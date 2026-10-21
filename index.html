@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Crypto">
+<title>Crypto Portfolio</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#0b0d12;--card:#151922;--card2:#1c212c;--line:#262c39;--text:#eef1f6;--muted:#8b93a5;--green:#1fd17a;--red:#ff5a5f;--accent:#4f8cff;--yellow:#f5b942}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;font-variant-numeric:tabular-nums}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overscroll-behavior-y:contain}
+button,input,select{font:inherit;color:inherit}
+#app{max-width:560px;margin:0 auto;padding:0 16px 120px}
+.top{display:flex;align-items:center;justify-content:space-between;height:60px;gap:10px}
+.top h1{font-size:17px;margin:0;flex:1;text-align:center;font-weight:650;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.icon-btn{background:var(--card);border:0;color:var(--text);width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;flex:none}
+.icon-btn svg{width:20px;height:20px}
+.sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--green)}.dot.err{background:var(--red)}.dot.busy{background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.hero{text-align:center;padding:14px 0 18px}
+.label{color:var(--muted);font-size:13px}
+.big{font-size:40px;font-weight:700;letter-spacing:-.8px;margin:2px 0 6px}
+.pl-toggle{background:var(--card);border:0;font-weight:600;cursor:pointer;padding:6px 12px;border-radius:999px;display:inline-flex;gap:8px;align-items:center}
+.pl-toggle small{color:var(--muted);font-weight:500}
+.up{color:var(--green)}.down{color:var(--red)}.flat{color:var(--muted)}
+.pill{display:inline-block;padding:2px 7px;border-radius:7px;font-weight:600;font-size:13px}
+.pill.up{background:rgba(31,209,122,.13)}.pill.down{background:rgba(255,90,95,.13)}
+.sub{color:var(--muted);font-size:13px;margin-top:10px}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px}
+.alloc-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;margin-bottom:10px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.list-head{display:flex;justify-content:space-between;align-items:center;margin:20px 2px 8px}
+.list-head h2{font-size:16px;margin:0}
+.list-head select{background:var(--card);border:0;border-radius:10px;padding:6px 8px;font-size:13px;color:var(--muted)}
+.list{list-style:none;margin:0;padding:0;background:var(--card);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:active{background:var(--card2)}
+.coin-img{width:36px;height:36px;border-radius:50%;background:var(--card2);flex:none;object-fit:cover}
+.coin-ph{width:36px;height:36px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted);flex:none}
+.grow{flex:1;min-width:0}
+.name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.right{text-align:right;flex:none}
+.right .v{font-weight:600}
+.empty{text-align:center;color:var(--muted);padding:50px 20px}
+.empty b{display:block;color:var(--text);font-size:17px;margin-bottom:6px}
+details.closed{margin-top:14px}
+details.closed summary{color:var(--muted);font-size:13px;cursor:pointer;padding:6px 2px}
+.fab{position:fixed;right:max(20px,calc(50% - 260px));bottom:calc(22px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:0;background:var(--green);color:#03150b;font-size:30px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer;display:grid;place-items:center}
+.fab svg{width:26px;height:26px}
+/* detail */
+.price-big{font-size:32px;font-weight:700;letter-spacing:-.5px}
+.chart-wrap{position:relative;margin:10px -4px 6px;touch-action:pan-y}
+.chart-wrap svg{display:block;width:100%;height:190px}
+.chart-msg{height:190px;display:grid;place-items:center;color:var(--muted);font-size:13px}
+.ranges{display:flex;justify-content:space-between;gap:6px;margin-bottom:16px}
+.ranges button{flex:1;background:none;border:0;color:var(--muted);padding:7px 0;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer}
+.ranges button.on{background:var(--card);color:var(--text)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.stat{background:var(--card);border-radius:14px;padding:12px}
+.stat .label{font-size:12px}
+.stat .val{font-weight:650;font-size:16px;margin-top:2px;word-break:break-word}
+.stat.wide{grid-column:1/-1}
+.tx-type{font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px;text-transform:uppercase;letter-spacing:.3px}
+.tx-type.buy{background:rgba(31,209,122,.13);color:var(--green)}
+.tx-type.sell{background:rgba(255,90,95,.13);color:var(--red)}
+.note{color:var(--muted);font-size:12px;margin-top:8px}
+/* sheet */
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet.hidden{display:none}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:fade .2s}
+.sheet-card{position:relative;background:#121620;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+.sheet h3{margin:4px 0 16px;font-size:18px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--muted);margin:0 0 5px 2px}
+.field input,.field select,.field textarea{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:16px;color:var(--text);outline:none}
+.field input:focus{border-color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;background:var(--card);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:none;padding:9px;border-radius:9px;font-weight:650;cursor:pointer;color:var(--muted)}
+.seg button.on.buy{background:var(--green);color:#03150b}
+.seg button.on.sell{background:var(--red);color:#fff}
+.btn{width:100%;border:0;border-radius:14px;padding:14px;font-weight:700;font-size:16px;cursor:pointer;background:var(--green);color:#03150b;margin-top:6px}
+.btn.sec{background:var(--card);color:var(--text)}
+.btn.danger{background:transparent;color:var(--red)}
+.btn:disabled{opacity:.5}
+.results{list-style:none;margin:0 0 12px;padding:0;background:var(--card);border-radius:12px;overflow:hidden}
+.results li{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.results li:last-child{border-bottom:0}
+.results img{width:26px;height:26px;border-radius:50%}
+.chosen{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.chosen button{margin-left:auto;background:none;border:0;color:var(--accent);cursor:pointer}
+.hint{font-size:12px;color:var(--muted);margin:-4px 2px 12px}
+.section-t{font-size:13px;color:var(--muted);margin:18px 2px 8px;text-transform:uppercase;letter-spacing:.4px}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#2a3040;color:var(--text);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+.private .m{filter:blur(7px);user-select:none}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top" id="topbar"></header>
+  <main id="view"></main>
+</div>
+<button class="fab" id="btnAdd" aria-label="Transactie toevoegen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<div id="sheet" class="sheet hidden"><div class="sheet-bg" id="sheetBg"></div><div class="sheet-card" id="sheetCard"></div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ---------- opslag ---------- */
+const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices';
+const API='https://api.coingecko.com/api/v3';
+const CUR='eur';
+function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
+let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
+let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
+let prices=load(LS_PRICES,{});
+let syncState={s:'off',msg:''};
+let syncTimer=null;
+
+function saveData(sync=true){data.updated=Date.now();localStorage.setItem(LS_DATA,JSON.stringify(data));if(sync)scheduleSync()}
+function saveSettings(){localStorage.setItem(LS_SET,JSON.stringify(settings))}
+function savePrices(){localStorage.setItem(LS_PRICES,JSON.stringify(prices))}
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function num(s){s=String(s??'').trim().replace(/\s/g,'').replace(/€/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'');s=s.replace(',','.');const n=parseFloat(s);return isFinite(n)?n:NaN}
+function decFor(v){const a=Math.abs(v);return a>=1000?2:a>=1?2:a>=0.01?4:a>=0.0001?6:8}
+function money(v,d){if(v==null||!isFinite(v))return '–';d=d??decFor(v);return new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:Math.min(2,d),maximumFractionDigits:d}).format(v)}
+function signed(v,d){if(v==null||!isFinite(v))return '–';return (v>=0?'+':'−')+money(Math.abs(v),d??2)}
+function pct(p){if(p==null||!isFinite(p))return '–';return (p>=0?'+':'−')+Math.abs(p).toFixed(2).replace('.',',')+'%'}
+function qtyf(q){return new Intl.NumberFormat('nl-NL',{maximumFractionDigits:8}).format(q)}
+function plainNum(v){if(v==null||!isFinite(v))return '';return String(+v.toFixed(decFor(v)>2?decFor(v):2)).replace('.',',')}
+const cls=v=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'flat':v>0?'up':'down';
+function fmtDate(s){const d=new Date(s);if(isNaN(d))return s;return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
+function nowLocal(){const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
+function coinIcon(m,size){const img=prices[m.coinId]?.image||m.image;return img?`<img class="coin-img" src="${esc(img)}" alt="" loading="lazy"${size?` style="width:${size}px;height:${size}px"`:''}>`:`<div class="coin-ph">${esc((m.symbol||'?').slice(0,3).toUpperCase())}</div>`}
+const ICONS={
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.3 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.5-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>'
+};
+
+/* ---------- berekeningen (FIFO per transactie) ---------- */
+function coinIds(){return [...new Set(data.txs.map(t=>t.coinId))]}
+function computeCoin(coinId){
+  const txs=data.txs.filter(t=>t.coinId===coinId).sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0));
+  const last=txs[txs.length-1]||{};
+  const meta={coinId,name:last.name,symbol:last.symbol,image:last.image};
+  const lots=[],sellInfo={};let realized=0,totalBought=0;
+  for(const t of txs){
+    const fee=t.fee||0;
+    if(t.type==='buy'){const unit=(t.qty*t.price+fee)/t.qty;lots.push({tx:t,remaining:t.qty,unit});totalBought+=t.qty*t.price+fee}
+    else{
+      let left=t.qty,cost=0;
+      for(const l of lots){if(left<=1e-12)break;const take=Math.min(l.remaining,left);l.remaining-=take;left-=take;cost+=take*l.unit;if(l.remaining<1e-12)l.remaining=0}
+      const matched=t.qty-left;
+      const proceeds=matched*t.price-fee*(t.qty?matched/t.qty:1);
+      const pl=proceeds-cost;realized+=pl;
+      sellInfo[t.id]={pl,cost,pct:cost>0?(proceeds/cost-1)*100:null,oversold:left>1e-12};
+    }
+  }
+  const lotMap={};lots.forEach(l=>lotMap[l.tx.id]=l);
+  const qty=lots.reduce((s,l)=>s+l.remaining,0);
+  const cost=lots.reduce((s,l)=>s+l.remaining*l.unit,0);
+  const P=prices[coinId];const price=P?.price;
+  const value=price!=null?qty*price:null;
+  const unreal=value!=null?value-cost:null;
+  return{coinId,meta,txs,lotMap,sellInfo,qty,cost,avg:qty>1e-12?cost/qty:null,price,ch24:P?.ch24,value,unreal,unrealPct:cost>0&&unreal!=null?unreal/cost*100:null,realized,totalBought};
+}
+function portfolio(){
+  const coins=coinIds().map(computeCoin);
+  const open=coins.filter(c=>c.qty>1e-12),closed=coins.filter(c=>c.qty<=1e-12);
+  let value=0,cost=0,ch=0,missing=false,realized=0;
+  for(const c of coins){realized+=c.realized}
+  for(const c of open){cost+=c.cost;if(c.value==null){missing=true;continue}value+=c.value;if(c.ch24!=null)ch+=c.value-c.value/(1+c.ch24/100)}
+  const unreal=value-cost;
+  return{open,closed,value,cost,unreal,unrealPct:cost>0?unreal/cost*100:null,ch24:ch,ch24Pct:value-ch>0?ch/(value-ch)*100:null,realized,missing};
+}
+
+/* ---------- koersen ---------- */
+let priceBusy=false;
+async function refreshPrices(force){
+  const ids=coinIds();if(!ids.length||priceBusy)return;
+  priceBusy=true;
+  try{
+    const r=await fetch(`${API}/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=24h`);
+    if(!r.ok)throw new Error(r.status===429?'Te veel koersverzoeken, even wachten':'Koersen ophalen mislukt ('+r.status+')');
+    const arr=await r.json();
+    for(const c of arr)prices[c.id]={price:c.current_price,ch24:c.price_change_percentage_24h,image:c.image,ts:Date.now()};
+    savePrices();render();
+  }catch(e){if(force)toast(e.message||'Geen verbinding')}
+  finally{priceBusy=false}
+}
+async function fetchPrice(id){
+  try{const r=await fetch(`${API}/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=${CUR}&include_24hr_change=true`);const j=await r.json();if(j[id]){prices[id]=Object.assign(prices[id]||{},{price:j[id][CUR],ch24:j[id][CUR+'_24h_change'],ts:Date.now()});savePrices();return j[id][CUR]}}catch(e){}
+  return null;
+}
+const chartCache={};
+async function fetchChart(id,days){
+  const key=id+'|'+days,c=chartCache[key];
+  if(c&&Date.now()-c.ts<5*60000)return c.pts;
+  const r=await fetch(`${API}/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=${days}`);
+  if(!r.ok)throw new Error(r.status===429?'Te veel verzoeken, probeer zo opnieuw':'Grafiek niet beschikbaar');
+  const j=await r.json();chartCache[key]={ts:Date.now(),pts:j.prices||[]};return chartCache[key].pts;
+}
+
+/* ---------- weergave ---------- */
+function render(){
+  document.body.classList.toggle('private',!!settings.privacy);
+  const m=location.hash.match(/^#coin\/(.+)$/);
+  if(m&&data.txs.some(t=>t.coinId===decodeURIComponent(m[1])))renderCoin(decodeURIComponent(m[1]));
+  else renderHome();
+}
+function syncBadge(){
+  const g=settings.gh;if(!g.token||!g.repo||!g.pass)return '<div class="sync"></div>';
+  const txt={ok:'Gesynchroniseerd',busy:'Synchroniseren…',err:'Sync mislukt',off:'Sync'}[syncState.s];
+  return `<div class="sync" title="${esc(syncState.msg)}"><span class="dot ${syncState.s}"></span>${txt}</div>`;
+}
+function renderHome(){
+  $('#topbar').innerHTML=`<button class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>${syncBadge()}<button class="icon-btn" data-act="settings" aria-label="Instellingen">${ICONS.gear}</button>`;
+  const p=portfolio();
+  if(!data.txs.length){
+    $('#view').innerHTML=`<div class="empty"><b>Nog geen investeringen</b>Tik op + om je eerste aankoop toe te voegen.<br>Koersen worden automatisch opgehaald.</div>`;return;
+  }
+  const mode=settings.plMode;
+  const plV=mode==='24h'?p.ch24:p.unreal,plP=mode==='24h'?p.ch24Pct:p.unrealPct;
+  const palette=['#4f8cff','#1fd17a','#f5b942','#b56cff','#ff7a59','#34c6d3','#8b93a5'];
+  const sorted=[...p.open].sort(sorter());
+  const byVal=[...p.open].filter(c=>c.value).sort((a,b)=>b.value-a.value);
+  let segs=byVal.slice(0,6).map((c,i)=>({n:(c.meta.symbol||'').toUpperCase(),v:c.value,col:palette[i]}));
+  const rest=byVal.slice(6).reduce((s,c)=>s+c.value,0);if(rest>0)segs.push({n:'Overig',v:rest,col:palette[6]});
+  const tot=segs.reduce((s,x)=>s+x.v,0);
+  $('#view').innerHTML=`
+  <section class="hero">
+    <div class="label">Portfoliowaarde</div>
+    <div class="big m">${money(p.value,2)}</div>
+    <button class="pl-toggle ${cls(plV)}" data-act="plmode"><span class="m">${signed(plV)}</span> <span>(${pct(plP)})</span> <small>${mode==='24h'?'24 uur':'Totaal ongerealiseerd'} ⇄</small></button>
+    <div class="sub">Geïnvesteerd <span class="m">${money(p.cost,2)}</span>${Math.abs(p.realized)>0.005?` · Gerealiseerd <span class="m ${cls(p.realized)}">${signed(p.realized)}</span>`:''}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
+  </section>
+  ${tot>0?`<div class="card"><div class="alloc-bar">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}
+  <div class="list-head"><h2>Bezittingen</h2>
+    <select data-act="sort"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
+  ${sorted.length?`<ul class="list">${sorted.map(c=>{
+    const v=mode==='24h'?c.ch24:c.unrealPct;
+    return `<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}
+      <div class="grow"><div class="name">${esc(c.meta.name)}</div><div class="meta"><span class="m">${qtyf(c.qty)}</span> ${esc((c.meta.symbol||'').toUpperCase())} · gem. <span class="m">${money(c.avg)}</span></div></div>
+      <div class="right"><div class="v m">${money(c.value,2)}</div><div class="${cls(mode==='24h'?c.ch24:c.unreal)}" style="font-size:13px;font-weight:600"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div></li>`}).join('')}</ul>`:'<div class="card" style="color:var(--muted);text-align:center">Geen open posities</div>'}
+  ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name">${esc(c.meta.name)}</div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="${cls(c.realized)} m" style="font-weight:600">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}`;
+}
+function sorter(){
+  const s=settings.sort;
+  if(s==='name')return(a,b)=>(a.meta.name||'').localeCompare(b.meta.name||'');
+  if(s==='pl')return(a,b)=>(b.unrealPct??-1e9)-(a.unrealPct??-1e9);
+  if(s==='plabs')return(a,b)=>(b.unreal??-1e18)-(a.unreal??-1e18);
+  return(a,b)=>(b.value??0)-(a.value??0);
+}
+
+let chartToken=0;
+function renderCoin(id){
+  const c=computeCoin(id),sym=(c.meta.symbol||'').toUpperCase();
+  $('#topbar').innerHTML=`<button class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button><h1>${esc(c.meta.name)} <span style="color:var(--muted);font-weight:500">${esc(sym)}</span></h1><button class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
+  const ranges=[['1','24U'],['7','1W'],['30','1M'],['90','3M'],['365','1J'],['max','Max']];
+  const txs=[...c.txs].reverse();
+  $('#view').innerHTML=`
+  <div style="display:flex;align-items:center;gap:12px;margin-top:6px">${coinIcon(c.meta,44)}
+    <div><div class="price-big" id="pxMain">${money(c.price)}</div><div id="pxSub" class="${cls(c.ch24)}" style="font-weight:600;font-size:14px">${pct(c.ch24)} <span style="color:var(--muted);font-weight:500">24 uur</span></div></div></div>
+  <div class="chart-wrap" id="chart"><div class="chart-msg">Grafiek laden…</div></div>
+  <div class="ranges">${ranges.map(([d,l])=>`<button data-range="${d}" class="${settings.range===d?'on':''}">${l}</button>`).join('')}</div>
+  ${c.qty>1e-12?`
+  <div class="stat wide card" style="padding:14px;margin-bottom:10px">
+    <div class="label">Ongerealiseerde winst/verlies</div>
+    <div style="font-size:26px;font-weight:700" class="${cls(c.unreal)}"><span class="m">${signed(c.unreal)}</span> <span style="font-size:17px">${pct(c.unrealPct)}</span></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="label">Waarde</div><div class="val m">${money(c.value,2)}</div></div>
+    <div class="stat"><div class="label">In bezit</div><div class="val m">${qtyf(c.qty)} ${esc(sym)}</div></div>
+    <div class="stat"><div class="label">Gem. aankoopprijs</div><div class="val m">${money(c.avg)}</div></div>
+    <div class="stat"><div class="label">Geïnvesteerd</div><div class="val m">${money(c.cost,2)}</div></div>
+    <div class="stat"><div class="label">Koers t.o.v. gemiddelde</div><div class="val ${cls(c.price-c.avg)}">${c.price!=null&&c.avg?pct((c.price/c.avg-1)*100):'–'}</div></div>
+    <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(c.realized)}">${Math.abs(c.realized)>0.005?signed(c.realized):'–'}</div></div>
+  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val m ${cls(c.realized)}" style="font-size:22px">${signed(c.realized)}</div></div></div>`}
+  <div class="list-head"><h2>Transacties</h2><span class="label">${c.txs.length}</span></div>
+  <ul class="list">${txs.map(t=>txRow(t,c)).join('')}</ul>
+  <div class="note">Winst per transactie wordt berekend met FIFO: verkopen worden afgeboekt op je oudste aankopen eerst. Transactiekosten tellen mee in de aankoopprijs.</div>`;
+  drawChart(c);
+}
+function txRow(t,c){
+  const sym=(c.meta.symbol||'').toUpperCase();
+  let right='';
+  if(t.type==='buy'){
+    const l=c.lotMap[t.id],unit=l?l.unit:t.price;
+    if(!l||l.remaining<=1e-12)right=`<div class="label">Volledig verkocht</div>`;
+    else if(c.price==null)right=`<div class="label">Geen koers</div>`;
+    else{const val=l.remaining*c.price,pl=l.remaining*(c.price-unit),pp=(c.price/unit-1)*100;
+      right=`<div class="v m">${money(val,2)}</div><div class="${cls(pl)}" style="font-size:13px;font-weight:600"><span class="m">${signed(pl)}</span> ${pct(pp)}</div>${l.remaining<t.qty-1e-12?`<div class="label" style="font-size:11px">nog <span class="m">${qtyf(l.remaining)}</span> over</div>`:''}`}
+  }else{
+    const s=c.sellInfo[t.id]||{};
+    right=`<div class="label" style="font-size:11px">Gerealiseerd</div><div class="${cls(s.pl)}" style="font-size:13px;font-weight:600"><span class="m">${signed(s.pl)}</span> ${pct(s.pct)}</div>${s.oversold?'<div class="label" style="font-size:11px;color:var(--yellow)">meer verkocht dan gekocht</div>':''}`;
+  }
+  return `<li class="row" data-tx="${esc(t.id)}"><div class="grow">
+    <div style="display:flex;gap:8px;align-items:center"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span><span class="meta">${fmtDate(t.date)}</span></div>
+    <div style="margin-top:4px;font-weight:600"><span class="m">${qtyf(t.qty)}</span> ${esc(sym)} <span style="color:var(--muted);font-weight:500">@ ${money(t.price)}</span></div>
+    <div class="meta">Totaal <span class="m">${money(t.qty*t.price,2)}</span>${t.fee?` · kosten <span class="m">${money(t.fee,2)}</span>`:''}${t.note?' · '+esc(t.note):''}</div>
+  </div><div class="right">${right}</div></li>`;
+}
+
+async function drawChart(c){
+  const my=++chartToken,el=$('#chart');if(!el)return;
+  let pts;
+  try{pts=await fetchChart(c.coinId,settings.range)}catch(e){if(my===chartToken&&$('#chart'))$('#chart').innerHTML=`<div class="chart-msg">${esc(e.message)}</div>`;return}
+  if(my!==chartToken||!$('#chart'))return;
+  if(!pts.length){$('#chart').innerHTML='<div class="chart-msg">Geen koersdata</div>';return}
+  const W=360,H=190,pt=14,pb=14;
+  const t0=pts[0][0],t1=pts[pts.length-1][0];
+  let lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1]));
+  const avg=c.qty>1e-12?c.avg:null;
+  const buys=c.txs.filter(t=>t.type==='buy').map(t=>({t:new Date(t.date).getTime(),p:t.price})).filter(b=>b.t>=t0&&b.t<=t1);
+  const showAvg=avg&&avg>lo*0.6&&avg<hi*1.4;
+  if(showAvg){lo=Math.min(lo,avg);hi=Math.max(hi,avg)}
+  buys.forEach(b=>{lo=Math.min(lo,b.p);hi=Math.max(hi,b.p)});
+  if(hi===lo){hi*=1.01;lo*=0.99}
+  const X=t=>(t-t0)/(t1-t0||1)*W,Y=v=>pt+(1-(v-lo)/(hi-lo))*(H-pt-pb);
+  const up=pts[pts.length-1][1]>=pts[0][1],col=up?'var(--green)':'var(--red)';
+  const d=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join('');
+  const gid='g'+my;
+  $('#chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${up?'#1fd17a':'#ff5a5f'}" stop-opacity=".25"/><stop offset="1" stop-color="${up?'#1fd17a':'#ff5a5f'}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${d}L${W} ${H}L0 ${H}Z" fill="url(#${gid})"/>
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    ${showAvg?`<line x1="0" x2="${W}" y1="${Y(avg)}" y2="${Y(avg)}" stroke="#8b93a5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>`:''}
+    <line id="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
+  </svg>
+  ${buys.map(b=>`<span title="Aankoop ${money(b.p)}" style="position:absolute;left:calc(${X(b.t)/W*100}% - 5px);top:${Y(b.p)-5}px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)"></span>`).join('')}
+  ${showAvg?`<span class="m" style="position:absolute;right:6px;top:${Math.max(0,Y(avg)-18)}px;font-size:11px;color:var(--muted);background:var(--bg);padding:0 4px;border-radius:4px">gem. ${money(avg)}</span>`:''}`;
+  // scrubben
+  const wrap=$('#chart'),line=wrap.querySelector('#cur');
+  const reset=()=>{line.style.display='none';$('#pxMain').textContent=money(c.price);$('#pxSub').className=cls(c.ch24);$('#pxSub').innerHTML=`${pct(c.ch24)} <span style="color:var(--muted);font-weight:500">24 uur</span>`};
+  const move=e=>{const r=wrap.getBoundingClientRect(),x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
+    const tt=t0+Math.max(0,Math.min(1,x))*(t1-t0);let i=0,lo2=0,hi2=pts.length-1;while(lo2<hi2){const m=(lo2+hi2)>>1;if(pts[m][0]<tt)lo2=m+1;else hi2=m}i=lo2;
+    const p=pts[i];line.setAttribute('x1',X(p[0]));line.setAttribute('x2',X(p[0]));line.style.display='';
+    $('#pxMain').textContent=money(p[1]);const ch=(p[1]/pts[0][1]-1)*100;$('#pxSub').className=cls(ch);
+    const dt=new Date(p[0]);$('#pxSub').innerHTML=`${pct(ch)} <span style="color:var(--muted);font-weight:500">${dt.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:settings.range==='1'?undefined:'numeric'})}${['1','7'].includes(settings.range)?' '+dt.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):''}</span>`};
+  wrap.onmousemove=move;wrap.ontouchmove=move;wrap.ontouchstart=move;wrap.onmouseleave=reset;wrap.ontouchend=reset;
+}
+
+/* ---------- bladen (sheets) ---------- */
+function openSheet(html){$('#sheetCard').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.remove('hidden');document.body.style.overflow='hidden'}
+function closeSheet(){$('#sheet').classList.add('hidden');document.body.style.overflow=''}
+$('#sheetBg').onclick=closeSheet;
+
+let form=null;
+function openTx(opts={}){
+  const t=opts.txId?data.txs.find(x=>x.id===opts.txId):null;
+  let coin=null;
+  if(t)coin={id:t.coinId,name:t.name,symbol:t.symbol,image:t.image};
+  else if(opts.coinId){const c=computeCoin(opts.coinId);coin={id:opts.coinId,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image}}
+  form={id:t?.id,coin,type:t?.type||'buy',qty:t?plainNum(t.qty):'',price:t?plainNum(t.price):'',total:t?plainNum(t.qty*t.price):'',fee:t?.fee?plainNum(t.fee):'',date:t?.date||nowLocal(),note:t?.note||'',last:t?'qty':'total'};
+  if(coin&&!t&&prices[coin.id]?.price)form.price=plainNum(prices[coin.id].price);
+  renderTxSheet();
+  if(coin&&!t&&!prices[coin.id]?.price)fetchPrice(coin.id).then(p=>{if(p&&form&&!form.price){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});
+}
+function renderTxSheet(){
+  const f=form;
+  openSheet(`<h3>${f.id?'Transactie bewerken':'Transactie toevoegen'}</h3>
+  ${f.coin?`<div class="chosen">${coinIcon({coinId:f.coin.id,symbol:f.coin.symbol,image:f.coin.image},28)}<div><b>${esc(f.coin.name)}</b> <span style="color:var(--muted)">${esc((f.coin.symbol||'').toUpperCase())}</span></div>${f.id?'':'<button data-act="changecoin">Wijzig</button>'}</div>`
+  :`<div class="field"><label>Munt zoeken</label><input id="f_search" placeholder="bijv. Bitcoin, ETH, Solana" autocomplete="off"></div><ul class="results" id="f_results"></ul>`}
+  <div class="seg"><button data-type="buy" class="buy ${f.type==='buy'?'on':''}">Koop</button><button data-type="sell" class="sell ${f.type==='sell'?'on':''}">Verkoop</button></div>
+  <div class="field"><label>Totaalbedrag (€)</label><input id="f_total" inputmode="decimal" value="${esc(f.total)}" placeholder="0,00"></div>
+  <div class="two">
+    <div class="field"><label>Koers per munt (€)</label><input id="f_price" inputmode="decimal" value="${esc(f.price)}" placeholder="0,00"></div>
+    <div class="field"><label>Aantal</label><input id="f_qty" inputmode="decimal" value="${esc(f.qty)}" placeholder="0"></div>
+  </div>
+  <p class="hint">Vul het bedrag óf het aantal in; het andere wordt berekend met de koers.</p>
+  <div class="two">
+    <div class="field"><label>Datum en tijd</label><input id="f_date" type="datetime-local" value="${esc(f.date)}"></div>
+    <div class="field"><label>Kosten (€, optioneel)</label><input id="f_fee" inputmode="decimal" value="${esc(f.fee)}" placeholder="0"></div>
+  </div>
+  <div class="field"><label>Notitie (optioneel)</label><input id="f_note" value="${esc(f.note)}" placeholder="bijv. eToro, Bitvavo"></div>
+  <button class="btn" data-act="savetx">${f.id?'Opslaan':'Toevoegen'}</button>
+  ${f.id?'<button class="btn danger" data-act="deltx">Transactie verwijderen</button>':''}`);
+  const s=$('#f_search');if(s){s.focus();s.oninput=()=>{clearTimeout(s._t);s._t=setTimeout(()=>searchCoins(s.value),300)}}
+  $('#f_total').oninput=()=>recalc('total');$('#f_qty').oninput=()=>recalc('qty');$('#f_price').oninput=()=>recalc('price');
+}
+function recalc(src){
+  if(src==='total'||src==='qty')form.last=src;
+  const pr=num($('#f_price').value);if(!(pr>0))return;
+  const base=src==='price'?form.last:src;
+  if(base==='total'){const tot=num($('#f_total').value);if(isFinite(tot))$('#f_qty').value=String(+(tot/pr).toFixed(10)).replace('.',',')}
+  else{const q=num($('#f_qty').value);if(isFinite(q))$('#f_total').value=(q*pr).toFixed(2).replace('.',',')}
+}
+async function searchCoins(q){
+  const ul=$('#f_results');if(!ul)return;q=q.trim();
+  if(q.length<2){ul.innerHTML='';return}
+  ul.innerHTML='<li style="color:var(--muted)">Zoeken…</li>';
+  try{const r=await fetch(`${API}/search?query=${encodeURIComponent(q)}`);const j=await r.json();
+    const list=(j.coins||[]).slice(0,8);
+    if(!$('#f_results'))return;
+    ul.innerHTML=list.length?list.map(c=>`<li data-pick='${esc(JSON.stringify({id:c.id,name:c.name,symbol:c.symbol,image:c.large||c.thumb}))}'><img src="${esc(c.thumb)}" alt=""><div class="grow"><b>${esc(c.name)}</b> <span style="color:var(--muted)">${esc(c.symbol)}</span></div>${c.market_cap_rank?`<span class="label">#${c.market_cap_rank}</span>`:''}</li>`).join(''):'<li style="color:var(--muted)">Niets gevonden</li>';
+  }catch(e){ul.innerHTML='<li style="color:var(--muted)">Zoeken mislukt (offline?)</li>'}
+}
+function readForm(){
+  form.qty=$('#f_qty').value;form.price=$('#f_price').value;form.total=$('#f_total').value;form.fee=$('#f_fee').value;form.date=$('#f_date').value;form.note=$('#f_note').value;
+}
+function saveTx(){
+  readForm();const f=form;
+  if(!f.coin)return toast('Kies eerst een munt');
+  const qty=num(f.qty),price=num(f.price),fee=f.fee?num(f.fee):0;
+  if(!(price>0))return toast('Vul een geldige koers in');
+  if(!(qty>0))return toast('Vul een bedrag of aantal in');
+  if(!(fee>=0))return toast('Kosten zijn ongeldig');
+  if(!f.date)return toast('Vul een datum in');
+  const now=Date.now();
+  const tx={id:f.id||uid(),coinId:f.coin.id,name:f.coin.name,symbol:f.coin.symbol,image:f.coin.image,type:f.type,qty,price,fee,date:f.date,note:f.note.trim(),created:f.id?(data.txs.find(t=>t.id===f.id)?.created||now):now,mod:now};
+  const i=data.txs.findIndex(t=>t.id===tx.id);if(i>=0)data.txs[i]=tx;else data.txs.push(tx);
+  saveData();closeSheet();
+  if(!prices[tx.coinId])refreshPrices();
+  location.hash='#coin/'+encodeURIComponent(tx.coinId);render();
+  toast(f.id?'Transactie bijgewerkt':'Transactie toegevoegd');
+}
+function deleteTx(){
+  if(!confirm('Deze transactie verwijderen?'))return;
+  data.txs=data.txs.filter(t=>t.id!==form.id);data.deleted.push(form.id);saveData();closeSheet();render();toast('Verwijderd');
+}
+
+function openSettings(){
+  const g=settings.gh;
+  openSheet(`<h3>Instellingen</h3>
+  <div class="section-t">Synchronisatie via GitHub</div>
+  <p class="hint" style="margin-top:0">Je portfolio wordt versleuteld (AES-256) opgeslagen in een privé-repository, zodat je het op al je apparaten ziet. Zonder wachtwoord kan niemand het lezen, ook GitHub niet.</p>
+  <div class="field"><label>Repository (gebruiker/naam)</label><input id="s_repo" value="${esc(g.repo)}" placeholder="geert/mijn-data" autocapitalize="off" autocorrect="off"></div>
+  <div class="field"><label>Personal access token</label><input id="s_token" type="password" value="${esc(g.token)}" placeholder="github_pat_…" autocomplete="off"></div>
+  <div class="two"><div class="field"><label>Bestand</label><input id="s_path" value="${esc(g.path)}"></div><div class="field"><label>Branch</label><input id="s_branch" value="${esc(g.branch)}"></div></div>
+  <div class="field"><label>Versleutelwachtwoord</label><input id="s_pass" type="password" value="${esc(g.pass)}" autocomplete="new-password" placeholder="Zelfde op elk apparaat"></div>
+  <p class="hint">Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span style="color:var(--red)">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
+  <button class="btn" data-act="savesync">Opslaan en synchroniseren</button>
+  <div class="section-t">Back-up</div>
+  <div class="two"><button class="btn sec" data-act="export">Exporteren</button><button class="btn sec" data-act="import">Importeren</button></div>
+  <input type="file" id="s_file" accept="application/json,.json" hidden>
+  <button class="btn sec" data-act="refresh" style="margin-top:10px">Koersen nu verversen</button>
+  <div class="section-t">Gevarenzone</div>
+  <button class="btn danger" data-act="wipe">Alle transacties wissen</button>
+  <p class="hint" style="text-align:center;margin-top:14px">Koersdata: CoinGecko · ${data.txs.length} transacties</p>`);
+  $('#s_file').onchange=importFile;
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+async function importFile(e){
+  const file=e.target.files[0];if(!file)return;
+  try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
+    data=merge(data,{txs:j.txs,deleted:j.deleted||[]});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
+  }catch(err){toast('Ongeldig back-upbestand')}
+}
+
+/* ---------- versleuteling + GitHub-sync ---------- */
+const enc=new TextEncoder(),dec=new TextDecoder();
+const bufToB64=b=>{let s='';new Uint8Array(b).forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
+const b64ToBuf=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(pass,salt){const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function encryptObj(obj,pass){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const key=await deriveKey(pass,salt);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));return{v:1,alg:'AES-GCM/PBKDF2-SHA256',salt:bufToB64(salt),iv:bufToB64(iv),ct:bufToB64(ct)}}
+async function decryptObj(o,pass){const key=await deriveKey(pass,b64ToBuf(o.salt));try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBuf(o.iv)},key,b64ToBuf(o.ct));return JSON.parse(dec.decode(pt))}catch(e){throw new Error('Versleutelwachtwoord klopt niet')}}
+const utf8ToB64=s=>bufToB64(enc.encode(s));
+const b64ToUtf8=s=>dec.decode(b64ToBuf(s.replace(/\s/g,'')));
+function merge(a,b){
+  const deleted=[...new Set([...(a.deleted||[]),...(b.deleted||[])])],del=new Set(deleted),m=new Map();
+  for(const t of [...(a.txs||[]),...(b.txs||[])]){if(del.has(t.id))continue;const e=m.get(t.id);if(!e||(t.mod||0)>(e.mod||0))m.set(t.id,t)}
+  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0)};
+}
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort()]);
+function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
+function setSync(s,msg=''){syncState={s,msg};const el=document.querySelector('.sync');if(el&&!location.hash.startsWith('#coin'))el.outerHTML=syncBadge()}
+let syncing=false,syncAgain=false;
+async function syncNow(silent){
+  const g=settings.gh;if(!g.token||!g.repo||!g.pass)return;
+  if(syncing){syncAgain=true;return}
+  syncing=true;setSync('busy');
+  try{
+    const url=`https://api.github.com/repos/${g.repo.trim()}/contents/${g.path.split('/').map(encodeURIComponent).join('/')}`;
+    const h={Authorization:'Bearer '+g.token.trim(),Accept:'application/vnd.github+json'};
+    const r=await fetch(url+'?ref='+encodeURIComponent(g.branch)+'&_='+Date.now(),{headers:h,cache:'no-store'});
+    let sha=null,remote=null;
+    if(r.status===200){const j=await r.json();sha=j.sha;remote=await decryptObj(JSON.parse(b64ToUtf8(j.content)),g.pass)}
+    else if(r.status===401)throw new Error('Token ongeldig of verlopen');
+    else if(r.status!==404)throw new Error('GitHub gaf fout '+r.status);
+    const before=sig(data);
+    const merged=remote?merge(data,remote):data;
+    data=merged;localStorage.setItem(LS_DATA,JSON.stringify(data));
+    if(!remote||sig(remote)!==sig(merged)){
+      const body={message:'Portfolio bijgewerkt '+new Date().toISOString(),content:utf8ToB64(JSON.stringify(await encryptObj(merged,g.pass))),branch:g.branch};
+      if(sha)body.sha=sha;
+      const p=await fetch(url,{method:'PUT',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(p.status===409||p.status===422){syncAgain=true}
+      else if(p.status===404)throw new Error('Repository niet gevonden of geen schrijfrechten');
+      else if(!p.ok)throw new Error('Opslaan op GitHub mislukt ('+p.status+')');
+    }
+    setSync('ok');
+    if(before!==sig(data)){refreshPrices();render()}
+    if(!silent)toast('Gesynchroniseerd');
+  }catch(e){setSync('err',e.message||'Geen verbinding');if(!silent)toast(e.message||'Sync mislukt')}
+  finally{syncing=false;if(syncAgain){syncAgain=false;setTimeout(()=>syncNow(true),800)}}
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-type],[data-pick]');if(!a)return;
+  if(a.dataset.coin){location.hash='#coin/'+encodeURIComponent(a.dataset.coin);return}
+  if(a.dataset.tx){openTx({txId:a.dataset.tx});return}
+  if(a.dataset.range){settings.range=a.dataset.range;saveSettings();document.querySelectorAll('.ranges button').forEach(b=>b.classList.toggle('on',b===a));const m=location.hash.match(/^#coin\/(.+)$/);if(m)drawChart(computeCoin(decodeURIComponent(m[1])));return}
+  if(a.dataset.type){readForm();form.type=a.dataset.type;renderTxSheet();return}
+  if(a.dataset.pick){readForm();const c=JSON.parse(a.dataset.pick);form.coin=c;const cached=prices[c.id]?.price;if(cached)form.price=plainNum(cached);renderTxSheet();
+    fetchPrice(c.id).then(p=>{if(p&&form&&form.coin?.id===c.id){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});return}
+  switch(a.dataset.act){
+    case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
+    case 'settings':openSettings();break;
+    case 'home':location.hash='';break;
+    case 'plmode':settings.plMode=settings.plMode==='24h'?'total':'24h';saveSettings();render();break;
+    case 'changecoin':readForm();form.coin=null;renderTxSheet();break;
+    case 'savetx':saveTx();break;
+    case 'deltx':deleteTx();break;
+    case 'export':exportData();break;
+    case 'import':$('#s_file').click();break;
+    case 'refresh':refreshPrices(true).then(()=>toast('Koersen bijgewerkt'));break;
+    case 'savesync':
+      settings.gh={repo:$('#s_repo').value.trim(),token:$('#s_token').value.trim(),path:$('#s_path').value.trim()||'crypto-portfolio.enc.json',branch:$('#s_branch').value.trim()||'main',pass:$('#s_pass').value};
+      saveSettings();closeSheet();render();
+      if(settings.gh.repo&&settings.gh.token&&settings.gh.pass)syncNow(false);else toast('Sync uitgeschakeld');break;
+    case 'wipe':
+      if(!confirm('Alle transacties wissen? Dit wordt ook naar je andere apparaten gesynchroniseerd.'))return;
+      data.deleted=[...new Set([...data.deleted,...data.txs.map(t=>t.id)])];data.txs=[];saveData();closeSheet();location.hash='';render();toast('Alles gewist');break;
+  }
+});
+document.addEventListener('change',e=>{if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
+$('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
+window.addEventListener('hashchange',()=>{window.scrollTo(0,0);render()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshPrices();syncNow(true)}});
+setInterval(()=>{if(!document.hidden)refreshPrices()},60000);
+
+render();
+refreshPrices();
+syncNow(true);
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
