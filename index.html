@@ -186,7 +186,13 @@ a{color:var(--accent)}
 .calc input{color:var(--muted);border-style:dashed}
 .calc label::after{content:' · berekend';color:var(--accent)}
 .warn{color:var(--yellow);font-size:12px;margin:8px 0 2px}
-.rep-grid{display:grid;gap:14px}
+.rep-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}   /* kolom nooit breder dan het scherm */
+.rep-grid>*,.rep-grid .card,.cc,.cc-scroll{min-width:0}
+.rt td:first-child{white-space:normal}
+.rt th{white-space:normal;vertical-align:bottom}
+.rep-grid .card,.zoom .card{overflow-x:auto}   /* past een tabel echt niet, dan scrolt alleen het blok opzij */
+@media (max-width:420px){.rt td,.rt th{padding:7px 3px;font-size:13px}.rt th{font-size:11px}}
+@media (max-width:360px){.filters .seg button{font-size:13px;padding:8px 1px}}
 .rep-grid .card{margin:0}
 .rep-col{display:contents}
 .zoomable{cursor:pointer}
@@ -340,8 +346,8 @@ a{color:var(--accent)}
   .grab{display:none}
   .light .panel{box-shadow:0 1px 2px rgba(16,24,40,.06),0 0 0 1px rgba(16,24,40,.04)}
   .tx-sum{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
-  .rep-grid{grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-  .rep-col{display:grid;gap:20px;align-content:start}
+  .rep-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+  .rep-col{display:grid;gap:20px;align-content:start;grid-template-columns:minmax(0,1fr);min-width:0}
   .tx-sum .stat:first-child{grid-column:auto}
   .filters input{flex:2 1 260px;font-size:15px}
   .filters .seg{flex:0 0 300px}
@@ -374,7 +380,7 @@ a{color:var(--accent)}
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='33 (22 okt 2026)';
+const APP_VERSION='34 (22 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
