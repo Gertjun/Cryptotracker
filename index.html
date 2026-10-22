@@ -133,8 +133,8 @@ a{color:var(--accent)}
 .kv small{font-weight:600;font-size:12px}
 .tbl-wrap{background:var(--card);border-radius:16px;overflow:auto}
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap;user-select:none}
-.tbl td{padding:12px 16px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:13px 12px;border-bottom:1px solid var(--line);white-space:nowrap;user-select:none}
+.tbl td{padding:12px 12px;font-size:14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl .l{text-align:left}
 .tbl tbody tr:last-child td{border-bottom:0}
 .tbl tbody tr{cursor:pointer}
@@ -142,10 +142,26 @@ a{color:var(--accent)}
 .tbl th[data-sort]{cursor:pointer}
 .tbl th[data-sort]:hover,.tbl th.on{color:var(--text)}
 .coin-cell{display:flex;align-items:center;gap:12px}
-.note-cell{color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.tbl th:first-child,.tbl td:first-child{padding-left:16px}.tbl th:last-child,.tbl td:last-child{padding-right:16px}
+.note-cell{color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:center;background:rgba(11,13,18,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{flex:1;max-width:200px;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:6px 0;cursor:pointer}
+.tabbar svg{width:23px;height:23px}
+.tabbar button.on{color:var(--text)}
+.locked .tabbar{display:none}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.filters input,.filters select{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:16px;color:var(--text);outline:none;min-width:0}
+.filters input{flex:1 1 100%}
+.filters select{flex:1 1 0}
+.filters .seg{margin:0;flex:1 1 100%}
+.seg button.on.all{background:var(--card2);color:var(--text)}
+.month-h{font-size:13px;color:var(--muted);margin:18px 4px 8px;text-transform:capitalize}
+.month-h:first-child{margin-top:4px}
+.tx-sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tx-sum .stat:first-child{grid-column:1/-1}
 .btn-add{background:var(--green);color:#03150b;border:0;border-radius:12px;padding:0 16px;height:40px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;flex:none}
 .btn-add svg{width:18px;height:18px}
-@media (max-width:999px){.only-d{display:none!important}}
+@media (max-width:999px){.only-d{display:none!important}.fab{bottom:calc(84px + env(safe-area-inset-bottom))}#app{padding-bottom:170px}}
 @media (min-width:1000px){
   .only-m{display:none!important}
   .shell{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
@@ -181,6 +197,11 @@ a{color:var(--accent)}
   .sheet{align-items:center}
   .sheet-card{border-radius:20px;max-width:520px;max-height:88vh;padding:24px 28px}
   .grab{display:none}
+  .tx-sum{grid-template-columns:repeat(5,1fr)}
+  .tx-sum .stat:first-child{grid-column:auto}
+  .filters input{flex:2 1 260px;font-size:15px}
+  .filters .seg{flex:0 0 300px}
+  .filters select{flex:0 0 180px;font-size:15px}
 }
 .pk-list{background:var(--card);border-radius:12px;overflow:hidden;margin-bottom:10px}
 .pk-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line)}
@@ -198,6 +219,7 @@ a{color:var(--accent)}
 </div>
 </div>
 <button class="fab" id="btnAdd" aria-label="Transactie toevoegen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<nav class="tabbar only-m"><button data-act="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Overzicht</button><button data-act="txs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Transacties</button></nav>
 <div id="sheet" class="sheet hidden"><div class="sheet-bg" id="sheetBg"></div><div class="sheet-card" id="sheetCard"></div></div>
 <div id="toast"></div>
 
@@ -252,6 +274,7 @@ const ICONS={
   eyeOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.3 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.5-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M18 5l2 2"/></svg>',
@@ -369,26 +392,101 @@ function render(){
   document.body.classList.toggle('private',!!settings.privacy);
   const m=location.hash.match(/^#coin\/(.+)$/);
   const cid=m&&data.txs.some(t=>t.coinId===decodeURIComponent(m[1]))?decodeURIComponent(m[1]):null;
-  if(cid)renderCoin(cid);else renderHome();
-  renderSide(cid);
+  const isTx=location.hash==='#transacties';
+  if(isTx){
+    if(lastView==='tx'&&$('#txOut')){$('#topbar').innerHTML=topbarHTML(null,'Transacties');fillTxs()}  // focus in zoekveld behouden
+    else renderTxs();
+    lastView='tx';renderSide('__tx');
+  }else{
+    if(cid)renderCoin(cid);else renderHome();
+    lastView=cid?'coin':'home';renderSide(cid);
+  }
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.act===(isTx?'txs':'home')));
 }
+let lastView=null;
 function renderSide(cid){
   const el=$('#side');if(!el)return;
   const p=portfolio(),list=[...p.open].sort((a,b)=>(b.value??0)-(a.value??0));
   el.innerHTML=`<div class="brand"><img src="icon.svg" alt="">Crypto Portfolio</div>
   <div class="nav ${cid?'':'on'}" data-act="home">${ICONS.home} Overzicht</div>
+  <div class="nav ${cid==='__tx'?'on':''}" data-act="txs">${ICONS.list} Transacties</div>
   ${list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<div class="side-coin ${c.coinId===cid?'on':''}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name" style="font-size:14px">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="${cls(c.unreal)}" style="font-size:13px;font-weight:600">${pct(c.unrealPct)}</div></div>`).join('')}`:''}
   ${p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<div class="side-coin ${c.coinId===cid?'on':''}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name" style="font-size:14px">${esc(c.meta.name)}</div></div><div class="${cls(c.realized)} m" style="font-size:13px;font-weight:600">${signed(c.realized)}</div></div>`).join('')}`:''}
   <div class="side-foot">Koersdata: CoinGecko</div>`;
 }
-function topbarHTML(c){
+function topbarHTML(c,pageTitle){
   const eye=`<button class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
   const lockB=lockCfg?`<button class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';
   const gear=`<button class="icon-btn" data-act="settings" aria-label="Instellingen">${ICONS.gear}</button>`;
   const back=`<button class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button>`;
-  const title=c?`${esc(c.meta.name)} <span style="color:var(--muted);font-weight:500">${esc((c.meta.symbol||'').toUpperCase())}</span>`:'Overzicht';
-  const mob=c?`${back}<h1>${title}</h1>${eye}`:`<div class="tb-group">${eye}${lockB}</div>${syncBadge()}<div class="tb-group">${lockCfg?'<span style="width:40px"></span>':''}${gear}</div>`;
+  const title=c?`${esc(c.meta.name)} <span style="color:var(--muted);font-weight:500">${esc((c.meta.symbol||'').toUpperCase())}</span>`:(pageTitle||'Overzicht');
+  const mob=c?`${back}<h1>${title}</h1>${eye}`:`<div class="tb-group">${eye}${lockB}</div>${pageTitle?`<h1>${pageTitle}</h1>`:syncBadge()}<div class="tb-group">${lockCfg?'<span style="width:40px"></span>':''}${gear}</div>`;
   return `<div class="m-top only-m">${mob}</div><div class="d-top only-d">${c?back:''}<h1>${title}</h1><span class="grow"></span>${syncBadge()}${eye}${lockB}${gear}<button class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div>`;
+}
+/* ---------- transactie-overzicht ---------- */
+let txf={q:'',type:'all',coin:'all',year:'all'};
+function renderTxs(){
+  $('#topbar').innerHTML=topbarHTML(null,'Transacties');
+  if(!data.txs.length){$('#view').innerHTML=`<div class="empty"><b>Nog geen transacties</b>Tik op + om je eerste aankoop toe te voegen.</div>`;return}
+  const coins=coinIds().map(computeCoin).sort((a,b)=>(a.meta.name||'').localeCompare(b.meta.name||''));
+  const years=[...new Set(data.txs.map(t=>t.date.slice(0,4)))].sort().reverse();
+  if(txf.coin!=='all'&&!coins.some(c=>c.coinId===txf.coin))txf.coin='all';
+  if(txf.year!=='all'&&!years.includes(txf.year))txf.year='all';
+  $('#view').innerHTML=`<div class="filters">
+    <input id="tf_q" type="search" placeholder="Zoek op munt of notitie" value="${esc(txf.q)}" autocomplete="off">
+    <div class="seg">${[['all','Alle'],['buy','Koop'],['sell','Verkoop']].map(([v,l])=>`<button data-tf="${v}" class="${v} ${txf.type===v?'on':''}">${l}</button>`).join('')}</div>
+    <select id="tf_coin"><option value="all">Alle munten</option>${coins.map(c=>`<option value="${esc(c.coinId)}"${txf.coin===c.coinId?' selected':''}>${esc(c.meta.name)}</option>`).join('')}</select>
+    <select id="tf_year"><option value="all">Alle jaren</option>${years.map(y=>`<option${txf.year===y?' selected':''}>${y}</option>`).join('')}</select>
+  </div><div id="txOut"></div>`;
+  $('#tf_q').oninput=e=>{txf.q=e.target.value;fillTxs()};
+  $('#tf_coin').onchange=e=>{txf.coin=e.target.value;fillTxs()};
+  $('#tf_year').onchange=e=>{txf.year=e.target.value;fillTxs()};
+  fillTxs();
+}
+function txOutcome(t,c){
+  if(!c)return{};
+  if(t.type==='buy'){const l=c.lotMap[t.id];
+    if(!l)return{};
+    if(l.remaining<=1e-12)return{sold:true};
+    if(c.price==null)return{rem:l.remaining};
+    return{rem:l.remaining,val:l.remaining*c.price,pl:l.remaining*(c.price-l.unit),pp:(c.price/l.unit-1)*100,partial:l.remaining<t.qty-1e-12}}
+  const s=c.sellInfo[t.id]||{};return{realized:true,pl:s.pl,pp:s.pct};
+}
+function fillTxs(){
+  const out=$('#txOut');if(!out)return;
+  document.querySelectorAll('[data-tf]').forEach(b=>b.classList.toggle('on',b.dataset.tf===txf.type));
+  const cm={};coinIds().forEach(id=>cm[id]=computeCoin(id));
+  const q=txf.q.trim().toLowerCase();
+  const list=data.txs.filter(t=>(txf.type==='all'||t.type===txf.type)&&(txf.coin==='all'||t.coinId===txf.coin)&&(txf.year==='all'||t.date.startsWith(txf.year))
+      &&(!q||[t.name,t.symbol,t.note].some(x=>(x||'').toLowerCase().includes(q))))
+    .sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
+  let bought=0,sold=0,fees=0,real=0;
+  for(const t of list){const tot=t.qty*t.price;fees+=t.fee||0;if(t.type==='buy')bought+=tot;else{sold+=tot;const o=txOutcome(t,cm[t.coinId]);if(o.pl!=null)real+=o.pl}}
+  const sum=`<div class="tx-sum">
+    <div class="stat"><div class="label">Transacties</div><div class="val">${list.length}</div></div>
+    <div class="stat"><div class="label">Gekocht</div><div class="val m">${money(bought,2)}</div></div>
+    <div class="stat"><div class="label">Verkocht</div><div class="val m">${money(sold,2)}</div></div>
+    <div class="stat"><div class="label">Betaalde kosten</div><div class="val m">${money(fees,2)}</div></div>
+    <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(real)}">${Math.abs(real)>0.005?signed(real):'–'}</div></div></div>`;
+  if(!list.length){out.innerHTML=sum+'<div class="card" style="text-align:center;color:var(--muted)">Geen transacties gevonden</div>';return}
+  let mob='',cur='',items='';
+  const flush=()=>{if(items)mob+=`<div class="month-h">${cur}</div><ul class="list">${items}</ul>`;items=''};
+  for(const t of list){
+    const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase()),d=new Date(t.date);
+    const mk=isNaN(d)?'':d.toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
+    if(mk!==cur){flush();cur=mk}
+    const right=o.sold?'<div class="label" style="font-size:12px">volledig verkocht</div>':o.pl==null?'':`<div class="${cls(o.pl)}" style="font-size:13px;font-weight:600"><span class="m">${signed(o.pl)}</span> ${pct(o.pp)}</div>${o.realized?'<div class="label" style="font-size:11px">gerealiseerd</div>':''}`;
+    items+=`<li class="row" data-tx="${esc(t.id)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image})}
+      <div class="grow"><div class="name">${esc(t.name)} <span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></div>
+      <div class="meta">${isNaN(d)?esc(t.date):d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})} · <span class="m">${qtyf(t.qty)}</span> ${sym} @ ${money(t.price)}</div></div>
+      <div class="right"><div class="v m">${money(t.qty*t.price,2)}</div>${right}</div></li>`;
+  }
+  flush();
+  const tbl=`<div class="tbl-wrap only-d"><table class="tbl"><thead><tr><th class="l">Datum</th><th class="l">Munt</th><th class="l">Type</th><th>Aantal</th><th>Koers</th><th>Totaal</th><th>Kosten</th><th class="l">Notitie</th><th>Waarde nu</th><th>Winst/verlies</th><th>%</th></tr></thead><tbody>${list.map(t=>{
+    const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
+    const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="label" style="font-size:11px">nog ${qtyf(o.rem)} ${sym}</div>`:''):'–';
+    return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${money(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+  out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl;
 }
 function holdingsTable(list){
   const th=(l,k,cl='')=>`<th class="${cl} ${settings.sort===k?'on':''}" data-sort="${k}">${l}${settings.sort===k?' ↓':''}</th>`;
@@ -701,7 +799,8 @@ function saveTx(){
   const i=data.txs.findIndex(t=>t.id===tx.id);if(i>=0)data.txs[i]=tx;else data.txs.push(tx);
   saveData();closeSheet();
   if(!prices[tx.coinId])refreshPrices();
-  location.hash='#coin/'+encodeURIComponent(tx.coinId);render();
+  if(location.hash!=='#transacties')location.hash='#coin/'+encodeURIComponent(tx.coinId);
+  render();
   toast(f.id?'Transactie bijgewerkt':'Transactie toegevoegd');
 }
 function deleteTx(){
@@ -911,7 +1010,8 @@ async function securityAction(act,el){
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-type],[data-pick]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick]');if(!a)return;
+  if(a.dataset.tf){txf.type=a.dataset.tf;fillTxs();return}
   if(a.dataset.sort){settings.sort=a.dataset.sort;saveSettings();render();return}
   if(a.dataset.prange){settings.pRange=a.dataset.prange;saveSettings();document.querySelectorAll('[data-prange]').forEach(b=>b.classList.toggle('on',b===a));drawPortfolioChart();return}
   if(a.dataset.coin){location.hash='#coin/'+encodeURIComponent(a.dataset.coin);return}
@@ -930,7 +1030,8 @@ document.addEventListener('click',e=>{
     case 'lockon':case 'lockon2':case 'addpk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
     case 'settings':openSettings();break;
-    case 'home':location.hash='';break;
+    case 'home':if(location.hash)location.hash='';else window.scrollTo(0,0);break;
+    case 'txs':location.hash='#transacties';break;
     case 'plmode':settings.plMode=settings.plMode==='24h'?'total':'24h';saveSettings();render();break;
     case 'changecoin':readForm();form.coin=null;renderTxSheet();break;
     case 'savetx':saveTx();break;
