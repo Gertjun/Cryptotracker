@@ -187,13 +187,15 @@ a{color:var(--accent)}
 .seg.mini button.on{background:var(--card2);color:var(--text)}
 .rep-grid h3{margin:0 0 4px;font-size:16px}
 .rep-grid .hint{margin:2px 0 12px}
-.bars{display:flex;gap:5px;height:150px;margin:6px 0 4px}
+.bars{display:flex;gap:5px;height:180px;margin:6px 0 4px}
 .bar{flex:1;display:flex;flex-direction:column;min-width:0}
 .kv>.bars{display:flex;align-items:stretch;justify-content:normal;padding:0;border:0}
-.bar .bp{flex:1;display:flex;align-items:flex-end}
-.bar .bn{flex:1;display:flex;align-items:flex-start;border-top:1px solid var(--line)}
+.bar .bp{flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-height:0}
+.bar .bn{flex:1;display:flex;flex-direction:column;justify-content:flex-start;border-top:1px solid var(--line);min-height:0}
+.bar em{font-style:normal;font-size:10px;font-weight:600;text-align:center;line-height:1.15;margin:2px 0;white-space:nowrap;flex:none}
+.bars.vt em{writing-mode:vertical-rl;transform:rotate(180deg);align-self:center;font-size:9px}
 .bars:not(.neg) .bp{border-bottom:1px solid var(--line)}
-.bar i{display:block;width:100%;border-radius:3px;min-height:1px}
+.bar i{display:block;width:100%;border-radius:3px;min-height:1px;flex:none}
 .bar i.u{background:var(--green)}.bar i.d{background:var(--red)}.bar i.n{background:var(--accent)}
 .bar span{font-size:10px;color:var(--muted);text-align:center;margin-top:4px;white-space:nowrap;overflow:visible;display:flex;justify-content:center;height:13px}
 .rt{width:100%;border-collapse:collapse;font-size:14px}
@@ -855,9 +857,16 @@ function snapshot(ts,S){   // stand van je portfolio op tijdstip ts
   for(const x of data.txs)if(txTime(x)<=ts){const [c,d]=cashEffect(x);o.cash+=c;o.dep+=d}
   o.cash=Math.round(o.cash*1e8)/1e8;o.total=o.crypto+o.cash;o.coins.sort((a,b)=>(b.value??0)-(a.value??0));return o;
 }
+// compacte bedragen voor in de staafdiagrammen: 0,90 · 12,5 · 340 · 1,2k
+function cmp(v,sign){const a=Math.abs(v),f=(x,d)=>x.toFixed(d).replace('.',',');
+  const t=a>=1e6?f(a/1e6,1)+'M':a>=1e4?Math.round(a/1e3)+'k':a>=1e3?Math.round(a).toLocaleString('nl-NL'):a>=100?String(Math.round(a)):a>=10?f(a,1):f(a,2);
+  return (v<0?'−':sign&&v>0?'+':'')+t}
 function bars(items,neutral){
-  const mx=Math.max(1e-9,...items.map(i=>Math.abs(i.v||0))),neg=items.some(i=>i.v<0);
-  return `<div class="bars${neg?' neg':''}">${items.map(i=>`<div class="bar" title="${esc(i.title||'')}"><div class="bp">${i.v>0?`<i class="${neutral?'n':'u'}" style="height:${i.v/mx*100}%"></i>`:''}</div>${neg?`<div class="bn">${i.v<0?`<i class="d" style="height:${-i.v/mx*100}%"></i>`:''}</div>`:''}<span>${i.label}</span></div>`).join('')}</div>`;
+  const mx=Math.max(1e-9,...items.map(i=>Math.abs(i.v||0))),neg=items.some(i=>i.v<0),vt=items.length>14;
+  const lab=(v,c)=>Math.abs(v)<0.005?'':`<em class="m ${c}">${cmp(v,!neutral)}</em>`,H=v=>Math.max(1,Math.abs(v)/mx*(vt?50:78));
+  return `<div class="bars${neg?' neg':''}${vt?' vt':''}">${items.map(i=>`<div class="bar" title="${esc(i.title||'')}">
+    <div class="bp">${i.v>0?`${lab(i.v,neutral?'':'up')}<i class="${neutral?'n':'u'}" style="height:${H(i.v)}%"></i>`:''}</div>
+    ${neg?`<div class="bn">${i.v<0?`<i class="d" style="height:${H(i.v)}%"></i>${lab(i.v,'down')}`:''}</div>`:''}<span>${i.label}</span></div>`).join('')}</div>`;
 }
 const monthStart=(y,m)=>new Date(y,m,1).getTime();
 // Periodes voor rapporten: dag, week (ma–zo), maand, jaar — in lokale tijd
