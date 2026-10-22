@@ -663,13 +663,21 @@ async function drawPortfolioChart(){
   // rendement = verandering in (ongerealiseerd + gerealiseerd); stortingen tellen niet als winst
   const tr=p=>p[1]-p[2]+p[3],dPL=tr(pts[pts.length-1])-tr(pts[0]);
   const up=dPL>=0,hex=up?'#1fd17a':'#ff5a5f';
-  const dv=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join('');
-  const di=pts.map((p,i)=>(i?'L'+X(p[0]).toFixed(1)+' '+Y(pts[i-1][2]).toFixed(1)+'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[2]).toFixed(1)).join('');
+  // Waarde-lijn en geïnvesteerd-lijn (trapvormig: springt bij elke aankoop/verkoop)
+  const vp=pts.map(p=>[X(p[0]),Y(p[1])]),ip=[];
+  pts.forEach((p,i)=>{if(i)ip.push([X(p[0]),Y(pts[i-1][2])]);ip.push([X(p[0]),Y(p[2])])});
+  const P=a=>a.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join('');
+  const dv=P(vp),di=P(ip);
+  const band=dv+ip.slice().reverse().map(q=>'L'+q[0].toFixed(1)+' '+q[1].toFixed(1)).join('')+'Z';
+  // Boven de stippellijn = winst (groen), eronder = verlies (rood)
+  const above=`${di}L${W} -10L0 -10Z`,below=`${di}L${W} ${H+10}L0 ${H+10}Z`;
   wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-    <defs><linearGradient id="pg${my}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${hex}" stop-opacity=".25"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></linearGradient></defs>
-    <path d="${dv}L${W} ${H}L0 ${H}Z" fill="url(#pg${my})"/>
+    <defs><clipPath id="ca${my}"><path d="${above}"/></clipPath><clipPath id="cb${my}"><path d="${below}"/></clipPath></defs>
+    <path d="${band}" fill="#1fd17a" fill-opacity=".16" clip-path="url(#ca${my})"/>
+    <path d="${band}" fill="#ff5a5f" fill-opacity=".16" clip-path="url(#cb${my})"/>
     <path d="${di}" fill="none" stroke="#8b93a5" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
-    <path d="${dv}" fill="none" stroke="${hex}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    <path d="${dv}" fill="none" stroke="#1fd17a" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" clip-path="url(#ca${my})"/>
+    <path d="${dv}" fill="none" stroke="#ff5a5f" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" clip-path="url(#cb${my})"/>
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>`;
   const lbl={'1':'24 uur','7':'deze week','30':'deze maand','90':'3 maanden','365':'dit jaar','max':'sinds start'}[settings.pRange];
