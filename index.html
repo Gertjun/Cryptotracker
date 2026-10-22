@@ -378,6 +378,35 @@ function saveCharts(){clearTimeout(chartSaveT);chartSaveT=setTimeout(()=>{
     else localStorage.setItem(LS_CHARTS,JSON.stringify(chartCache));
   }catch(e){/* opslag vol: cache blijft alleen in het geheugen */}
 },1500)}
+// Eigen koersarchief: per munt één koers per dag (zo dicht mogelijk bij 00:00 UTC), voorgoed bewaard
+// in data.hist en dus ook versleuteld gesynchroniseerd. Zo reikt 'Max' na verloop van tijd verder dan
+// de 365 dagen die de gratis CoinGecko-API teruggeeft.
+const DAY=864e5;
+let histT=null;
+function histDirty(){clearTimeout(histT);histT=setTimeout(()=>{if(!locked)saveData()},3000)}
+function addHist(id,pts){
+  if(!pts?.length)return;
+  const h=((data.hist||(data.hist={}))[id])||(data.hist[id]={});let ch=false;
+  for(const [t,v] of pts){
+    if(!(v>0))continue;
+    const d=Math.floor(t/DAY),e=h[d];
+    if(!e||t-d*DAY<e[0]-d*DAY){h[d]=[Math.round(t/6e4)*6e4,+(+v).toPrecision(7)];ch=true}
+  }
+  if(ch)histDirty();
+}
+function withHist(id,pts){   // archiefpunten toevoegen vóór het begin van de opgehaalde reeks
+  const h=data.hist?.[id];if(!h)return pts;
+  const start=pts.length?pts[0][0]:Infinity;
+  const old=Object.values(h).filter(e=>e[0]<start-36e5).sort((a,b)=>a[0]-b[0]);
+  return old.length?[...old,...pts]:pts;
+}
+async function collectHistory(){
+  if(locked)return;
+  for(const id of coinIds()){
+    const n=Object.keys(data.hist?.[id]||{}).length;
+    try{await fetchChart(id,n<300?'365':'30')}catch(e){}   // eerste keer een heel jaar, daarna de laatste maand
+  }
+}
 async function fetchChart(id,days){
   const key=id+'|'+days,c=chartCache[key];
   if(c&&Date.now()-c.ts<chartTtl(days))return c.pts;
@@ -385,7 +414,7 @@ async function fetchChart(id,days){
     let r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=${days}`);
     if(!r.ok&&r.status!==429&&days==='max')r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=365`);
     if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Grafiek niet beschikbaar');
-    const j=await r.json();chartCache[key]={ts:Date.now(),pts:thin(j.prices||[])};saveCharts();return chartCache[key].pts;
+    const j=await r.json();addHist(id,j.prices||[]);chartCache[key]={ts:Date.now(),pts:thin(j.prices||[])};saveCharts();return chartCache[key].pts;
   }catch(e){if(c)return c.pts;throw e}   // bij een fout: laatst bekende grafiek tonen
 }
 
@@ -592,9 +621,17 @@ async function portfolioSeries(range){
   await Promise.all([0,1].map(async()=>{while(queue.length){const id=queue.shift();try{charts[id]=await fetchChart(id,days)}catch(e){err=e}}}));
   if(err&&!Object.keys(charts).length)throw err;
   const states={};ids.forEach(id=>states[id]=coinStates(id));
-  let base=[];for(const id in charts)if(charts[id].length>base.length)base=charts[id];
-  const t0=base.length?Math.max(first,base[0][0]):first;
-  const grid=[t0,...base.map(p=>p[0]).filter(t=>t>t0&&t<now-60000),now];
+  let grid,t0,earliest=Infinity;
+  if(range==='max'){
+    for(const id of ids){charts[id]=withHist(id,charts[id]||[]);if(charts[id].length)earliest=Math.min(earliest,charts[id][0][0])}
+    t0=isFinite(earliest)?Math.max(first,earliest):first;
+    const times=new Set();for(const id in charts)for(const p of charts[id])if(p[0]>t0&&p[0]<now-60000)times.add(p[0]);
+    grid=[t0,...[...times].sort((a,b)=>a-b),now];
+  }else{
+    let base=[];for(const id in charts)if(charts[id].length>base.length)base=charts[id];
+    t0=base.length?Math.max(first,base[0][0]):first;
+    grid=[t0,...base.map(p=>p[0]).filter(t=>t>t0&&t<now-60000),now];
+  }
   const pts=grid.map(t=>{
     let value=0,inv=0,real=0;
     for(const id of ids){
@@ -608,7 +645,7 @@ async function portfolioSeries(range){
     }
     return[t,value,inv,real];
   });
-  return{pts,partial:!!err};
+  return{pts,partial:!!err,from:range==='max'&&first<t0-2*DAY?t0:null};
 }
 let pChartTok=0;
 async function drawPortfolioChart(){
@@ -636,7 +673,7 @@ async function drawPortfolioChart(){
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>`;
   const lbl={'1':'24 uur','7':'deze week','30':'deze maand','90':'3 maanden','365':'dit jaar','max':'sinds start'}[settings.pRange];
-  $('#pperiod').innerHTML=`<span>Rendement ${lbl}: <b class="m ${cls(dPL)}">${signed(dPL)}</b></span><span><i></i>geïnvesteerd</span>${res.partial?'<span style="color:var(--yellow)">niet alle koersen geladen</span>':''}`;
+  $('#pperiod').innerHTML=`<span>Rendement ${lbl}: <b class="m ${cls(dPL)}">${signed(dPL)}</b></span><span><i></i>geïnvesteerd</span>${res.partial?'<span style="color:var(--yellow)">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
   const line=wrap.querySelector('.cur'),hv=$('#heroVal'),hp=$('#heroPl'),oV=hv.innerHTML,oP=hp.innerHTML;
   const short=['1','7'].includes(settings.pRange);
   const reset=()=>{line.style.display='none';hv.innerHTML=oV;hp.innerHTML=oP};
@@ -701,7 +738,7 @@ function txRow(t,c){
 async function drawChart(c){
   const my=++chartToken,el=$('#chart');if(!el)return;
   let pts;
-  try{pts=await fetchChart(c.coinId,settings.range)}catch(e){if(my===chartToken&&$('#chart'))$('#chart').innerHTML=`<div class="chart-msg">${esc(e.message)}</div>`;return}
+  try{pts=await fetchChart(c.coinId,settings.range);if(settings.range==='max')pts=withHist(c.coinId,pts)}catch(e){if(my===chartToken&&$('#chart'))$('#chart').innerHTML=`<div class="chart-msg">${esc(e.message)}</div>`;return}
   if(my!==chartToken||!$('#chart'))return;
   if(!pts.length){$('#chart').innerHTML='<div class="chart-msg">Geen koersdata</div>';return}
   if(c.price!=null&&Date.now()-pts[pts.length-1][0]>6e4)pts=[...pts,[Date.now(),c.price]];
@@ -840,6 +877,7 @@ function openSettings(){
   <div class="section-t">Koersdata</div>
   <p class="hint" style="margin-top:0">Koersen laatst bijgewerkt: <b>${lastCgTs()?fmtTs(lastCgTs()):'nog niet'}</b>${cgState.s==='err'?` (laatste poging mislukt: ${esc(cgState.msg)})`:''}</p>
   <p class="hint" style="margin-top:0">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener">coingecko.com/en/api</a> → Demo (gratis account).</p>
+  <p class="hint">Eigen koersarchief: ${(()=>{let n=0,mn=Infinity;for(const id in data.hist||{})for(const d in data.hist[id]){n++;mn=Math.min(mn,data.hist[id][d][0])}return n?`${n} dagkoersen, vanaf ${new Date(mn).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}`:'wordt opgebouwd'})()}. Dagkoersen worden voorgoed bewaard, zodat 'Max' na verloop van tijd verder dan een jaar terug reikt.</p>
   <div class="field"><label>CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" type="password" value="${esc(data.cfg?.cgKey||'')}" placeholder="CG-…" autocomplete="off" autocapitalize="off"></div>
   <button class="btn sec" data-act="savecg">Sleutel opslaan en testen</button>
   <div class="section-t">Back-up</div>
@@ -859,7 +897,7 @@ function exportData(){
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
-    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
+    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
 
@@ -876,9 +914,12 @@ function merge(a,b){
   const deleted=[...new Set([...(a.deleted||[]),...(b.deleted||[])])],del=new Set(deleted),m=new Map();
   for(const t of [...(a.txs||[]),...(b.txs||[])]){if(del.has(t.id))continue;const e=m.get(t.id);if(!e||(t.mod||0)>(e.mod||0))m.set(t.id,t)}
   const ca=a.cfg||{mod:0},cb=b.cfg||{mod:0},cfg=(cb.mod||0)>(ca.mod||0)?cb:ca;   // nieuwste instelling wint
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{})};
+  const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
+  for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
+    for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
+  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist};
 }
-const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0]);
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
 function setSync(s,msg=''){syncState={s,msg};updBadges()}
 let syncing=false,syncAgain=false;
@@ -1073,8 +1114,10 @@ document.addEventListener('visibilitychange',()=>{
 });
 setInterval(()=>{if(!document.hidden)refreshPrices()},60000);
 setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
+setInterval(()=>{if(!document.hidden)collectHistory()},6*3600e3);
 
-function start(){document.body.classList.remove('locked');
+let histTimer=null;
+function start(){document.body.classList.remove('locked');clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();syncNow(true)}
 if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
