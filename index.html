@@ -857,14 +857,17 @@ function snapshot(ts,S){   // stand van je portfolio op tijdstip ts
   for(const x of data.txs)if(txTime(x)<=ts){const [c,d]=cashEffect(x);o.cash+=c;o.dep+=d}
   o.cash=Math.round(o.cash*1e8)/1e8;o.total=o.crypto+o.cash;o.coins.sort((a,b)=>(b.value??0)-(a.value??0));return o;
 }
-// compacte bedragen voor in de staafdiagrammen: 0,90 · 12,5 · 340 · 1,2k
-function cmp(v,sign){const a=Math.abs(v),f=(x,d)=>x.toFixed(d).replace('.',',');
-  const t=a>=1e6?f(a/1e6,1)+'M':a>=1e4?Math.round(a/1e3)+'k':a>=1e3?Math.round(a).toLocaleString('nl-NL'):a>=100?String(Math.round(a)):a>=10?f(a,1):f(a,2);
-  return (v<0?'−':sign&&v>0?'+':'')+t}
+// bedragen in de staafdiagrammen: € 1.000 (heel bedrag) of € 43,50 (altijd 2 decimalen)
+function cmp(v,sign){const a=Math.round(Math.abs(v)*100)/100,whole=Math.abs(a-Math.round(a))<0.005;
+  return (v<0?'−':sign&&v>0?'+':'')+'€ '+new Intl.NumberFormat('nl-NL',{minimumFractionDigits:whole?0:2,maximumFractionDigits:whole?0:2}).format(a)}
+// zet bedragen verticaal als ze niet naast elkaar passen
+function fitBars(){document.querySelectorAll('.bars').forEach(b=>{b.classList.remove('vt');const bar=b.querySelector('.bar');if(!bar)return;const w=bar.clientWidth;
+  if([...b.querySelectorAll('em')].some(e=>e.scrollWidth>w+3))b.classList.add('vt')})}
+window.addEventListener('resize',()=>{clearTimeout(window._fb);window._fb=setTimeout(fitBars,150)});
 function bars(items,neutral){
-  const mx=Math.max(1e-9,...items.map(i=>Math.abs(i.v||0))),neg=items.some(i=>i.v<0),vt=items.length>14;
+  const mx=Math.max(1e-9,...items.map(i=>Math.abs(i.v||0))),neg=items.some(i=>i.v<0),vt=items.length>6;   // veel staven: ruimte houden voor verticale bedragen
   const lab=(v,c)=>Math.abs(v)<0.005?'':`<em class="m ${c}">${cmp(v,!neutral)}</em>`,H=v=>Math.max(1,Math.abs(v)/mx*(vt?50:78));
-  return `<div class="bars${neg?' neg':''}${vt?' vt':''}">${items.map(i=>`<div class="bar" title="${esc(i.title||'')}">
+  return `<div class="bars${neg?' neg':''}">${items.map(i=>`<div class="bar" title="${esc(i.title||'')}">
     <div class="bp">${i.v>0?`${lab(i.v,neutral?'':'up')}<i class="${neutral?'n':'u'}" style="height:${H(i.v)}%"></i>`:''}</div>
     ${neg?`<div class="bn">${i.v<0?`<i class="d" style="height:${H(i.v)}%"></i>${lab(i.v,'down')}`:''}</div>`:''}<span>${i.label}</span></div>`).join('')}</div>`;
 }
@@ -943,6 +946,7 @@ function renderReports(){
   // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
   const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
   $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(perfCard,3)}</div><div class="rep-col">${ord(inCard,2)}${ord(accCard,4)}${ord(janCard,5)}</div></div>`;
+  fitBars();
 }
 /* ---------- volglijst ---------- */
 function watchSection(){
