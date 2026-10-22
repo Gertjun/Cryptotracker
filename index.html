@@ -181,6 +181,7 @@ a{color:var(--accent)}
 .warn{color:var(--yellow);font-size:12px;margin:8px 0 2px}
 .rep-grid{display:grid;gap:14px}
 .rep-grid .card{margin:0}
+.rep-col{display:contents}
 .rep-grid h3{margin:0 0 4px;font-size:16px}
 .rep-grid .hint{margin:2px 0 12px}
 .bars{display:flex;gap:5px;height:150px;margin:6px 0 4px}
@@ -247,6 +248,7 @@ a{color:var(--accent)}
   .grab{display:none}
   .tx-sum{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
   .rep-grid{grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  .rep-col{display:grid;gap:20px;align-content:start}
   .tx-sum .stat:first-child{grid-column:auto}
   .filters input{flex:2 1 260px;font-size:15px}
   .filters .seg{flex:0 0 300px}
@@ -907,7 +909,10 @@ function renderReports(){
   ${acc.some(a=>a.coins.some(c=>c.qty<0)||a.cash<-0.005)?'<p class="warn">Een broker of wallet staat negatief: controleer of alle overboekingen en stortingen erin staan.</p>':''}`
   :'<p class="hint">Vul bij je transacties in bij welke broker of wallet ze horen; dan zie je hier per plek je bezit en cash.</p>'}</div>`;
 
-  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-grid" style="grid-template-columns:1fr">${retCard}${perfCard}</div><div class="rep-grid" style="grid-template-columns:1fr">${janCard}${inCard}${accCard}</div></div>`;
+  // volgorde: rendement en inleg naast elkaar, daaronder beste/slechtste munt en brokers, onderaan 1 januari
+  // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
+  const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
+  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(perfCard,3)}</div><div class="rep-col">${ord(inCard,2)}${ord(accCard,4)}${ord(janCard,5)}</div></div>`;
 }
 /* ---------- volglijst ---------- */
 function watchSection(){
