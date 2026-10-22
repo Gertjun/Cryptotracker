@@ -161,7 +161,17 @@ a{color:var(--accent)}
 .month-h{font-size:13px;color:var(--muted);margin:18px 4px 8px;text-transform:capitalize}
 .month-h:first-child{margin-top:4px}
 .tx-sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.tx-sum .stat:first-child{grid-column:1/-1}
+.tx-sum.odd .stat:first-child{grid-column:1/-1}
+.tx-type.deposit{background:rgba(79,140,255,.15);color:var(--accent)}
+.tx-type.withdraw{background:rgba(245,185,66,.15);color:var(--yellow)}
+.seg4 button{padding:9px 2px;font-size:14px}
+.seg button.on.deposit,.seg button.on.cash{background:var(--accent);color:#fff}
+.seg button.on.withdraw{background:var(--yellow);color:#1a1300}
+.cash-ic{color:var(--accent)!important;font-size:16px!important}
+.kv-h{align-items:center!important}
+.kv-h b{font-size:15px}
+.link{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0;font-size:13px}
+.warn{color:var(--yellow);font-size:12px;margin:8px 0 2px}
 .btn-add{background:var(--green);color:#03150b;border:0;border-radius:12px;padding:0 16px;height:40px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;flex:none}
 .btn-add svg{width:18px;height:18px}
 @media (max-width:999px){.only-d{display:none!important}.fab{bottom:calc(84px + env(safe-area-inset-bottom))}#app{padding-bottom:170px}}
@@ -200,7 +210,7 @@ a{color:var(--accent)}
   .sheet{align-items:center}
   .sheet-card{border-radius:20px;max-width:520px;max-height:88vh;padding:24px 28px}
   .grab{display:none}
-  .tx-sum{grid-template-columns:repeat(5,1fr)}
+  .tx-sum{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
   .tx-sum .stat:first-child{grid-column:auto}
   .filters input{flex:2 1 260px;font-size:15px}
   .filters .seg{flex:0 0 300px}
@@ -285,7 +295,17 @@ const ICONS={
 };
 
 /* ---------- berekeningen (FIFO per transactie) ---------- */
-function coinIds(){return [...new Set(data.txs.map(t=>t.coinId))]}
+function coinIds(){return [...new Set(data.txs.filter(t=>t.coinId).map(t=>t.coinId))]}
+const isCash=t=>t==='deposit'||t==='withdraw';
+const TYPE_L={buy:'Koop',sell:'Verkoop',deposit:'Storting',withdraw:'Opname'};
+const hasCashTx=()=>data.txs.some(t=>isCash(t.type));
+// Effect van een transactie op je cash en op 'netto gestort' (stortingen − opnames)
+function cashEffect(x){const f=x.fee||0;
+  if(x.type==='deposit')return[x.amount-f,x.amount];
+  if(x.type==='withdraw')return[-(x.amount+f),-x.amount];
+  if(x.type==='buy')return[-(x.qty*x.price+f),0];
+  return[x.qty*x.price-f,0];
+}
 function computeCoin(coinId){
   const txs=data.txs.filter(t=>t.coinId===coinId).sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0));
   const last=txs[txs.length-1]||{};
@@ -318,7 +338,11 @@ function portfolio(){
   for(const c of coins){realized+=c.realized}
   for(const c of open){cost+=c.cost;if(c.value==null){missing=true;continue}value+=c.value;if(c.ch24!=null)ch+=c.value-c.value/(1+c.ch24/100)}
   const unreal=value-cost;
-  return{open,closed,value,cost,unreal,unrealPct:cost>0?unreal/cost*100:null,ch24:ch,ch24Pct:value-ch>0?ch/(value-ch)*100:null,realized,missing};
+  const hasCash=hasCashTx();let cash=0,dep=0;
+  if(hasCash)for(const x of data.txs){const [c,d]=cashEffect(x);cash+=c;dep+=d}
+  const total=value+cash,ret=total-dep;
+  return{open,closed,value,cost,unreal,unrealPct:cost>0?unreal/cost*100:null,ch24:ch,ch24Pct:value-ch>0?ch/(value-ch)*100:null,realized,missing,
+    hasCash,cash,dep,total,ret,retPct:dep>0?ret/dep*100:null};
 }
 
 /* ---------- koersen ---------- */
@@ -442,6 +466,7 @@ function renderSide(cid){
   el.innerHTML=`<div class="brand"><img src="icon.svg" alt="">Crypto Portfolio</div>
   <div class="nav ${cid?'':'on'}" data-act="home">${ICONS.home} Overzicht</div>
   <div class="nav ${cid==='__tx'?'on':''}" data-act="txs">${ICONS.list} Transacties</div>
+  ${p.hasCash?`<div class="side-t">Cash</div><div class="side-coin" data-act="cashtx"><div class="coin-ph cash-ic">€</div><div class="grow"><div class="name" style="font-size:14px">Beschikbaar</div><div class="meta m">${money(p.cash,2)}</div></div></div>`:''}
   ${list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<div class="side-coin ${c.coinId===cid?'on':''}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name" style="font-size:14px">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="${cls(c.unreal)}" style="font-size:13px;font-weight:600">${pct(c.unrealPct)}</div></div>`).join('')}`:''}
   ${p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<div class="side-coin ${c.coinId===cid?'on':''}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name" style="font-size:14px">${esc(c.meta.name)}</div></div><div class="${cls(c.realized)} m" style="font-size:13px;font-weight:600">${signed(c.realized)}</div></div>`).join('')}`:''}
   <div class="side-foot">Koersdata: CoinGecko</div>`;
@@ -466,7 +491,7 @@ function renderTxs(){
   if(txf.year!=='all'&&!years.includes(txf.year))txf.year='all';
   $('#view').innerHTML=`<div class="filters">
     <input id="tf_q" type="search" placeholder="Zoek op munt of notitie" value="${esc(txf.q)}" autocomplete="off">
-    <div class="seg">${[['all','Alle'],['buy','Koop'],['sell','Verkoop']].map(([v,l])=>`<button data-tf="${v}" class="${v} ${txf.type===v?'on':''}">${l}</button>`).join('')}</div>
+    <div class="seg">${[['all','Alle'],['buy','Koop'],['sell','Verkoop'],...(hasCashTx()?[['cash','Cash']]:[])].map(([v,l])=>`<button data-tf="${v}" class="${v} ${txf.type===v?'on':''}">${l}</button>`).join('')}</div>
     <select id="tf_coin"><option value="all">Alle munten</option>${coins.map(c=>`<option value="${esc(c.coinId)}"${txf.coin===c.coinId?' selected':''}>${esc(c.meta.name)}</option>`).join('')}</select>
     <select id="tf_year"><option value="all">Alle jaren</option>${years.map(y=>`<option${txf.year===y?' selected':''}>${y}</option>`).join('')}</select>
   </div><div id="txOut"></div>`;
@@ -489,17 +514,17 @@ function fillTxs(){
   document.querySelectorAll('[data-tf]').forEach(b=>b.classList.toggle('on',b.dataset.tf===txf.type));
   const cm={};coinIds().forEach(id=>cm[id]=computeCoin(id));
   const q=txf.q.trim().toLowerCase();
-  const list=data.txs.filter(t=>(txf.type==='all'||t.type===txf.type)&&(txf.coin==='all'||t.coinId===txf.coin)&&(txf.year==='all'||t.date.startsWith(txf.year))
-      &&(!q||[t.name,t.symbol,t.note].some(x=>(x||'').toLowerCase().includes(q))))
+  const list=data.txs.filter(t=>(txf.type==='all'||t.type===txf.type||(txf.type==='cash'&&isCash(t.type)))&&(txf.coin==='all'||t.coinId===txf.coin)&&(txf.year==='all'||t.date.startsWith(txf.year))
+      &&(!q||[t.name,t.symbol,t.note,TYPE_L[t.type],isCash(t.type)?'cash':''].some(x=>(x||'').toLowerCase().includes(q))))
     .sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
-  let bought=0,sold=0,fees=0,real=0;
-  for(const t of list){const tot=t.qty*t.price;fees+=t.fee||0;if(t.type==='buy')bought+=tot;else{sold+=tot;const o=txOutcome(t,cm[t.coinId]);if(o.pl!=null)real+=o.pl}}
-  const sum=`<div class="tx-sum">
+  let bought=0,sold=0,fees=0,real=0,dep=0;const showDep=hasCashTx();
+  for(const t of list){fees+=t.fee||0;if(isCash(t.type)){dep+=t.type==='deposit'?t.amount:-t.amount;continue}const tot=t.qty*t.price;if(t.type==='buy')bought+=tot;else{sold+=tot;const o=txOutcome(t,cm[t.coinId]);if(o.pl!=null)real+=o.pl}}
+  const sum=`<div class="tx-sum${showDep?'':' odd'}">
     <div class="stat"><div class="label">Transacties</div><div class="val">${list.length}</div></div>
     <div class="stat"><div class="label">Gekocht</div><div class="val m">${money(bought,2)}</div></div>
     <div class="stat"><div class="label">Verkocht</div><div class="val m">${money(sold,2)}</div></div>
     <div class="stat"><div class="label">Betaalde kosten</div><div class="val m">${money(fees,2)}</div></div>
-    <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(real)}">${Math.abs(real)>0.005?signed(real):'–'}</div></div></div>`;
+    <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(real)}">${Math.abs(real)>0.005?signed(real):'–'}</div></div>${showDep?`<div class="stat"><div class="label">Netto gestort</div><div class="val m">${money(dep,2)}</div></div>`:''}</div>`;
   if(!list.length){out.innerHTML=sum+'<div class="card" style="text-align:center;color:var(--muted)">Geen transacties gevonden</div>';return}
   let mob='',cur='',items='';
   const flush=()=>{if(items)mob+=`<div class="month-h">${cur}</div><ul class="list">${items}</ul>`;items=''};
@@ -507,6 +532,11 @@ function fillTxs(){
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase()),d=new Date(t.date);
     const mk=isNaN(d)?'':d.toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
     if(mk!==cur){flush();cur=mk}
+    if(isCash(t.type)){const sg=t.type==='deposit'?1:-1;
+      items+=`<li class="row" data-tx="${esc(t.id)}"><div class="coin-ph cash-ic">€</div>
+      <div class="grow"><div class="name">Cash <span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></div>
+      <div class="meta">${isNaN(d)?esc(t.date):d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})}${t.note?' · '+esc(t.note):''}</div></div>
+      <div class="right"><div class="v m ${sg>0?'up':''}">${sg>0?'+':'−'}${money(t.amount,2)}</div>${t.fee?`<div class="label" style="font-size:11px">kosten <span class="m">${money(t.fee,2)}</span></div>`:''}</div></li>`;continue}
     const right=o.sold?'<div class="label" style="font-size:12px">volledig verkocht</div>':o.pl==null?'':`<div class="${cls(o.pl)}" style="font-size:13px;font-weight:600"><span class="m">${signed(o.pl)}</span> ${pct(o.pp)}</div>${o.realized?'<div class="label" style="font-size:11px">gerealiseerd</div>':''}`;
     items+=`<li class="row" data-tx="${esc(t.id)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image})}
       <div class="grow"><div class="name">${esc(t.name)} <span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></div>
@@ -515,6 +545,7 @@ function fillTxs(){
   }
   flush();
   const tbl=`<div class="tbl-wrap only-d"><table class="tbl"><thead><tr><th class="l">Datum</th><th class="l">Munt</th><th class="l">Type</th><th>Aantal</th><th>Koers</th><th>Totaal</th><th>Kosten</th><th class="l">Notitie</th><th>Waarde nu</th><th>Winst/verlies</th><th>%</th></tr></thead><tbody>${list.map(t=>{
+    if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell"><div class="coin-ph cash-ic" style="width:28px;height:28px">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(t.amount,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td>–</td><td>–</td><td>–</td></tr>`;
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
     const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="label" style="font-size:11px">nog ${qtyf(o.rem)} ${sym}</div>`:''):'–';
     return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${money(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
@@ -562,6 +593,14 @@ function renderHome(){
   const byVal=[...p.open].filter(c=>c.value).sort((a,b)=>b.value-a.value);
   let segs=byVal.slice(0,6).map((c,i)=>({n:(c.meta.symbol||'').toUpperCase(),v:c.value,col:palette[i]}));
   const rest=byVal.slice(6).reduce((s,c)=>s+c.value,0);if(rest>0)segs.push({n:'Overig',v:rest,col:palette[6]});
+  if(p.hasCash&&p.cash>0.005)segs.push({n:'Cash',v:p.cash,col:'#c9ced8'});
+  const cashCard=p.hasCash?`<div class="card kv">
+    <div class="kv-h"><b>Cash</b><button class="link" data-act="addcash">+ Storting / opname</button></div>
+    <div><span class="label">Beschikbaar</span><b class="m">${money(p.cash,2)}</b></div>
+    <div><span class="label">Netto gestort</span><b class="m">${money(p.dep,2)}</b></div>
+    <div><span class="label">Totaal rendement</span><b class="${cls(p.ret)}"><span class="m">${signed(p.ret)}</span> <small>${pct(p.retPct)}</small></b></div>
+    ${p.cash<-0.005?'<p class="warn">Je cash staat negatief: er zijn aankopen zonder bijbehorende storting. Voeg je eerdere stortingen toe.</p>':''}</div>`
+    :`<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="label">Houd ook je cash bij de broker bij</span><button class="link" data-act="addcash">+ Storting</button></div>`;
   const tot=segs.reduce((s,x)=>s+x.v,0);
   const kv=`<div class="card only-d kv">
     <div><span class="label">Geïnvesteerd</span><b class="m">${money(p.cost,2)}</b></div>
@@ -571,15 +610,15 @@ function renderHome(){
     <div><span class="label">Open posities</span><b>${p.open.length}</b></div></div>`;
   $('#view').innerHTML=`<div class="home-grid"><div class="panel">
   <section class="hero">
-    <div class="label">Portfoliowaarde</div>
-    <div class="big m" id="heroVal">${money(p.value,2)}</div>
+    <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
+    <div class="big m" id="heroVal">${money(p.hasCash?p.total:p.value,2)}</div>
     <div id="heroPl"><button class="pl-toggle ${cls(plV)}" data-act="plmode"><span class="m">${signed(plV)}</span> <span>(${pct(plP)})</span> <small>${mode==='24h'?'24 uur':'Totaal ongerealiseerd'} ⇄</small></button></div>
-    <div class="sub">Geïnvesteerd <span class="m">${money(p.cost,2)}</span>${Math.abs(p.realized)>0.005?` · Gerealiseerd <span class="m ${cls(p.realized)}">${signed(p.realized)}</span>`:''}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
+    <div class="sub">${p.hasCash?`Crypto <span class="m">${money(p.value,2)}</span> · Cash <span class="m ${p.cash<-0.005?'down':''}">${money(p.cash,2)}</span> · `:''}Geïnvesteerd <span class="m">${money(p.cost,2)}</span>${Math.abs(p.realized)>0.005?` · Gerealiseerd <span class="m ${cls(p.realized)}">${signed(p.realized)}</span>`:''}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
   </section>
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div>
   <div class="ranges">${[['1','24U'],['7','1W'],['30','1M'],['90','3M'],['365','1J'],['max','Max']].map(([d,l])=>`<button data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</div>
   <div class="period" id="pperiod"></div></div>
-  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${kv}</div></div>
+  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${kv}</div></div>
   <div class="list-head"><h2>Bezittingen</h2>
     <select data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
   ${sorted.length?`<ul class="list only-m">${sorted.map(c=>{
@@ -632,6 +671,9 @@ async function portfolioSeries(range){
     t0=base.length?Math.max(first,base[0][0]):first;
     grid=[t0,...base.map(p=>p[0]).filter(t=>t>t0&&t<now-60000),now];
   }
+  // Met cash: totale waarde (crypto + cash) afgezet tegen netto gestort; anders crypto tegen geïnvesteerd.
+  const withCash=hasCashTx(),cev=withCash?data.txs.map(x=>[txTime(x),...cashEffect(x)]).sort((a,b)=>a[0]-b[0]):[];
+  let ci=0,cumC=0,cumD=0;
   const pts=grid.map(t=>{
     let value=0,inv=0,real=0;
     for(const id of ids){
@@ -643,6 +685,7 @@ async function portfolioSeries(range){
       if(px==null){const c=charts[id];px=c?.length?c[c.length-1][1]:0}
       value+=q*px;
     }
+    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2];ci++}return[t,value+cumC,cumD,0]}
     return[t,value,inv,real];
   });
   return{pts,partial:!!err,from:range==='max'&&first<t0-2*DAY?t0:null};
@@ -672,7 +715,7 @@ async function drawPortfolioChart(){
   // Boven de stippellijn = winst (groen), eronder = verlies (rood)
   const above=`${di}L${W} -10L0 -10Z`,below=`${di}L${W} ${H+10}L0 ${H+10}Z`;
   wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-    <defs><clipPath id="ca${my}"><path d="${above}"/></clipPath><clipPath id="cb${my}"><path d="${below}"/></clipPath></defs>
+    <defs><clipPath id="ca${my}"><path d="${above}"/></clipPath><clipPath id="cb${my}"><path d="${below}" transform="translate(0 1.5)"/></clipPath></defs>
     <path d="${band}" fill="#1fd17a" fill-opacity=".16" clip-path="url(#ca${my})"/>
     <path d="${band}" fill="#ff5a5f" fill-opacity=".16" clip-path="url(#cb${my})"/>
     <path d="${di}" fill="none" stroke="#8b93a5" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
@@ -792,25 +835,27 @@ let form=null;
 function openTx(opts={}){
   const t=opts.txId?data.txs.find(x=>x.id===opts.txId):null;
   let coin=null;
-  if(t)coin={id:t.coinId,name:t.name,symbol:t.symbol,image:t.image};
+  if(t&&t.coinId)coin={id:t.coinId,name:t.name,symbol:t.symbol,image:t.image};
   else if(opts.coinId){const c=computeCoin(opts.coinId);coin={id:opts.coinId,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image}}
-  form={id:t?.id,coin,type:t?.type||'buy',qty:t?plainNum(t.qty):'',price:t?plainNum(t.price):'',total:t?plainNum(t.qty*t.price):'',fee:t?.fee?plainNum(t.fee):'',date:t?.date||nowLocal(),note:t?.note||'',last:t?'qty':'total'};
+  form={id:t?.id,coin,type:t?.type||opts.type||'buy',amount:t?.amount!=null?plainNum(t.amount):'',qty:t?plainNum(t.qty):'',price:t?plainNum(t.price):'',total:t?plainNum(t.qty*t.price):'',fee:t?.fee?plainNum(t.fee):'',date:t?.date||nowLocal(),note:t?.note||'',last:t?'qty':'total'};
   if(coin&&!t&&prices[coin.id]?.price)form.price=plainNum(prices[coin.id].price);
   renderTxSheet();
   if(coin&&!t&&!prices[coin.id]?.price)fetchPrice(coin.id).then(p=>{if(p&&form&&!form.price){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});
 }
 function renderTxSheet(){
-  const f=form;
-  openSheet(`<h3>${f.id?'Transactie bewerken':'Transactie toevoegen'}</h3>
-  ${f.coin?`<div class="chosen">${coinIcon({coinId:f.coin.id,symbol:f.coin.symbol,image:f.coin.image},28)}<div><b>${esc(f.coin.name)}</b> <span style="color:var(--muted)">${esc((f.coin.symbol||'').toUpperCase())}</span></div>${f.id?'':'<button data-act="changecoin">Wijzig</button>'}</div>`
+  const f=form,cash=isCash(f.type);
+  const seg=`<div class="seg seg4">${['buy','sell','deposit','withdraw'].map(k=>`<button data-type="${k}" class="${k} ${f.type===k?'on':''}">${TYPE_L[k]}</button>`).join('')}</div>`;
+  const body=cash?`<div class="field"><label>${f.type==='deposit'?'Gestort bedrag':'Opgenomen bedrag'} (€)</label><input id="f_amount" inputmode="decimal" value="${esc(f.amount)}" placeholder="0,00"></div>
+  <p class="hint">${f.type==='deposit'?'Geld dat je naar je broker hebt overgemaakt.':'Geld dat je van je broker terug naar je bank hebt gehaald.'} Eventuele kosten gaan van je cash af.</p>`
+  :`${f.coin?`<div class="chosen">${coinIcon({coinId:f.coin.id,symbol:f.coin.symbol,image:f.coin.image},28)}<div><b>${esc(f.coin.name)}</b> <span style="color:var(--muted)">${esc((f.coin.symbol||'').toUpperCase())}</span></div>${f.id?'':'<button data-act="changecoin">Wijzig</button>'}</div>`
   :`<div class="field"><label>Munt zoeken</label><input id="f_search" placeholder="bijv. Bitcoin, ETH, Solana" autocomplete="off"></div><ul class="results" id="f_results"></ul>`}
-  <div class="seg"><button data-type="buy" class="buy ${f.type==='buy'?'on':''}">Koop</button><button data-type="sell" class="sell ${f.type==='sell'?'on':''}">Verkoop</button></div>
   <div class="field"><label>Totaalbedrag (€)</label><input id="f_total" inputmode="decimal" value="${esc(f.total)}" placeholder="0,00"></div>
   <div class="two">
     <div class="field"><label>Koers per munt (€)</label><input id="f_price" inputmode="decimal" value="${esc(f.price)}" placeholder="0,00"></div>
     <div class="field"><label>Aantal</label><input id="f_qty" inputmode="decimal" value="${esc(f.qty)}" placeholder="0"></div>
   </div>
-  <p class="hint">Vul het bedrag óf het aantal in; het andere wordt berekend met de koers.</p>
+  <p class="hint">Vul het bedrag óf het aantal in; het andere wordt berekend met de koers.</p>`;
+  openSheet(`<h3>${f.id?'Transactie bewerken':'Transactie toevoegen'}</h3>${seg}${body}
   <div class="two">
     <div class="field"><label>Datum en tijd</label><input id="f_date" type="datetime-local" value="${esc(f.date)}"></div>
     <div class="field"><label>Kosten (€, optioneel)</label><input id="f_fee" inputmode="decimal" value="${esc(f.fee)}" placeholder="0"></div>
@@ -818,6 +863,7 @@ function renderTxSheet(){
   <div class="field"><label>Notitie (optioneel)</label><input id="f_note" value="${esc(f.note)}" placeholder="bijv. eToro, Bitvavo"></div>
   <button class="btn" data-act="savetx">${f.id?'Opslaan':'Toevoegen'}</button>
   ${f.id?'<button class="btn danger" data-act="deltx">Transactie verwijderen</button>':''}`);
+  if(cash){$('#f_amount').focus();return}
   const s=$('#f_search');if(s){s.focus();s.oninput=()=>{clearTimeout(s._t);s._t=setTimeout(()=>searchCoins(s.value),300)}}
   $('#f_total').oninput=()=>recalc('total');$('#f_qty').oninput=()=>recalc('qty');$('#f_price').oninput=()=>recalc('price');
 }
@@ -839,24 +885,31 @@ async function searchCoins(q){
   }catch(e){ul.innerHTML='<li style="color:var(--muted)">Zoeken mislukt (offline?)</li>'}
 }
 function readForm(){
-  form.qty=$('#f_qty').value;form.price=$('#f_price').value;form.total=$('#f_total').value;form.fee=$('#f_fee').value;form.date=$('#f_date').value;form.note=$('#f_note').value;
+  const v=(id,k)=>{const el=$('#'+id);if(el)form[k]=el.value};
+  v('f_qty','qty');v('f_price','price');v('f_total','total');v('f_amount','amount');v('f_fee','fee');v('f_date','date');v('f_note','note');
 }
 function saveTx(){
   readForm();const f=form;
-  if(!f.coin)return toast('Kies eerst een munt');
-  const qty=num(f.qty),price=num(f.price),fee=f.fee?num(f.fee):0;
-  if(!(price>0))return toast('Vul een geldige koers in');
-  if(!(qty>0))return toast('Vul een bedrag of aantal in');
+  const fee=f.fee?num(f.fee):0;
   if(!(fee>=0))return toast('Kosten zijn ongeldig');
   if(!f.date)return toast('Vul een datum in');
-  const now=Date.now();
-  const tx={id:f.id||uid(),coinId:f.coin.id,name:f.coin.name,symbol:f.coin.symbol,image:f.coin.image,type:f.type,qty,price,fee,date:f.date,note:f.note.trim(),created:f.id?(data.txs.find(t=>t.id===f.id)?.created||now):now,mod:now};
+  const now=Date.now(),created=f.id?(data.txs.find(t=>t.id===f.id)?.created||now):now;
+  let tx;
+  if(isCash(f.type)){
+    const amount=num(f.amount);if(!(amount>0))return toast('Vul een bedrag in');
+    tx={id:f.id||uid(),type:f.type,amount,fee,date:f.date,note:(f.note||'').trim(),created,mod:now};
+  }else{
+    if(!f.coin)return toast('Kies eerst een munt');
+    const qty=num(f.qty),price=num(f.price);
+    if(!(price>0))return toast('Vul een geldige koers in');
+    if(!(qty>0))return toast('Vul een bedrag of aantal in');
+    tx={id:f.id||uid(),coinId:f.coin.id,name:f.coin.name,symbol:f.coin.symbol,image:f.coin.image,type:f.type,qty,price,fee,date:f.date,note:(f.note||'').trim(),created,mod:now};
+  }
   const i=data.txs.findIndex(t=>t.id===tx.id);if(i>=0)data.txs[i]=tx;else data.txs.push(tx);
   saveData();closeSheet();
-  if(!prices[tx.coinId])refreshPrices();
-  if(location.hash!=='#transacties')location.hash='#coin/'+encodeURIComponent(tx.coinId);
+  if(tx.coinId){if(!prices[tx.coinId])refreshPrices();if(location.hash!=='#transacties')location.hash='#coin/'+encodeURIComponent(tx.coinId)}
   render();
-  toast(f.id?'Transactie bijgewerkt':'Transactie toegevoegd');
+  toast(f.id?'Transactie bijgewerkt':isCash(tx.type)?TYPE_L[tx.type]+' toegevoegd':'Transactie toegevoegd');
 }
 function deleteTx(){
   if(!confirm('Deze transactie verwijderen?'))return;
@@ -1082,6 +1135,8 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{if(p&&form&&form.coin?.id===c.id){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'addcash':openTx({type:'deposit'});break;
+    case 'cashtx':txf.type='cash';txf.coin='all';if(location.hash==='#transacties'){lastView=null;render()}else location.hash='#transacties';break;
     case 'syncinfo':syncNow(false);refreshPrices(true);break;
     case 'savecg':(async()=>{const nk=$('#s_cg').value.trim();if(nk!==(data.cfg?.cgKey||'')){data.cfg={cgKey:nk,mod:Date.now()};saveData()}
       try{const r=await cg('/ping');toast(r.ok?(nk?'Sleutel werkt':'Sleutel verwijderd'):r.status===401||r.status===400?'Sleutel ongeldig':'CoinGecko gaf fout '+r.status)}catch(e){toast(e.message)}
