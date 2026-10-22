@@ -23,7 +23,10 @@ button,input,select{font:inherit;color:inherit}
 .top h1{font-size:17px;margin:0;flex:1;text-align:center;font-weight:650;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .icon-btn{background:var(--card);border:0;color:var(--text);width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;flex:none}
 .icon-btn svg{width:20px;height:20px}
-.sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+.sync{font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;flex:0 1 auto;line-height:1.25;cursor:pointer;min-width:0}
+.sl{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.sl b{font-weight:600;color:var(--text)}
+.dot.off{background:var(--muted)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--green)}.dot.err{background:var(--red)}.dot.busy{background:var(--yellow);animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.3}}
@@ -181,7 +184,7 @@ a{color:var(--accent)}
   #app{max-width:none;margin:0;padding:0 36px 48px}
   .top{height:84px}
   .d-top h1{flex:none;text-align:left;font-size:22px}
-  .d-top .sync{flex:none;margin-right:6px}
+  .d-top .sync{flex:none;margin-right:8px;font-size:12px}
   .fab{display:none}
   .home-grid,.coin-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
   .panel{background:var(--card);border-radius:20px;padding:24px 26px 12px}
@@ -233,7 +236,7 @@ function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Obje
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
 let prices=load(LS_PRICES,{});
-let syncState={s:'off',msg:''};
+let syncState={s:'off',msg:''},cgState={s:'off',msg:''};
 let syncTimer=null;
 let lockCfg=(()=>{try{return JSON.parse(localStorage.getItem(LS_LOCK))}catch(e){return null}})();
 let DEK=null,dekRaw=null,locked=!!lockCfg,vaultQ=Promise.resolve();
@@ -342,14 +345,14 @@ const BUSY='CoinGecko is even druk; de app probeert het zo opnieuw';
 let priceBusy=false;
 async function refreshPrices(force){
   const ids=coinIds();if(locked||!ids.length||priceBusy)return;
-  priceBusy=true;
+  priceBusy=true;cgState={s:'busy',msg:''};updBadges();
   try{
     const r=await cg(`/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=24h`);
     if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Koersen ophalen mislukt ('+r.status+')');
     const arr=await r.json();if(locked)return;
     for(const c of arr)prices[c.id]={price:c.current_price,ch24:c.price_change_percentage_24h,image:c.image,ts:Date.now()};
-    savePrices();render();
-  }catch(e){if(force)toast(e.message||'Geen verbinding')}
+    cgState={s:'ok',msg:''};savePrices();render();
+  }catch(e){cgState={s:'err',msg:e.message||'Geen verbinding'};updBadges();if(force)toast(e.message||'Geen verbinding')}
   finally{priceBusy=false}
 }
 async function fetchPrice(id){
@@ -505,11 +508,18 @@ function txTable(txs,c){
     else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
     return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${money(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
+function fmtTs(ts){const d=new Date(ts);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}
+const lastCgTs=()=>Math.max(0,...Object.values(prices).map(x=>x?.ts||0));
 function syncBadge(){
-  const g=settings.gh;if(!g.token||!g.repo||!g.pass)return '<div class="sync"></div>';
-  const txt={ok:'Gesynchroniseerd',busy:'Synchroniseren…',err:'Sync mislukt',off:'Sync'}[syncState.s];
-  return `<div class="sync" title="${esc(syncState.msg)}"><span class="dot ${syncState.s}"></span>${txt}</div>`;
+  const g=settings.gh,ghOn=g.token&&g.repo&&g.pass,cgT=lastCgTs();
+  const line=(lbl,st,txt)=>`<div class="sl"><span class="dot ${st}"></span>${lbl} <b>${txt}</b></div>`;
+  const ghTxt=settings.lastGh?fmtTs(settings.lastGh):syncState.s==='busy'?'bezig…':syncState.s==='err'?'mislukt':'nog niet';
+  const cgTxt=cgT?fmtTs(cgT):cgState.s==='busy'?'bezig…':cgState.s==='err'?'mislukt':'–';
+  const cgSt=cgState.s==='off'&&cgT?'ok':cgState.s;
+  const tip=[ghOn?'GitHub: '+(syncState.msg||ghTxt):'',coinIds().length?'Koersen: '+(cgState.msg||cgTxt):''].filter(Boolean).join(' · ');
+  return `<div class="sync" data-act="syncinfo" title="${esc(tip)}">${ghOn?line('GitHub',syncState.s,ghTxt):''}${coinIds().length?line('Koersen',cgSt,cgTxt):''}</div>`;
 }
+function updBadges(){document.querySelectorAll('.sync').forEach(el=>el.outerHTML=syncBadge())}
 function renderHome(){
   $('#topbar').innerHTML=topbarHTML(null);
   const p=portfolio();
@@ -825,9 +835,10 @@ function openSettings(){
   <div class="field"><label>Personal access token</label><input id="s_token" type="password" value="${esc(g.token)}" placeholder="github_pat_…" autocomplete="off"></div>
   <div class="two"><div class="field"><label>Bestand</label><input id="s_path" value="${esc(g.path)}"></div><div class="field"><label>Branch</label><input id="s_branch" value="${esc(g.branch)}"></div></div>
   <div class="field"><label>Versleutelwachtwoord</label><input id="s_pass" type="password" value="${esc(g.pass)}" autocomplete="new-password" placeholder="Zelfde op elk apparaat"></div>
-  <p class="hint">Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span style="color:var(--red)">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
+  <p class="hint">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span style="color:var(--red)">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
   <button class="btn" data-act="savesync">Opslaan en synchroniseren</button>
   <div class="section-t">Koersdata</div>
+  <p class="hint" style="margin-top:0">Koersen laatst bijgewerkt: <b>${lastCgTs()?fmtTs(lastCgTs()):'nog niet'}</b>${cgState.s==='err'?` (laatste poging mislukt: ${esc(cgState.msg)})`:''}</p>
   <p class="hint" style="margin-top:0">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener">coingecko.com/en/api</a> → Demo (gratis account).</p>
   <div class="field"><label>CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" type="password" value="${esc(data.cfg?.cgKey||'')}" placeholder="CG-…" autocomplete="off" autocapitalize="off"></div>
   <button class="btn sec" data-act="savecg">Sleutel opslaan en testen</button>
@@ -869,7 +880,7 @@ function merge(a,b){
 }
 const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
-function setSync(s,msg=''){syncState={s,msg};document.querySelectorAll('.sync').forEach(el=>el.outerHTML=syncBadge())}
+function setSync(s,msg=''){syncState={s,msg};updBadges()}
 let syncing=false,syncAgain=false;
 async function syncNow(silent){
   const g=settings.gh;if(locked||!g.token||!g.repo||!g.pass)return;
@@ -895,7 +906,7 @@ async function syncNow(silent){
       else if(p.status===404)throw new Error('Repository niet gevonden of geen schrijfrechten');
       else if(!p.ok)throw new Error('Opslaan op GitHub mislukt ('+p.status+')');
     }
-    setSync('ok');
+    settings.lastGh=Date.now();saveSettings();setSync('ok');
     if(before!==sig(data)){refreshPrices();render()}
     if(!silent)toast('Gesynchroniseerd');
   }catch(e){setSync('err',e.message||'Geen verbinding');if(!silent)toast(e.message||'Sync mislukt')}
@@ -1022,6 +1033,7 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{if(p&&form&&form.coin?.id===c.id){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'syncinfo':syncNow(false);refreshPrices(true);break;
     case 'savecg':(async()=>{const nk=$('#s_cg').value.trim();if(nk!==(data.cfg?.cgKey||'')){data.cfg={cgKey:nk,mod:Date.now()};saveData()}
       try{const r=await cg('/ping');toast(r.ok?(nk?'Sleutel werkt':'Sleutel verwijderd'):r.status===401||r.status===400?'Sleutel ongeldig':'CoinGecko gaf fout '+r.status)}catch(e){toast(e.message)}
       refreshPrices()})();break;
@@ -1060,6 +1072,7 @@ document.addEventListener('visibilitychange',()=>{
   refreshPrices();syncNow(true);
 });
 setInterval(()=>{if(!document.hidden)refreshPrices()},60000);
+setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
 
 function start(){document.body.classList.remove('locked');
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
