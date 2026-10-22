@@ -298,6 +298,7 @@ const ICONS={
 
 /* ---------- berekeningen (FIFO per transactie) ---------- */
 function coinIds(){return [...new Set(data.txs.filter(t=>t.coinId).map(t=>t.coinId))]}
+const txTotal=t=>t.qty*t.price+(t.type==='sell'?-1:1)*(t.fee||0);
 const isCash=t=>t==='deposit'||t==='withdraw';
 const TYPE_L={buy:'Koop',sell:'Verkoop',deposit:'Storting',withdraw:'Opname'};
 const hasCashTx=()=>data.txs.some(t=>isCash(t.type));
@@ -520,7 +521,7 @@ function fillTxs(){
       &&(!q||[t.name,t.symbol,t.note,TYPE_L[t.type],isCash(t.type)?'cash':''].some(x=>(x||'').toLowerCase().includes(q))))
     .sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
   let bought=0,sold=0,fees=0,real=0,dep=0;const showDep=hasCashTx();
-  for(const t of list){fees+=t.fee||0;if(isCash(t.type)){dep+=t.type==='deposit'?t.amount:-t.amount;continue}const tot=t.qty*t.price;if(t.type==='buy')bought+=tot;else{sold+=tot;const o=txOutcome(t,cm[t.coinId]);if(o.pl!=null)real+=o.pl}}
+  for(const t of list){fees+=t.fee||0;if(isCash(t.type)){dep+=t.type==='deposit'?t.amount:-t.amount;continue}const tot=txTotal(t);if(t.type==='buy')bought+=tot;else{sold+=tot;const o=txOutcome(t,cm[t.coinId]);if(o.pl!=null)real+=o.pl}}
   const sum=`<div class="tx-sum${showDep?'':' odd'}">
     <div class="stat"><div class="label">Transacties</div><div class="val">${list.length}</div></div>
     <div class="stat"><div class="label">Gekocht</div><div class="val m">${money(bought,2)}</div></div>
@@ -543,14 +544,14 @@ function fillTxs(){
     items+=`<li class="row" data-tx="${esc(t.id)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image})}
       <div class="grow"><div class="name">${esc(t.name)} <span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></div>
       <div class="meta">${isNaN(d)?esc(t.date):d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})} · <span class="m">${qtyf(t.qty)}</span> ${sym} @ ${priceF(t.price)}</div></div>
-      <div class="right"><div class="v m">${money(t.qty*t.price,2)}</div>${right}</div></li>`;
+      <div class="right"><div class="v m">${money(txTotal(t),2)}</div>${right}</div></li>`;
   }
   flush();
   const tbl=`<div class="tbl-wrap only-d"><table class="tbl"><thead><tr><th class="l">Datum</th><th class="l">Munt</th><th class="l">Type</th><th>Aantal</th><th>Koers</th><th>Totaal</th><th>Kosten</th><th class="l">Notitie</th><th>Waarde nu</th><th>Winst/verlies</th><th>%</th></tr></thead><tbody>${list.map(t=>{
     if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell"><div class="coin-ph cash-ic" style="width:28px;height:28px">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(t.amount,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td>–</td><td>–</td><td>–</td></tr>`;
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
     const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="label" style="font-size:11px">nog ${qtyf(o.rem)} ${sym}</div>`:''):'–';
-    return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${priceF(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${priceF(t.price)}</td><td class="m">${money(txTotal(t),2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
   out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl;
 }
 function holdingsTable(list){
@@ -568,7 +569,7 @@ function txTable(txs,c){
       if(l&&l.remaining<=1e-12)val='<span class="label">verkocht</span>';
       else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="label" style="font-size:11px">nog ${qtyf(l.remaining)} ${sym}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=(c.price/l.unit-1)*100}}
     else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${priceF(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${priceF(t.price)}</td><td class="m">${money(txTotal(t),2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
 function fmtTs(ts){const d=new Date(ts);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}
 const lastCgTs=()=>Math.max(0,...Object.values(prices).map(x=>x?.ts||0));
@@ -788,7 +789,7 @@ function txRow(t,c){
   return `<li class="row" data-tx="${esc(t.id)}"><div class="grow">
     <div style="display:flex;gap:8px;align-items:center"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span><span class="meta">${fmtDate(t.date)}</span></div>
     <div style="margin-top:4px;font-weight:600"><span class="m">${qtyf(t.qty)}</span> ${esc(sym)} <span style="color:var(--muted);font-weight:500">@ ${priceF(t.price)}</span></div>
-    <div class="meta">Totaal <span class="m">${money(t.qty*t.price,2)}</span>${t.fee?` · kosten <span class="m">${money(t.fee,2)}</span>`:''}${t.note?' · '+esc(t.note):''}</div>
+    <div class="meta">Totaal <span class="m">${money(txTotal(t),2)}</span>${t.fee?` · kosten <span class="m">${money(t.fee,2)}</span>`:''}${t.note?' · '+esc(t.note):''}</div>
   </div><div class="right">${right}</div></li>`;
 }
 
@@ -843,7 +844,7 @@ function openTx(opts={}){
   let coin=null;
   if(t&&t.coinId)coin={id:t.coinId,name:t.name,symbol:t.symbol,image:t.image};
   else if(opts.coinId){const c=computeCoin(opts.coinId);coin={id:opts.coinId,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image}}
-  form={id:t?.id,coin,type:t?.type||opts.type||'buy',amount:t?.amount!=null?plainNum(t.amount):'',qty:t?plainNum(t.qty):'',price:t?plainNum(t.price):'',total:t&&t.qty?plainNum(Math.round(t.qty*t.price*100)/100):'',fee:t?.fee?plainNum(t.fee):'',date:t?.date||nowLocal(),note:t?.note||'',last:t?'qty':'total'};
+  form={id:t?.id,coin,type:t?.type||opts.type||'buy',amount:t?.amount!=null?plainNum(t.amount):'',qty:t?plainNum(t.qty):'',price:t?plainNum(t.price):'',total:t&&t.qty?plainNum(Math.round(txTotal(t)*100)/100):'',fee:t?.fee?plainNum(t.fee):'',date:t?.date||nowLocal(),note:t?.note||'',last:t?'qty':'total'};
   if(coin&&!t&&prices[coin.id]?.price)form.price=plainNum(prices[coin.id].price);
   renderTxSheet();
   if(coin&&!t&&!prices[coin.id]?.price)fetchPrice(coin.id).then(p=>{if(p&&form&&!form.price){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});
@@ -855,12 +856,12 @@ function renderTxSheet(){
   <p class="hint">${f.type==='deposit'?'Geld dat je naar je broker hebt overgemaakt.':'Geld dat je van je broker terug naar je bank hebt gehaald.'} Eventuele kosten gaan van je cash af.</p>`
   :`${f.coin?`<div class="chosen">${coinIcon({coinId:f.coin.id,symbol:f.coin.symbol,image:f.coin.image},28)}<div><b>${esc(f.coin.name)}</b> <span style="color:var(--muted)">${esc((f.coin.symbol||'').toUpperCase())}</span></div>${f.id?'':'<button data-act="changecoin">Wijzig</button>'}</div>`
   :`<div class="field"><label>Munt zoeken</label><input id="f_search" placeholder="bijv. Bitcoin, ETH, Solana" autocomplete="off"></div><ul class="results" id="f_results"></ul>`}
-  <div class="field"><label>Totaalbedrag (€)</label><input id="f_total" inputmode="decimal" value="${esc(f.total)}" placeholder="0,00"></div>
+  <div class="field"><label>${f.type==='sell'?'Opbrengst na kosten (€)':'Totaalbedrag incl. kosten (€)'}</label><input id="f_total" inputmode="decimal" value="${esc(f.total)}" placeholder="0,00"></div>
   <div class="two">
     <div class="field"><label>Koers per munt (€)</label><input id="f_price" inputmode="decimal" value="${esc(f.price)}" placeholder="0,00"></div>
     <div class="field"><label>Aantal</label><input id="f_qty" inputmode="decimal" value="${esc(f.qty)}" placeholder="0"></div>
   </div>
-  <p class="hint">Vul het bedrag óf het aantal in; het andere wordt berekend met de koers.</p>`;
+  <p class="hint">${f.type==='sell'?'Opbrengst = aantal × koers − kosten.':'Totaal = aantal × koers + kosten.'} Vul het totaal óf het aantal in; het andere wordt berekend.</p>`;
   openSheet(`<h3>${f.id?'Transactie bewerken':'Transactie toevoegen'}</h3>${seg}${body}
   <div class="two">
     <div class="field"><label>Datum en tijd</label><input id="f_date" type="datetime-local" value="${esc(f.date)}"></div>
@@ -871,14 +872,16 @@ function renderTxSheet(){
   ${f.id?'<button class="btn danger" data-act="deltx">Transactie verwijderen</button>':''}`);
   if(cash){$('#f_amount').focus();return}
   const s=$('#f_search');if(s){s.focus();s.oninput=()=>{clearTimeout(s._t);s._t=setTimeout(()=>searchCoins(s.value),300)}}
-  $('#f_total').oninput=()=>recalc('total');$('#f_qty').oninput=()=>recalc('qty');$('#f_price').oninput=()=>recalc('price');
+  $('#f_total').oninput=()=>recalc('total');$('#f_qty').oninput=()=>recalc('qty');$('#f_price').oninput=()=>recalc('price');$('#f_fee').oninput=()=>recalc('fee');
+  recalc('price');   // totaal bijwerken na wisselen tussen koop/verkoop
 }
 function recalc(src){
   if(src==='total'||src==='qty')form.last=src;
-  const pr=num($('#f_price').value);if(!(pr>0))return;
-  const base=src==='price'?form.last:src;
-  if(base==='total'){const tot=num($('#f_total').value);if(isFinite(tot))$('#f_qty').value=plainNum(tot/pr)}
-  else{const q=num($('#f_qty').value);if(isFinite(q))$('#f_total').value=(q*pr).toFixed(2).replace('.',',')}
+  const pr=num($('#f_price')?.value);if(!(pr>0))return;
+  const k=num($('#f_fee')?.value)||0,sg=form.type==='sell'?-1:1;
+  const base=(src==='price'||src==='fee')?form.last:src;
+  if(base==='total'){const tot=num($('#f_total').value);if(isFinite(tot))$('#f_qty').value=plainNum(Math.max(0,(tot-sg*k)/pr))}   // Q = (totaal − K) / P
+  else{const q=num($('#f_qty').value);if(isFinite(q))$('#f_total').value=(q*pr+sg*k).toFixed(2).replace('.',',')}                  // totaal = Q × P + K
 }
 async function searchCoins(q){
   const ul=$('#f_results');if(!ul)return;q=q.trim();
