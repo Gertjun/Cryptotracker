@@ -125,6 +125,63 @@ a{color:var(--accent)}
 .period i{display:inline-block;width:14px;border-top:2px dashed var(--muted);vertical-align:middle;margin-right:5px}
 #pchart svg{height:170px}#pchart .chart-msg{height:170px}
 .tb-group{display:flex;gap:8px;flex:none}
+.m-top,.d-top{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
+#side{display:none}
+.side-col .card{margin-bottom:14px}
+.kv>div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.kv>div:last-child{border-bottom:0}
+.kv small{font-weight:600;font-size:12px}
+.tbl-wrap{background:var(--card);border-radius:16px;overflow:auto}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap;user-select:none}
+.tbl td{padding:12px 16px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl .l{text-align:left}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover{background:var(--card2)}
+.tbl th[data-sort]{cursor:pointer}
+.tbl th[data-sort]:hover,.tbl th.on{color:var(--text)}
+.coin-cell{display:flex;align-items:center;gap:12px}
+.note-cell{color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.btn-add{background:var(--green);color:#03150b;border:0;border-radius:12px;padding:0 16px;height:40px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;flex:none}
+.btn-add svg{width:18px;height:18px}
+@media (max-width:999px){.only-d{display:none!important}}
+@media (min-width:1000px){
+  .only-m{display:none!important}
+  .shell{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
+  .locked .shell{display:block}
+  .locked #side{display:none}
+  #side{display:flex;flex-direction:column;position:sticky;top:0;height:100vh;background:#0f1218;border-right:1px solid var(--line);padding:20px 14px;overflow:auto}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;padding:6px 10px 24px}
+  .brand img{width:32px;height:32px;border-radius:9px}
+  .nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--muted);font-weight:600}
+  .nav svg{width:18px;height:18px}
+  .nav.on,.nav:hover{background:var(--card);color:var(--text)}
+  .side-t{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:22px 12px 8px}
+  .side-coin{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .side-coin.on,.side-coin:hover{background:var(--card)}
+  .side-coin .coin-img,.side-coin .coin-ph{width:28px;height:28px;font-size:9px}
+  .side-foot{margin-top:auto;color:var(--muted);font-size:12px;padding:16px 12px 0}
+  #app{max-width:none;margin:0;padding:0 36px 48px}
+  .top{height:84px}
+  .d-top h1{flex:none;text-align:left;font-size:22px}
+  .d-top .sync{flex:none;margin-right:6px}
+  .fab{display:none}
+  .home-grid,.coin-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+  .panel{background:var(--card);border-radius:20px;padding:24px 26px 12px}
+  .panel .ranges button.on{background:var(--card2)}
+  .hero{text-align:left;padding:0 0 4px}
+  .big{font-size:48px}
+  #pchart svg{height:320px}#pchart .chart-msg{height:320px}
+  #chart svg{height:340px}#chart .chart-msg{height:340px}
+  .ranges{justify-content:flex-start;max-width:440px}
+  .period{justify-content:flex-start;margin:-6px 0 8px}
+  .coin-side .stat{background:var(--card)}
+  .list-head{margin-top:28px}
+  .sheet{align-items:center}
+  .sheet-card{border-radius:20px;max-width:520px;max-height:88vh;padding:24px 28px}
+  .grab{display:none}
+}
 .pk-list{background:var(--card);border-radius:12px;overflow:hidden;margin-bottom:10px}
 .pk-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line)}
 .pk-row:last-child{border-bottom:0}
@@ -133,9 +190,12 @@ a{color:var(--accent)}
 </style>
 </head>
 <body>
+<div class="shell">
+<aside id="side"></aside>
 <div id="app">
   <header class="top" id="topbar"></header>
   <main id="view"></main>
+</div>
 </div>
 <button class="fab" id="btnAdd" aria-label="Transactie toevoegen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <div id="sheet" class="sheet hidden"><div class="sheet-bg" id="sheetBg"></div><div class="sheet-card" id="sheetCard"></div></div>
@@ -191,6 +251,8 @@ const ICONS={
   eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   eyeOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.3 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.5 4.5-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L20 3M16 7l3 3M18 5l2 2"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>'
@@ -266,8 +328,44 @@ function render(){
   if(locked)return renderLock();
   document.body.classList.toggle('private',!!settings.privacy);
   const m=location.hash.match(/^#coin\/(.+)$/);
-  if(m&&data.txs.some(t=>t.coinId===decodeURIComponent(m[1])))renderCoin(decodeURIComponent(m[1]));
-  else renderHome();
+  const cid=m&&data.txs.some(t=>t.coinId===decodeURIComponent(m[1]))?decodeURIComponent(m[1]):null;
+  if(cid)renderCoin(cid);else renderHome();
+  renderSide(cid);
+}
+function renderSide(cid){
+  const el=$('#side');if(!el)return;
+  const p=portfolio(),list=[...p.open].sort((a,b)=>(b.value??0)-(a.value??0));
+  el.innerHTML=`<div class="brand"><img src="icon.svg" alt="">Crypto Portfolio</div>
+  <div class="nav ${cid?'':'on'}" data-act="home">${ICONS.home} Overzicht</div>
+  ${list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<div class="side-coin ${c.coinId===cid?'on':''}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name" style="font-size:14px">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="${cls(c.unreal)}" style="font-size:13px;font-weight:600">${pct(c.unrealPct)}</div></div>`).join('')}`:''}
+  ${p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<div class="side-coin ${c.coinId===cid?'on':''}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name" style="font-size:14px">${esc(c.meta.name)}</div></div><div class="${cls(c.realized)} m" style="font-size:13px;font-weight:600">${signed(c.realized)}</div></div>`).join('')}`:''}
+  <div class="side-foot">Koersdata: CoinGecko</div>`;
+}
+function topbarHTML(c){
+  const eye=`<button class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
+  const lockB=lockCfg?`<button class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';
+  const gear=`<button class="icon-btn" data-act="settings" aria-label="Instellingen">${ICONS.gear}</button>`;
+  const back=`<button class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button>`;
+  const title=c?`${esc(c.meta.name)} <span style="color:var(--muted);font-weight:500">${esc((c.meta.symbol||'').toUpperCase())}</span>`:'Overzicht';
+  const mob=c?`${back}<h1>${title}</h1>${eye}`:`<div class="tb-group">${eye}${lockB}</div>${syncBadge()}<div class="tb-group">${lockCfg?'<span style="width:40px"></span>':''}${gear}</div>`;
+  return `<div class="m-top only-m">${mob}</div><div class="d-top only-d">${c?back:''}<h1>${title}</h1><span class="grow"></span>${syncBadge()}${eye}${lockB}${gear}<button class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div>`;
+}
+function holdingsTable(list){
+  const th=(l,k,cl='')=>`<th class="${cl} ${settings.sort===k?'on':''}" data-sort="${k}">${l}${settings.sort===k?' ↓':''}</th>`;
+  return `<div class="tbl-wrap only-d"><table class="tbl"><thead><tr>${th('Munt','name','l')}<th>Aantal</th><th>Gem. aankoopprijs</th><th>Koers</th><th>24 uur</th>${th('Waarde','value')}<th>Geïnvesteerd</th>${th('Winst/verlies','plabs')}${th('%','pl')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
+    <td class="l"><div class="coin-cell">${coinIcon(c.meta)}<div><div class="name">${esc(c.meta.name)}</div><div class="meta">${esc((c.meta.symbol||'').toUpperCase())}</div></div></div></td>
+    <td class="m">${qtyf(c.qty)}</td><td class="m">${money(c.avg)}</td><td>${money(c.price)}</td><td class="${cls(c.ch24)}">${pct(c.ch24)}</td>
+    <td class="m"><b>${money(c.value,2)}</b></td><td class="m">${money(c.cost,2)}</td><td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td><td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td></tr>`).join('')}</tbody></table></div>`;
+}
+function txTable(txs,c){
+  const sym=esc((c.meta.symbol||'').toUpperCase());
+  return `<div class="tbl-wrap only-d"><table class="tbl"><thead><tr><th class="l">Type</th><th class="l">Datum</th><th>Aantal</th><th>Koers</th><th>Totaal</th><th>Kosten</th><th class="l">Notitie</th><th>Waarde nu</th><th>Winst/verlies</th><th>%</th></tr></thead><tbody>${txs.map(t=>{
+    let val='–',pl=null,pp=null;
+    if(t.type==='buy'){const l=c.lotMap[t.id];
+      if(l&&l.remaining<=1e-12)val='<span class="label">verkocht</span>';
+      else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="label" style="font-size:11px">nog ${qtyf(l.remaining)} ${sym}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=(c.price/l.unit-1)*100}}
+    else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${money(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
 function syncBadge(){
   const g=settings.gh;if(!g.token||!g.repo||!g.pass)return '<div class="sync"></div>';
@@ -275,7 +373,7 @@ function syncBadge(){
   return `<div class="sync" title="${esc(syncState.msg)}"><span class="dot ${syncState.s}"></span>${txt}</div>`;
 }
 function renderHome(){
-  $('#topbar').innerHTML=`<div class="tb-group"><button class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>${lockCfg?`<button class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:''}</div>${syncBadge()}<div class="tb-group">${lockCfg?'<span style="width:40px"></span>':''}<button class="icon-btn" data-act="settings" aria-label="Instellingen">${ICONS.gear}</button></div>`;
+  $('#topbar').innerHTML=topbarHTML(null);
   const p=portfolio();
   if(!data.txs.length){
     $('#view').innerHTML=`<div class="empty"><b>Nog geen investeringen</b>Tik op + om je eerste aankoop toe te voegen.<br>Koersen worden automatisch opgehaald.</div>`;return;
@@ -288,7 +386,13 @@ function renderHome(){
   let segs=byVal.slice(0,6).map((c,i)=>({n:(c.meta.symbol||'').toUpperCase(),v:c.value,col:palette[i]}));
   const rest=byVal.slice(6).reduce((s,c)=>s+c.value,0);if(rest>0)segs.push({n:'Overig',v:rest,col:palette[6]});
   const tot=segs.reduce((s,x)=>s+x.v,0);
-  $('#view').innerHTML=`
+  const kv=`<div class="card only-d kv">
+    <div><span class="label">Geïnvesteerd</span><b class="m">${money(p.cost,2)}</b></div>
+    <div><span class="label">Ongerealiseerd</span><b class="${cls(p.unreal)}"><span class="m">${signed(p.unreal)}</span> <small>${pct(p.unrealPct)}</small></b></div>
+    <div><span class="label">Laatste 24 uur</span><b class="${cls(p.ch24)}"><span class="m">${signed(p.ch24)}</span> <small>${pct(p.ch24Pct)}</small></b></div>
+    <div><span class="label">Gerealiseerd</span><b class="m ${cls(p.realized)}">${signed(p.realized)}</b></div>
+    <div><span class="label">Open posities</span><b>${p.open.length}</b></div></div>`;
+  $('#view').innerHTML=`<div class="home-grid"><div class="panel">
   <section class="hero">
     <div class="label">Portfoliowaarde</div>
     <div class="big m" id="heroVal">${money(p.value,2)}</div>
@@ -297,15 +401,15 @@ function renderHome(){
   </section>
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div>
   <div class="ranges">${[['1','24U'],['7','1W'],['30','1M'],['90','3M'],['365','1J'],['max','Max']].map(([d,l])=>`<button data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</div>
-  <div class="period" id="pperiod"></div>
-  ${tot>0?`<div class="card"><div class="alloc-bar">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}
+  <div class="period" id="pperiod"></div></div>
+  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${kv}</div></div>
   <div class="list-head"><h2>Bezittingen</h2>
-    <select data-act="sort"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
-  ${sorted.length?`<ul class="list">${sorted.map(c=>{
+    <select data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
+  ${sorted.length?`<ul class="list only-m">${sorted.map(c=>{
     const v=mode==='24h'?c.ch24:c.unrealPct;
     return `<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}
       <div class="grow"><div class="name">${esc(c.meta.name)}</div><div class="meta"><span class="m">${qtyf(c.qty)}</span> ${esc((c.meta.symbol||'').toUpperCase())} · gem. <span class="m">${money(c.avg)}</span></div></div>
-      <div class="right"><div class="v m">${money(c.value,2)}</div><div class="${cls(mode==='24h'?c.ch24:c.unreal)}" style="font-size:13px;font-weight:600"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div></li>`}).join('')}</ul>`:'<div class="card" style="color:var(--muted);text-align:center">Geen open posities</div>'}
+      <div class="right"><div class="v m">${money(c.value,2)}</div><div class="${cls(mode==='24h'?c.ch24:c.unreal)}" style="font-size:13px;font-weight:600"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="card" style="color:var(--muted);text-align:center">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name">${esc(c.meta.name)}</div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="${cls(c.realized)} m" style="font-weight:600">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}`;
   drawPortfolioChart();
 }
@@ -400,15 +504,15 @@ async function drawPortfolioChart(){
 let chartToken=0;
 function renderCoin(id){
   const c=computeCoin(id),sym=(c.meta.symbol||'').toUpperCase();
-  $('#topbar').innerHTML=`<button class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button><h1>${esc(c.meta.name)} <span style="color:var(--muted);font-weight:500">${esc(sym)}</span></h1><button class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
+  $('#topbar').innerHTML=topbarHTML(c);
   const ranges=[['1','24U'],['7','1W'],['30','1M'],['90','3M'],['365','1J'],['max','Max']];
   const txs=[...c.txs].reverse();
-  $('#view').innerHTML=`
+  $('#view').innerHTML=`<div class="coin-grid"><div class="panel">
   <div style="display:flex;align-items:center;gap:12px;margin-top:6px">${coinIcon(c.meta,44)}
     <div><div class="price-big" id="pxMain">${money(c.price)}</div><div id="pxSub" class="${cls(c.ch24)}" style="font-weight:600;font-size:14px">${pct(c.ch24)} <span style="color:var(--muted);font-weight:500">24 uur</span></div></div></div>
   <div class="chart-wrap" id="chart"><div class="chart-msg">Grafiek laden…</div></div>
-  <div class="ranges">${ranges.map(([d,l])=>`<button data-range="${d}" class="${settings.range===d?'on':''}">${l}</button>`).join('')}</div>
-  ${c.qty>1e-12?`
+  <div class="ranges">${ranges.map(([d,l])=>`<button data-range="${d}" class="${settings.range===d?'on':''}">${l}</button>`).join('')}</div></div>
+  <div class="coin-side">${c.qty>1e-12?`
   <div class="stat wide card" style="padding:14px;margin-bottom:10px">
     <div class="label">Ongerealiseerde winst/verlies</div>
     <div style="font-size:26px;font-weight:700" class="${cls(c.unreal)}"><span class="m">${signed(c.unreal)}</span> <span style="font-size:17px">${pct(c.unrealPct)}</span></div>
@@ -420,9 +524,9 @@ function renderCoin(id){
     <div class="stat"><div class="label">Geïnvesteerd</div><div class="val m">${money(c.cost,2)}</div></div>
     <div class="stat"><div class="label">Koers t.o.v. gemiddelde</div><div class="val ${cls(c.price-c.avg)}">${c.price!=null&&c.avg?pct((c.price/c.avg-1)*100):'–'}</div></div>
     <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(c.realized)}">${Math.abs(c.realized)>0.005?signed(c.realized):'–'}</div></div>
-  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val m ${cls(c.realized)}" style="font-size:22px">${signed(c.realized)}</div></div></div>`}
+  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val m ${cls(c.realized)}" style="font-size:22px">${signed(c.realized)}</div></div></div>`}</div></div>
   <div class="list-head"><h2>Transacties</h2><span class="label">${c.txs.length}</span></div>
-  <ul class="list">${txs.map(t=>txRow(t,c)).join('')}</ul>
+  <ul class="list only-m">${txs.map(t=>txRow(t,c)).join('')}</ul>${txTable(txs,c)}
   <div class="note">Winst per transactie wordt berekend met FIFO: verkopen worden afgeboekt op je oudste aankopen eerst. Transactiekosten tellen mee in de aankoopprijs.</div>`;
   drawChart(c);
 }
@@ -472,8 +576,8 @@ async function drawChart(c){
     ${showAvg?`<line x1="0" x2="${W}" y1="${Y(avg)}" y2="${Y(avg)}" stroke="#8b93a5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>`:''}
     <line id="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>
-  ${buys.map(b=>`<span title="Aankoop ${money(b.p)}" style="position:absolute;left:calc(${X(b.t)/W*100}% - 5px);top:${Y(b.p)-5}px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)"></span>`).join('')}
-  ${showAvg?`<span class="m" style="position:absolute;right:6px;top:${Math.max(0,Y(avg)-18)}px;font-size:11px;color:var(--muted);background:var(--bg);padding:0 4px;border-radius:4px">gem. ${money(avg)}</span>`:''}`;
+  ${buys.map(b=>`<span title="Aankoop ${money(b.p)}" style="position:absolute;left:calc(${X(b.t)/W*100}% - 5px);top:calc(${(Y(b.p)/H*100).toFixed(2)}% - 5px);width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)"></span>`).join('')}
+  ${showAvg?`<span class="m" style="position:absolute;right:6px;top:calc(${(Y(avg)/H*100).toFixed(2)}% - 18px);font-size:11px;color:var(--muted);background:var(--bg);padding:0 4px;border-radius:4px">gem. ${money(avg)}</span>`:''}`;
   // scrubben
   const wrap=$('#chart'),line=wrap.querySelector('#cur');
   const reset=()=>{line.style.display='none';$('#pxMain').textContent=money(c.price);$('#pxSub').className=cls(c.ch24);$('#pxSub').innerHTML=`${pct(c.ch24)} <span style="color:var(--muted);font-weight:500">24 uur</span>`};
@@ -620,7 +724,7 @@ function merge(a,b){
 }
 const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort()]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
-function setSync(s,msg=''){syncState={s,msg};const el=document.querySelector('.sync');if(el&&!location.hash.startsWith('#coin'))el.outerHTML=syncBadge()}
+function setSync(s,msg=''){syncState={s,msg};document.querySelectorAll('.sync').forEach(el=>el.outerHTML=syncBadge())}
 let syncing=false,syncAgain=false;
 async function syncNow(silent){
   const g=settings.gh;if(locked||!g.token||!g.repo||!g.pass)return;
@@ -724,7 +828,7 @@ function lockNow(){
 function pkErr(e){return e?.name==='NotAllowedError'?'Geannuleerd of verlopen':e?.name==='InvalidStateError'?'Deze passkey bestaat al op dit apparaat':e?.message||'Mislukt'}
 function renderLock(){
   document.body.classList.add('locked');document.body.classList.remove('private');
-  $('#topbar').innerHTML='';
+  $('#topbar').innerHTML='';$('#side').innerHTML='';
   const hasPk=(lockCfg.pks||[]).length>0&&pkSupported();
   $('#view').innerHTML=`<div class="lock"><div class="lock-ic">${ICONS.lock}</div><h2>Crypto Portfolio</h2><p class="label">Vergrendeld</p>
     ${hasPk?`<button class="btn" data-act="unlockpk">${ICONS.key} Ontgrendel met passkey</button><div class="or">of</div>`:''}
@@ -760,7 +864,8 @@ async function securityAction(act,el){
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-type],[data-pick]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-type],[data-pick]');if(!a)return;
+  if(a.dataset.sort){settings.sort=a.dataset.sort;saveSettings();render();return}
   if(a.dataset.prange){settings.pRange=a.dataset.prange;saveSettings();document.querySelectorAll('[data-prange]').forEach(b=>b.classList.toggle('on',b===a));drawPortfolioChart();return}
   if(a.dataset.coin){location.hash='#coin/'+encodeURIComponent(a.dataset.coin);return}
   if(a.dataset.tx){openTx({txId:a.dataset.tx});return}
@@ -770,6 +875,7 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{if(p&&form&&form.coin?.id===c.id){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'add':$('#btnAdd').click();break;
     case 'unlockpk':tryPasskey(false);break;
     case 'lockon':case 'lockon2':case 'addpk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
