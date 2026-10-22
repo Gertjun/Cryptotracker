@@ -681,7 +681,7 @@ async function drawPortfolioChart(){
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>`;
   const lbl={'1':'24 uur','7':'deze week','30':'deze maand','90':'3 maanden','365':'dit jaar','max':'sinds start'}[settings.pRange];
-  $('#pperiod').innerHTML=`<span>Rendement ${lbl}: <b class="m ${cls(dPL)}">${signed(dPL)}</b></span><span><i></i>geïnvesteerd</span>${res.partial?'<span style="color:var(--yellow)">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
+  $('#pperiod').innerHTML=`<span>Rendement ${lbl}: <b class="m ${cls(dPL)}">${signed(dPL)}</b></span>${res.partial?'<span style="color:var(--yellow)">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
   const line=wrap.querySelector('.cur'),hv=$('#heroVal'),hp=$('#heroPl'),oV=hv.innerHTML,oP=hp.innerHTML;
   const short=['1','7'].includes(settings.pRange);
   const reset=()=>{line.style.display='none';hv.innerHTML=oV;hp.innerHTML=oP};
