@@ -809,7 +809,8 @@ async function drawChart(c){
   const t0=pts[0][0],t1=pts[pts.length-1][0];
   let lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1]));
   const avg=c.qty>1e-12?c.avg:null;
-  const buys=c.txs.filter(t=>t.type==='buy').map(t=>({t:new Date(t.date).getTime(),p:t.price})).filter(b=>b.t>=t0&&b.t<=t1);
+  // Stip = prijs incl. kosten (betaald ÷ aantal), net als de gemiddelde aankoopprijs
+  const buys=c.txs.filter(t=>t.type==='buy').map(t=>({t:new Date(t.date).getTime(),p:txTotal(t)/t.qty,k:t.price})).filter(b=>b.t>=t0&&b.t<=t1);
   const showAvg=avg&&avg>lo*0.6&&avg<hi*1.4;
   if(showAvg){lo=Math.min(lo,avg);hi=Math.max(hi,avg)}
   buys.forEach(b=>{lo=Math.min(lo,b.p);hi=Math.max(hi,b.p)});
@@ -825,8 +826,8 @@ async function drawChart(c){
     ${showAvg?`<line x1="0" x2="${W}" y1="${Y(avg)}" y2="${Y(avg)}" stroke="#8b93a5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>`:''}
     <line id="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>
-  ${buys.map(b=>`<span title="Aankoop ${money(b.p)}" style="position:absolute;left:calc(${X(b.t)/W*100}% - 5px);top:calc(${(Y(b.p)/H*100).toFixed(2)}% - 5px);width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)"></span>`).join('')}
-  ${showAvg?`<span class="m" style="position:absolute;right:6px;top:calc(${(Y(avg)/H*100).toFixed(2)}% - 18px);font-size:11px;color:var(--muted);background:var(--bg);padding:0 4px;border-radius:4px">gem. ${money(avg)}</span>`:''}`;
+  ${buys.map(b=>`<span title="Aankoop ${fmtDate(new Date(b.t).toISOString().slice(0,10))}: ${money(b.p)} incl. kosten (koers ${priceF(b.k)})" style="position:absolute;left:calc(${X(b.t)/W*100}% - 5px);top:calc(${(Y(b.p)/H*100).toFixed(2)}% - 5px);width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--accent);z-index:2"></span>`).join('')}
+  ${showAvg?`<span class="m" style="position:absolute;left:6px;top:calc(${(Y(avg)/H*100).toFixed(2)}% - 18px);font-size:11px;color:var(--muted);background:var(--bg);padding:0 4px;border-radius:4px">gem. ${money(avg)}</span>`:''}`;
   // scrubben
   const wrap=$('#chart'),line=wrap.querySelector('#cur');
   const reset=()=>{line.style.display='none';$('#pxMain').textContent=money(c.price);$('#pxSub').className=cls(c.ch24);$('#pxSub').innerHTML=`${pct(c.ch24)} <span style="color:var(--muted);font-weight:500">24 uur</span>`};
