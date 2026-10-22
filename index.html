@@ -182,6 +182,16 @@ a{color:var(--accent)}
 .rep-grid{display:grid;gap:14px}
 .rep-grid .card{margin:0}
 .rep-col{display:contents}
+.zoomable{cursor:pointer}
+.zoom-hint{float:right;font-size:12px;color:var(--accent);font-weight:600;margin-top:2px}
+.zoom{position:fixed;inset:0;z-index:55;background:var(--bg);overflow:auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(30px + env(safe-area-inset-bottom))}
+.zoom-in{max-width:1200px;margin:0 auto}
+.zoom-top{display:flex;align-items:center;justify-content:space-between;gap:10px;height:56px}
+.zoom-top h2{margin:0;font-size:20px}
+.zoom-chart{overflow-x:auto;margin:4px -4px 0;padding:0 4px}
+.zoom .bars{height:320px}
+.zstats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+@media (min-width:1000px){.zstats{grid-template-columns:repeat(5,1fr)}.zoom{padding:20px 36px 40px}}
 .seg.mini{margin:8px 0 12px;padding:3px}
 .seg.mini button{padding:6px 2px;font-size:13px}
 .seg.mini button.on{background:var(--card2);color:var(--text)}
@@ -884,6 +894,36 @@ function pLabel(u,ts,long){const d=new Date(ts);
   if(u==='week')return long?`Week ${isoWeek(d)} · ${d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}`:String(isoWeek(d));
   if(u==='month')return long?monthLbl(ts,{month:'long',year:'numeric'}):monthLbl(ts);
   return String(d.getFullYear())}
+// rendementsreeks per periode (los van het rapportscherm, ook gebruikt door het vergrote scherm)
+function retSeries(u,n){
+  const S={};coinIds().forEach(id=>S[id]=coinStates(id));
+  const hc=hasCashTx(),now=Date.now(),first=Math.min(...data.txs.map(txTime)),metric=o=>hc?o.total-o.dep:o.crypto-o.inv+o.real;
+  const st=pList(u,first,now).slice(-n);let prev=snapshot(st[0],S);
+  return st.map(a=>{const o=snapshot(Math.min(pNext(u,a),now),S),r={ts:a,v:metric(o)-metric(prev),end:hc?o.total:o.crypto,miss:o.missing.length>0||prev.missing.length>0};prev=o;return r});
+}
+const ZN={day:90,week:52,month:36,year:99};
+function renderRetZoom(){
+  const u=PU[settings.repRet]?settings.repRet:'month',[L,l]=PU[u],res=retSeries(u,ZN[u]),hc=hasCashTx();
+  const tot=res.reduce((s,r)=>s+r.v,0),best=res.reduce((a,r)=>r.v>a.v?r:a,res[0]),worst=res.reduce((a,r)=>r.v<a.v?r:a,res[0]),pos=res.filter(r=>r.v>0.005).length;
+  const many=u==='day'?'dagen':u==='week'?'weken':u==='month'?'maanden':'jaar';
+  let cum=0;const rows=res.map(r=>({...r,cum:cum+=r.v})).reverse();
+  let z=$('#zoom');if(!z){z=document.createElement('div');z.id='zoom';z.className='zoom';document.body.appendChild(z);document.body.style.overflow='hidden'}
+  z.innerHTML=`<div class="zoom-in"><div class="zoom-top"><h2>Rendement per ${l}</h2><button class="icon-btn" data-act="zoomclose" aria-label="Sluiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  ${pSeg('repRet',u)}
+  <div class="zstats">
+    <div class="stat"><div class="label">Totaal (${res.length} ${many})</div><div class="val m ${cls(tot)}">${signed(tot)}</div></div>
+    <div class="stat"><div class="label">Gemiddeld per ${l}</div><div class="val m ${cls(tot)}">${signed(tot/res.length)}</div></div>
+    <div class="stat"><div class="label">Beste ${l}</div><div class="val m up">${signed(best.v)}</div><div class="label" style="font-size:12px">${pLabel(u,best.ts,true)}</div></div>
+    <div class="stat"><div class="label">Slechtste ${l}</div><div class="val m ${cls(worst.v)}">${signed(worst.v)}</div><div class="label" style="font-size:12px">${pLabel(u,worst.ts,true)}</div></div>
+    <div class="stat"><div class="label">In de plus</div><div class="val">${pos} van ${res.length}</div><div class="label" style="font-size:12px">${Math.round(pos/res.length*100)}% van de ${many}</div></div>
+  </div>
+  <div class="card"><div class="zoom-chart" id="zchart"><div style="min-width:${res.length*(u==='day'?18:28)}px">${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%(u==='day'?7:u==='week'?4:1)?'':pLabel(u,r.ts),title:`${pLabel(u,r.ts,true)}: ${signed(r.v)}`})))}</div></div>
+  <p class="hint" style="margin-top:8px">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hc?'Stortingen':'Aankopen'} tellen niet als winst. Veeg of scroll de grafiek opzij voor eerdere periodes; op de laptop toont de muis op een staaf de details.</p></div>
+  <div class="card" style="margin-top:14px"><table class="rt"><tr><th>${L}</th><th>Resultaat</th><th>Cumulatief</th><th>${hc?'Totale waarde':'Waarde crypto'} aan eind</th></tr>
+  ${rows.map((r,i)=>`<tr><td>${pLabel(u,r.ts,true)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td><td class="m ${cls(r.cum)}">${signed(r.cum)}</td><td class="m">${money(r.end,2)}</td></tr>`).join('')}</table></div></div>`;
+  fitBars();const zc=$('#zchart');zc.scrollLeft=zc.scrollWidth;   // nieuwste periode in beeld
+}
+function closeZoom(){const z=$('#zoom');if(z){z.remove();document.body.style.overflow=''}}
 const pSeg=(key,u)=>`<div class="seg mini">${Object.entries(PU).map(([k,v])=>`<button data-rp="${key}:${k}" class="${u===k?'on':''}">${v[0]}</button>`).join('')}</div>`;
 const monthLbl=(ts,o={month:'short'})=>new Date(ts).toLocaleDateString('nl-NL',o).replace('.','');
 function renderReports(){
@@ -909,7 +949,7 @@ function renderReports(){
     return st.map(a=>{const o=snapshot(Math.min(pNext(u,a),now),S),r={ts:a,v:metric(o)-metric(prev),miss:o.missing.length>0||prev.missing.length>0};prev=o;return r})};
   const res=resFor(ru,RN),yrs=ru==='year'?null:resFor('year',99);
   const lblEvery=ru==='day'?5:1;
-  const retCard=`<div class="card"><h3>Rendement per ${rl}</h3>${pSeg('repRet',ru)}<p class="hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hasCash?'Stortingen':'Aankopen'} tellen niet als winst.${ru==='day'?' Per dag rekent de app met de dagkoers uit het archief.':''}</p>
+  const retCard=`<div class="card zoomable" data-act="zoomret"><h3>Rendement per ${rl} <span class="zoom-hint">Vergroten ⤢</span></h3>${pSeg('repRet',ru)}<p class="hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hasCash?'Stortingen':'Aankopen'} tellen niet als winst.${ru==='day'?' Per dag rekent de app met de dagkoers uit het archief.':''}</p>
   ${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%lblEvery?'':pLabel(ru,r.ts),title:`${pLabel(ru,r.ts,true)}: ${signed(r.v)}`})))}
   <table class="rt"><tr><th>${RL}</th><th>Resultaat</th></tr>${[...res].reverse().map((r,i)=>`<tr><td>${pLabel(ru,r.ts,true)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td></tr>`).join('')}
   <tr><td><b>Totaal deze ${res.length} ${ru==='day'?'dagen':ru==='week'?'weken':ru==='month'?'maanden':'jaar'}</b></td><td class="m ${cls(res.reduce((s,r)=>s+r.v,0))}"><b>${signed(res.reduce((s,r)=>s+r.v,0))}</b></td></tr></table>
@@ -1503,7 +1543,7 @@ async function enableLock(pw){
 }
 function disableLock(){lockCfg=null;DEK=null;dekRaw=null;localStorage.removeItem(LS_LOCK);localStorage.removeItem(LS_VAULT);localStorage.removeItem(LS_VCHARTS);persist();saveCharts()}
 function lockNow(){
-  if(!lockCfg)return;
+  if(!lockCfg)return;closeZoom();
   DEK=null;dekRaw=null;locked=true;clearTimeout(syncTimer);
   data={txs:[],deleted:[],updated:0};prices={};chartCache={};settings.gh={...settings.gh,token:'',repo:'',pass:'',cgKey:''};
   closeSheet();if(location.hash)history.replaceState(null,'',location.pathname+location.search);renderLock();
@@ -1550,7 +1590,7 @@ document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp]');if(!a)return;
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
   if(a.dataset.adir){setAlertDir(a.dataset.adir);return}
-  if(a.dataset.rp){const [k,u]=a.dataset.rp.split(':');settings[k]=u;saveSettings();renderReports();return}
+  if(a.dataset.rp){const [k,u]=a.dataset.rp.split(':');settings[k]=u;saveSettings();renderReports();if($('#zoom'))renderRetZoom();return}
   if(a.dataset.tf){txf.type=a.dataset.tf;fillTxs();return}
   if(a.dataset.sort){settings.sort=a.dataset.sort;saveSettings();render();return}
   if(a.dataset.prange){settings.pRange=a.dataset.prange;saveSettings();document.querySelectorAll('[data-prange]').forEach(b=>b.classList.toggle('on',b===a));drawPortfolioChart();return}
@@ -1562,6 +1602,8 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{const el=$('#f_price');if(p&&form&&form.coin?.id===c.id&&el&&form.edits.length<2){form.price=el.value=plainNum(p);recalc('price')}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'zoomret':renderRetZoom();break;
+    case 'zoomclose':closeZoom();break;
     case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
     case 'doimport':doImport();break;
     case 'cancelimport':imp=null;closeSheet();break;
@@ -1605,8 +1647,8 @@ document.addEventListener('click',e=>{
 $('#bvFile').onchange=e=>{const f=e.target.files[0];if(f){closeSheet();startImport(f)}};
 document.addEventListener('change',e=>{if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
 $('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
-window.addEventListener('hashchange',()=>{window.scrollTo(0,0);render()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);render()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#zoom'))closeZoom();else closeSheet()}});
 let hiddenAt=0;
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){hiddenAt=Date.now();return}
