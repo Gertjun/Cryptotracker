@@ -182,6 +182,9 @@ a{color:var(--accent)}
 .rep-grid{display:grid;gap:14px}
 .rep-grid .card{margin:0}
 .rep-col{display:contents}
+.seg.mini{margin:8px 0 12px;padding:3px}
+.seg.mini button{padding:6px 2px;font-size:13px}
+.seg.mini button.on{background:var(--card2);color:var(--text)}
 .rep-grid h3{margin:0 0 4px;font-size:16px}
 .rep-grid .hint{margin:2px 0 12px}
 .bars{display:flex;gap:5px;height:150px;margin:6px 0 4px}
@@ -192,7 +195,7 @@ a{color:var(--accent)}
 .bars:not(.neg) .bp{border-bottom:1px solid var(--line)}
 .bar i{display:block;width:100%;border-radius:3px;min-height:1px}
 .bar i.u{background:var(--green)}.bar i.d{background:var(--red)}.bar i.n{background:var(--accent)}
-.bar span{font-size:10px;color:var(--muted);text-align:center;margin-top:4px;white-space:nowrap;overflow:hidden}
+.bar span{font-size:10px;color:var(--muted);text-align:center;margin-top:4px;white-space:nowrap;overflow:visible;display:flex;justify-content:center;height:13px}
 .rt{width:100%;border-collapse:collapse;font-size:14px}
 .rt td,.rt th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 .rt th{font-size:12px;color:var(--muted);font-weight:600}
@@ -857,6 +860,19 @@ function bars(items,neutral){
   return `<div class="bars${neg?' neg':''}">${items.map(i=>`<div class="bar" title="${esc(i.title||'')}"><div class="bp">${i.v>0?`<i class="${neutral?'n':'u'}" style="height:${i.v/mx*100}%"></i>`:''}</div>${neg?`<div class="bn">${i.v<0?`<i class="d" style="height:${-i.v/mx*100}%"></i>`:''}</div>`:''}<span>${i.label}</span></div>`).join('')}</div>`;
 }
 const monthStart=(y,m)=>new Date(y,m,1).getTime();
+// Periodes voor rapporten: dag, week (ma–zo), maand, jaar — in lokale tijd
+const PU={day:['Dag','dag',30],week:['Week','week',12],month:['Maand','maand',12],year:['Jaar','jaar',99]};
+function pStart(u,ts){const d=new Date(ts);let s=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  if(u==='week')s.setDate(s.getDate()-((s.getDay()+6)%7));else if(u==='month')s=new Date(d.getFullYear(),d.getMonth(),1);else if(u==='year')s=new Date(d.getFullYear(),0,1);return s.getTime()}
+function pNext(u,ts){const s=new Date(ts);if(u==='day')s.setDate(s.getDate()+1);else if(u==='week')s.setDate(s.getDate()+7);else if(u==='month')s.setMonth(s.getMonth()+1);else s.setFullYear(s.getFullYear()+1);return s.getTime()}
+function pList(u,from,to){const out=[];for(let s=pStart(u,from);s<=to;s=pNext(u,s))out.push(s);return out}
+function isoWeek(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const w=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-w);return Math.ceil(((t-Date.UTC(t.getUTCFullYear(),0,1))/864e5+1)/7)}
+function pLabel(u,ts,long){const d=new Date(ts);
+  if(u==='day')return long?d.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):String(d.getDate());
+  if(u==='week')return long?`Week ${isoWeek(d)} · ${d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}`:String(isoWeek(d));
+  if(u==='month')return long?monthLbl(ts,{month:'long',year:'numeric'}):monthLbl(ts);
+  return String(d.getFullYear())}
+const pSeg=(key,u)=>`<div class="seg mini">${Object.entries(PU).map(([k,v])=>`<button data-rp="${key}:${k}" class="${u===k?'on':''}">${v[0]}</button>`).join('')}</div>`;
 const monthLbl=(ts,o={month:'short'})=>new Date(ts).toLocaleDateString('nl-NL',o).replace('.','');
 function renderReports(){
   $('#topbar').innerHTML=topbarHTML(null,'Rapporten');
@@ -875,31 +891,36 @@ function renderReports(){
     ${o.missing.length?`<p class="warn">Geen koers bewaard voor ${o.missing.join(', ')} op deze datum.</p>`:''}</div></details>`).join('')
   :`<p class="hint">Je eerste peildatum is 1 januari ${nd.getFullYear()+1}.</p>`}</div>`;
 
-  // 2. rendement per maand
-  const months=[];for(let y=fd.getFullYear(),m=fd.getMonth();monthStart(y,m)<=now;m++){if(m>11){m=0;y++}if(monthStart(y,m)>now)break;months.push([y,m])}
-  let prev=snapshot(monthStart(...months[0]),S);
-  const res=months.map(([y,m])=>{const end=Math.min(monthStart(y,m+1),now),o=snapshot(end,S),r={y,m,ts:monthStart(y,m),v:metric(o)-metric(prev),miss:o.missing.length>0||prev.missing.length>0};prev=o;return r});
-  const last12=res.slice(-12),byYear={};res.forEach(r=>byYear[r.y]=(byYear[r.y]||0)+r.v);
-  const retCard=`<div class="card"><h3>Rendement per maand</h3><p class="hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hasCash?'Stortingen':'Aankopen'} tellen niet als winst.</p>
-  ${bars(last12.map(r=>({v:r.v,label:monthLbl(r.ts),title:`${monthLbl(r.ts,{month:'long',year:'numeric'})}: ${signed(r.v)}`})))}
-  <table class="rt"><tr><th>Maand</th><th>Resultaat</th></tr>${[...last12].reverse().map(r=>`<tr><td>${monthLbl(r.ts,{month:'long',year:'numeric'})}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td></tr>`).join('')}</table>
-  <table class="rt" style="margin-top:10px"><tr><th>Jaar</th><th>Resultaat</th></tr>${Object.keys(byYear).sort().reverse().map(y=>`<tr><td>${y}${+y===nd.getFullYear()?' (tot nu)':''}</td><td class="m ${cls(byYear[y])}"><b>${signed(byYear[y])}</b></td></tr>`).join('')}</table></div>`;
+  // 2. rendement per dag/week/maand/jaar
+  const ru=PU[settings.repRet]?settings.repRet:'month',[RL,rl,RN]=PU[ru];
+  const resFor=(u,n)=>{const st=pList(u,first,now).slice(-n);let prev=snapshot(st[0],S);
+    return st.map(a=>{const o=snapshot(Math.min(pNext(u,a),now),S),r={ts:a,v:metric(o)-metric(prev),miss:o.missing.length>0||prev.missing.length>0};prev=o;return r})};
+  const res=resFor(ru,RN),yrs=ru==='year'?null:resFor('year',99);
+  const lblEvery=ru==='day'?5:1;
+  const retCard=`<div class="card"><h3>Rendement per ${rl}</h3>${pSeg('repRet',ru)}<p class="hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hasCash?'Stortingen':'Aankopen'} tellen niet als winst.${ru==='day'?' Per dag rekent de app met de dagkoers uit het archief.':''}</p>
+  ${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%lblEvery?'':pLabel(ru,r.ts),title:`${pLabel(ru,r.ts,true)}: ${signed(r.v)}`})))}
+  <table class="rt"><tr><th>${RL}</th><th>Resultaat</th></tr>${[...res].reverse().map((r,i)=>`<tr><td>${pLabel(ru,r.ts,true)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td></tr>`).join('')}
+  <tr><td><b>Totaal deze ${res.length} ${ru==='day'?'dagen':ru==='week'?'weken':ru==='month'?'maanden':'jaar'}</b></td><td class="m ${cls(res.reduce((s,r)=>s+r.v,0))}"><b>${signed(res.reduce((s,r)=>s+r.v,0))}</b></td></tr></table>
+  ${yrs?`<table class="rt" style="margin-top:10px"><tr><th>Jaar</th><th>Resultaat</th></tr>${[...yrs].reverse().map((r,i)=>`<tr><td>${pLabel('year',r.ts)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}"><b>${signed(r.v)}</b></td></tr>`).join('')}</table>`:''}</div>`;
 
   // 3. beste en slechtste munt
   const perf=coinIds().map(computeCoin).map(c=>{const r=(c.unreal||0)+c.realized;return{c,r,pc:c.totalBought>0?r/c.totalBought*100:null}}).sort((a,b)=>b.r-a.r);
   const perfCard=`<div class="card"><h3>Beste en slechtste munt</h3><p class="hint">Totaal resultaat per munt: ongerealiseerd + gerealiseerd, afgezet tegen alles wat je erin hebt gestoken.</p>
   <table class="rt">${perf.map((x,i)=>`<tr data-coin="${esc(x.c.coinId)}" style="cursor:pointer"><td>${i===0&&perf.length>1?'🏆 ':i===perf.length-1&&perf.length>1?'↓ ':''}${esc(x.c.meta.name)}</td><td class="m ${cls(x.r)}">${signed(x.r)}</td><td class="${cls(x.r)}">${pct(x.pc)}</td></tr>`).join('')}</table></div>`;
 
-  // 4. inleg
-  const inflow=months.map(([y,m])=>{const a=monthStart(y,m),b=monthStart(y,m+1);let v=0;for(const t of data.txs){const tt=txTime(t);if(tt<a||tt>=b)continue;if(hasCash){if(t.type==='deposit')v+=t.amount;else if(t.type==='withdraw')v-=t.amount}else if(t.type==='buy')v+=txTotal(t);else if(t.type==='sell')v-=txTotal(t)}return{ts:a,v}});
-  const firstIn=inflow.findIndex(x=>Math.abs(x.v)>0.005),n=firstIn<0?1:Math.min(12,inflow.length-firstIn),recent=inflow.slice(-n),avg=recent.reduce((s,x)=>s+x.v,0)/n;
+  // 4. inleg per dag/week/maand/jaar
+  const iu=PU[settings.repIn]?settings.repIn:'month',[IL,il,IN]=PU[iu];
+  const flowFor=(u,n)=>pList(u,first,now).slice(-n).map(a=>{const b=pNext(u,a);let v=0;for(const t of data.txs){const tt=txTime(t);if(tt<a||tt>=b)continue;
+    if(hasCash){if(t.type==='deposit')v+=t.amount;else if(t.type==='withdraw')v-=t.amount}else if(t.type==='buy')v+=txTotal(t);else if(t.type==='sell')v-=txTotal(t)}return{ts:a,v}});
+  const avgOf=fl=>{const f=fl.findIndex(x=>Math.abs(x.v)>0.005),n=f<0?fl.length:fl.length-f;return{n,avg:fl.slice(-n).reduce((s,x)=>s+x.v,0)/n}};
+  const inflow=flowFor(iu,IN),A=avgOf(inflow),M=avgOf(flowFor('month',12));   // vooruitblik altijd op basis van het maandgemiddelde
   const totalIn=hasCash?p.dep:p.cost,curVal=hasCash?p.total:p.value;
-  const inCard=`<div class="card kv"><h3>Inleg</h3><p class="hint">${hasCash?'Netto gestort (stortingen − opnames)':'Netto gekocht (aankopen − verkopen)'} per maand.</p>
-  ${bars(inflow.slice(-12).map(x=>({v:x.v,label:monthLbl(x.ts),title:`${monthLbl(x.ts,{month:'long',year:'numeric'})}: ${money(x.v,2)}`})),true)}
-  <div><span class="label">Gemiddeld per maand${n<12?` (laatste ${n} mnd)`:' (laatste 12 mnd)'}</span><b class="m">${money(avg,2)}</b></div>
+  const inCard=`<div class="card kv"><h3>Inleg</h3>${pSeg('repIn',iu)}<p class="hint">${hasCash?'Netto gestort (stortingen − opnames)':'Netto gekocht (aankopen − verkopen)'} per ${il}.</p>
+  ${bars(inflow.map((x,i)=>({v:x.v,label:(inflow.length-1-i)%(iu==='day'?5:1)?'':pLabel(iu,x.ts),title:`${pLabel(iu,x.ts,true)}: ${money(x.v,2)}`})),true)}
+  <div><span class="label">Gemiddeld per ${il} (laatste ${A.n} ${iu==='day'?(A.n>1?'dagen':'dag'):iu==='week'?(A.n>1?'weken':'week'):iu==='month'?'mnd':'jaar'})</span><b class="m">${money(A.avg,2)}</b></div>
   <div><span class="label">Totaal ingelegd</span><b class="m">${money(totalIn,2)}</b></div>
-  <div><span class="label">Inleg over 12 maanden bij dit tempo</span><b class="m">${money(totalIn+avg*12,2)}</b></div>
-  <div><span class="label">Waarde over 12 maanden bij gelijkblijvende koersen</span><b class="m">${money(curVal+avg*12,2)}</b></div></div>`;
+  <div><span class="label">Inleg over 12 maanden bij huidig maandtempo</span><b class="m">${money(totalIn+M.avg*12,2)}</b></div>
+  <div><span class="label">Waarde over 12 maanden bij gelijkblijvende koersen</span><b class="m">${money(curVal+M.avg*12,2)}</b></div></div>`;
 
   // 5. per broker / wallet
   const acc=acctSummary(),named=acc.some(a=>a.name);
@@ -1513,9 +1534,10 @@ async function securityAction(act,el){
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp]');if(!a)return;
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
   if(a.dataset.adir){setAlertDir(a.dataset.adir);return}
+  if(a.dataset.rp){const [k,u]=a.dataset.rp.split(':');settings[k]=u;saveSettings();renderReports();return}
   if(a.dataset.tf){txf.type=a.dataset.tf;fillTxs();return}
   if(a.dataset.sort){settings.sort=a.dataset.sort;saveSettings();render();return}
   if(a.dataset.prange){settings.pRange=a.dataset.prange;saveSettings();document.querySelectorAll('[data-prange]').forEach(b=>b.classList.toggle('on',b===a));drawPortfolioChart();return}
