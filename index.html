@@ -198,6 +198,23 @@ a{color:var(--accent)}
 .zoom-chart{overflow-x:auto;margin:4px -4px 0;padding:0 4px}
 .zoom .bars{height:320px}
 .zc-wrap{position:relative}
+/* rendementsgrafiek: staven + cumulatieve lijn op één gedeelde y-as */
+.cc{display:flex;gap:6px;margin:8px 0 4px}
+.cc-axis{position:relative;width:52px;flex:none;height:var(--h);font-size:10px;color:var(--muted)}
+.cc-axis span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap}
+.cc-scroll{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden}
+.cc-plot{position:relative;height:var(--h)}
+.cc-grid{position:absolute;left:0;right:0;border-top:1px dashed var(--line)}
+.cc-grid.z{border-top:1px solid var(--muted);opacity:.55}
+.cb{position:absolute;top:0;bottom:0}
+.cb i{position:absolute;left:10%;right:10%;border-radius:3px}
+.cb i.u{background:var(--green)}.cb i.d{background:var(--red)}
+.cb em{position:absolute;left:50%;transform:translateX(-50%);font-style:normal;font-size:10px;font-weight:600;white-space:nowrap;line-height:1.1}
+.cc.vt .cb em{writing-mode:vertical-rl;transform:translateX(-50%) rotate(180deg);font-size:9px}
+.cc-line{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.cc-x{position:relative;height:16px;font-size:10px;color:var(--muted)}
+.cc-x span{position:absolute;transform:translateX(-50%);top:3px;white-space:nowrap}
+.cc-last{position:absolute;right:0;transform:translateY(-130%);font-size:11px;font-weight:700;color:var(--yellow);background:var(--card);padding:0 4px;border-radius:4px;pointer-events:none;white-space:nowrap}
 .goal{padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .goal:last-of-type{border-bottom:0}
 .goal-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
@@ -902,7 +919,7 @@ function snapshot(ts,S){   // stand van je portfolio op tijdstip ts
 function cmp(v,sign){const a=Math.round(Math.abs(v)*100)/100,whole=Math.abs(a-Math.round(a))<0.005;
   return (v<0?'−':sign&&v>0?'+':'')+'€ '+new Intl.NumberFormat('nl-NL',{minimumFractionDigits:whole?0:2,maximumFractionDigits:whole?0:2}).format(a)}
 // zet bedragen verticaal als ze niet naast elkaar passen
-function fitBars(){document.querySelectorAll('.bars').forEach(b=>{b.classList.remove('vt');const bar=b.querySelector('.bar');if(!bar)return;const w=bar.clientWidth;
+function fitBars(){document.querySelectorAll('.bars,.cc').forEach(b=>{b.classList.remove('vt');const bar=b.querySelector('.bar,.cb');if(!bar)return;const w=bar.clientWidth;
   if([...b.querySelectorAll('em')].some(e=>e.scrollWidth>w+3))b.classList.add('vt')})}
 window.addEventListener('resize',()=>{clearTimeout(window._fb);window._fb=setTimeout(fitBars,150)});
 function bars(items,neutral){
@@ -948,12 +965,33 @@ function renderRetZoom(){
     <div class="stat"><div class="label">Slechtste ${l}</div><div class="val m ${cls(worst.v)}">${signed(worst.v)}</div><div class="label" style="font-size:12px">${pLabel(u,worst.ts,true)}</div></div>
     <div class="stat"><div class="label">In de plus</div><div class="val">${pos} van ${res.length}</div><div class="label" style="font-size:12px">${Math.round(pos/res.length*100)}% van de ${many}</div></div>
   </div>
-  <div class="card"><div class="zoom-chart" id="zchart"><div class="zc-wrap" style="min-width:${res.length*(u==='day'?18:28)}px">${cumLine(res)}${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%(u==='day'?7:u==='week'?4:1)?'':pLabel(u,r.ts),title:`${pLabel(u,r.ts,true)}: ${signed(r.v)}`})))}</div></div>
+  <div class="card">${retChart(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%(u==='day'?7:u==='week'?4:1)?'':pLabel(u,r.ts),title:`${pLabel(u,r.ts,true)}: ${signed(r.v)}`})),{h:360,id:'zchart',minW:res.length*(u==='day'?18:30)})}
   <div class="zlegend"><span><i></i>Resultaat per ${l}</span><span><i class="ln"></i>Cumulatief resultaat</span></div>
   <p class="hint" style="margin-top:8px">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hc?'Stortingen':'Aankopen'} tellen niet als winst. Veeg of scroll de grafiek opzij voor eerdere periodes; op de laptop toont de muis op een staaf de details.</p></div>
   <div class="card" style="margin-top:14px"><table class="rt"><tr><th>${L}</th><th>Resultaat</th><th>Cumulatief</th><th>${hc?'Totale waarde':'Waarde crypto'} aan eind</th></tr>
   ${rows.map((r,i)=>`<tr><td>${pLabel(u,r.ts,true)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td><td class="m ${cls(r.cum)}">${signed(r.cum)}</td><td class="m">${money(r.end,2)}</td></tr>`).join('')}</table></div></div>`;
   fitBars();const zc=$('#zchart');zc.scrollLeft=zc.scrollWidth;   // nieuwste periode in beeld
+}
+// Rendementsgrafiek met één y-as voor staven (resultaat per periode) én lijn (cumulatief)
+function niceStep(raw){const p=10**Math.floor(Math.log10(raw)),r=raw/p;return (r<1.5?1:r<3?2:r<7?5:10)*p}
+function retChart(items,o={}){
+  const n=items.length;if(!n)return '';
+  const H=o.h||200;let c=0;const cum=items.map(i=>c+=i.v);
+  let lo=Math.min(0,...items.map(i=>i.v),...cum),hi=Math.max(0,...items.map(i=>i.v),...cum);if(hi-lo<1e-9)hi=lo+1;
+  const pad=(hi-lo)*(n>6?0.28:0.14);if(hi>0)hi+=pad;if(lo<0)lo-=pad;   // ruimte voor de bedragen bij de staven
+  const step=niceStep((hi-lo)/4),ticks=[];for(let t=Math.ceil(lo/step)*step;t<=hi+1e-9;t+=step)ticks.push(Math.abs(t)<step/1e6?0:t);
+  lo=Math.min(lo,ticks[0]);hi=Math.max(hi,ticks[ticks.length-1]);
+  const Y=v=>(hi-v)/(hi-lo)*100,y0=Y(0),w=100/n;
+  const fmtT=v=>(v<0?'−':'')+'€ '+new Intl.NumberFormat('nl-NL',{maximumFractionDigits:step<1?2:0,minimumFractionDigits:step<1?2:0}).format(Math.abs(v));
+  const bars=items.map((it,i)=>{const v=it.v,a=Math.min(Y(v),y0),h=Math.abs(Y(v)-y0),lab=Math.abs(v)<0.005?'':cmp(v,true);
+    return `<div class="cb" style="left:${(i*w).toFixed(4)}%;width:${w.toFixed(4)}%" title="${esc(it.title||'')}"><i class="${v>=0?'u':'d'}" style="top:${a.toFixed(3)}%;height:${Math.max(h,0.4).toFixed(3)}%"></i>
+      ${lab?`<em class="m ${v>=0?'up':'down'}" style="${v>=0?`bottom:calc(${(100-a).toFixed(3)}% + 2px)`:`top:calc(${(a+h).toFixed(3)}% + 2px)`}">${lab}</em>`:''}</div>`}).join('');
+  const pts=cum.map((v,i)=>`${((i+0.5)*w*10).toFixed(2)},${Y(v).toFixed(3)}`).join(' ');
+  const line=o.line===false?'':`<svg class="cc-line" viewBox="0 0 1000 100" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#f5b942" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+    <span class="cc-last m" style="top:${Y(cum[n-1]).toFixed(3)}%">${signed(cum[n-1])}</span>`;
+  return `<div class="cc" style="--h:${H}px"><div class="cc-axis">${ticks.map(t=>`<span class="m" style="top:${Y(t).toFixed(3)}%">${fmtT(t)}</span>`).join('')}</div>
+  <div class="cc-scroll"${o.id?` id="${o.id}"`:''}><div style="min-width:${o.minW||0}px"><div class="cc-plot">${ticks.map(t=>`<div class="cc-grid${t===0?' z':''}" style="top:${Y(t).toFixed(3)}%"></div>`).join('')}${bars}${line}</div>
+  <div class="cc-x">${items.map((it,i)=>it.label?`<span style="left:${((i+0.5)*w).toFixed(3)}%">${it.label}</span>`:'').join('')}</div></div></div></div>`;
 }
 // lijn met het opgetelde resultaat over de staven heen (eigen schaal, zodat hij altijd goed zichtbaar is)
 function cumLine(res){
@@ -991,7 +1029,7 @@ function renderReports(){
   const res=resFor(ru,RN),yrs=ru==='year'?null:resFor('year',99);
   const lblEvery=ru==='day'?5:1;
   const retCard=`<div class="card zoomable" data-act="zoomret"><h3>Rendement per ${rl} <span class="zoom-hint">Vergroten ⤢</span></h3>${pSeg('repRet',ru)}<p class="hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hasCash?'Stortingen':'Aankopen'} tellen niet als winst.${ru==='day'?' Per dag rekent de app met de dagkoers uit het archief.':''}</p>
-  <div class="zc-wrap">${cumLine(res)}${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%lblEvery?'':pLabel(ru,r.ts),title:`${pLabel(ru,r.ts,true)}: ${signed(r.v)}`})))}</div>
+  ${retChart(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%lblEvery?'':pLabel(ru,r.ts),title:`${pLabel(ru,r.ts,true)}: ${signed(r.v)}`})),{h:210})}
   <div class="zlegend" style="margin:2px 0 10px"><span><i></i>Resultaat per ${rl}</span><span><i class="ln"></i>Cumulatief</span></div>
   <table class="rt"><tr><th>${RL}</th><th>Resultaat</th></tr>${[...res].reverse().map((r,i)=>`<tr><td>${pLabel(ru,r.ts,true)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td></tr>`).join('')}
   <tr><td><b>Totaal deze ${res.length} ${ru==='day'?'dagen':ru==='week'?'weken':ru==='month'?'maanden':'jaar'}</b></td><td class="m ${cls(res.reduce((s,r)=>s+r.v,0))}"><b>${signed(res.reduce((s,r)=>s+r.v,0))}</b></td></tr></table>
