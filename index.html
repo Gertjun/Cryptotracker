@@ -304,7 +304,7 @@ async function cg(path){
   while(cgActive>=2)await new Promise(r=>cgWait.push(r));
   cgActive++;
   try{
-    const key=(settings.gh.cgKey||'').trim();
+    const key=(data.cfg?.cgKey||'').trim();
     const url=API+path+(key?(path.includes('?')?'&':'?')+'x_cg_demo_api_key='+encodeURIComponent(key):'');
     for(let i=0;;i++){
       let r=null;
@@ -729,8 +729,8 @@ function openSettings(){
   <p class="hint">Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span style="color:var(--red)">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
   <button class="btn" data-act="savesync">Opslaan en synchroniseren</button>
   <div class="section-t">Koersdata</div>
-  <p class="hint" style="margin-top:0">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener">coingecko.com/en/api</a> → Demo (gratis account).</p>
-  <div class="field"><label>CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" type="password" value="${esc(settings.gh.cgKey||'')}" placeholder="CG-…" autocomplete="off" autocapitalize="off"></div>
+  <p class="hint" style="margin-top:0">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener">coingecko.com/en/api</a> → Demo (gratis account).</p>
+  <div class="field"><label>CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" type="password" value="${esc(data.cfg?.cgKey||'')}" placeholder="CG-…" autocomplete="off" autocapitalize="off"></div>
   <button class="btn sec" data-act="savecg">Sleutel opslaan en testen</button>
   <div class="section-t">Back-up</div>
   <div class="two"><button class="btn sec" data-act="export">Exporteren</button><button class="btn sec" data-act="import">Importeren</button></div>
@@ -749,7 +749,7 @@ function exportData(){
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
-    data=merge(data,{txs:j.txs,deleted:j.deleted||[]});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
+    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
 
@@ -765,9 +765,10 @@ const b64ToUtf8=s=>dec.decode(b64ToBuf(s.replace(/\s/g,'')));
 function merge(a,b){
   const deleted=[...new Set([...(a.deleted||[]),...(b.deleted||[])])],del=new Set(deleted),m=new Map();
   for(const t of [...(a.txs||[]),...(b.txs||[])]){if(del.has(t.id))continue;const e=m.get(t.id);if(!e||(t.mod||0)>(e.mod||0))m.set(t.id,t)}
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0)};
+  const ca=a.cfg||{mod:0},cb=b.cfg||{mod:0},cfg=(cb.mod||0)>(ca.mod||0)?cb:ca;   // nieuwste instelling wint
+  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{})};
 }
-const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort()]);
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
 function setSync(s,msg=''){syncState={s,msg};document.querySelectorAll('.sync').forEach(el=>el.outerHTML=syncBadge())}
 let syncing=false,syncAgain=false;
@@ -921,8 +922,8 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{if(p&&form&&form.coin?.id===c.id){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
-    case 'savecg':(async()=>{settings.gh.cgKey=$('#s_cg').value.trim();saveSettings();
-      try{const r=await cg('/ping');toast(r.ok?(settings.gh.cgKey?'Sleutel werkt':'Sleutel verwijderd'):r.status===401||r.status===400?'Sleutel ongeldig':'CoinGecko gaf fout '+r.status)}catch(e){toast(e.message)}
+    case 'savecg':(async()=>{const nk=$('#s_cg').value.trim();if(nk!==(data.cfg?.cgKey||'')){data.cfg={cgKey:nk,mod:Date.now()};saveData()}
+      try{const r=await cg('/ping');toast(r.ok?(nk?'Sleutel werkt':'Sleutel verwijderd'):r.status===401||r.status===400?'Sleutel ongeldig':'CoinGecko gaf fout '+r.status)}catch(e){toast(e.message)}
       refreshPrices()})();break;
     case 'add':$('#btnAdd').click();break;
     case 'unlockpk':tryPasskey(false);break;
@@ -959,7 +960,9 @@ document.addEventListener('visibilitychange',()=>{
 });
 setInterval(()=>{if(!document.hidden)refreshPrices()},60000);
 
-function start(){document.body.classList.remove('locked');render();refreshPrices();syncNow(true)}
+function start(){document.body.classList.remove('locked');
+  if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
+  render();refreshPrices();syncNow(true)}
 if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
 else start();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
