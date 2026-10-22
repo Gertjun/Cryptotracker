@@ -198,6 +198,27 @@ a{color:var(--accent)}
 .zoom-chart{overflow-x:auto;margin:4px -4px 0;padding:0 4px}
 .zoom .bars{height:320px}
 .zc-wrap{position:relative}
+.iss{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.iss:last-child{border-bottom:0}
+.iss[data-tx],.iss[data-act]{cursor:pointer}
+.iss b{flex:none;width:20px;text-align:center}
+.iss.warn b{color:var(--yellow)}.iss.info b{color:var(--accent)}
+.iss .go{margin-left:auto;color:var(--accent);flex:none;font-size:13px}
+.banner{display:flex;align-items:center;gap:10px;width:100%;border:1px solid rgba(245,185,66,.35);background:rgba(245,185,66,.1);color:var(--text);border-radius:14px;padding:10px 14px;margin:4px 0 14px;font-size:14px;cursor:pointer;text-align:left}
+.banner b{color:var(--yellow)}
+.banner span:last-child{margin-left:auto;color:var(--accent);font-weight:600}
+#upd{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:70;background:var(--accent);color:#fff;border-radius:14px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px;font-weight:600;max-width:calc(100vw - 32px)}
+#upd button{background:#fff;color:#1a3a8f;border:0;border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer}
+#print{display:none}
+@media print{
+  body.printing>*:not(#print){display:none!important}
+  body.printing{background:#fff!important;padding:0}
+  body.printing #print{display:block;color:#111;font:11pt/1.4 -apple-system,Segoe UI,Roboto,sans-serif}
+  #print h1{font-size:18pt;margin:0 0 2pt}#print h2{font-size:12.5pt;margin:16pt 0 6pt;border-bottom:1px solid #999;padding-bottom:3pt}
+  #print table{width:100%;border-collapse:collapse;font-size:9.5pt}#print th,#print td{border-bottom:1px solid #ddd;padding:3pt 4pt;text-align:right}
+  #print th:first-child,#print td:first-child{text-align:left}#print th{background:#f2f2f2}
+  #print .sm{color:#555;font-size:9pt}#print .tot td{font-weight:700;border-top:1.5px solid #333}
+}
 /* rendementsgrafiek: staven + cumulatieve lijn op één gedeelde y-as */
 .cc{display:flex;gap:6px;margin:8px 0 4px}
 .cc-axis{position:relative;width:52px;flex:none;height:var(--h);font-size:10px;color:var(--muted)}
@@ -336,6 +357,7 @@ a{color:var(--accent)}
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
+const APP_VERSION='31 (22 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -638,7 +660,7 @@ function renderTxs(){
   if(txf.coin!=='all'&&!coins.some(c=>c.coinId===txf.coin))txf.coin='all';
   if(txf.year!=='all'&&!years.includes(txf.year))txf.year='all';
   const accts=accounts();if(txf.acct!=='all'&&!accts.includes(txf.acct))txf.acct='all';
-  $('#view').innerHTML=`<div style="text-align:right;margin:-6px 0 6px"><button class="link" data-act="bvimport">Importeren uit Bitvavo</button></div><div class="filters">
+  $('#view').innerHTML=`<div style="display:flex;justify-content:flex-end;gap:16px;margin:-6px 0 6px"><button class="link" data-act="csvfiltered">Exporteren (CSV)</button><button class="link" data-act="bvimport">Importeren uit Bitvavo</button></div><div class="filters">
     <input id="tf_q" type="search" placeholder="Zoek op munt of notitie" value="${esc(txf.q)}" autocomplete="off">
     <div class="seg">${[['all','Alle'],['buy','Koop'],['sell','Verkoop'],...(hasCashTx()?[['cash','Cash']]:[]),...(data.txs.some(t=>isOther(t.type))?[['other','Overig']]:[])].map(([v,l])=>`<button data-tf="${v}" class="${v} ${txf.type===v?'on':''}">${l}</button>`).join('')}</div>
     <select id="tf_coin"><option value="all">Alle munten</option>${coins.map(c=>`<option value="${esc(c.coinId)}"${txf.coin===c.coinId?' selected':''}>${esc(c.meta.name)}</option>`).join('')}</select>
@@ -769,7 +791,7 @@ function renderHome(){
     <div><span class="label">Laatste 24 uur</span><b class="${cls(p.ch24)}"><span class="m">${signed(p.ch24)}</span> <small>${pct(p.ch24Pct)}</small></b></div>
     <div><span class="label">Gerealiseerd</span><b class="m ${cls(p.realized)}">${signed(p.realized)}</b></div>
     <div><span class="label">Open posities</span><b>${p.open.length}</b></div></div>`;
-  $('#view').innerHTML=`<div class="home-grid"><div class="panel">
+  $('#view').innerHTML=`${issuesBanner()}<div class="home-grid"><div class="panel">
   <section class="hero">
     <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
     <div class="big m" id="heroVal">${money(p.hasCash?p.total:p.value,2)}</div>
@@ -1065,9 +1087,88 @@ function renderReports(){
   // volgorde: rendement en inleg naast elkaar, daaronder beste/slechtste munt en brokers, onderaan 1 januari
   // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
   const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
-  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(perfCard,4)}${ord(benchCard(),5)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(accCard,6)}${ord(janCard,7)}</div></div>`;
+  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(perfCard,4)}${ord(benchCard(),5)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(checkCard(),6)}${ord(accCard,7)}${ord(janCard,8)}${ord(exportCard(),9)}</div></div>`;
   fitBars();
 }
+/* ---------- exporteren ---------- */
+function download(name,text,mime){const b=new Blob([text],{type:mime}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+// CSV voor Nederlandse Excel: puntkomma als scheidingsteken, komma als decimaalteken, UTF-8 met BOM
+function exportCSV(list,name){
+  const n=v=>v==null||v===''?'':String(+(+v).toPrecision(15)).replace('.',','),q=v=>{v=String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const rows=[['Datum','Tijd','Type','Munt','Symbool','Aantal','Koers (EUR)','Totaal (EUR)','Kosten (EUR)','Netwerkkosten (munt)','Broker/wallet','Naar','Notitie','ID']];
+  for(const t of [...list].sort((a,b)=>a.date.localeCompare(b.date))){
+    const cash=isCash(t.type);
+    rows.push([t.date.slice(0,10),t.date.slice(11,19),TYPE_L[t.type],cash?'Cash':t.name,cash?'EUR':(t.symbol||'').toUpperCase(),cash?'':n(t.qty),cash||isOther(t.type)?'':n(t.price),
+      cash?n(t.amount):isOther(t.type)?'':n(Math.round(txTotal(t)*100)/100),n(t.fee||''),t.feeQty?n(t.feeQty):'',t.acct||'',t.to||'',t.note||'',t.id]);
+  }
+  download(name||`crypto-transacties-${new Date().toISOString().slice(0,10)}.csv`,'﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n'),'text/csv;charset=utf-8');
+}
+// Jaaroverzicht: opgemaakt om af te drukken of als PDF op te slaan (via het printvenster)
+function printYear(Y){
+  const S={};coinIds().forEach(id=>S[id]=coinStates(id));
+  const a=new Date(Y,0,1).getTime(),bEnd=new Date(Y+1,0,1).getTime(),now=Date.now(),isCur=bEnd>now,b=isCur?now:bEnd;
+  const o1=snapshot(a,S),o2=snapshot(b,S),hc=hasCashTx(),metric=o=>hc?o.total-o.dep:o.crypto-o.inv+o.real;
+  const inY=data.txs.filter(t=>{const tt=txTime(t);return tt>=a&&tt<bEnd}).sort((x,y)=>x.date.localeCompare(y.date));
+  let real=0,fees=0,dep=0,wd=0,buy=0,sell=0;
+  for(const id of coinIds()){const c=computeCoin(id);for(const t of c.txs){const tt=txTime(t);if(tt<a||tt>=bEnd)continue;const si=c.sellInfo[t.id];if(si?.pl!=null)real+=si.pl}}
+  for(const t of inY){fees+=t.fee||0;if(t.type==='deposit')dep+=t.amount;else if(t.type==='withdraw')wd+=t.amount;else if(t.type==='buy')buy+=txTotal(t);else if(t.type==='sell')sell+=txTotal(t)}
+  const dl=ts=>new Date(ts).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+  const snapT=(o,label)=>`<h2>${label}</h2><table><tr><th>Munt</th><th>Aantal</th><th>Koers</th><th>Waarde</th></tr>
+    ${o.coins.map(c=>`<tr><td>${esc(c.name||c.id)} (${esc((c.symbol||'').toUpperCase())})</td><td>${qtyf(c.qty)}</td><td>${c.price!=null?money(c.price):'onbekend'}</td><td>${c.value!=null?money(c.value,2):'–'}</td></tr>`).join('')}
+    ${hc?`<tr><td>Cash</td><td></td><td></td><td>${money(o.cash,2)}</td></tr>`:''}
+    <tr class="tot"><td>Totaal</td><td></td><td></td><td>${money(hc?o.total:o.crypto,2)}</td></tr></table>${o.missing.length?`<p class="sm">Geen koers bekend voor ${o.missing.join(', ')}; niet meegeteld.</p>`:''}`;
+  let el=$('#print');if(!el){el=document.createElement('div');el.id='print';document.body.appendChild(el)}
+  el.innerHTML=`<h1>Crypto Portfolio · Jaaroverzicht ${Y}</h1><div class="sm">Gemaakt op ${dl(now)}${isCur?' · lopend jaar, eindstand is vandaag':''}</div>
+  ${snapT(o1,`Stand op 1 januari ${Y} (peildatum)`)}
+  ${snapT(o2,isCur?`Stand vandaag (${dl(now)})`:`Stand op 1 januari ${Y+1}`)}
+  <h2>Samenvatting ${Y}</h2><table>
+    ${hc?`<tr><td>Gestort</td><td>${money(dep,2)}</td></tr><tr><td>Opgenomen</td><td>${money(wd,2)}</td></tr>`:''}
+    <tr><td>Gekocht (incl. kosten)</td><td>${money(buy,2)}</td></tr><tr><td>Verkocht (na kosten)</td><td>${money(sell,2)}</td></tr>
+    <tr><td>Betaalde transactiekosten</td><td>${money(fees,2)}</td></tr>
+    <tr><td>Gerealiseerde winst/verlies (FIFO)</td><td>${signed(real)}</td></tr>
+    <tr class="tot"><td>Rendement ${Y}${isCur?' (tot nu)':''}</td><td>${signed(metric(o2)-metric(o1))}</td></tr></table>
+  <h2>Transacties ${Y} (${inY.length})</h2><table><tr><th>Datum</th><th>Type</th><th>Munt</th><th>Aantal</th><th>Koers</th><th>Totaal</th><th>Kosten</th><th>Broker/wallet</th></tr>
+    ${inY.map(t=>`<tr><td>${new Date(t.date).toLocaleDateString('nl-NL')}</td><td>${TYPE_L[t.type]}</td><td>${isCash(t.type)?'Cash':esc((t.symbol||'').toUpperCase())}</td><td>${isCash(t.type)?'':qtyf(t.qty)}</td><td>${isCash(t.type)||isOther(t.type)?'':priceF(t.price)}</td><td>${isCash(t.type)?money(t.amount,2):isOther(t.type)?'':money(txTotal(t),2)}</td><td>${t.type==='transfer'?(t.feeQty?qtyf(t.feeQty)+' '+esc((t.symbol||'').toUpperCase()):''):t.fee?money(t.fee,2):''}</td><td>${esc(t.type==='transfer'?`${t.acct||''} → ${t.to||''}`:t.acct||'')}</td></tr>`).join('')}</table>
+  <p class="sm" style="margin-top:14pt">Waarden op basis van dagkoersen (CoinGecko) uit het koersarchief van de app. Dit overzicht is een hulpmiddel, geen fiscaal advies; controleer de regels van de Belastingdienst.</p>`;
+  document.body.classList.add('printing');
+  const done=()=>{document.body.classList.remove('printing');window.removeEventListener('afterprint',done)};
+  window.addEventListener('afterprint',done);setTimeout(()=>window.print(),50);
+}
+function exportCard(){
+  const ys=[...new Set(data.txs.map(t=>+t.date.slice(0,4)))].sort((a,b)=>b-a);
+  return `<div class="card"><h3>Exporteren</h3><p class="hint">Je transacties voor Excel, of een jaaroverzicht om te bewaren of af te drukken (kies "Opslaan als PDF" in het printvenster).</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select class="bench-sel" id="py">${ys.map(y=>`<option>${y}</option>`).join('')}</select>
+  <button class="btn sec" style="width:auto;margin:0;padding:10px 14px" data-act="printyear">Jaaroverzicht (PDF)</button>
+  <button class="btn sec" style="width:auto;margin:0;padding:10px 14px" data-act="csvall">Transacties (CSV)</button></div></div>`;
+}
+
+/* ---------- controle van je gegevens ---------- */
+function dataIssues(){
+  const out=[],p=portfolio(),d=ts=>new Date(ts).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}),S=t=>esc((t.symbol||'').toUpperCase());
+  if(p.hasCash&&p.cash<-0.005)out.push({lvl:'warn',t:`Je cash staat negatief (${money(p.cash,2)}). Er ontbreekt een storting, of een aankoop of de kosten zijn te hoog ingevoerd.`,act:'cashtx'});
+  for(const a of acctSummary()){
+    if(a.name&&a.hasCash&&a.cash<-0.005&&Math.abs(a.cash-p.cash)>0.005)out.push({lvl:'warn',t:`${esc(a.name)}: cash staat negatief (${money(a.cash,2)}).`,act:'cashtx'});
+    for(const c of a.coins)if(c.qty<-1e-9)out.push({lvl:'warn',t:`${esc(a.name||'Zonder broker/wallet')}: ${qtyf(c.qty)} ${esc((c.symbol||'').toUpperCase())}, dat kan niet. Controleer de overboekingen van en naar deze plek.`});
+  }
+  for(const id of coinIds()){const c=computeCoin(id);
+    for(const t of c.txs)if(c.sellInfo[t.id]?.oversold)out.push({lvl:'warn',t:`Verkoop ${qtyf(t.qty)} ${S(t)} op ${d(txTime(t))}: meer verkocht dan je op dat moment had.`,tx:t.id});
+    if(c.qty>1e-12&&c.price==null)out.push({lvl:'info',t:`Nog geen actuele koers voor ${esc(c.meta.name)}. Klopt de munt-koppeling?`});
+  }
+  const off=data.txs.filter(t=>(t.type==='buy'||t.type==='sell')&&Math.abs(txTotal(t)*100-Math.round(txTotal(t)*100))>1e-6);
+  off.slice(0,5).forEach(t=>out.push({lvl:'warn',t:`${esc(t.name)} op ${d(txTime(t))}: totaal ${plainNum(txTotal(t))} is geen heel bedrag in centen. Neem het betaalde bedrag over van je afschrift.`,tx:t.id}));
+  if(off.length>5)out.push({lvl:'warn',t:`En nog ${off.length-5} transactie${off.length-5>1?'s':''} met een totaal dat niet op hele centen uitkomt (zie ≈ bij Transacties).`});
+  data.txs.filter(t=>txTime(t)>Date.now()+6e4).forEach(t=>out.push({lvl:'warn',t:`${TYPE_L[t.type]} ${isCash(t.type)?money(t.amount,2):esc(t.name)} heeft een datum in de toekomst (${d(txTime(t))}).`,tx:t.id}));
+  const seen={};for(const t of data.txs){const k=[t.type,t.coinId,t.qty??t.amount,t.date.slice(0,16)].join('|');if(seen[k])out.push({lvl:'info',t:`Mogelijk dubbel ingevoerd: ${TYPE_L[t.type]} ${isCash(t.type)?money(t.amount,2):qtyf(t.qty)+' '+S(t)} op ${d(txTime(t))}.`,tx:t.id});seen[k]=1}
+  data.txs.filter(t=>t.type==='receive'&&/externe wallet/i.test(t.note||'')).slice(0,3).forEach(t=>out.push({lvl:'info',t:`${qtyf(t.qty)} ${S(t)} van een externe wallet (${d(txTime(t))}) staat op aankoopprijs € 0. Was dit een aankoop elders, voer die dan in als Koop.`,tx:t.id}));
+  if(syncState.s==='err')out.push({lvl:'info',t:`GitHub-synchronisatie mislukt: ${esc(syncState.msg)}.`,act:'settings'});
+  if(data.txs.length&&!(settings.gh.token&&settings.gh.repo)&&Date.now()-(settings.lastExport||0)>60*864e5)out.push({lvl:'info',t:'Je gegevens staan alleen op dit apparaat. Maak een back-up of zet GitHub-synchronisatie aan.',act:'export'});
+  return out;
+}
+function issuesList(list){return list.map(i=>`<div class="iss ${i.lvl}"${i.tx?` data-tx="${esc(i.tx)}"`:i.act?` data-act="${i.act}"`:''}><b>${i.lvl==='warn'?'⚠':'ℹ'}</b><span>${i.t}</span>${i.tx||i.act?'<span class="go">›</span>':''}</div>`).join('')}
+function issuesBanner(){const w=dataIssues().filter(i=>i.lvl==='warn');return w.length?`<button class="banner" data-act="issues"><b>⚠</b><span>${w.length} aandachtspunt${w.length>1?'en':''} in je gegevens</span><span>Bekijken</span></button>`:''}
+function checkCard(){const l=dataIssues();return `<div class="card"><h3>Controle</h3>${l.length?`<p class="hint">De app controleert je gegevens op dingen die niet kloppen. Tik op een punt om het te bekijken.</p>${issuesList(l)}`:'<p class="hint" style="margin-bottom:0"><span class="up">✓ Alles klopt.</span> Geen negatieve saldi, afrondingsverschillen of dubbele transacties gevonden.</p>'}</div>`}
+function openIssues(){openSheet(`<h3>Controle</h3>${issuesList(dataIssues())||'<p class="hint">Alles klopt.</p>'}`)}
+
 /* ---------- doelen ---------- */
 // Doel: streefbedrag op een datum. Voortgang = je huidige waarde (crypto + cash als je cash bijhoudt).
 function monthlyInflow(){   // gemiddelde netto inleg per maand over de laatste 12 maanden
@@ -1584,11 +1685,12 @@ function openSettings(){
   <button class="btn sec" data-act="refresh" style="margin-top:10px">Koersen nu verversen</button>
   <div class="section-t">Gevarenzone</div>
   <button class="btn danger" data-act="wipe">Alle transacties wissen</button>
-  <p class="hint" style="text-align:center;margin-top:14px">Koersdata: CoinGecko · ${data.txs.length} transacties</p>`);
+  <p class="hint" style="text-align:center;margin-top:14px">Koersdata: CoinGecko · ${data.txs.length} transacties · versie ${APP_VERSION}</p>`);
   $('#s_file').onchange=importFile;
   const sa=$('#s_auto');if(sa)sa.onchange=()=>{lockCfg.autoLock=+sa.value;saveLock()};
 }
 function exportData(){
+  settings.lastExport=Date.now();saveSettings();
   const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 }
@@ -1777,6 +1879,11 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{const el=$('#f_price');if(p&&form&&form.coin?.id===c.id&&el&&form.edits.length<2){form.price=el.value=plainNum(p);recalc('price')}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'issues':openIssues();break;
+    case 'csvall':exportCSV(data.txs);break;
+    case 'csvfiltered':{const ids=new Set([...document.querySelectorAll('#txOut .only-m [data-tx]')].map(e=>e.dataset.tx));exportCSV(data.txs.filter(t=>ids.has(t.id)));break}
+    case 'printyear':printYear(+($('#py')?.value||new Date().getFullYear()));break;
+    case 'reload':location.reload();break;
     case 'addgoal':openGoal();break;
     case 'savegoal':saveGoal(a.dataset.id);break;
     case 'delgoal':{const g=(data.goals||[]).find(x=>x.id===a.dataset.id);if(g&&confirm('Dit doel verwijderen?')){g.del=true;g.mod=Date.now();saveData();closeSheet();render()}break}
@@ -1844,7 +1951,16 @@ function start(){document.body.classList.remove('locked');migrateAccounts();clea
   render();refreshPrices();syncNow(true)}
 if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
 else start();
-if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+// Nieuwe versie online gezet? De service worker haalt hem op; dan verschijnt een melding om te vernieuwen.
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  let hadCtrl=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtrl)showUpdate();hadCtrl=true});
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    const chk=()=>reg.update().catch(()=>{});setInterval(chk,30*60e3);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
+  }).catch(()=>{});
+}
+function showUpdate(){if($('#upd'))return;const d=document.createElement('div');d.id='upd';d.innerHTML='Nieuwe versie beschikbaar <button data-act="reload">Vernieuwen</button>';document.body.appendChild(d)}
 </script>
 </body>
 </html>
