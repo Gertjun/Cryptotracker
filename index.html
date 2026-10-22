@@ -13,7 +13,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#0b0d12;--card:#151922;--card2:#1c212c;--line:#262c39;--text:#eef1f6;--muted:#8b93a5;--green:#1fd17a;--red:#ff5a5f;--accent:#4f8cff;--yellow:#f5b942}
+:root{--sheet:#121620;--side:#0f1218;--tab:rgba(11,13,18,.94);--toast:#2a3040;--bg:#0b0d12;--card:#151922;--card2:#1c212c;--line:#262c39;--text:#eef1f6;--muted:#8b93a5;--green:#1fd17a;--red:#ff5a5f;--accent:#4f8cff;--yellow:#f5b942}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;font-variant-numeric:tabular-nums}
 body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overscroll-behavior-y:contain}
@@ -84,7 +84,7 @@ details.closed summary{color:var(--muted);font-size:13px;cursor:pointer;padding:
 .sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .sheet.hidden{display:none}
 .sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:fade .2s}
-.sheet-card{position:relative;background:#121620;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+.sheet-card{position:relative;background:var(--sheet);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));animation:up .22s ease-out}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
 @keyframes up{from{transform:translateY(40px);opacity:.4}}
 @keyframes fade{from{opacity:0}}
@@ -110,10 +110,17 @@ details.closed summary{color:var(--muted);font-size:13px;cursor:pointer;padding:
 .chosen button{margin-left:auto;background:none;border:0;color:var(--accent);cursor:pointer}
 .hint{font-size:12px;color:var(--muted);margin:-4px 2px 12px}
 .section-t{font-size:13px;color:var(--muted);margin:18px 2px 8px;text-transform:uppercase;letter-spacing:.4px}
-#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:#2a3040;color:var(--text);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60;max-width:90vw;text-align:center}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--toast);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
 .private .m{filter:blur(7px);user-select:none}
 a{color:var(--accent)}
+/* lichte weergave */
+:root.light{--sheet:#ffffff;--side:#fbfbfc;--tab:rgba(255,255,255,.94);--toast:#1f2430;--bg:#f3f4f7;--card:#ffffff;--card2:#eceef2;--line:#e2e5ea;--text:#151821;--muted:#6b7280;--green:#0fa968;--red:#e5484d;--accent:#2563eb;--yellow:#b7791f}
+.light .card,.light .stat,.light .list,.light .tbl-wrap,.light .icon-btn,.light .pl-toggle{box-shadow:0 1px 2px rgba(16,24,40,.06),0 0 0 1px rgba(16,24,40,.04)}
+.light .tx-type.transfer{color:#4b5563;background:#e5e7eb}
+.light .seg button.on.buy,.light .btn,.light .fab,.light .btn-add{color:#fff}
+.light .btn.sec{color:var(--text)}.light .btn.danger{color:var(--red)}
+.light .tabbar{border-top-color:var(--line)}
 .lock{text-align:center;padding:12vh 8px 0;max-width:360px;margin:0 auto}
 .lock-ic{width:76px;height:76px;border-radius:24px;background:var(--card);display:grid;place-items:center;margin:0 auto 18px;color:var(--green)}
 .lock-ic svg{width:36px;height:36px}
@@ -147,7 +154,7 @@ a{color:var(--accent)}
 .coin-cell{display:flex;align-items:center;gap:12px}
 .tbl th:first-child,.tbl td:first-child{padding-left:16px}.tbl th:last-child,.tbl td:last-child{padding-right:16px}
 .note-cell{color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis}
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:center;background:rgba(11,13,18,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:center;background:var(--tab);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom))}
 .tabbar button{flex:1;max-width:200px;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:6px 0;cursor:pointer}
 .tabbar svg{width:23px;height:23px}
 .tabbar button.on{color:var(--text)}
@@ -191,6 +198,15 @@ a{color:var(--accent)}
 .zoom-chart{overflow-x:auto;margin:4px -4px 0;padding:0 4px}
 .zoom .bars{height:320px}
 .zc-wrap{position:relative}
+.goal{padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.goal:last-of-type{border-bottom:0}
+.goal-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.gbar{height:8px;border-radius:4px;background:var(--card2);overflow:hidden;margin:7px 0 5px}
+.gbar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.gbar i.done{background:var(--green)}
+.bench-sel{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:6px 8px;color:var(--text);font-size:14px;max-width:100%}
+.bchart{position:relative;height:150px;margin:10px 0 4px}
+.bchart svg{width:100%;height:100%;display:block;overflow:visible}
 .zc-line{position:absolute;left:0;top:0;width:100%;height:calc(100% - 17px);pointer-events:none;overflow:visible}
 .zc-last{position:absolute;right:0;transform:translateY(-120%);font-size:11px;font-weight:700;color:var(--yellow);background:var(--card);padding:0 4px;border-radius:4px;pointer-events:none;white-space:nowrap}
 .zlegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
@@ -237,7 +253,7 @@ a{color:var(--accent)}
   .shell{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
   .locked .shell{display:block}
   .locked #side{display:none}
-  #side{display:flex;flex-direction:column;position:sticky;top:0;height:100vh;background:#0f1218;border-right:1px solid var(--line);padding:20px 14px;overflow:auto}
+  #side{display:flex;flex-direction:column;position:sticky;top:0;height:100vh;background:var(--side);border-right:1px solid var(--line);padding:20px 14px;overflow:auto}
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;padding:6px 10px 24px}
   .brand img{width:32px;height:32px;border-radius:9px}
   .nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--muted);font-weight:600}
@@ -267,6 +283,7 @@ a{color:var(--accent)}
   .sheet{align-items:center}
   .sheet-card{border-radius:20px;max-width:520px;max-height:88vh;padding:24px 28px}
   .grab{display:none}
+  .light .panel{box-shadow:0 1px 2px rgba(16,24,40,.06),0 0 0 1px rgba(16,24,40,.04)}
   .tx-sum{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
   .rep-grid{grid-template-columns:1fr 1fr;gap:20px;align-items:start}
   .rep-col{display:grid;gap:20px;align-content:start}
@@ -306,6 +323,14 @@ function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Obje
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
 let prices=load(LS_PRICES,{});
+// weergave: automatisch (volgt het apparaat), donker of licht
+const mqLight=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
+function applyTheme(){
+  const t=settings.theme||'auto',light=t==='light'||(t==='auto'&&!!mqLight?.matches);
+  document.documentElement.classList.toggle('light',light);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content',light?'#f3f4f7':'#0b0d12');
+}
+applyTheme();mqLight?.addEventListener?.('change',applyTheme);
 let syncState={s:'off',msg:''},cgState={s:'off',msg:''};
 let syncTimer=null;
 let lockCfg=(()=>{try{return JSON.parse(localStorage.getItem(LS_LOCK))}catch(e){return null}})();
@@ -737,7 +762,7 @@ function renderHome(){
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div>
   <div class="ranges">${[['1','24U'],['7','1W'],['30','1M'],['90','3M'],['365','1J'],['max','Max']].map(([d,l])=>`<button data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</div>
   <div class="period" id="pperiod"></div></div>
-  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${kv}</div></div>
+  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${goalsCard(true)}${kv}</div></div>
   <div class="list-head"><h2>Bezittingen</h2>
     <select data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
   ${sorted.length?`<ul class="list only-m">${sorted.map(c=>{
@@ -1002,8 +1027,99 @@ function renderReports(){
   // volgorde: rendement en inleg naast elkaar, daaronder beste/slechtste munt en brokers, onderaan 1 januari
   // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
   const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
-  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(perfCard,3)}</div><div class="rep-col">${ord(inCard,2)}${ord(accCard,4)}${ord(janCard,5)}</div></div>`;
+  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(perfCard,4)}${ord(benchCard(),5)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(accCard,6)}${ord(janCard,7)}</div></div>`;
   fitBars();
+}
+/* ---------- doelen ---------- */
+// Doel: streefbedrag op een datum. Voortgang = je huidige waarde (crypto + cash als je cash bijhoudt).
+function monthlyInflow(){   // gemiddelde netto inleg per maand over de laatste 12 maanden
+  const hc=hasCashTx(),now=Date.now(),a=pStart('month',now),from=new Date(a);from.setMonth(from.getMonth()-11);let v=0,firstT=Infinity;
+  for(const t of data.txs){const tt=txTime(t);if(hc?isCash(t.type):(t.type==='buy'||t.type==='sell')){firstT=Math.min(firstT,tt);if(tt>=from.getTime())v+=hc?(t.type==='deposit'?t.amount:-t.amount):(t.type==='buy'?txTotal(t):-txTotal(t))}}
+  if(!isFinite(firstT))return 0;
+  const months=Math.min(12,Math.max(1,(new Date(now).getFullYear()-new Date(Math.max(firstT,from.getTime())).getFullYear())*12+new Date(now).getMonth()-new Date(Math.max(firstT,from.getTime())).getMonth()+1));
+  return v/months;
+}
+function goalsHTML(compact){
+  const gl=live(data.goals).sort((a,b)=>a.date.localeCompare(b.date));if(!gl.length)return '';
+  const p=portfolio(),cur=p.hasCash?p.total:p.value,avg=monthlyInflow(),nd=new Date();
+  return gl.map(g=>{
+    const [y,m]=g.date.split('-').map(Number),left=Math.max(0,(y-nd.getFullYear())*12+(m-1-nd.getMonth())),pc=Math.max(0,Math.min(100,cur/g.target*100)),done=cur>=g.target;
+    const need=done?0:(g.target-cur)/Math.max(1,left);
+    const when=new Date(y,m-1,1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
+    const status=done?'<span class="up">Behaald 🎉</span>':left===0?'<span class="down">Deadline is deze maand</span>':avg>=need?`<span class="up">Op schema</span> bij je huidige inleg van <span class="m">${money(avg,2)}</span>/mnd`:`Nodig: <span class="m">${money(need,2)}</span>/mnd · je legt nu <span class="m">${money(avg,2)}</span>/mnd in`;
+    return `<div class="goal" data-goal="${esc(g.id)}"><div class="goal-top"><b>${esc(g.name||'Doel')}</b><span class="label">${when}</span></div>
+      <div class="gbar"><i class="${done?'done':''}" style="width:${pc.toFixed(1)}%"></i></div>
+      <div class="goal-top"><span class="label"><span class="m">${money(cur,2)}</span> van <span class="m">${money(g.target,0)}</span> · ${pc.toFixed(0)}%</span></div>
+      ${compact?'':`<div class="label" style="font-size:12px;margin-top:3px">${status}${!done&&left>0?` · nog ${left} maand${left>1?'en':''}`:''}</div>`}</div>`}).join('');
+}
+function goalsCard(compact){
+  const h=goalsHTML(compact);
+  if(compact&&!h)return '';
+  return `<div class="card"><div class="kv-h" style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0;font-size:16px">Doelen</h3><button class="link" data-act="addgoal">+ Doel</button></div>
+  ${h||'<p class="hint" style="margin:8px 0 0">Stel een doel in, bijvoorbeeld € 5.000 in december 2027. Je ziet dan je voortgang en wat je per maand moet inleggen (bij gelijkblijvende koersen).</p>'}
+  ${h&&!compact?'<p class="hint" style="margin:8px 0 0">"Nodig per maand" gaat uit van gelijkblijvende koersen.</p>':''}</div>`;
+}
+function openGoal(id){
+  const g=id?(data.goals||[]).find(x=>x.id===id):null,d=new Date();d.setFullYear(d.getFullYear()+1);
+  openSheet(`<h3>${g?'Doel bewerken':'Nieuw doel'}</h3>
+  <div class="field"><label>Naam</label><input id="g_name" value="${esc(g?.name||'')}" placeholder="bijv. Eerste € 5.000"></div>
+  <div class="two"><div class="field"><label>Streefbedrag (€)</label><input id="g_target" inputmode="decimal" value="${g?plainNum(g.target):''}" placeholder="5000"></div>
+  <div class="field"><label>Te halen in</label><input id="g_date" type="month" value="${esc(g?.date||d.toISOString().slice(0,7))}"></div></div>
+  <button class="btn" data-act="savegoal" data-id="${esc(g?.id||'')}">Opslaan</button>
+  ${g?`<button class="btn danger" data-act="delgoal" data-id="${esc(g.id)}">Doel verwijderen</button>`:''}`);
+}
+function saveGoal(id){
+  const target=num($('#g_target').value),date=$('#g_date').value;
+  if(!(target>0))return toast('Vul een streefbedrag in');if(!/^\d{4}-\d{2}$/.test(date))return toast('Kies een maand');
+  const now=Date.now(),name=$('#g_name').value.trim(),e=id&&(data.goals||[]).find(x=>x.id===id);
+  if(e)Object.assign(e,{name,target,date,mod:now});else(data.goals||(data.goals=[])).push({id:uid(),name,target,date,mod:now});
+  saveData();closeSheet();render();toast('Doel opgeslagen');
+}
+
+/* ---------- vergelijking met één munt (benchmark) ---------- */
+// Elke storting (of, zonder cash: elke aankoop) gaat in gedachten direct naar de gekozen munt; opnames/verkopen halen er weer uit.
+let benchFetch={};
+function benchData(bid){
+  const hc=hasCashTx(),now=Date.now();
+  const flows=data.txs.filter(t=>hc?isCash(t.type):(t.type==='buy'||t.type==='sell')).map(t=>({t:txTime(t),v:hc?cashEffect(t)[0]:(t.type==='buy'?txTotal(t):-txTotal(t))})).sort((a,b)=>a.t-b.t);
+  if(!flows.length)return null;
+  const h=data.hist?.[bid];let firstKnown=Infinity;if(h)for(const d in h)firstKnown=Math.min(firstKnown,h[d][0]);
+  const px=t=>priceAt(bid,Math.max(t,firstKnown))??priceAt(bid,t);
+  const S={};coinIds().forEach(id=>S[id]=coinStates(id));
+  let units=0,early=false;const ev=[];
+  for(const f of flows){const pr=px(f.t);if(pr==null)return{pending:true};if(f.t<firstKnown-1.5*DAY)early=true;units+=f.v/pr;ev.push([f.t,units])}
+  const t0=flows[0].t,span=now-t0,step=span>400*DAY?7*DAY:span>3*DAY?DAY:36e5;
+  const pts=[];let k=0,u=0;
+  for(let t=t0;t<now+step;t+=step){const tt=Math.min(t,now);while(k<ev.length&&ev[k][0]<=tt){u=ev[k][1];k++}
+    const o=snapshot(tt,S),pr=tt>=now-15*6e4?prices[bid]?.price:px(tt);if(pr==null)continue;pts.push([tt,hc?o.total:o.crypto,u*pr]);if(tt===now)break}
+  const last=pts[pts.length-1];
+  return{pts,you:last?.[1],bench:last?.[2],early,firstKnown,hc};
+}
+function benchCard(){
+  const opts=[...new Set(['bitcoin','ethereum',...coinIds(),...live(data.watch).map(w=>w.id)])];
+  const nameOf=id=>(data.txs.find(t=>t.coinId===id)||live(data.watch).find(w=>w.id===id)||{}).name||({bitcoin:'Bitcoin',ethereum:'Ethereum'}[id])||id;
+  const bid=opts.includes(settings.bench)?settings.bench:'bitcoin',nm=nameOf(bid);
+  // koersen van de vergelijkingsmunt nog niet in het archief? eenmalig ophalen
+  if(!prices[bid]||!data.hist?.[bid]){if(!benchFetch[bid]){benchFetch[bid]=1;Promise.all([prices[bid]?null:fetchPrice(bid),data.hist?.[bid]?null:fetchChart(bid,'365').catch(()=>{})]).then(()=>{if(location.hash==='#rapporten')renderReports()})}}
+  const B=benchData(bid);
+  const sel=`<select class="bench-sel" data-act="bench">${opts.map(id=>`<option value="${esc(id)}"${id===bid?' selected':''}>${esc(nameOf(id))}</option>`).join('')}</select>`;
+  let body;
+  if(!B)body='<p class="hint">Nog geen stortingen of aankopen om te vergelijken.</p>';
+  else if(B.pending||!B.pts.length)body='<p class="hint">Koersgeschiedenis wordt opgehaald…</p>';
+  else{
+    const d=B.you-B.bench,dp=B.bench>0?d/B.bench*100:null,pts=B.pts,t0=pts[0][0],t1=pts[pts.length-1][0];
+    let lo=Infinity,hi=-Infinity;pts.forEach(p=>{lo=Math.min(lo,p[1],p[2]);hi=Math.max(hi,p[1],p[2])});if(hi-lo<1e-9){hi+=1;lo-=1}
+    const X=t=>(t-t0)/(t1-t0||1)*1000,Y=v=>6+(1-(v-lo)/(hi-lo))*88,L=i=>pts.map((p,j)=>(j?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[i]).toFixed(2)).join('');
+    body=`<div class="kv" style="margin-top:6px">
+      <div><span class="label"><span style="color:var(--accent)">●</span> Jouw portfolio</span><b class="m">${money(B.you,2)}</b></div>
+      <div><span class="label"><span style="color:var(--yellow)">●</span> Alles in ${esc(nm)}</span><b class="m">${money(B.bench,2)}</b></div>
+      <div><span class="label">Verschil</span><b class="${cls(d)}"><span class="m">${signed(d)}</span> <small>${pct(dp)}</small></b></div></div>
+      <div class="bchart"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="${L(2)}" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/><path d="${L(1)}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg></div>
+      <div class="zlegend" style="justify-content:space-between"><span>${new Date(t0).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span><span>vandaag</span></div>
+      <p class="hint" style="margin:8px 0 0">${d>=0?`Je doet het <b class="up">beter</b> dan alles in ${esc(nm)}.`:`Met alles in ${esc(nm)} had je <b class="down">meer</b> gehad.`} De vergelijking rekent zonder transactiekosten voor ${esc(nm)}.${B.early?` Voor stortingen vóór ${new Date(B.firstKnown).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})} is de oudst bekende koers gebruikt.`:''}</p>`;
+  }
+  return `<div class="card"><h3>Vergelijking</h3><p class="hint">Wat als je elke ${hasCashTx()?'storting':'aankoop'} direct in één munt had gestoken?</p>
+  <label class="label" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Vergelijk met ${sel}</label>${body}</div>`;
 }
 /* ---------- volglijst ---------- */
 function watchSection(){
@@ -1398,6 +1514,8 @@ function openSettings(){
   const g=settings.gh;
   const pks=lockCfg?.pks||[];
   openSheet(`<h3>Instellingen</h3>
+  <div class="section-t">Weergave</div>
+  <div class="seg">${[['auto','Automatisch'],['dark','Donker'],['light','Licht']].map(([v,l])=>`<button data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}">${l}</button>`).join('')}</div>
   <div class="section-t">Beveiliging</div>
   ${lockCfg?`
   ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="label" style="font-size:12px">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="hint" style="margin-top:0">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
@@ -1439,7 +1557,7 @@ function exportData(){
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
-    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
+    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
 
@@ -1459,9 +1577,9 @@ function merge(a,b){
   const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
   for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts)};
+  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals)};
 }
-const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
 function setSync(s,msg=''){syncState={s,msg};updBadges()}
 let syncing=false,syncAgain=false;
@@ -1604,7 +1722,9 @@ async function securityAction(act,el){
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme]');if(!a)return;
+  if(a.dataset.goal){openGoal(a.dataset.goal);return}
+  if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));return}
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
   if(a.dataset.adir){setAlertDir(a.dataset.adir);return}
   if(a.dataset.rp){const [k,u]=a.dataset.rp.split(':');settings[k]=u;saveSettings();renderReports();if($('#zoom'))renderRetZoom();return}
@@ -1619,6 +1739,9 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{const el=$('#f_price');if(p&&form&&form.coin?.id===c.id&&el&&form.edits.length<2){form.price=el.value=plainNum(p);recalc('price')}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'addgoal':openGoal();break;
+    case 'savegoal':saveGoal(a.dataset.id);break;
+    case 'delgoal':{const g=(data.goals||[]).find(x=>x.id===a.dataset.id);if(g&&confirm('Dit doel verwijderen?')){g.del=true;g.mod=Date.now();saveData();closeSheet();render()}break}
     case 'zoomret':renderRetZoom();break;
     case 'zoomclose':closeZoom();break;
     case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
@@ -1662,7 +1785,7 @@ document.addEventListener('click',e=>{
   }
 });
 $('#bvFile').onchange=e=>{const f=e.target.files[0];if(f){closeSheet();startImport(f)}};
-document.addEventListener('change',e=>{if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
+document.addEventListener('change',e=>{if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
 $('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
 window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);render()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#zoom'))closeZoom();else closeSheet()}});
