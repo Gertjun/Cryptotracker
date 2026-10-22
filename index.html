@@ -198,6 +198,23 @@ a{color:var(--accent)}
 .zoom-chart{overflow-x:auto;margin:4px -4px 0;padding:0 4px}
 .zoom .bars{height:320px}
 .zc-wrap{position:relative}
+.since{position:relative}
+.since .x{position:absolute;top:10px;right:10px;background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;line-height:1}
+.since-g{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+.since-g>div{background:var(--card2);border-radius:12px;padding:10px}
+.since-g b{display:block;font-size:16px;margin-top:2px}
+@media (min-width:1000px){.since-g{grid-template-columns:repeat(4,1fr)}}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.cal-nav button{background:var(--card2);border:0;color:var(--text);width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:18px}
+.cal-nav button:disabled{opacity:.3;cursor:default}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .h{font-size:11px;color:var(--muted);text-align:center;padding-bottom:2px}
+.cd{border-radius:8px;min-height:50px;padding:4px 5px;display:flex;flex-direction:column;justify-content:space-between;background:var(--card2);min-width:0}
+.cd .n{color:var(--muted);font-size:10px}
+.cd .v{font-weight:700;font-size:10px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.cd.e{background:transparent}
+.cd.f{opacity:.35}
+.cd.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .iss{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
 .iss:last-child{border-bottom:0}
 .iss[data-tx],.iss[data-act]{cursor:pointer}
@@ -357,7 +374,7 @@ a{color:var(--accent)}
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='31 (22 okt 2026)';
+const APP_VERSION='33 (22 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -378,9 +395,9 @@ let DEK=null,dekRaw=null,locked=!!lockCfg,vaultQ=Promise.resolve();
 // Met vergrendeling aan staan transacties, koersen en GitHub-gegevens alleen versleuteld in de 'vault'.
 function persist(){
   if(lockCfg){
-    localStorage.setItem(LS_SET,JSON.stringify({...settings,gh:{path:settings.gh.path,branch:settings.gh.branch,token:'',repo:'',pass:''}}));
+    localStorage.setItem(LS_SET,JSON.stringify({...settings,visit:undefined,gh:{path:settings.gh.path,branch:settings.gh.branch,token:'',repo:'',pass:''}}));
     if(!DEK)return;
-    const k=DEK,snap=enc.encode(JSON.stringify({data,gh:settings.gh,prices}));
+    const k=DEK,snap=enc.encode(JSON.stringify({data,gh:settings.gh,prices,visit:settings.visit}));
     vaultQ=vaultQ.then(()=>aesEnc(k,snap)).then(o=>localStorage.setItem(LS_VAULT,JSON.stringify(o))).catch(()=>{});
   }else{
     localStorage.setItem(LS_SET,JSON.stringify(settings));localStorage.setItem(LS_DATA,JSON.stringify(data));localStorage.setItem(LS_PRICES,JSON.stringify(prices));
@@ -538,11 +555,14 @@ async function refreshPrices(force){
   const ids=priceIds();if(locked||!ids.length||priceBusy)return;
   priceBusy=true;cgState={s:'busy',msg:''};updBadges();
   try{
-    const r=await cg(`/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=24h`);
+    const r=await cg(`/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=24h,7d,30d`);
     if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Koersen ophalen mislukt ('+r.status+')');
     const arr=await r.json();if(locked)return;
-    for(const c of arr)prices[c.id]={price:c.current_price,ch24:c.price_change_percentage_24h,image:c.image,ts:Date.now()};
-    cgState={s:'ok',msg:''};savePrices();checkAlerts();render();
+    // koers + marktinformatie (zelfde aanvraag, dus geen extra verzoeken)
+    for(const c of arr)prices[c.id]={price:c.current_price,ch24:c.price_change_percentage_24h,image:c.image,ts:Date.now(),
+      m:{ch7:c.price_change_percentage_7d_in_currency,ch30:c.price_change_percentage_30d_in_currency,cap:c.market_cap,rank:c.market_cap_rank,vol:c.total_volume,
+         hi:c.high_24h,lo:c.low_24h,ath:c.ath,athPct:c.ath_change_percentage,athDate:c.ath_date,atl:c.atl,atlDate:c.atl_date,circ:c.circulating_supply,max:c.max_supply}};
+    cgState={s:'ok',msg:''};savePrices();checkAlerts();render();saveVisit();
   }catch(e){cgState={s:'err',msg:e.message||'Geen verbinding'};updBadges();if(force)toast(e.message||'Geen verbinding')}
   finally{priceBusy=false}
 }
@@ -791,7 +811,7 @@ function renderHome(){
     <div><span class="label">Laatste 24 uur</span><b class="${cls(p.ch24)}"><span class="m">${signed(p.ch24)}</span> <small>${pct(p.ch24Pct)}</small></b></div>
     <div><span class="label">Gerealiseerd</span><b class="m ${cls(p.realized)}">${signed(p.realized)}</b></div>
     <div><span class="label">Open posities</span><b>${p.open.length}</b></div></div>`;
-  $('#view').innerHTML=`${issuesBanner()}<div class="home-grid"><div class="panel">
+  $('#view').innerHTML=`${issuesBanner()}${sinceCard()}<div class="home-grid"><div class="panel">
   <section class="hero">
     <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
     <div class="big m" id="heroVal">${money(p.hasCash?p.total:p.value,2)}</div>
@@ -1087,9 +1107,57 @@ function renderReports(){
   // volgorde: rendement en inleg naast elkaar, daaronder beste/slechtste munt en brokers, onderaan 1 januari
   // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
   const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
-  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(perfCard,4)}${ord(benchCard(),5)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(checkCard(),6)}${ord(accCard,7)}${ord(janCard,8)}${ord(exportCard(),9)}</div></div>`;
+  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(calCard(),4)}${ord(perfCard,5)}${ord(benchCard(),6)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(checkCard(),7)}${ord(accCard,8)}${ord(janCard,9)}${ord(exportCard(),10)}</div></div>`;
   fitBars();
 }
+/* ---------- sinds je vorige bezoek ---------- */
+// Bij het openen (of na ruim een uur weg) vergelijkt de app met de stand van je vorige bezoek.
+let prevVisit=null,sinceDismissed=false;
+function visitNow(){const p=portfolio(),P={};coinIds().forEach(id=>{const pr=prices[id]?.price;if(pr!=null)P[id]=pr});
+  return{ts:Date.now(),total:p.hasCash?p.total:p.value,metric:p.hasCash?p.ret:p.value-p.cost+p.realized,prices:P,missing:p.missing}}
+function saveVisit(){if(locked||!data.txs.length)return;const v=visitNow();if(v.missing)return;delete v.missing;settings.visit=v;saveSettings()}
+function sinceCard(){
+  const v=prevVisit;if(!v||sinceDismissed||Date.now()-v.ts<3600e3)return '';
+  const n=visitNow(),dv=n.total-v.total,dm=n.metric-v.metric;
+  const mv=coinIds().map(computeCoin).filter(c=>c.qty>1e-12&&v.prices[c.coinId]&&c.price!=null).map(c=>({c,ch:(c.price/v.prices[c.coinId]-1)*100})).sort((a,b)=>b.ch-a.ch);
+  const hits=live(data.alerts).filter(a=>a.hit&&a.hit>v.ts),newTx=data.txs.filter(t=>(t.created||0)>v.ts).length;
+  const d=new Date(v.ts),dd=Math.round((pStart('day',Date.now())-pStart('day',v.ts))/864e5);
+  const when=(dd===0?'vandaag':dd===1?'gisteren':dd<7?d.toLocaleDateString('nl-NL',{weekday:'long'}):d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}))+' '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+  const mvTxt=x=>`${esc((x.c.meta.symbol||'').toUpperCase())} <span class="${cls(x.ch)}">${pct(x.ch)}</span>`;
+  return `<div class="card since"><button class="x" data-act="sinceclose" aria-label="Sluiten">×</button><b>Sinds je vorige bezoek</b> <span class="label">(${when})</span>
+  <div class="since-g">
+    <div><span class="label">Waarde</span><b class="m">${money(n.total,2)}</b><span class="label m" style="font-size:12px">was ${money(v.total,2)}</span></div>
+    <div><span class="label">Resultaat</span><b class="m ${cls(dm)}">${signed(dm)}</b><span class="label" style="font-size:12px">${Math.abs(dv-dm)>0.005?`zonder ${hasCashTx()?'stortingen':'aankopen'}`:'koersverandering'}</span></div>
+    <div><span class="label">Grootste stijger</span><b>${mv.length?mvTxt(mv[0]):'–'}</b></div>
+    <div><span class="label">Grootste daler</span><b>${mv.length>1?mvTxt(mv[mv.length-1]):'–'}</b></div>
+  </div>
+  ${hits.length||newTx?`<p class="hint" style="margin:10px 0 0">${hits.length?`🔔 ${hits.map(a=>`${esc(a.name)} ${a.dir==='above'?'boven':'onder'} ${money(a.price)}`).join(', ')}. `:''}${newTx?`${newTx} nieuwe transactie${newTx>1?'s':''} (bijv. van een ander apparaat).`:''}</p>`:''}</div>`;
+}
+
+/* ---------- rendementskalender ---------- */
+function retRange(u,from,to){   // resultaat per periode voor periodes die beginnen tussen from en to
+  const S={};coinIds().forEach(id=>S[id]=coinStates(id));
+  const hc=hasCashTx(),now=Date.now(),metric=o=>hc?o.total-o.dep:o.crypto-o.inv+o.real;
+  const st=pList(u,from,to).filter(a=>a<=now);if(!st.length)return[];let prev=snapshot(st[0],S);
+  return st.map(a=>{const o=snapshot(Math.min(pNext(u,a),now),S),r={ts:a,v:metric(o)-metric(prev),miss:o.missing.length>0};prev=o;return r});
+}
+function calCard(){
+  const now=Date.now(),cur=pStart('month',now),minM=pStart('month',Math.min(...data.txs.map(txTime)));
+  let m=+settings.calMonth||cur;if(m>cur)m=cur;if(m<minM)m=minM;
+  const first=Math.min(...data.txs.map(txTime)),res=retRange('day',m,pNext('month',m)-1),by={};res.forEach(r=>by[r.ts]=r);
+  const mx=Math.max(1e-9,...res.map(r=>Math.abs(r.v))),tot=res.reduce((s,r)=>s+r.v,0),pos=res.filter(r=>r.v>0.005).length,neg=res.filter(r=>r.v<-0.005).length;
+  const lead=(new Date(m).getDay()+6)%7,days=pList('day',m,pNext('month',m)-1),today=pStart('day',now);
+  const cell=ts=>{const r=by[ts],dn=new Date(ts).getDate();
+    if(ts>now||ts<pStart('day',first))return `<div class="cd f"><span class="n">${dn}</span></div>`;
+    const v=r?r.v:0,a=(0.12+0.68*Math.min(1,Math.abs(v)/mx)).toFixed(2),bg=Math.abs(v)<0.005?'':`background:rgba(${v>0?'31,209,122':'255,90,95'},${a})`;
+    return `<div class="cd${ts===today?' today':''}" style="${bg}" title="${pLabel('day',ts,true)}: ${signed(v)}"><span class="n">${dn}</span><span class="v m">${Math.abs(v)<0.005?'':(v>0?'+':'−')+new Intl.NumberFormat('nl-NL',{minimumFractionDigits:Math.abs(v)>=100?0:2,maximumFractionDigits:Math.abs(v)>=100?0:2}).format(Math.abs(v))}</span></div>`};
+  return `<div class="card"><h3>Rendementskalender</h3><p class="hint">Resultaat per dag in euro's: groen is winst, rood is verlies. Hoe feller, hoe groter.</p>
+  <div class="cal-nav"><button data-cal="-1" ${m<=minM?'disabled':''} aria-label="Vorige maand">‹</button><b>${monthLbl(m,{month:'long',year:'numeric'})}</b><button data-cal="1" ${m>=cur?'disabled':''} aria-label="Volgende maand">›</button></div>
+  <div class="cal">${['ma','di','wo','do','vr','za','zo'].map(d=>`<div class="h">${d}</div>`).join('')}${'<div class="cd e"></div>'.repeat(lead)}${days.map(cell).join('')}</div>
+  <div class="kv" style="margin-top:10px"><div><span class="label">Totaal ${monthLbl(m,{month:'long'})}</span><b class="m ${cls(tot)}">${signed(tot)}</b></div>
+  <div><span class="label">Dagen in de plus / min</span><b><span class="up">${pos}</span> / <span class="down">${neg}</span></b></div></div></div>`;
+}
+
 /* ---------- exporteren ---------- */
 function download(name,text,mime){const b=new Blob([text],{type:mime}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 // CSV voor Nederlandse Excel: puntkomma als scheidingsteken, komma als decimaalteken, UTF-8 met BOM
@@ -1281,6 +1349,26 @@ function setWatch(c,on){
 }
 /* ---------- prijsalerts ---------- */
 let alertForm=null;
+// grote bedragen leesbaar: € 1,23 bln · € 45,6 mld · € 789 mln
+function bigEur(v){if(v==null||!isFinite(v))return '–';const a=Math.abs(v),f=(x,u)=>'€ '+x.toLocaleString('nl-NL',{maximumFractionDigits:x<10?2:x<100?1:0})+' '+u;
+  return a>=1e12?f(a/1e12,'bln'):a>=1e9?f(a/1e9,'mld'):a>=1e6?f(a/1e6,'mln'):money(v,0)}
+function bigNum(v){if(v==null||!isFinite(v))return '–';const a=Math.abs(v),f=(x,u)=>x.toLocaleString('nl-NL',{maximumFractionDigits:x<10?2:x<100?1:0})+' '+u;
+  return a>=1e9?f(a/1e9,'mld'):a>=1e6?f(a/1e6,'mln'):Math.round(a).toLocaleString('nl-NL')}
+function marketCard(c){
+  const P=prices[c.coinId]||{},m=P.m;if(!m)return '';
+  const sym=esc((c.meta.symbol||'').toUpperCase()),dd=s=>s?new Date(s).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}):'';
+  const range=m.lo!=null&&m.hi!=null&&m.hi>m.lo&&P.price!=null?Math.max(0,Math.min(100,(P.price-m.lo)/(m.hi-m.lo)*100)):null;
+  return `<div class="card kv" style="margin-top:10px"><div class="kv-h"><b>Marktinformatie</b>${m.rank?`<span class="label">#${m.rank} op marktwaarde</span>`:''}</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${[['24 uur',P.ch24],['7 dagen',m.ch7],['30 dagen',m.ch30]].map(([l,v])=>`<div style="background:var(--card2);border-radius:10px;padding:8px;text-align:center"><div class="label" style="font-size:12px">${l}</div><b class="${cls(v)}">${pct(v)}</b></div>`).join('')}</div>
+  ${range!=null?`<div style="display:block"><div style="display:flex;justify-content:space-between"><span class="label">Dagbereik</span><span class="label">${money(m.lo)} – ${money(m.hi)}</span></div>
+    <div class="gbar" style="margin:6px 0 0;position:relative"><i style="width:${range.toFixed(1)}%;background:var(--muted);opacity:.5"></i></div></div>`:''}
+  ${m.ath?`<div><span class="label">All-time high${m.athDate?` (${dd(m.athDate)})`:''}</span><b>${money(m.ath)} <small class="${cls(m.athPct)}">${pct(m.athPct)}</small></b></div>`:''}
+  ${m.atl?`<div><span class="label">All-time low${m.atlDate?` (${dd(m.atlDate)})`:''}</span><b>${money(m.atl)}</b></div>`:''}
+  <div><span class="label">Marktwaarde</span><b>${bigEur(m.cap)}</b></div>
+  <div><span class="label">Handelsvolume 24 uur</span><b>${bigEur(m.vol)}</b></div>
+  ${m.circ?`<div><span class="label">In omloop${m.max?' / maximaal':''}</span><b>${bigNum(m.circ)}${m.max?` / ${bigNum(m.max)}`:''} ${sym}</b></div>`:''}
+  </div>`;
+}
 function alertsCard(c){
   const list=live(data.alerts).filter(a=>a.coinId===c.coinId).sort((a,b)=>(a.hit?1:0)-(b.hit?1:0)||a.price-b.price);
   return `<div class="card kv" style="margin-top:10px"><div class="kv-h"><b>Prijsalerts</b><button class="link" data-act="addalert">+ Alert</button></div>
@@ -1457,7 +1545,7 @@ function renderCoin(id){
     <div class="stat"><div class="label">Geïnvesteerd</div><div class="val m">${money(c.cost,2)}</div></div>
     <div class="stat"><div class="label">Koers t.o.v. gemiddelde</div><div class="val ${cls(c.price-c.avg)}">${c.price!=null&&c.avg?pct((c.price/c.avg-1)*100):'–'}</div></div>
     <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(c.realized)}">${Math.abs(c.realized)>0.005?signed(c.realized):'–'}</div></div>
-  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val m ${cls(c.realized)}" style="font-size:22px">${signed(c.realized)}</div></div></div>`}${alertsCard(c)}</div></div>
+  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val m ${cls(c.realized)}" style="font-size:22px">${signed(c.realized)}</div></div></div>`}${marketCard(c)}${alertsCard(c)}</div></div>
   ${c.txs.length?`<div class="list-head"><h2>Transacties</h2><span class="label">${c.txs.length}</span></div>
   <ul class="list only-m">${txs.map(t=>txRow(t,c)).join('')}</ul>${txTable(txs,c)}
   <div class="note">Winst per transactie wordt berekend met FIFO: verkopen worden afgeboekt op je oudste aankopen eerst. Transactiekosten tellen mee in de aankoopprijs.</div>`:''}`;
@@ -1777,7 +1865,7 @@ async function openVault(raw){
   dekRaw=raw;DEK=key;
   data=Object.assign({txs:[],deleted:[],updated:0},obj.data);
   settings.gh=Object.assign({token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''},obj.gh);
-  prices=obj.prices||{};
+  prices=obj.prices||{};if(obj.visit)settings.visit=obj.visit;
   try{const vc=JSON.parse(localStorage.getItem(LS_VCHARTS)||'null');chartCache=vc?JSON.parse(dec.decode(await aesDec(key,vc))):{}}catch(e){chartCache={}}
   locked=false;start();
 }
@@ -1862,7 +1950,8 @@ async function securityAction(act,el){
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal]');if(!a)return;
+  if(a.dataset.cal){const now=Date.now();let m=+settings.calMonth||pStart('month',now);const d=new Date(m);d.setMonth(d.getMonth()+(+a.dataset.cal));settings.calMonth=d.getTime();saveSettings();renderReports();return}
   if(a.dataset.goal){openGoal(a.dataset.goal);return}
   if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));return}
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
@@ -1879,6 +1968,7 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{const el=$('#f_price');if(p&&form&&form.coin?.id===c.id&&el&&form.edits.length<2){form.price=el.value=plainNum(p);recalc('price')}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'sinceclose':sinceDismissed=true;render();break;
     case 'issues':openIssues();break;
     case 'csvall':exportCSV(data.txs);break;
     case 'csvfiltered':{const ids=new Set([...document.querySelectorAll('#txOut .only-m [data-tx]')].map(e=>e.dataset.tx));exportCSV(data.txs.filter(t=>ids.has(t.id)));break}
@@ -1936,7 +2026,8 @@ window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);rende
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#zoom'))closeZoom();else closeSheet()}});
 let hiddenAt=0;
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){hiddenAt=Date.now();return}
+  if(document.hidden){hiddenAt=Date.now();saveVisit();return}
+  if(hiddenAt&&Date.now()-hiddenAt>3600e3&&settings.visit){prevVisit={...settings.visit};sinceDismissed=false}
   const al=lockCfg?.autoLock??5;
   if(lockCfg&&!locked&&hiddenAt&&al>=0&&Date.now()-hiddenAt>=al*60000){lockNow();return}
   refreshPrices();syncNow(true);
@@ -1946,7 +2037,7 @@ setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
 setInterval(()=>{if(!document.hidden)collectHistory()},6*3600e3);
 
 let histTimer=null;
-function start(){document.body.classList.remove('locked');migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
+function start(){document.body.classList.remove('locked');prevVisit=settings.visit?{...settings.visit}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();syncNow(true)}
 if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
