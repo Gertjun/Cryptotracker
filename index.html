@@ -190,6 +190,12 @@ a{color:var(--accent)}
 .zoom-top h2{margin:0;font-size:20px}
 .zoom-chart{overflow-x:auto;margin:4px -4px 0;padding:0 4px}
 .zoom .bars{height:320px}
+.zc-wrap{position:relative}
+.zc-line{position:absolute;left:0;top:0;width:100%;height:calc(100% - 17px);pointer-events:none;overflow:visible}
+.zc-last{position:absolute;right:0;transform:translateY(-120%);font-size:11px;font-weight:700;color:var(--yellow);background:var(--card);padding:0 4px;border-radius:4px;pointer-events:none;white-space:nowrap}
+.zlegend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.zlegend i{display:inline-block;width:14px;height:10px;border-radius:2px;background:var(--green);margin-right:6px;vertical-align:middle}
+.zlegend i.ln{height:3px;background:var(--yellow)}
 .zstats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
 @media (min-width:1000px){.zstats{grid-template-columns:repeat(5,1fr)}.zoom{padding:20px 36px 40px}}
 .seg.mini{margin:8px 0 12px;padding:3px}
@@ -917,11 +923,21 @@ function renderRetZoom(){
     <div class="stat"><div class="label">Slechtste ${l}</div><div class="val m ${cls(worst.v)}">${signed(worst.v)}</div><div class="label" style="font-size:12px">${pLabel(u,worst.ts,true)}</div></div>
     <div class="stat"><div class="label">In de plus</div><div class="val">${pos} van ${res.length}</div><div class="label" style="font-size:12px">${Math.round(pos/res.length*100)}% van de ${many}</div></div>
   </div>
-  <div class="card"><div class="zoom-chart" id="zchart"><div style="min-width:${res.length*(u==='day'?18:28)}px">${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%(u==='day'?7:u==='week'?4:1)?'':pLabel(u,r.ts),title:`${pLabel(u,r.ts,true)}: ${signed(r.v)}`})))}</div></div>
+  <div class="card"><div class="zoom-chart" id="zchart"><div class="zc-wrap" style="min-width:${res.length*(u==='day'?18:28)}px">${cumLine(res)}${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%(u==='day'?7:u==='week'?4:1)?'':pLabel(u,r.ts),title:`${pLabel(u,r.ts,true)}: ${signed(r.v)}`})))}</div></div>
+  <div class="zlegend"><span><i></i>Resultaat per ${l}</span><span><i class="ln"></i>Cumulatief resultaat</span></div>
   <p class="hint" style="margin-top:8px">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hc?'Stortingen':'Aankopen'} tellen niet als winst. Veeg of scroll de grafiek opzij voor eerdere periodes; op de laptop toont de muis op een staaf de details.</p></div>
   <div class="card" style="margin-top:14px"><table class="rt"><tr><th>${L}</th><th>Resultaat</th><th>Cumulatief</th><th>${hc?'Totale waarde':'Waarde crypto'} aan eind</th></tr>
   ${rows.map((r,i)=>`<tr><td>${pLabel(u,r.ts,true)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td><td class="m ${cls(r.cum)}">${signed(r.cum)}</td><td class="m">${money(r.end,2)}</td></tr>`).join('')}</table></div></div>`;
   fitBars();const zc=$('#zchart');zc.scrollLeft=zc.scrollWidth;   // nieuwste periode in beeld
+}
+// lijn met het opgetelde resultaat over de staven heen (eigen schaal, zodat hij altijd goed zichtbaar is)
+function cumLine(res){
+  if(res.length<2)return '';
+  let c=0;const cum=res.map(r=>c+=r.v),lo=Math.min(0,...cum),hi=Math.max(0,...cum),sp=hi-lo||1,n=res.length;
+  const Y=v=>8+(1-(v-lo)/sp)*84,X=i=>(i+0.5)/n*1000;
+  const pts=cum.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(2)}`).join(' ');
+  return `<svg class="zc-line" viewBox="0 0 1000 100" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#f5b942" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+  <div class="zc-line"><span class="zc-last m" style="top:${Y(cum[n-1]).toFixed(2)}%">${signed(cum[n-1])}</span></div>`;
 }
 function closeZoom(){const z=$('#zoom');if(z){z.remove();document.body.style.overflow=''}}
 const pSeg=(key,u)=>`<div class="seg mini">${Object.entries(PU).map(([k,v])=>`<button data-rp="${key}:${k}" class="${u===k?'on':''}">${v[0]}</button>`).join('')}</div>`;
@@ -950,7 +966,8 @@ function renderReports(){
   const res=resFor(ru,RN),yrs=ru==='year'?null:resFor('year',99);
   const lblEvery=ru==='day'?5:1;
   const retCard=`<div class="card zoomable" data-act="zoomret"><h3>Rendement per ${rl} <span class="zoom-hint">Vergroten ⤢</span></h3>${pSeg('repRet',ru)}<p class="hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hasCash?'Stortingen':'Aankopen'} tellen niet als winst.${ru==='day'?' Per dag rekent de app met de dagkoers uit het archief.':''}</p>
-  ${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%lblEvery?'':pLabel(ru,r.ts),title:`${pLabel(ru,r.ts,true)}: ${signed(r.v)}`})))}
+  <div class="zc-wrap">${cumLine(res)}${bars(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%lblEvery?'':pLabel(ru,r.ts),title:`${pLabel(ru,r.ts,true)}: ${signed(r.v)}`})))}</div>
+  <div class="zlegend" style="margin:2px 0 10px"><span><i></i>Resultaat per ${rl}</span><span><i class="ln"></i>Cumulatief</span></div>
   <table class="rt"><tr><th>${RL}</th><th>Resultaat</th></tr>${[...res].reverse().map((r,i)=>`<tr><td>${pLabel(ru,r.ts,true)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td></tr>`).join('')}
   <tr><td><b>Totaal deze ${res.length} ${ru==='day'?'dagen':ru==='week'?'weken':ru==='month'?'maanden':'jaar'}</b></td><td class="m ${cls(res.reduce((s,r)=>s+r.v,0))}"><b>${signed(res.reduce((s,r)=>s+r.v,0))}</b></td></tr></table>
   ${yrs?`<table class="rt" style="margin-top:10px"><tr><th>Jaar</th><th>Resultaat</th></tr>${[...yrs].reverse().map((r,i)=>`<tr><td>${pLabel('year',r.ts)}${i===0?' (tot nu)':''}</td><td class="m ${cls(r.v)}"><b>${signed(r.v)}</b></td></tr>`).join('')}</table>`:''}</div>`;
