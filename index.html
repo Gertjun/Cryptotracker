@@ -271,12 +271,14 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 function num(s){s=String(s??'').trim().replace(/\s/g,'').replace(/€/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'');s=s.replace(',','.');const n=parseFloat(s);return isFinite(n)?n:NaN}
-function decFor(v){const a=Math.abs(v);return a>=1000?2:a>=1?2:a>=0.01?4:a>=0.0001?6:8}
+function decFor(v){const a=Math.abs(v);return !a||a>=1?2:Math.min(20,Math.ceil(-Math.log10(a))+3)}
 function money(v,d){if(v==null||!isFinite(v))return '–';d=d??decFor(v);return new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:Math.min(2,d),maximumFractionDigits:d}).format(v)}
-function signed(v,d){if(v==null||!isFinite(v))return '–';return (v>=0?'+':'−')+money(Math.abs(v),d??2)}
-function pct(p){if(p==null||!isFinite(p))return '–';return (p>=0?'+':'−')+Math.abs(p).toFixed(2).replace('.',',')+'%'}
-function qtyf(q){return new Intl.NumberFormat('nl-NL',{maximumFractionDigits:8}).format(q)}
-function plainNum(v){if(v==null||!isFinite(v))return '';return String(+v.toFixed(decFor(v)>2?decFor(v):2)).replace('.',',')}
+function signed(v,d){if(v==null||!isFinite(v))return '–';d=d??2;if(Math.abs(v)<0.5*10**-d)v=0;return (v>=0?'+':'−')+money(Math.abs(v),d)}
+function pct(p){if(p==null||!isFinite(p))return '–';if(Math.abs(p)<0.005)p=0;return (p>=0?'+':'−')+Math.abs(p).toFixed(2).replace('.',',')+'%'}
+function qtyf(q){return new Intl.NumberFormat('nl-NL',{maximumFractionDigits:20}).format(+(+q).toPrecision(15))}
+function plainNum(v){if(v==null||!isFinite(v))return '';return new Intl.NumberFormat('en-US',{maximumFractionDigits:20,useGrouping:false}).format(+(+v).toPrecision(15)).replace('.',',')}
+// ingevoerde koers per munt: precies zoals ingevoerd tonen, met minimaal 2 decimalen
+function priceF(v){if(v==null||!isFinite(v))return '–';const d=(plainNum(v).split(',')[1]||'').length;return money(v,Math.max(2,Math.min(20,d)))}
 const cls=v=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'flat':v>0?'up':'down';
 function fmtDate(s){const d=new Date(s);if(isNaN(d))return s;return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
 function nowLocal(){const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
@@ -540,7 +542,7 @@ function fillTxs(){
     const right=o.sold?'<div class="label" style="font-size:12px">volledig verkocht</div>':o.pl==null?'':`<div class="${cls(o.pl)}" style="font-size:13px;font-weight:600"><span class="m">${signed(o.pl)}</span> ${pct(o.pp)}</div>${o.realized?'<div class="label" style="font-size:11px">gerealiseerd</div>':''}`;
     items+=`<li class="row" data-tx="${esc(t.id)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image})}
       <div class="grow"><div class="name">${esc(t.name)} <span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></div>
-      <div class="meta">${isNaN(d)?esc(t.date):d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})} · <span class="m">${qtyf(t.qty)}</span> ${sym} @ ${money(t.price)}</div></div>
+      <div class="meta">${isNaN(d)?esc(t.date):d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})} · <span class="m">${qtyf(t.qty)}</span> ${sym} @ ${priceF(t.price)}</div></div>
       <div class="right"><div class="v m">${money(t.qty*t.price,2)}</div>${right}</div></li>`;
   }
   flush();
@@ -548,7 +550,7 @@ function fillTxs(){
     if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell"><div class="coin-ph cash-ic" style="width:28px;height:28px">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(t.amount,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td>–</td><td>–</td><td>–</td></tr>`;
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
     const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="label" style="font-size:11px">nog ${qtyf(o.rem)} ${sym}</div>`:''):'–';
-    return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${money(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${priceF(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
   out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl;
 }
 function holdingsTable(list){
@@ -566,7 +568,7 @@ function txTable(txs,c){
       if(l&&l.remaining<=1e-12)val='<span class="label">verkocht</span>';
       else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="label" style="font-size:11px">nog ${qtyf(l.remaining)} ${sym}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=(c.price/l.unit-1)*100}}
     else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${money(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${priceF(t.price)}</td><td class="m">${money(t.qty*t.price,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc(t.note||'')}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
 function fmtTs(ts){const d=new Date(ts);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}
 const lastCgTs=()=>Math.max(0,...Object.values(prices).map(x=>x?.ts||0));
@@ -613,7 +615,7 @@ function renderHome(){
     <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
     <div class="big m" id="heroVal">${money(p.hasCash?p.total:p.value,2)}</div>
     <div id="heroPl"><button class="pl-toggle ${cls(plV)}" data-act="plmode"><span class="m">${signed(plV)}</span> <span>(${pct(plP)})</span> <small>${mode==='24h'?'24 uur':'Totaal ongerealiseerd'} ⇄</small></button></div>
-    <div class="sub">${p.hasCash?`Crypto <span class="m">${money(p.value,2)}</span> · Cash <span class="m ${p.cash<-0.005?'down':''}">${money(p.cash,2)}</span> · `:''}Geïnvesteerd <span class="m">${money(p.cost,2)}</span>${Math.abs(p.realized)>0.005?` · Gerealiseerd <span class="m ${cls(p.realized)}">${signed(p.realized)}</span>`:''}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
+    <div class="sub" id="heroSub">${heroSub(p.hasCash,p.value,p.cash,p.cost,p.realized)}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
   </section>
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div>
   <div class="ranges">${[['1','24U'],['7','1W'],['30','1M'],['90','3M'],['365','1J'],['max','Max']].map(([d,l])=>`<button data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</div>
@@ -628,6 +630,9 @@ function renderHome(){
       <div class="right"><div class="v m">${money(c.value,2)}</div><div class="${cls(mode==='24h'?c.ch24:c.unreal)}" style="font-size:13px;font-weight:600"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="card" style="color:var(--muted);text-align:center">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name">${esc(c.meta.name)}</div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="${cls(c.realized)} m" style="font-weight:600">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}`;
   drawPortfolioChart();
+}
+function heroSub(hasCash,value,cash,cost,realized){
+  return `${hasCash?`Crypto <span class="m">${money(value,2)}</span> · Cash <span class="m ${cash<-0.005?'down':''}">${money(cash,2)}</span> · `:''}Geïnvesteerd <span class="m">${money(cost,2)}</span>${Math.abs(realized)>0.005?` · Gerealiseerd <span class="m ${cls(realized)}">${signed(realized)}</span>`:''}`;
 }
 function sorter(){
   const s=settings.sort;
@@ -685,8 +690,8 @@ async function portfolioSeries(range){
       if(px==null){const c=charts[id];px=c?.length?c[c.length-1][1]:0}
       value+=q*px;
     }
-    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2];ci++}return[t,value+cumC,cumD,0]}
-    return[t,value,inv,real];
+    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2];ci++}return[t,value+cumC,cumD,0,{v:value,cash:cumC,inv,real}]}
+    return[t,value,inv,real,{v:value,cash:0,inv,real}];
   });
   return{pts,partial:!!err,from:range==='max'&&first<t0-2*DAY?t0:null};
 }
@@ -725,14 +730,15 @@ async function drawPortfolioChart(){
   </svg>`;
   const lbl={'1':'24 uur','7':'deze week','30':'deze maand','90':'3 maanden','365':'dit jaar','max':'sinds start'}[settings.pRange];
   $('#pperiod').innerHTML=`<span>Rendement ${lbl}: <b class="m ${cls(dPL)}">${signed(dPL)}</b></span>${res.partial?'<span style="color:var(--yellow)">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
-  const line=wrap.querySelector('.cur'),hv=$('#heroVal'),hp=$('#heroPl'),oV=hv.innerHTML,oP=hp.innerHTML;
+  const line=wrap.querySelector('.cur'),hv=$('#heroVal'),hp=$('#heroPl'),hs=$('#heroSub'),oV=hv.innerHTML,oP=hp.innerHTML,oS=hs?hs.innerHTML:'',wc=hasCashTx();
   const short=['1','7'].includes(settings.pRange);
-  const reset=()=>{line.style.display='none';hv.innerHTML=oV;hp.innerHTML=oP};
+  const reset=()=>{line.style.display='none';hv.innerHTML=oV;hp.innerHTML=oP;if(hs)hs.innerHTML=oS};
   const move=e=>{const r=wrap.getBoundingClientRect(),x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
     const t=t0+Math.max(0,Math.min(1,x))*(t1-t0);let i=Math.max(0,lastAtOrBefore(pts,t));if(i<pts.length-1&&t-pts[i][0]>pts[i+1][0]-t)i++;
     const p=pts[i],pl=p[1]-p[2],d=new Date(p[0]);
     line.setAttribute('x1',X(p[0]));line.setAttribute('x2',X(p[0]));line.style.display='';
     hv.textContent=money(p[1],2);
+    if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
     hp.innerHTML=`<span class="pl-toggle ${cls(pl)}" style="cursor:default"><span class="m">${signed(pl)}</span> <span>(${pct(p[2]>0?pl/p[2]*100:null)})</span> <small>${d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:short?undefined:'numeric'})}${short?' '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):''}</small></span>`};
   wrap.onmousemove=move;wrap.ontouchmove=move;wrap.ontouchstart=move;wrap.onmouseleave=reset;wrap.ontouchend=reset;
 }
@@ -781,7 +787,7 @@ function txRow(t,c){
   }
   return `<li class="row" data-tx="${esc(t.id)}"><div class="grow">
     <div style="display:flex;gap:8px;align-items:center"><span class="tx-type ${t.type}">${t.type==='buy'?'Koop':'Verkoop'}</span><span class="meta">${fmtDate(t.date)}</span></div>
-    <div style="margin-top:4px;font-weight:600"><span class="m">${qtyf(t.qty)}</span> ${esc(sym)} <span style="color:var(--muted);font-weight:500">@ ${money(t.price)}</span></div>
+    <div style="margin-top:4px;font-weight:600"><span class="m">${qtyf(t.qty)}</span> ${esc(sym)} <span style="color:var(--muted);font-weight:500">@ ${priceF(t.price)}</span></div>
     <div class="meta">Totaal <span class="m">${money(t.qty*t.price,2)}</span>${t.fee?` · kosten <span class="m">${money(t.fee,2)}</span>`:''}${t.note?' · '+esc(t.note):''}</div>
   </div><div class="right">${right}</div></li>`;
 }
@@ -837,7 +843,7 @@ function openTx(opts={}){
   let coin=null;
   if(t&&t.coinId)coin={id:t.coinId,name:t.name,symbol:t.symbol,image:t.image};
   else if(opts.coinId){const c=computeCoin(opts.coinId);coin={id:opts.coinId,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image}}
-  form={id:t?.id,coin,type:t?.type||opts.type||'buy',amount:t?.amount!=null?plainNum(t.amount):'',qty:t?plainNum(t.qty):'',price:t?plainNum(t.price):'',total:t?plainNum(t.qty*t.price):'',fee:t?.fee?plainNum(t.fee):'',date:t?.date||nowLocal(),note:t?.note||'',last:t?'qty':'total'};
+  form={id:t?.id,coin,type:t?.type||opts.type||'buy',amount:t?.amount!=null?plainNum(t.amount):'',qty:t?plainNum(t.qty):'',price:t?plainNum(t.price):'',total:t&&t.qty?plainNum(Math.round(t.qty*t.price*100)/100):'',fee:t?.fee?plainNum(t.fee):'',date:t?.date||nowLocal(),note:t?.note||'',last:t?'qty':'total'};
   if(coin&&!t&&prices[coin.id]?.price)form.price=plainNum(prices[coin.id].price);
   renderTxSheet();
   if(coin&&!t&&!prices[coin.id]?.price)fetchPrice(coin.id).then(p=>{if(p&&form&&!form.price){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});
@@ -871,7 +877,7 @@ function recalc(src){
   if(src==='total'||src==='qty')form.last=src;
   const pr=num($('#f_price').value);if(!(pr>0))return;
   const base=src==='price'?form.last:src;
-  if(base==='total'){const tot=num($('#f_total').value);if(isFinite(tot))$('#f_qty').value=String(+(tot/pr).toFixed(10)).replace('.',',')}
+  if(base==='total'){const tot=num($('#f_total').value);if(isFinite(tot))$('#f_qty').value=plainNum(tot/pr)}
   else{const q=num($('#f_qty').value);if(isFinite(q))$('#f_total').value=(q*pr).toFixed(2).replace('.',',')}
 }
 async function searchCoins(q){
