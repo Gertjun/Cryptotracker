@@ -380,7 +380,7 @@ a{color:var(--accent)}
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='34 (22 okt 2026)';
+const APP_VERSION='35 (22 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -425,7 +425,14 @@ function pct(p){if(p==null||!isFinite(p))return '–';if(Math.abs(p)<0.005)p=0;r
 function qtyf(q){return new Intl.NumberFormat('nl-NL',{maximumFractionDigits:20}).format(+(+q).toPrecision(15))}
 function plainNum(v){if(v==null||!isFinite(v))return '';return new Intl.NumberFormat('en-US',{maximumFractionDigits:20,useGrouping:false}).format(+(+v).toPrecision(15)).replace('.',',')}
 // ingevoerde koers per munt: precies zoals ingevoerd tonen, met minimaal 2 decimalen
-function priceF(v){if(v==null||!isFinite(v))return '–';const d=(plainNum(v).split(',')[1]||'').length;return money(v,Math.max(2,Math.min(20,d)))}
+// Koers tonen: exact als het getal kort is (≤ 6 significante cijfers, zoals je het zelf intypt),
+// anders afgerond (≥ € 1: 2 decimalen, < € 1: 4 significante cijfers) met ≈ ervoor. Opgeslagen waarde blijft exact.
+function priceR(v){const a=Math.abs(v),d=(plainNum(v).split(',')[1]||'').length;
+  const sig6=a>=1?Math.max(0,6-String(Math.floor(a)).length):Math.ceil(-Math.log10(a))+5;
+  if(d<=Math.max(2,sig6))return {s:money(v,Math.max(2,Math.min(20,d))),r:false};
+  return {s:money(v,decFor(v)),r:true}}
+function priceF(v){if(v==null||!isFinite(v))return '–';const o=priceR(v);return (o.r?'≈ ':'')+o.s}
+function priceH(v){if(v==null||!isFinite(v))return '–';const o=priceR(v);return o.r?`<span title="Exacte koers: € ${plainNum(v)}" style="cursor:help;white-space:nowrap"><span style="color:var(--muted)">≈ </span>${o.s}</span>`:`<span style="white-space:nowrap">${o.s}</span>`}
 const cls=v=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'flat':v>0?'up':'down';
 function fmtDate(s){const d=new Date(s);if(isNaN(d))return s;return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
 function nowLocal(){const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
@@ -703,7 +710,7 @@ function txWhat(t,sym){   // korte omschrijving: aantal @ koers / ontvangen / va
   const q=`<span class="m">${qtyf(t.qty)}</span> ${sym}`;
   if(t.type==='receive')return `${q} <span style="color:var(--muted);font-weight:500">ontvangen</span>`;
   if(t.type==='transfer')return `${q} <span style="color:var(--muted);font-weight:500">${esc(t.acct||'?')} → ${esc(t.to||'?')}</span>`;
-  return `${q} <span style="color:var(--muted);font-weight:500">@ ${priceF(t.price)}</span>`;
+  return `${q} <span style="color:var(--muted);font-weight:500">@ ${priceH(t.price)}</span>`;
 }
 const feeTxt=(t,sym)=>t.type==='transfer'?(t.feeQty?`${qtyf(t.feeQty)} ${sym}`:'–'):(t.fee?money(t.fee,2):'–');
 function txOutcome(t,c){
@@ -756,7 +763,7 @@ function fillTxs(){
     if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell"><div class="coin-ph cash-ic" style="width:28px;height:28px">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(t.amount,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc([t.acct,t.note].filter(Boolean).join(' · '))}</td><td>–</td><td>–</td><td>–</td></tr>`;
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
     const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.transfer?'<span class="label">overboeking</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="label" style="font-size:11px">nog ${qtyf(o.rem)} ${sym}</div>`:''):'–';
-    return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceF(t.price)}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l">${new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(t.price)}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
   out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl;
 }
 function holdingsTable(list){
@@ -775,7 +782,7 @@ function txTable(txs,c){
       else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="label" style="font-size:11px">nog ${qtyf(l.remaining)} ${sym}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=l.unit>0?(c.price/l.unit-1)*100:null}}
     else if(t.type==='transfer'){const s=c.sellInfo[t.id]||{};pl=s.pl??null;val='<span class="label">overboeking</span>'}
     else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceF(t.price)}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="l">${fmtDate(t.date)}</td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(t.price)}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
 function fmtTs(ts){const d=new Date(ts);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}
 const lastCgTs=()=>Math.max(0,...Object.values(prices).map(x=>x?.ts||0));
@@ -1202,7 +1209,7 @@ function printYear(Y){
     <tr><td>Gerealiseerde winst/verlies (FIFO)</td><td>${signed(real)}</td></tr>
     <tr class="tot"><td>Rendement ${Y}${isCur?' (tot nu)':''}</td><td>${signed(metric(o2)-metric(o1))}</td></tr></table>
   <h2>Transacties ${Y} (${inY.length})</h2><table><tr><th>Datum</th><th>Type</th><th>Munt</th><th>Aantal</th><th>Koers</th><th>Totaal</th><th>Kosten</th><th>Broker/wallet</th></tr>
-    ${inY.map(t=>`<tr><td>${new Date(t.date).toLocaleDateString('nl-NL')}</td><td>${TYPE_L[t.type]}</td><td>${isCash(t.type)?'Cash':esc((t.symbol||'').toUpperCase())}</td><td>${isCash(t.type)?'':qtyf(t.qty)}</td><td>${isCash(t.type)||isOther(t.type)?'':priceF(t.price)}</td><td>${isCash(t.type)?money(t.amount,2):isOther(t.type)?'':money(txTotal(t),2)}</td><td>${t.type==='transfer'?(t.feeQty?qtyf(t.feeQty)+' '+esc((t.symbol||'').toUpperCase()):''):t.fee?money(t.fee,2):''}</td><td>${esc(t.type==='transfer'?`${t.acct||''} → ${t.to||''}`:t.acct||'')}</td></tr>`).join('')}</table>
+    ${inY.map(t=>`<tr><td>${new Date(t.date).toLocaleDateString('nl-NL')}</td><td>${TYPE_L[t.type]}</td><td>${isCash(t.type)?'Cash':esc((t.symbol||'').toUpperCase())}</td><td>${isCash(t.type)?'':qtyf(t.qty)}</td><td>${isCash(t.type)||isOther(t.type)?'':priceH(t.price)}</td><td>${isCash(t.type)?money(t.amount,2):isOther(t.type)?'':money(txTotal(t),2)}</td><td>${t.type==='transfer'?(t.feeQty?qtyf(t.feeQty)+' '+esc((t.symbol||'').toUpperCase()):''):t.fee?money(t.fee,2):''}</td><td>${esc(t.type==='transfer'?`${t.acct||''} → ${t.to||''}`:t.acct||'')}</td></tr>`).join('')}</table>
   <p class="sm" style="margin-top:14pt">Waarden op basis van dagkoersen (CoinGecko) uit het koersarchief van de app. Dit overzicht is een hulpmiddel, geen fiscaal advies; controleer de regels van de Belastingdienst.</p>`;
   document.body.classList.add('printing');
   const done=()=>{document.body.classList.remove('printing');window.removeEventListener('afterprint',done)};
@@ -1378,7 +1385,7 @@ function marketCard(c){
 function alertsCard(c){
   const list=live(data.alerts).filter(a=>a.coinId===c.coinId).sort((a,b)=>(a.hit?1:0)-(b.hit?1:0)||a.price-b.price);
   return `<div class="card kv" style="margin-top:10px"><div class="kv-h"><b>Prijsalerts</b><button class="link" data-act="addalert">+ Alert</button></div>
-  ${list.length?list.map(a=>`<div><span class="label" style="${a.hit?'':'color:var(--text)'}">${a.dir==='above'?'Boven':'Onder'} ${priceF(a.price)}${a.hit?` · bereikt ${fmtTs(a.hit)}`:''}</span><button class="link" data-act="delalert" data-id="${esc(a.id)}" style="color:var(--red)">Verwijder</button></div>`).join('')
+  ${list.length?list.map(a=>`<div><span class="label" style="${a.hit?'':'color:var(--text)'}">${a.dir==='above'?'Boven':'Onder'} ${priceH(a.price)}${a.hit?` · bereikt ${fmtTs(a.hit)}`:''}</span><button class="link" data-act="delalert" data-id="${esc(a.id)}" style="color:var(--red)">Verwijder</button></div>`).join('')
   :'<div><span class="label">Krijg een melding als de koers een grens bereikt.</span></div>'}</div>`;
 }
 function openAlert(c){
