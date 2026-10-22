@@ -204,7 +204,7 @@ a{color:var(--accent)}
 <script>
 'use strict';
 /* ---------- opslag ---------- */
-const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault';
+const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
@@ -296,13 +296,33 @@ function portfolio(){
 }
 
 /* ---------- koersen ---------- */
+// Alle CoinGecko-verzoeken gaan via één wachtrij (max. 2 tegelijk). Bij een weigering (429, of een
+// geblokkeerd antwoord zonder CORS-header) wacht de app en probeert het automatisch opnieuw.
+let cgActive=0;const cgWait=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function cg(path){
+  while(cgActive>=2)await new Promise(r=>cgWait.push(r));
+  cgActive++;
+  try{
+    const key=(settings.gh.cgKey||'').trim();
+    const url=API+path+(key?(path.includes('?')?'&':'?')+'x_cg_demo_api_key='+encodeURIComponent(key):'');
+    for(let i=0;;i++){
+      let r=null;
+      try{r=await fetch(url)}catch(e){if(!navigator.onLine||i>=2)throw new Error('Geen antwoord van CoinGecko (offline of te veel verzoeken)')}
+      if(r&&(r.status!==429||i>=2))return r;
+      await sleep([6000,15000][i]);
+    }
+  }finally{cgActive--;const n=cgWait.shift();if(n)n()}
+}
+const BUSY='CoinGecko is even druk; de app probeert het zo opnieuw';
+
 let priceBusy=false;
 async function refreshPrices(force){
   const ids=coinIds();if(locked||!ids.length||priceBusy)return;
   priceBusy=true;
   try{
-    const r=await fetch(`${API}/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=24h`);
-    if(!r.ok)throw new Error(r.status===429?'Te veel koersverzoeken, even wachten':'Koersen ophalen mislukt ('+r.status+')');
+    const r=await cg(`/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=24h`);
+    if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Koersen ophalen mislukt ('+r.status+')');
     const arr=await r.json();if(locked)return;
     for(const c of arr)prices[c.id]={price:c.current_price,ch24:c.price_change_percentage_24h,image:c.image,ts:Date.now()};
     savePrices();render();
@@ -310,17 +330,37 @@ async function refreshPrices(force){
   finally{priceBusy=false}
 }
 async function fetchPrice(id){
-  try{const r=await fetch(`${API}/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=${CUR}&include_24hr_change=true`);const j=await r.json();if(j[id]){prices[id]=Object.assign(prices[id]||{},{price:j[id][CUR],ch24:j[id][CUR+'_24h_change'],ts:Date.now()});savePrices();return j[id][CUR]}}catch(e){}
+  try{const r=await cg(`/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=${CUR}&include_24hr_change=true`);const j=await r.json();if(j[id]){prices[id]=Object.assign(prices[id]||{},{price:j[id][CUR],ch24:j[id][CUR+'_24h_change'],ts:Date.now()});savePrices();return j[id][CUR]}}catch(e){}
   return null;
 }
-const chartCache={};
+// Koersgeschiedenis wordt bewaard (versleuteld als de app-vergrendeling aan staat) en pas opnieuw
+// opgehaald als hij verouderd is: 24U na 5 min, 1W na 15 min, 1M na 1 uur, langer na 6 uur.
+let chartCache=lockCfg?{}:load(LS_CHARTS,{});
+const chartTtl=d=>d==='1'?5*6e4:d==='7'?15*6e4:d==='30'?60*6e4:6*3600e3;
+function thin(pts,max=500){
+  const step=Math.max(1,Math.ceil(pts.length/max)),out=[];
+  for(let i=0;i<pts.length;i+=step)out.push(pts[i]);
+  if(pts.length&&out[out.length-1]!==pts[pts.length-1])out.push(pts[pts.length-1]);
+  return out.map(([t,v])=>[Math.round(t/6e4)*6e4,+(+v).toPrecision(7)]);
+}
+let chartSaveT=null;
+function saveCharts(){clearTimeout(chartSaveT);chartSaveT=setTimeout(()=>{
+  const now=Date.now();for(const k in chartCache)if(now-chartCache[k].ts>7*864e5)delete chartCache[k];
+  try{
+    if(lockCfg){if(!DEK)return;const k=DEK,snap=enc.encode(JSON.stringify(chartCache));
+      vaultQ=vaultQ.then(()=>aesEnc(k,snap)).then(o=>localStorage.setItem(LS_VCHARTS,JSON.stringify(o))).catch(()=>{})}
+    else localStorage.setItem(LS_CHARTS,JSON.stringify(chartCache));
+  }catch(e){/* opslag vol: cache blijft alleen in het geheugen */}
+},1500)}
 async function fetchChart(id,days){
   const key=id+'|'+days,c=chartCache[key];
-  if(c&&Date.now()-c.ts<5*60000)return c.pts;
-  let r=await fetch(`${API}/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=${days}`);
-  if(!r.ok&&r.status!==429&&days==='max')r=await fetch(`${API}/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=365`);
-  if(!r.ok)throw new Error(r.status===429?'Te veel verzoeken, probeer zo opnieuw':'Grafiek niet beschikbaar');
-  const j=await r.json();chartCache[key]={ts:Date.now(),pts:j.prices||[]};return chartCache[key].pts;
+  if(c&&Date.now()-c.ts<chartTtl(days))return c.pts;
+  try{
+    let r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=${days}`);
+    if(!r.ok&&r.status!==429&&days==='max')r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=365`);
+    if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Grafiek niet beschikbaar');
+    const j=await r.json();chartCache[key]={ts:Date.now(),pts:thin(j.prices||[])};saveCharts();return chartCache[key].pts;
+  }catch(e){if(c)return c.pts;throw e}   // bij een fout: laatst bekende grafiek tonen
 }
 
 /* ---------- weergave ---------- */
@@ -441,7 +481,7 @@ async function portfolioSeries(range){
   const first=Math.min(...data.txs.map(txTime).filter(isFinite));
   const days=range==='max'?String(Math.min(365,Math.max(1,Math.ceil((now-first)/864e5)+1))):range;
   const charts={},queue=[...ids];let err=null;
-  await Promise.all([0,1,2].map(async()=>{while(queue.length){const id=queue.shift();try{charts[id]=await fetchChart(id,days)}catch(e){err=e}}}));
+  await Promise.all([0,1].map(async()=>{while(queue.length){const id=queue.shift();try{charts[id]=await fetchChart(id,days)}catch(e){err=e}}}));
   if(err&&!Object.keys(charts).length)throw err;
   const states={};ids.forEach(id=>states[id]=coinStates(id));
   let base=[];for(const id in charts)if(charts[id].length>base.length)base=charts[id];
@@ -556,6 +596,7 @@ async function drawChart(c){
   try{pts=await fetchChart(c.coinId,settings.range)}catch(e){if(my===chartToken&&$('#chart'))$('#chart').innerHTML=`<div class="chart-msg">${esc(e.message)}</div>`;return}
   if(my!==chartToken||!$('#chart'))return;
   if(!pts.length){$('#chart').innerHTML='<div class="chart-msg">Geen koersdata</div>';return}
+  if(c.price!=null&&Date.now()-pts[pts.length-1][0]>6e4)pts=[...pts,[Date.now(),c.price]];
   const W=360,H=190,pt=14,pb=14;
   const t0=pts[0][0],t1=pts[pts.length-1][0];
   let lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1]));
@@ -638,7 +679,7 @@ async function searchCoins(q){
   const ul=$('#f_results');if(!ul)return;q=q.trim();
   if(q.length<2){ul.innerHTML='';return}
   ul.innerHTML='<li style="color:var(--muted)">Zoeken…</li>';
-  try{const r=await fetch(`${API}/search?query=${encodeURIComponent(q)}`);const j=await r.json();
+  try{const r=await cg(`/search?query=${encodeURIComponent(q)}`);const j=await r.json();
     const list=(j.coins||[]).slice(0,8);
     if(!$('#f_results'))return;
     ul.innerHTML=list.length?list.map(c=>`<li data-pick='${esc(JSON.stringify({id:c.id,name:c.name,symbol:c.symbol,image:c.large||c.thumb}))}'><img src="${esc(c.thumb)}" alt=""><div class="grow"><b>${esc(c.name)}</b> <span style="color:var(--muted)">${esc(c.symbol)}</span></div>${c.market_cap_rank?`<span class="label">#${c.market_cap_rank}</span>`:''}</li>`).join(''):'<li style="color:var(--muted)">Niets gevonden</li>';
@@ -687,6 +728,10 @@ function openSettings(){
   <div class="field"><label>Versleutelwachtwoord</label><input id="s_pass" type="password" value="${esc(g.pass)}" autocomplete="new-password" placeholder="Zelfde op elk apparaat"></div>
   <p class="hint">Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span style="color:var(--red)">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
   <button class="btn" data-act="savesync">Opslaan en synchroniseren</button>
+  <div class="section-t">Koersdata</div>
+  <p class="hint" style="margin-top:0">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener">coingecko.com/en/api</a> → Demo (gratis account).</p>
+  <div class="field"><label>CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" type="password" value="${esc(settings.gh.cgKey||'')}" placeholder="CG-…" autocomplete="off" autocapitalize="off"></div>
+  <button class="btn sec" data-act="savecg">Sleutel opslaan en testen</button>
   <div class="section-t">Back-up</div>
   <div class="two"><button class="btn sec" data-act="export">Exporteren</button><button class="btn sec" data-act="import">Importeren</button></div>
   <input type="file" id="s_file" accept="application/json,.json" hidden>
@@ -781,6 +826,7 @@ async function openVault(raw){
   data=Object.assign({txs:[],deleted:[],updated:0},obj.data);
   settings.gh=Object.assign({token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''},obj.gh);
   prices=obj.prices||{};
+  try{const vc=JSON.parse(localStorage.getItem(LS_VCHARTS)||'null');chartCache=vc?JSON.parse(dec.decode(await aesDec(key,vc))):{}}catch(e){chartCache={}}
   locked=false;start();
 }
 async function unlockPw(pw){
@@ -816,13 +862,13 @@ async function enableLock(pw){
   dekRaw=rnd(32);DEK=await importAes(dekRaw);
   lockCfg={pw:null,pks:[],autoLock:5};lockCfg.pw=await wrapPw(pw);saveLock();
   persist();await vaultQ;
-  localStorage.removeItem(LS_DATA);localStorage.removeItem(LS_PRICES);
+  localStorage.removeItem(LS_DATA);localStorage.removeItem(LS_PRICES);localStorage.removeItem(LS_CHARTS);saveCharts();
 }
-function disableLock(){lockCfg=null;DEK=null;dekRaw=null;localStorage.removeItem(LS_LOCK);localStorage.removeItem(LS_VAULT);persist()}
+function disableLock(){lockCfg=null;DEK=null;dekRaw=null;localStorage.removeItem(LS_LOCK);localStorage.removeItem(LS_VAULT);localStorage.removeItem(LS_VCHARTS);persist();saveCharts()}
 function lockNow(){
   if(!lockCfg)return;
   DEK=null;dekRaw=null;locked=true;clearTimeout(syncTimer);
-  data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};
+  data={txs:[],deleted:[],updated:0};prices={};chartCache={};settings.gh={...settings.gh,token:'',repo:'',pass:'',cgKey:''};
   closeSheet();if(location.hash)history.replaceState(null,'',location.pathname+location.search);renderLock();
 }
 function pkErr(e){return e?.name==='NotAllowedError'?'Geannuleerd of verlopen':e?.name==='InvalidStateError'?'Deze passkey bestaat al op dit apparaat':e?.message||'Mislukt'}
@@ -875,6 +921,9 @@ document.addEventListener('click',e=>{
     fetchPrice(c.id).then(p=>{if(p&&form&&form.coin?.id===c.id){form.price=plainNum(p);const el=$('#f_price');if(el){el.value=form.price;recalc('price')}}});return}
   switch(a.dataset.act){
     case 'lock':lockNow();break;
+    case 'savecg':(async()=>{settings.gh.cgKey=$('#s_cg').value.trim();saveSettings();
+      try{const r=await cg('/ping');toast(r.ok?(settings.gh.cgKey?'Sleutel werkt':'Sleutel verwijderd'):r.status===401||r.status===400?'Sleutel ongeldig':'CoinGecko gaf fout '+r.status)}catch(e){toast(e.message)}
+      refreshPrices()})();break;
     case 'add':$('#btnAdd').click();break;
     case 'unlockpk':tryPasskey(false);break;
     case 'lockon':case 'lockon2':case 'addpk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
@@ -889,7 +938,7 @@ document.addEventListener('click',e=>{
     case 'import':$('#s_file').click();break;
     case 'refresh':refreshPrices(true).then(()=>toast('Koersen bijgewerkt'));break;
     case 'savesync':
-      settings.gh={repo:$('#s_repo').value.trim(),token:$('#s_token').value.trim(),path:$('#s_path').value.trim()||'crypto-portfolio.enc.json',branch:$('#s_branch').value.trim()||'main',pass:$('#s_pass').value};
+      settings.gh={...settings.gh,repo:$('#s_repo').value.trim(),token:$('#s_token').value.trim(),path:$('#s_path').value.trim()||'crypto-portfolio.enc.json',branch:$('#s_branch').value.trim()||'main',pass:$('#s_pass').value};
       saveSettings();closeSheet();render();
       if(settings.gh.repo&&settings.gh.token&&settings.gh.pass)syncNow(false);else toast('Sync uitgeschakeld');break;
     case 'wipe':
