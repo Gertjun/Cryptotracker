@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0b0d12">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Crypto">
   <title>Crypto Portfolio</title>
   <meta name="description" content="Persoonlijke app om crypto-investeringen, cash en (on)gerealiseerde winst bij te houden.">
@@ -25,7 +25,7 @@
 :root{--sheet:#121620;--side:#0f1218;--tab:rgba(11,13,18,.94);--toast:#2a3040;--bg:#0b0d12;--card:#151922;--card2:#1c212c;--line:#262c39;--text:#eef1f6;--muted:#8b93a5;--green:#1fd17a;--red:#ff5a5f;--accent:#4f8cff;--yellow:#f5b942}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;font-variant-numeric:tabular-nums}
-body{padding:calc(env(safe-area-inset-top) + var(--top-extra,0px)) 0 env(safe-area-inset-bottom);overscroll-behavior-y:contain}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overscroll-behavior-y:contain}
 button,input,select{font:inherit;color:inherit}
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 /* rij-knoppen en -links: zien eruit als tekst, maar zijn met Tab en Enter te bedienen */
@@ -250,7 +250,7 @@ a{color:var(--accent)}
 .rep-col{display:contents}
 .zoomable{cursor:pointer}
 .zoom-hint{float:right;font-size:12px;color:var(--accent);font-weight:600;margin-top:2px}
-.zoom{position:fixed;inset:0;z-index:55;background:var(--bg);overflow:auto;padding:calc(10px + env(safe-area-inset-top) + var(--top-extra,0px)) 16px calc(30px + env(safe-area-inset-bottom))}
+.zoom{position:fixed;inset:0;z-index:55;background:var(--bg);overflow:auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(30px + env(safe-area-inset-bottom))}
 .zoom-in{max-width:1200px;margin:0 auto}
 .zoom-top{display:flex;align-items:center;justify-content:space-between;gap:10px;height:56px}
 .zoom-top h2{margin:0;font-size:20px}
@@ -283,7 +283,7 @@ a{color:var(--accent)}
 .banner{display:flex;align-items:center;gap:10px;width:100%;border:1px solid rgba(245,185,66,.35);background:rgba(245,185,66,.1);color:var(--text);border-radius:14px;padding:10px 14px;margin:4px 0 14px;font-size:14px;cursor:pointer;text-align:left}
 .banner b{color:var(--yellow)}
 .banner span:last-child{margin-left:auto;color:var(--accent);font-weight:600}
-#upd{position:fixed;top:calc(10px + env(safe-area-inset-top) + var(--top-extra,0px));left:50%;transform:translateX(-50%);z-index:70;background:var(--accent);color:#fff;border-radius:14px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px;font-weight:600;max-width:calc(100vw - 32px)}
+#upd{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:70;background:var(--accent);color:#fff;border-radius:14px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px;font-weight:600;max-width:calc(100vw - 32px)}
 #upd button{background:#fff;color:#1a3a8f;border:0;border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer}
 #print{display:none}
 @media print{
@@ -554,12 +554,15 @@ fieldset.ranges{padding:0}
 .alloc .rt th{white-space:normal}
 .alloc .rt .link::after{inset:-8px 0}
 .sell-link{color:var(--red)}
-/* Als app op het beginscherm (iPhone): iOS vervaagt een strook onder de statusbalk; houd de bovenbalk daar net onder */
-@media (display-mode: standalone){:root{--top-extra:14px}}
-:root.ios-standalone{--top-extra:14px}
+/* iPhone-app op het beginscherm: iOS neemt de achtergrondkleur van dit echte element (1 px, bovenaan) over voor de statusbalk.
+   Met status-bar-style 'default' tekent iOS geen Liquid Glass-vervaging over de bovenkant van de app (iOS 26/27). */
+#sbTint{display:none}
+@media (display-mode: standalone){#sbTint{display:block;position:fixed;top:0;left:0;right:0;height:1px;background:var(--bg);z-index:100;pointer-events:none}}
+:root.ios-standalone #sbTint{display:block;position:fixed;top:0;left:0;right:0;height:1px;background:var(--bg);z-index:100;pointer-events:none}
 </style>
 </head>
 <body>
+  <div id="sbTint" aria-hidden="true"></div>
   <a class="skip-link" href="#view">Naar hoofdinhoud</a>
   <div class="shell">
     <aside id="side"></aside>

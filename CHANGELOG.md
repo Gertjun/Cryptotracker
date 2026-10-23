@@ -6,6 +6,31 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v79 – 23 oktober 2026
+Vervaging bovenin de iPhone-app opgelost met een ondoorzichtige statusbalk. Gebouwd op v77; de aanpassing uit v78 is teruggedraaid.
+
+### Opgelost
+- **Vage bovenrand in de iPhone-app:** sinds iOS 26/27 tekent iOS bij apps op het beginscherm een "Liquid Glass"-vervaging over de bovenkant. Dat gebeurt alleen bij de statusbalk-instelling `black-translucent`.
+  - De app gebruikt nu `default`. De statusbalk is daardoor een effen balk en de pagina begint eronder, dus iOS tekent geen vervaging meer.
+  - De extra ruimte van v78 (14 punten) was te weinig, want de vervaging loopt zo'n 35–40 punten door. Die ruimte is weer weg.
+- **Kleur van de statusbalk:** helemaal bovenin staat een onzichtbaar element van 1 pixel in de achtergrondkleur van de app. iOS neemt die kleur over voor de statusbalk.
+  - Wissel je in de app tussen licht en donker, dan wisselt die kleur direct mee.
+  - Bij het thema "Automatisch" houdt iOS licht of donker vast zolang de app open is. Statusbalk en app blijven dan gelijk; het wisselt pas na herstarten van de app.
+
+### Let op: eenmalig opnieuw installeren
+iOS leest de statusbalk-instelling alleen als je de app aan het beginscherm toevoegt. Doe na het updaten daarom één keer het volgende:
+1. Open de app en controleer dat GitHub-synchronisatie bijgewerkt is. Maak voor de zekerheid ook een back-up (Instellingen › Back-up).
+2. Zorg dat je je GitHub-gegevens bij de hand hebt: token, repository en sync-wachtwoord.
+3. Verwijder de app van het beginscherm. Let op: iOS wist daarbij de gegevens die op het toestel in die app stonden, ook je instellingen en vergrendeling.
+4. Open de site in Safari en kies Deel › Zet op beginscherm.
+5. Open de app, vul onder Instellingen › Synchronisatie via GitHub je gegevens opnieuw in en synchroniseer: al je transacties komen terug.
+6. Zet daarna zo nodig de app-vergrendeling en je passkey opnieuw aan.
+
+### Technisch
+- **Element:** het element `#sbTint` is alleen zichtbaar als de app als app draait (`display-mode: standalone`, of `navigator.standalone` op oudere iOS-versies).
+- **Overige weergave:** in Safari en op de laptop verandert er niets.
+- **Bron van de oplossing:** een bevestigde oplossing uit de PWA-community (r/PWA, "iOS 27 beta blurs the top edge of installed PWAs").
+
 ## v78 – 23 oktober 2026
 Bovenbalk op de iPhone niet meer vaag.
 
