@@ -6,6 +6,26 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v72 – 23 oktober 2026
+Rapporten opgesplitst in drie tabbladen.
+
+### Gewijzigd
+- **Tabbladen bovenaan Rapporten:** **Rendement · Plannen · Administratie**. De twaalf kaarten stonden eerst allemaal onder elkaar en zijn nu verdeeld naar wanneer je ze gebruikt.
+  - **Rendement** (terugkijken): rendement per periode, rendementskalender, beste en slechtste munt, inleg, vergelijking met één munt en "Vaste inleg vergeleken".
+  - **Plannen** (vooruitkijken): doelen (volledig) en vaste-inlegplannen.
+    - Het Overzicht toont de doelen nog steeds compact.
+    - Plannen werkt ook als je nog geen transacties hebt, zodat je vooraf al een doel of plan kunt maken.
+  - **Administratie** (controleren en bewaren): per broker/wallet, controle, waarde op 1 januari en exporteren.
+    - De export staat hier en niet in Instellingen, omdat je hem samen met het jaaroverzicht gebruikt.
+- **Eigen adres per tabblad:** bijvoorbeeld `#rapporten/plannen`. De terugknop werkt daardoor, en je kunt er direct naartoe linken.
+- **Onthoudt het laatste tabblad:** tik je in de onderbalk op Rapporten, dan opent het tabblad dat je het laatst bekeek.
+- **Laptop:** elk tabblad gebruikt twee kolommen.
+- **Telefoon:** alles staat onder elkaar. De tabbladen passen ook op een scherm van 320 pixels breed.
+
+### Technisch
+- **Minder rekenwerk:** het jaaroverzicht per 1 januari en het overzicht per broker worden alleen berekend als je Administratie opent. Daardoor laadt Rendement iets sneller.
+- **Toegankelijkheid:** de tabbladen zijn gewone links in een `<nav>` met `aria-current="page"`. Ze werken met toetsenbord en schermlezer, en de focus blijft na het wisselen op het gekozen tabblad.
+
 ## v71 – 23 oktober 2026
 Meer marktinformatie in de tabel Bezittingen op het Overzicht (laptop/desktop).
 

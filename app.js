@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='71 (23 okt 2026)';
+const APP_VERSION='72 (23 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -386,7 +386,7 @@ function renderInner(){
   document.body.classList.toggle('private',!!settings.privacy);
   const m=location.hash.match(/^#coin\/(.+)$/);
   const cid=m&&(TX().some(t=>t.coinId===decodeURIComponent(m[1]))||isWatched(decodeURIComponent(m[1])))?decodeURIComponent(m[1]):null;
-  const isTx=location.hash==='#transacties',isRep=location.hash==='#rapporten';
+  const isTx=location.hash==='#transacties',isRep=/^#rapporten(\/|$)/.test(location.hash);
   const bar=()=>{if(multiPf())$('#view').insertAdjacentHTML('afterbegin',pfBarHTML())};
   if(isRep){inEUR(renderReports);bar();lastView='rep';renderSide('__rep')}
   else if(isTx){
@@ -707,6 +707,10 @@ function doImport(){
   toast(`${n} transacties geïmporteerd${k?` (${k} handmatige vervangen)`:''}`);
 }
 /* ---------- rapporten ---------- */
+// Rapporten in drie tabbladen; '#rapporten' zonder tabblad opent het laatst bekeken tabblad
+const REP_TABS=[['rendement','Rendement'],['plannen','Plannen'],['administratie','Administratie']];
+function repTab(){const m=location.hash.match(/^#rapporten\/(\w+)/),t=m?m[1]:settings.repTab;return REP_TABS.some(([k])=>k===t)?t:'rendement'}
+function repTabsHTML(cur){return `<nav class="rep-tabs" aria-label="Onderdelen van Rapporten">${REP_TABS.map(([k,l])=>`<a href="#rapporten/${k}" class="${k===cur?'on':''}"${k===cur?' aria-current="page"':''}>${l}</a>`).join('')}</nav>`}
 // Koers op een moment: uit het eigen koersarchief (dagkoersen) of de bewaarde grafieken; 'nu' = actuele koers.
 function priceAt(id,ts){
   if(Date.now()-ts<15*6e4)return prices[id]?.price??null;
@@ -840,13 +844,9 @@ let zoomReturn=null;
 function closeZoom(){const z=$('#zoom');if(z){if(z.open)z.close();z.remove();document.body.style.overflow='';const r=zoomReturn;zoomReturn=null;restoreFocus(r)}}
 const pSeg=(key,u)=>`<fieldset class="seg mini"><legend class="sr-only">Periode ${/Ret/.test(key)?'rendement':'inleg'}</legend>${Object.entries(PU).map(([k,v])=>`<button type="button" data-rp="${key}:${k}" class="${u===k?'on':''}">${v[0]}</button>`).join('')}</fieldset>`;
 const monthLbl=(ts,o={month:'short'})=>new Date(ts).toLocaleDateString('nl-NL',o).replace('.','');
-function renderReports(){
-  $('#topbar').innerHTML=topbarHTML(null,'Rapporten');
-  if(!TX().length){$('#view').innerHTML=`<div class="empty"><b>Nog geen gegevens</b>Voeg transacties toe om rapporten te zien.</div>`;return}
+function repJanCard(){
   const S={};coinIds().forEach(id=>S[id]=coinStates(id));
-  const p=portfolio(),hasCash=p.hasCash,now=Date.now(),first=Math.min(...TX().map(txTime)),fd=new Date(first),nd=new Date(now);
-  const metric=o=>hasCash?o.total-o.dep:o.crypto-o.inv+o.real;   // resultaat tot dan toe (stortingen/aankopen tellen niet als winst)
-
+  const hasCash=hasCashTx(),now=Date.now(),first=Math.min(...TX().map(txTime)),fd=new Date(first),nd=new Date(now);
   // 1. waarde op 1 januari
   const years=[];for(let y=fd.getFullYear()+1;y<=nd.getFullYear();y++)years.push(y);
   const jan=years.reverse().map(y=>({y,o:snapshot(new Date(y,0,1).getTime(),S)}));
@@ -856,6 +856,33 @@ function renderReports(){
     ${hasCash?`<div><span>Cash</span><span class="m">${money(o.cash,2)}</span></div>`:''}
     ${o.missing.length?`<p class="note-after hint">≈ Geen dagkoers bewaard voor ${o.missing.join(', ')}; geschat uit de dichtstbijzijnde bekende koersen.</p>`:''}</div></details>`).join('')
   :`<p class="hint">Je eerste peildatum is 1 januari ${nd.getFullYear()+1}.</p>`}</div>`;
+
+  return janCard;
+}
+function repAccCard(){
+  const hasCash=hasCashTx();
+  // 5. per broker / wallet
+  const acc=acctSummary(),named=acc.some(a=>a.name);
+  const accCard=`<div class="card"><h2 class="h3">Per broker / wallet</h2>
+  ${named?`<table class="rt"><caption class="sr-only">Waarde per broker of wallet</caption><tr><th scope="col">Broker / wallet</th><th scope="col">Crypto</th>${hasCash?'<th scope="col">Cash</th>':''}<th scope="col">Totaal</th></tr>${acc.map(a=>`<tr><th scope="row">${esc(a.name||'Niet ingevuld')}</th><td class="m">${a.miss?'≈ ':''}${money(a.crypto,2)}</td>${hasCash?`<td class="m">${money(a.cash,2)}</td>`:''}<td class="m"><b>${money(a.total,2)}</b></td></tr>`).join('')}</table>
+  ${acc.map(a=>a.coins.length?`<details><summary class="yr"><span class="label">${esc(a.name||'Niet ingevuld')}: ${a.coins.length} munt${a.coins.length>1?'en':''}</span><span class="label">▾</span></summary><div class="yr-d">${a.coins.map(c=>`<div><span>${esc(c.name||c.id)} · <span class="m">${qtyf(c.qty)}</span> ${esc((c.symbol||'').toUpperCase())}</span><span class="m">${money(c.value,2)}</span></div>`).join('')}</div></details>`:'').join('')}
+  ${acc.some(a=>a.coins.some(c=>c.qty<0)||a.cash<-0.005)?'<p class="warn">Een broker of wallet staat negatief: controleer of alle overboekingen en stortingen erin staan.</p>':''}`
+  :'<p class="hint">Vul bij je transacties in bij welke broker of wallet ze horen; dan zie je hier per plek je bezit en cash.</p>'}</div>`;
+
+  return accCard;
+}
+function renderReports(){
+  $('#topbar').innerHTML=topbarHTML(null,'Rapporten');
+  const tab=repTab();if(settings.repTab!==tab){settings.repTab=tab;saveSettings()}
+  const note=settings.unit&&settings.unit!=='EUR'?'<p class="hint rep-note">Rapporten staan altijd in euro, ook als je bedragen elders in '+(settings.unit==='USD'?'dollar':'bitcoin')+' bekijkt.</p>':'';
+  const cols=(a,b)=>`${repTabsHTML(tab)}${note}<div class="rep-grid"><div class="rep-col">${a}</div><div class="rep-col">${b}</div></div>`;
+  const ord0=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
+  if(tab==='plannen'){$('#view').innerHTML=cols(ord0(goalsCard(false),1),ord0(plansCard(),2));return}
+  if(!TX().length){$('#view').innerHTML=`${repTabsHTML(tab)}<div class="empty"><b>Nog geen gegevens</b>Voeg transacties toe om rapporten te zien.</div>`;return}
+  if(tab==='administratie'){$('#view').innerHTML=cols(ord0(repAccCard(),1)+ord0(checkCard(),3),ord0(repJanCard(),2)+ord0(exportCard(),4));return}
+  const S={};coinIds().forEach(id=>S[id]=coinStates(id));
+  const p=portfolio(),hasCash=p.hasCash,now=Date.now(),first=Math.min(...TX().map(txTime)),fd=new Date(first),nd=new Date(now);
+  const metric=o=>hasCash?o.total-o.dep:o.crypto-o.inv+o.real;   // resultaat tot dan toe (stortingen/aankopen tellen niet als winst)
 
   // 2. rendement per dag/week/maand/jaar
   const ru=PU[settings.repRet]?settings.repRet:'month',[RL,rl,RN]=PU[ru];
@@ -889,18 +916,9 @@ function renderReports(){
   <div><span class="label">Inleg over 12 maanden bij huidig maandtempo</span><b class="m">${money(totalIn+M.avg*12,2)}</b></div>
   <div><span class="label">Waarde over 12 maanden bij gelijkblijvende koersen</span><b class="m">${money(curVal+M.avg*12,2)}</b></div></div>`;
 
-  // 5. per broker / wallet
-  const acc=acctSummary(),named=acc.some(a=>a.name);
-  const accCard=`<div class="card"><h2 class="h3">Per broker / wallet</h2>
-  ${named?`<table class="rt"><caption class="sr-only">Waarde per broker of wallet</caption><tr><th scope="col">Broker / wallet</th><th scope="col">Crypto</th>${hasCash?'<th scope="col">Cash</th>':''}<th scope="col">Totaal</th></tr>${acc.map(a=>`<tr><th scope="row">${esc(a.name||'Niet ingevuld')}</th><td class="m">${a.miss?'≈ ':''}${money(a.crypto,2)}</td>${hasCash?`<td class="m">${money(a.cash,2)}</td>`:''}<td class="m"><b>${money(a.total,2)}</b></td></tr>`).join('')}</table>
-  ${acc.map(a=>a.coins.length?`<details><summary class="yr"><span class="label">${esc(a.name||'Niet ingevuld')}: ${a.coins.length} munt${a.coins.length>1?'en':''}</span><span class="label">▾</span></summary><div class="yr-d">${a.coins.map(c=>`<div><span>${esc(c.name||c.id)} · <span class="m">${qtyf(c.qty)}</span> ${esc((c.symbol||'').toUpperCase())}</span><span class="m">${money(c.value,2)}</span></div>`).join('')}</div></details>`:'').join('')}
-  ${acc.some(a=>a.coins.some(c=>c.qty<0)||a.cash<-0.005)?'<p class="warn">Een broker of wallet staat negatief: controleer of alle overboekingen en stortingen erin staan.</p>':''}`
-  :'<p class="hint">Vul bij je transacties in bij welke broker of wallet ze horen; dan zie je hier per plek je bezit en cash.</p>'}</div>`;
-
-  // volgorde: rendement en inleg naast elkaar, daaronder beste/slechtste munt en brokers, onderaan 1 januari
-  // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
-  const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
-  $('#view').innerHTML=`${settings.unit&&settings.unit!=='EUR'?'<p class="hint rep-note">Rapporten staan altijd in euro, ook als je bedragen elders in '+(settings.unit==='USD'?'dollar':'bitcoin')+' bekijkt.</p>':''}<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(calCard(),4)}${ord(perfCard,5)}${ord(benchCard(),6)}${ord(dcaCard(),6)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(plansCard(),3)}${ord(checkCard(),7)}${ord(accCard,8)}${ord(janCard,9)}${ord(exportCard(),10)}</div></div>`;
+    // Rendement: laptop links rendement, kalender, beste/slechtste munt; rechts inleg, vergelijking, vaste-inleg-analyse
+  const ord=ord0;
+  $('#view').innerHTML=cols(ord(retCard,1)+ord(calCard(),3)+ord(perfCard,4),ord(inCard,2)+ord(benchCard(),5)+ord(dcaCard(),6));
   fitBars();
 }
 /* ---------- sinds je vorige bezoek ---------- */
@@ -1185,7 +1203,7 @@ function benchCard(){
   const nameOf=id=>(data.txs.find(t=>t.coinId===id)||live(data.watch).find(w=>w.id===id)||{}).name||({bitcoin:'Bitcoin',ethereum:'Ethereum'}[id])||id;
   const bid=opts.includes(settings.bench)?settings.bench:'bitcoin',nm=nameOf(bid);
   // koersen van de vergelijkingsmunt nog niet in het archief? eenmalig ophalen
-  if(!prices[bid]||!data.hist?.[bid]){if(!benchFetch[bid]){benchFetch[bid]=1;Promise.all([prices[bid]?null:fetchPrice(bid),data.hist?.[bid]?null:fetchChart(bid,'365').catch(()=>{})]).then(()=>{if(location.hash==='#rapporten')renderReports()})}}
+  if(!prices[bid]||!data.hist?.[bid]){if(!benchFetch[bid]){benchFetch[bid]=1;Promise.all([prices[bid]?null:fetchPrice(bid),data.hist?.[bid]?null:fetchChart(bid,'365').catch(()=>{})]).then(()=>{if(/^#rapporten/.test(location.hash)&&repTab()==='rendement')inEUR(renderReports)})}}
   const B=benchData(bid);
   const sel=`<select class="bench-sel" data-act="bench">${opts.map(id=>`<option value="${esc(id)}"${id===bid?' selected':''}>${esc(nameOf(id))}</option>`).join('')}</select>`;
   let body;

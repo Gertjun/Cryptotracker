@@ -513,6 +513,12 @@ fieldset.ranges{padding:0}
 .pf-row .link{min-height:44px;padding:0 8px}
 .hold-tbl th,.hold-tbl td{padding-inline:9px}
 .hold-tbl abbr{text-decoration:none}
+.rep-tabs{display:flex;gap:4px;padding:4px;margin:0 0 14px;background:var(--card);border-radius:12px}
+.rep-tabs a{flex:1;display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px 6px;border-radius:9px;font-weight:650;color:var(--muted);text-decoration:none;text-align:center}
+.rep-tabs a:hover{color:var(--text)}
+.rep-tabs a.on{background:var(--card2);color:var(--text)}
+@media (min-width:900px){.rep-tabs{max-width:520px}}
+@media (max-width:370px){.rep-tabs a{font-size:14px;padding-inline:2px}}
 </style>
 </head>
 <body>
