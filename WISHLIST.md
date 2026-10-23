@@ -17,16 +17,19 @@ De betaalde kosten per broker en per jaar, en als percentage van je aankopen. Je
 ### W10 – Maandafsluiting
 De eerste keer dat je de app in een nieuwe maand opent, zie je een korte samenvatting van de vorige maand: resultaat, inleg, beste en slechtste munt, betaalde kosten en hoe je ervoor staat ten opzichte van je doelen.
 
+### W17 – Bijdrage per munt aan je rendement
+Kies een periode (maand, kwartaal, jaar) en zie per munt hoeveel euro die bijdroeg aan je resultaat, van grootste winnaar tot grootste verliezer. Je ziet dan bijvoorbeeld dat je +€ 200 deze maand vooral uit ETH kwam, terwijl BTC je € 40 kostte. Past in Rapporten › Analyse.
+
 ## Kopen en verkopen voorbereiden
 
 ### W2 – Verkoopsimulator
 Vul in hoeveel je wilt verkopen. Je ziet welke aankopen volgens FIFO worden afgeboekt, wat je gerealiseerde winst na kosten wordt en hoeveel cash je daarna hebt. Er wordt niets opgeslagen.
 
-### W3 – Doelverdeling en herbalanceren
-Leg een gewenste verdeling vast, bijvoorbeeld 50% BTC, 30% ETH en 20% cash. Je ziet hoeveel je ervan afwijkt en hoeveel euro je per munt zou moeten bij- of verkopen om weer in balans te komen.
-
 ### W8 – Winst- en verliesgrens per positie
 Een alert op basis van je eigen positie in plaats van een vaste koers, bijvoorbeeld "waarschuw bij +50% op mijn ETH" of "bij −20% ten opzichte van mijn gemiddelde aankoopprijs". Zo kun je winst nemen of verlies beperken volgens een plan dat je vooraf hebt gemaakt.
+
+### W16 – Alert op je hele portfolio
+Naast prijsalerts per munt een melding voor je totale waarde, bijvoorbeeld "waarschuw als mijn portfolio meer dan 5% in 24 uur daalt" of "als de totale waarde boven € 5.000 komt". Net als de prijsalerts wordt dit gecontroleerd zodra je de app opent.
 
 ## Administratie
 
@@ -38,6 +41,12 @@ Geef transacties een label, zoals "lange termijn", "trade" of "pensioen". Je kun
 
 ### W11 – Saldocontrole met je broker
 Typ per munt het saldo over dat Bitvavo (of een wallet) toont. De app vergelijkt het met zijn eigen stand en markeert verschillen, zoals "0,42 ADA meer bij Bitvavo". Zo vind je snel een vergeten staking-beloning of een ontbrekende transactie. Bij cash werkt het net zo.
+
+### W15 – Import uit andere brokers
+Naast Bitvavo ook CSV-exports van bijvoorbeeld Coinbase, Kraken en Binance inlezen, met dezelfde controle op dubbele transacties en het koppelen van munten. Handig als je (ook) bij een andere broker zit of overstapt.
+
+### W18 – Beleggingsdagboek
+Leg bij een aankoop of verkoop vast waaróm je het deed ("dip gekocht na nieuws", "winst genomen"). Na 3, 6 en 12 maanden laat de app zien hoe die beslissing uitpakte, zodat je kunt terugkijken welke redenen goed werkten.
 
 ## Grafieken
 

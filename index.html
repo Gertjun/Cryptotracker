@@ -525,7 +525,7 @@ fieldset.ranges{padding:0}
 .risk-lead{margin:4px 0 6px}
 .what-if input[type=range]{width:100%;min-height:44px;accent-color:var(--accent);margin:0}
 .wi-lots summary{cursor:pointer;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
-@media (max-width:420px){:is(.what-if,.risk) .rt td,:is(.what-if,.risk) .rt th[scope=row]{font-size:12px}:is(.what-if,.risk) .rt td,:is(.what-if,.risk) .rt th{padding-inline:2px}}
+@media (max-width:420px){:is(.what-if,.risk,.alloc) .rt td,:is(.what-if,.risk,.alloc) .rt th[scope=row]{font-size:12px}:is(.what-if,.risk,.alloc) .rt td,:is(.what-if,.risk,.alloc) .rt th{padding-inline:2px}}
 .pc{display:flex;align-items:stretch}
 .pc-plot{position:relative;flex:1 1 auto;min-width:0}
 .pc-axis{flex:none;font-size:11px;color:var(--muted);padding-left:6px}
@@ -542,6 +542,18 @@ fieldset.ranges{padding:0}
 .pz-info b{font-size:20px}
 .zoom .ranges{max-width:560px}
 .period .pz-open{float:none;margin:0;font-size:13px}
+.row:has(>.mkt-chg){flex-wrap:wrap;row-gap:4px}
+.mkt-chg{flex:0 0 100%;display:flex;flex-wrap:wrap;gap:0 14px;font-size:12px;font-variant-numeric:tabular-nums;padding-left:var(--mkt-indent,48px)}
+.mkt-chg abbr{text-decoration:none}
+.mkt-chg>span:not(.sr-only){min-width:6.8em}
+@media (max-width:360px){.mkt-chg{gap:0 10px;padding-left:0}.mkt-chg>span:not(.sr-only){min-width:0}}
+.alloc .seg{margin-bottom:10px}
+.alloc-sum{margin:6px 0 8px}
+.alloc-total{margin:4px 0 14px;font-weight:600}
+.alloc .rt .link{min-height:32px;font-size:13px;white-space:nowrap;text-align:right;padding:0;display:inline-block}
+.alloc .rt th{white-space:normal}
+.alloc .rt .link::after{inset:-8px 0}
+.sell-link{color:var(--red)}
 </style>
 </head>
 <body>

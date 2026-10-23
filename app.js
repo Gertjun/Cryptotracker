@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='74 (23 okt 2026)';
+const APP_VERSION='77 (23 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -156,7 +156,7 @@ function delPf(id){
   const p=pfOthers().find(x=>x.id===id);if(!p)return;const tx=data.txs.filter(t=>pfOf(t)===id);
   if(!confirm(`Portefeuille “${p.name}” verwijderen?${tx.length?` De ${tx.length} ${tx.length===1?'transactie':'transacties'} erin worden ook verwijderd, op al je apparaten.`:''}`))return;
   const now=Date.now(),ids=new Set(tx.map(t=>t.id));data.txs=data.txs.filter(t=>!ids.has(t.id));data.deleted.push(...ids);
-  for(const k of ['goals','plans'])for(const x of data[k]||[])if(pfOf(x)===id&&!x.del){x.del=true;x.mod=now}
+  for(const k of ['goals','plans','allocs'])for(const x of data[k]||[])if(pfOf(x)===id&&!x.del){x.del=true;x.mod=now}
   p.del=true;p.mod=now;if(settings.pf===id){settings.pf='main';saveSettings();prevVisit=getVisit('main')?{...getVisit('main')}:null}
   saveData();lastView=null;render();toast('Portefeuille verwijderd');openSettings();
 }
@@ -594,7 +594,8 @@ function renderHome(){
     const v=mode==='24h'?c.ch24:c.unrealPct;
     return `<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}
       <div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta"><span class="m">${qtyf(c.qty)}</span> ${esc((c.meta.symbol||'').toUpperCase())} · gem. <span class="m">${money(c.avg)}</span></div></div>
-      <div class="right"><div class="v m">${money(c.value,2)}</div><div class="chg ${cls(mode==='24h'?c.ch24:c.unreal)}"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
+      <div class="right"><div class="v m">${money(c.value,2)}</div><div class="chg ${cls(mode==='24h'?c.ch24:c.unreal)}"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div>
+      <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}
   ${watchSection()}`;
   drawPortfolioChart();
@@ -947,13 +948,91 @@ function riskCard(){
   <div class="tbl-scroll"><table class="rt"><caption class="sr-only">Risico per munt over het afgelopen jaar</caption><tr><th scope="col">Munt</th><th scope="col">Aandeel</th><th scope="col">Beweeglijk­heid</th><th scope="col">Grootste daling</th><th scope="col">Nu onder top</th></tr>
   ${row('Je crypto samen','100%',P,true)}${W.map(x=>row(esc(symOf(x.c)),pct0(x.w*100),x.r)).join('')}</table></div>
   <p class="hint mb-0">Over het afgelopen jaar. <b>Beweeglijkheid</b>: hoe sterk de koers van dag tot dag schommelt, omgerekend naar een jaar (standaarddeviatie); hoger is onrustiger. <b>Grootste daling</b>: het grootste verlies van een top naar een later dal. <b>Nu onder top</b>: hoe ver de koers nu onder de hoogste koers van het jaar staat. "Je crypto samen" rekent met je huidige verdeling, alsof je die het hele jaar had gehad.${miss?' – = minder dan 30 dagen koersen bekend.':''}</p></div>`}
+/* ---------- doelverdeling en herbalanceren (wens W3) ---------- */
+// Eén doelverdeling per portefeuille: {id:'alloc-<pf>', items:{coinId|'__cash': procent}}
+const allocOf=pf=>live(data.allocs).find(a=>a.id==='alloc-'+pf);
+let rebMode='full',rebIn='';
+const fmtPP=v=>(v<-0.05?'−':v>0.05?'+':'')+Math.abs(v).toFixed(1).replace('.',',')+'%-pt';
+const pctTxt=v=>(Math.round(v*10)/10).toString().replace('.',',')+'%';
+function allocKeyInfo(k){if(k==='__cash')return{name:'Cash',sym:'Cash'};const t=data.txs.find(x=>x.coinId===k)||{};return{name:t.name||k,sym:(t.symbol||'').toUpperCase()||t.name||k}}
+function allocNow(){
+  const p=portfolio(),hc=p.hasCash;
+  const cur=[...openCoins().map(c=>({k:c.coinId,name:c.meta.name||c.coinId,sym:symOf(c),v:c.value})),...(hc?[{k:'__cash',name:'Cash',sym:'Cash',v:Math.max(0,p.cash)}]:[])];
+  return{cur,total:cur.reduce((s,x)=>s+x.v,0),hc}}
+function allocCard(){
+  const head=a=>`<div class="row-between kv-h"><h2 class="h-inline h3">Doelverdeling</h2>${curPf()==='__all'?'':`<button type="button" class="link" data-act="editalloc">${a?'Wijzig':'+ Instellen'}</button>`}</div>`;
+  if(curPf()==='__all')return `<div class="card">${head()}<p class="hint mb-0">Kies bovenaan één portefeuille om een doelverdeling in te stellen of te bekijken.</p></div>`;
+  const a=allocOf(curPf()),{total}=allocNow();
+  if(!a)return `<div class="card">${head()}<p class="hint mb-0">Leg vast hoe je je geld wilt verdelen, bijvoorbeeld 50% BTC, 30% ETH en 20% cash. Je ziet dan hoeveel je ervan afwijkt en hoeveel je per munt moet bij- of verkopen om weer in balans te komen.</p></div>`;
+  if(!(total>0))return `<div class="card">${head(a)}<p class="hint mb-0">Je hebt nu nog geen bezit om te verdelen.</p></div>`;
+  return `<div class="card alloc">${head(a)}
+  <fieldset class="seg mini"><legend class="sr-only">Manier van herbalanceren</legend><button type="button" data-rebmode="full" class="${rebMode==='full'?'on':''}" aria-pressed="${rebMode==='full'}">Kopen en verkopen</button><button type="button" data-rebmode="buy" class="${rebMode==='buy'?'on':''}" aria-pressed="${rebMode==='buy'}">Alleen bijkopen</button></fieldset>
+  <div class="field" id="rebInField"${rebMode==='buy'?'':' hidden'}><label for="reb_in">Bedrag dat je wilt inleggen (€)</label><input type="text" id="reb_in" inputmode="decimal" value="${esc(rebIn)}" placeholder="bijv. 200"></div>
+  <output id="rebOut" class="ac-out" for="reb_in" aria-live="polite"></output>
+  <p class="hint mb-0">Afwijking: verschil tussen nu en je doel, in procentpunten. Bedragen zonder transactiekosten. "Koop" en "Verkoop" openen het transactieformulier, al ingevuld; er wordt pas iets opgeslagen als jij op Opslaan tikt.</p></div>`}
+function fillReb(){
+  const out=$('#rebOut'),a=allocOf(curPf());if(!out||!a)return;
+  inEUR(()=>{
+  const {cur,total}=allocNow(),keys=[...new Set([...cur.map(x=>x.k),...Object.keys(a.items)])];
+  const rows=keys.map(k=>{const c=cur.find(x=>x.k===k),inf=c||allocKeyInfo(k),v=c?.v||0,t=(a.items[k]||0)/100;return{k,name:inf.name,sym:inf.sym,v,t,now:v/total*100,tgt:t*100}}).filter(r=>r.t>0||r.v>0.005);
+  let A=0;
+  if(rebMode==='buy'){A=num(rebIn);if(!(A>0)){out.innerHTML=`${allocTable(rows,null)}<p class="hint">Vul hierboven het bedrag in dat je wilt inleggen; de app verdeelt het over de munten die het verst onder hun doel zitten.</p>`;return}
+    const T=total+A;rows.forEach(r=>r.def=Math.max(0,r.t*T-r.v));const S=rows.reduce((s,r)=>s+r.def,0);
+    rows.forEach(r=>r.d=S<=A?r.def+(A-S)*r.t:A*r.def/S)}
+  else rows.forEach(r=>r.d=r.t*total-r.v);
+  const buy=rows.filter(r=>r.k!=='__cash'&&r.d>=1).reduce((s,r)=>s+r.d,0),sell=rows.filter(r=>r.k!=='__cash'&&r.d<=-1).reduce((s,r)=>s-r.d,0);
+  const worst=rows.reduce((m,r)=>Math.abs(r.now-r.tgt)>Math.abs(m.now-m.tgt)?r:m,rows[0]);
+  out.innerHTML=`<p class="alloc-sum">${Math.abs(worst.now-worst.tgt)<1?'<span class="up">✓</span> Je zit overal binnen 1%-punt van je doel.':`Grootste afwijking: <b>${esc(worst.sym)}</b> ${fmtPP(worst.now-worst.tgt)}.`}${rebMode==='buy'?` Je legt <b class="m">${money(A,2)}</b> in.`:buy||sell?` Om in balans te komen: <b class="m">${money(buy,2)}</b> kopen${sell?` en <b class="m">${money(sell,2)}</b> verkopen`:''}.`:''}</p>${allocTable(rows,true)}`});
+}
+function allocTable(rows,act){
+  return `<div class="tbl-scroll"><table class="rt"><caption class="sr-only">Huidige verdeling tegenover je doel${act?', met wat je moet kopen of verkopen':''}</caption><tr><th scope="col">Munt</th><th scope="col">Nu</th><th scope="col">Doel</th><th scope="col">Afwijking<span class="sr-only"> in procentpunten</span></th>${act?'<th scope="col">Actie</th>':''}</tr>
+  ${rows.map(r=>{const dev=r.now-r.tgt;let ac='';
+    if(act){if(r.k==='__cash')ac=Math.abs(r.d)<1?'–':`<span class="m">${r.d>0?'+':'−'}${money(Math.abs(r.d),2)}</span>`;
+      else if(r.d>=1)ac=`<button type="button" class="link" data-act="rebtx" data-rtype="buy" data-coin-id="${esc(r.k)}" data-total="${(Math.round(r.d*100)/100)}">Koop ${money(r.d,2)}</button>`;
+      else if(r.d<=-1)ac=`<button type="button" class="link sell-link" data-act="rebtx" data-rtype="sell" data-coin-id="${esc(r.k)}" data-total="${(Math.round(-r.d*100)/100)}">Verkoop ${money(-r.d,2)}</button>`;
+      else ac='–'}
+    return `<tr><th scope="row">${esc(r.sym)}${r.t===0?'<div class="note-xs label">geen doel</div>':''}</th><td class="m">${pctTxt(r.now)}<div class="note-xs label m">${money(r.v,2)}</div></td><td>${pctTxt(r.tgt)}</td><td class="${Math.abs(dev)<1?'':'warn-mark'}">${fmtPP(dev).replace('%-pt','')}</td>${act?`<td>${ac}</td>`:''}</tr>`}).join('')}</table></div>`}
+function initAlloc(){
+  const card=$('.alloc');if(!card)return;
+  card.querySelectorAll('[data-rebmode]').forEach(b=>b.onclick=()=>{rebMode=b.dataset.rebmode;card.querySelectorAll('[data-rebmode]').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',x===b)});
+    $('#rebInField').hidden=rebMode!=='buy';fillReb();if(rebMode==='buy')$('#reb_in').focus()});
+  const i=$('#reb_in');if(i)i.oninput=()=>{rebIn=i.value;fillReb()};
+  fillReb()}
+function openAlloc(){
+  const a=allocOf(curPf()),{cur,total}=allocNow(),keys=cur.map(x=>x.k);if(a)for(const k in a.items)if(!keys.includes(k))keys.push(k);
+  if(!keys.length){toast('Voeg eerst munten toe aan je portefeuille');return}
+  const info=k=>cur.find(x=>x.k===k)||{...allocKeyInfo(k),v:0};
+  openSheet(`<h2 class="h3">Doelverdeling${multiPf()?' – '+esc(pfName(curPf())):''}</h2><p class="mt-0 hint">Vul per munt het percentage in dat je wilt aanhouden. Samen moet het 100% zijn. Laat een munt op 0 als je hem helemaal wilt afbouwen.</p>
+  <form class="js-form" novalidate>
+  <div class="two"><button type="button" class="btn sec" data-allocfill="now">Huidige verdeling</button><button type="button" class="btn sec" data-allocfill="equal">Gelijk verdelen</button></div>
+  ${keys.map((k,i)=>{const x=info(k);return `<div class="field alloc-f"><label for="al_${i}">${esc(x.name)}${x.sym&&x.sym!==x.name?` <span class="label">${esc(x.sym)}</span>`:''}<span class="label note-sm"> · nu ${total>0?pctTxt(x.v/total*100):'0%'}</span></label><input type="text" id="al_${i}" data-k="${esc(k)}" data-now="${total>0?(x.v/total*100).toFixed(1):0}" inputmode="decimal" value="${a?.items[k]!=null?plainNum(a.items[k]):''}" placeholder="0"></div>`}).join('')}
+  <p class="alloc-total">Totaal: <output id="al_sum">0%</output></p>
+  <button type="submit" class="btn" data-act="savealloc">Opslaan</button></form>
+  ${a?'<button type="button" class="btn danger" data-act="delalloc">Doelverdeling verwijderen</button>':''}`);
+  const ins=[...document.querySelectorAll('[id^="al_"][data-k]')],sum=()=>{const s=ins.reduce((t,i)=>t+(num(i.value)||0),0);$('#al_sum').textContent=pctTxt(s);$('#al_sum').className=Math.abs(s-100)<0.05?'up':'warn-mark'};
+  ins.forEach(i=>i.oninput=sum);
+  document.querySelectorAll('[data-allocfill]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.allocfill==='now')ins.forEach(i=>i.value=String(+i.dataset.now).replace('.',','));
+    else{const n=ins.length,base=Math.floor(1000/n)/10;ins.forEach((i,j)=>i.value=String(j===0?Math.round((100-base*(n-1))*10)/10:base).replace('.',','))}
+    // afronden kan net naast 100 uitkomen: verschil bij de grootste
+    const s=ins.reduce((t,i)=>t+(num(i.value)||0),0);if(Math.abs(s-100)>=0.05&&ins.length){const big=ins.reduce((m,i)=>(num(i.value)||0)>(num(m.value)||0)?i:m);big.value=String(Math.round(((num(big.value)||0)+100-s)*10)/10).replace('.',',')}
+    sum()});
+  sum();ins[0]?.focus();
+}
+function saveAlloc(){
+  const ins=[...document.querySelectorAll('[id^="al_"][data-k]')],items={};let s=0;
+  for(const i of ins){const v=i.value.trim()===''?0:num(i.value);if(!(v>=0&&v<=100))return fieldErr(i.id,'Vul een percentage tussen 0 en 100 in');if(v>0)items[i.dataset.k]=v;s+=v}
+  if(Math.abs(s-100)>=0.05)return fieldErr(ins[ins.length-1].id,`Samen is het nu ${pctTxt(s)}; dat moet 100% zijn`);
+  const pf=curPf(),id='alloc-'+pf,L=data.allocs||(data.allocs=[]),e=L.find(x=>x.id===id),now=Date.now();
+  if(e){e.items=items;e.mod=now;delete e.del}else L.push({id,items,mod:now,...(pf!=='main'?{pf}:{})});
+  saveData();closeSheet();render();toast('Doelverdeling opgeslagen')}
 function renderReports(){
   $('#topbar').innerHTML=topbarHTML(null,'Rapporten');
   const tab=repTab();if(settings.repTab!==tab){settings.repTab=tab;saveSettings()}
   const note=settings.unit&&settings.unit!=='EUR'?'<p class="hint rep-note">Rapporten staan altijd in euro, ook als je bedragen elders in '+(settings.unit==='USD'?'dollar':'bitcoin')+' bekijkt.</p>':'';
   const cols=(a,b)=>`${repTabsHTML(tab)}${note}<div class="rep-grid"><div class="rep-col">${a}</div><div class="rep-col">${b}</div></div>`;
   const ord0=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
-  if(tab==='plannen'){$('#view').innerHTML=cols(ord0(goalsCard(false),1),ord0(plansCard(),2));return}
+  if(tab==='plannen'){$('#view').innerHTML=cols(ord0(goalsCard(false),1)+ord0(allocCard(),3),ord0(plansCard(),2));initAlloc();return}
   if(!TX().length){$('#view').innerHTML=`${repTabsHTML(tab)}<div class="empty"><b>Nog geen gegevens</b>Voeg transacties toe om rapporten te zien.</div>`;return}
   if(tab==='analyse'){$('#view').innerHTML=cols(ord0(whatIfCard(),1)+ord0(benchCard(),3),ord0(riskCard(),2)+ord0(dcaCard(),4));initWhatIf();fitBars();return}
   if(tab==='administratie'){$('#view').innerHTML=cols(ord0(repAccCard(),1)+ord0(checkCard(),3),ord0(repJanCard(),2)+ord0(exportCard(),4));return}
@@ -1521,8 +1600,8 @@ function paintPf(wrap,res,o){
   const pts=res.pts,big=!!o.big,my=o.my;
   if(pts.length<2){wrap.innerHTML='<div class="chart-msg">Nog te weinig gegevens</div>';return null}
   const W=360,H=170,pt=10,pb=10,t0=pts[0][0],t1=pts[pts.length-1][0];
-  // uur-bereiken: schaal op de waarde zelf, anders is de beweging naast de geïnvesteerd-lijn niet te zien
-  const tight=['1h','4h'].includes(settings.pRange);
+  // 1U, 4U en 24U: schaal op de waarde zelf, anders is de beweging naast de geïnvesteerd-lijn niet te zien
+  const tight=['1h','4h','1'].includes(settings.pRange);
   let lo=Infinity,hi=-Infinity;pts.forEach(p=>{lo=Math.min(lo,p[1],tight?p[1]:p[2]);hi=Math.max(hi,p[1],tight?p[1]:p[2])});
   if(tight&&hi-lo<Math.abs(hi)*2e-4){const m=(hi+lo)/2,h=Math.max(Math.abs(hi)*1e-4,0.5);lo=m-h;hi=m+h}
   if(hi-lo<1e-9*Math.max(1,Math.abs(hi))){hi+=Math.max(1,Math.abs(hi)*0.01);lo-=Math.max(1,Math.abs(lo)*0.01)}
@@ -1582,7 +1661,7 @@ function renderPfZoom(){
   z.innerHTML=`<div class="zoom-in"><div class="zoom-top"><h2>${hc?'Totale waarde':'Portfoliowaarde'}</h2><button type="button" class="icon-btn" data-act="zoomclose" aria-label="Sluiten"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${PRANGES.map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
   <div class="card"><div class="pz-info" id="pzInfo"></div><div class="chart-wrap pz" id="pzchart"><div class="chart-msg">Grafiek laden…</div></div>
-  <p class="mt-8 hint mb-0">Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U en 4U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.</p></div></div>`;
+  <p class="mt-8 hint mb-0">Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U, 4U en 24U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.</p></div></div>`;
   titleDialog(z,'zoomTitle');if(fresh&&!z.open){try{z.showModal()}catch(e){z.setAttribute('open','')}}
   drawPfZoom();
 }
@@ -1893,7 +1972,7 @@ function exportData(){
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
-    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans,portfolios:j.portfolios});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
+    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans,portfolios:j.portfolios,allocs:j.allocs});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
 
@@ -1913,9 +1992,9 @@ function merge(a,b){
   const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
   for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios)};
+  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios),allocs:mergeList(a.allocs,b.allocs)};
 }
-const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[]),...(d.portfolios||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[]),...(d.portfolios||[]),...(d.allocs||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
 function setSync(s,msg=''){syncState={s,msg};updBadges()}
 let syncing=false,syncAgain=false;
@@ -1966,7 +2045,7 @@ function restoreSnapshot(snap){
   const now=Date.now(),del=new Set(data.deleted||[]),snapDel=new Set(snap.deleted||[]),keep=snap.txs.filter(t=>!snapDel.has(t.id)),keepIds=new Set(keep.map(t=>t.id));
   for(const t of data.txs)if(!keepIds.has(t.id))del.add(t.id);
   const txs=keep.map((t,i)=>del.has(t.id)?{...t,id:t.id+'-r'+now.toString(36)+i,mod:now,created:t.created||now}:{...t,mod:now});
-  const lists={};for(const k of ['watch','alerts','goals','plans','portfolios']){const sv=new Map((snap[k]||[]).map(x=>[x.id,x]));
+  const lists={};for(const k of ['watch','alerts','goals','plans','portfolios','allocs']){const sv=new Map((snap[k]||[]).map(x=>[x.id,x]));
     lists[k]=[...(snap[k]||[]).map(x=>({...x,mod:now})),...(data[k]||[]).filter(x=>!sv.has(x.id)).map(x=>({...x,del:true,mod:now}))]}
   data={...data,txs,deleted:[...del],...lists,updated:now};
 }
@@ -2165,6 +2244,10 @@ document.addEventListener('click',e=>{
     case 'verrestore':if(verPick&&confirm('Je gegevens terugzetten naar de versie van '+new Date(verPick.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'?')){restoreSnapshot(verPick.snap);saveData();closeSheet();render();refreshPrices();toast('Versie teruggezet')}break;
     case 'avgbuy':if(avgBuy)openTx({coinId:avgBuy.coinId,type:'buy',total:avgBuy.total,price:avgBuy.price,fee:avgBuy.fee});break;
     case 'addplan':openPlan();break;
+    case 'editalloc':openAlloc();break;
+    case 'savealloc':saveAlloc();break;
+    case 'delalloc':{const x=allocOf(curPf());if(x&&confirm('Je doelverdeling verwijderen?')){x.del=true;x.mod=Date.now();saveData();closeSheet();render()}break}
+    case 'rebtx':{const t=a.dataset.rtype,cid=a.dataset.coinId,c=computeCoin(cid);openTx({coinId:cid,type:t,total:+a.dataset.total,fee:Math.round(+a.dataset.total*coinFeePct(c))/100,acct:topAcct()});break}
     case 'editplan':openPlan(a.dataset.id);break;
     case 'saveplan':savePlan(a.dataset.id);break;
     case 'delplan':{const pl=(data.plans||[]).find(x=>x.id===a.dataset.id);if(pl&&confirm('Dit plan verwijderen? Ingevoerde transacties blijven bestaan.')){pl.del=true;pl.mod=Date.now();saveData();closeSheet();render()}break}

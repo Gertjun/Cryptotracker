@@ -6,6 +6,43 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v77 – 23 oktober 2026
+Nieuwe functie: doelverdeling en herbalanceren (wens W3).
+
+### Toegevoegd
+- **Kaart "Doelverdeling"** op Rapporten › Plannen.
+  - Met **+ Instellen** leg je per munt (en cash, als je die bijhoudt) vast welk percentage je wilt aanhouden, bijvoorbeeld 50% BTC, 30% ETH en 20% cash.
+  - De knoppen "Huidige verdeling" en "Gelijk verdelen" vullen alles in één keer in.
+  - Het totaal moet op 100% uitkomen; je ziet het meetellen terwijl je typt.
+  - Een munt op 0% betekent dat je hem wilt afbouwen.
+- **Tabel per munt:** het aandeel nu (met de waarde), je doel en de afwijking in procentpunten. Bovenaan staat de grootste afwijking.
+- **Twee manieren om te herbalanceren:**
+  - **Kopen en verkopen:** hoeveel euro je per munt moet kopen of verkopen om precies op je doel uit te komen, met het totaal.
+  - **Alleen bijkopen:** vul het bedrag in dat je wilt inleggen. De app verdeelt het over de munten die het verst onder hun doel zitten, zonder iets te verkopen.
+- **Knoppen "Koop € …" en "Verkoop € …"** openen het transactieformulier, al ingevuld met munt, bedrag en geschatte kosten. Er wordt pas iets opgeslagen als je op Opslaan tikt.
+- **Per portefeuille:** elke portefeuille heeft zijn eigen doelverdeling. Bij "Alles samen" vraagt de kaart om eerst een portefeuille te kiezen.
+
+### Technisch
+- **Opslag:** de doelverdeling staat in je versleutelde gegevens (`allocs`) en synchroniseert, wordt geback-upt en teruggezet zoals doelen en plannen.
+- **Portefeuille verwijderen:** dan wordt ook de doelverdeling ervan verwijderd.
+
+## v76 – 23 oktober 2026
+Portfoliografiek 24U toont kleine bewegingen beter.
+
+### Gewijzigd
+- **24U schaalt op de waarde zelf**, net als 1U en 4U sinds v74. Een beweging van een paar tientjes is nu goed te zien en loopt niet meer vlak weg naast de stippellijn (geïnvesteerd of netto gestort). Die stippellijn valt bij 24U daardoor meestal buiten beeld.
+- **Vanaf 1W** blijft de stippellijn in beeld, zoals voorheen.
+- **Uitleg in het vergrote venster** aangepast: daar staat nu "Bij 1U, 4U en 24U".
+
+## v75 – 23 oktober 2026
+Koersverandering over 24 uur, 7 dagen en 30 dagen nu ook in de lijst Bezittingen op de telefoon.
+
+### Toegevoegd
+- **Extra regel per munt** in de lijst Bezittingen op het Overzicht (telefoon): "24u · 7d · 30d" met de koersverandering over die periodes, in groen of rood. Dezelfde cijfers staan sinds v71 al in de tabel op de laptop.
+  - De regel loopt over de hele breedte van de rij, zodat de naam, de waarde en je resultaat blijven staan waar ze stonden.
+  - In bitcoin-weergave zijn de cijfers ten opzichte van bitcoin, net als in de tabel.
+  - Een schermlezer leest "Koersverandering: 24 uur …, 7 dagen …, 30 dagen …".
+
 ## v74 – 23 oktober 2026
 Portfoliografiek: periodes van een uur en vier uur, een y-as en een vergroot venster.
 
