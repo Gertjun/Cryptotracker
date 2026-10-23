@@ -5,6 +5,35 @@ Het versienummer staat in de app onder Instellingen en komt overeen met de cache
 
 ---
 
+## v67 – 23 oktober 2026
+Nieuwe functie: een eerdere versie terugzetten vanuit de GitHub-geschiedenis.
+
+### Toegevoegd
+- **Instellingen › Eerdere versie terugzetten:** deze knop verschijnt als GitHub-synchronisatie aan staat. Elke synchronisatie bewaart een versie van je versleutelde gegevens op GitHub. Je ziet de laatste 40 versies met datum en tijd. De bovenste is de huidige stand, want die wordt eerst nog gesynchroniseerd.
+- **Bekijken voor je terugzet:** per versie zie je het aantal transacties toen en nu, hoeveel er sindsdien zijn toegevoegd en verwijderd, en de laatste transactie in die versie.
+- **Terugzetten:**
+  - Je transacties, volglijst, prijsalerts, doelen en vaste-inlegplannen worden weer precies zoals in die versie. Je instellingen (zoals de CoinGecko-sleutel) en het koersarchief blijven zoals ze nu zijn.
+  - Transacties die sindsdien zijn verwijderd, komen terug. Wat erna is toegevoegd, wordt verwijderd.
+  - De teruggezette stand gaat bij de volgende synchronisatie naar al je apparaten en wint daar van oudere gegevens.
+- **Ongedaan maken:** de stand van vóór het terugzetten blijft zelf ook een versie, dus je kunt altijd weer terug.
+
+### Opmerkingen
+- **Ander versleutelwachtwoord:** een versie die met een ander versleutelwachtwoord is gemaakt, kan niet worden geopend. Je krijgt dan een melding.
+- **Teruggezette transacties:** krijgen intern een nieuwe code. Importeer je daarna hetzelfde Bitvavo-bestand opnieuw, dan worden ze niet dubbel toegevoegd.
+
+## v66 – 23 oktober 2026
+Nieuwe functie: vaste maandelijkse inleg (DCA).
+
+### Toegevoegd
+- **Plannen (Rapporten › Vaste inleg › + Plan):** leg vast dat je elke maand een vast bedrag in een munt steekt, bijvoorbeeld "€ 100 in Bitcoin op de 5e, bij Bitvavo, vanaf augustus 2026". Je kunt meerdere plannen hebben. Ze synchroniseren versleuteld mee naar je andere apparaten en staan ook in de back-up.
+- **Herinnering op het overzicht:** vanaf de plandag staat bovenaan "Vaste inleg: € 100,00 Bitcoin voor oktober 2026", met twee knoppen:
+  - **Invoeren** opent het transactieformulier, al ingevuld met het bedrag, de broker en voor een eerdere maand ook de plandatum en de koers van die dag. Neem de exacte bedragen van je afschrift over en sla op. De maand staat dan op "ingevoerd".
+  - **Overslaan** markeert de maand als overgeslagen.
+
+  Zijn er meerdere maanden open, dan zie je ze één voor één, de oudste eerst.
+- **Overzicht per plan:** hoeveel maanden ingevoerd zijn en hoeveel nog open staan.
+- **Vergelijking (Rapporten › Vaste inleg vergeleken):** per munt wordt jouw gemiddelde aankoopprijs vergeleken met wat je had betaald als je hetzelfde totaalbedrag gelijk verdeeld had over elke maand sinds je eerste aankoop. Daarbij staat het verschil in huidige waarde, per munt en in totaal, met de conclusie "jouw timing leverde € X meer op" of "met een vaste inleg had je € X meer gehad". Verkopen tellen niet mee. Maanden zonder bewaarde koers worden geschat (≈).
+
 ## v65 – 22 oktober 2026
 Codekwaliteit punt 27: datums zijn machineleesbaar en de HTML is netjes ingesprongen.
 

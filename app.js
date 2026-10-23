@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='65 (22 okt 2026)';
+const APP_VERSION='67 (23 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -478,7 +478,7 @@ function renderHome(){
     <div><span class="label">Laatste 24 uur</span><b class="${cls(p.ch24)}"><span class="m">${signed(p.ch24)}</span> <small>${pct(p.ch24Pct)}</small></b></div>
     <div><span class="label">Gerealiseerd</span><b class="m ${cls(p.realized)}">${signed(p.realized)}</b></div>
     <div><span class="label">Open posities</span><b>${p.open.length}</b></div></div>`;
-  $('#view').innerHTML=`${issuesBanner()}${sinceCard()}<div class="home-grid"><div class="panel">
+  $('#view').innerHTML=`${issuesBanner()}${sinceCard()}${planDueCard()}<div class="home-grid"><div class="panel">
   <section class="hero">
     <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
     <div class="big m" id="heroVal">${money(p.hasCash?p.total:p.value,2)}</div>
@@ -799,7 +799,7 @@ function renderReports(){
   // volgorde: rendement en inleg naast elkaar, daaronder beste/slechtste munt en brokers, onderaan 1 januari
   // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
   const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
-  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(calCard(),4)}${ord(perfCard,5)}${ord(benchCard(),6)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(checkCard(),7)}${ord(accCard,8)}${ord(janCard,9)}${ord(exportCard(),10)}</div></div>`;
+  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(calCard(),4)}${ord(perfCard,5)}${ord(benchCard(),6)}${ord(dcaCard(),6)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(plansCard(),3)}${ord(checkCard(),7)}${ord(accCard,8)}${ord(janCard,9)}${ord(exportCard(),10)}</div></div>`;
   fitBars();
 }
 /* ---------- sinds je vorige bezoek ---------- */
@@ -978,6 +978,82 @@ function saveGoal(id){
   if(e)Object.assign(e,{name,target,date,mod:now});else(data.goals||(data.goals=[])).push({id:uid(),name,target,date,mod:now});
   saveData();closeSheet();render();toast('Doel opgeslagen');
 }
+
+/* ---------- vaste maandelijkse inleg (DCA) ---------- */
+// Een plan = "elke maand € X in munt Y". Per maand wordt bijgehouden of de aankoop is ingevoerd of overgeslagen.
+const ymOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+const ymLabel=ym=>{const [y,m]=ym.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('nl-NL',{month:'long',year:'numeric'})};
+function planMonths(pl){   // maanden vanaf de start t/m nu waarin de plandag al geweest is
+  const out=[],now=new Date(),[sy,sm]=pl.start.split('-').map(Number);
+  for(let d=new Date(sy,sm-1,1);d<=now;d.setMonth(d.getMonth()+1)){const ym=ymOf(d);if(ym===ymOf(now)&&now.getDate()<pl.day)break;out.push(ym)}
+  return out}
+const planOpen=pl=>planMonths(pl).filter(ym=>!pl.done?.[ym]);
+const coinChoices=()=>{const m=new Map();coinIds().forEach(id=>{const c=computeCoin(id);m.set(id,{id,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image})});
+  live(data.watch).forEach(w=>{if(!m.has(w.id))m.set(w.id,{id:w.id,name:w.name,symbol:w.symbol,image:w.image})});return [...m.values()].sort((a,b)=>(a.name||'').localeCompare(b.name||''))};
+function planDueCard(){   // herinnering op het overzicht
+  const due=live(data.plans).map(pl=>({pl,open:planOpen(pl)})).filter(x=>x.open.length);if(!due.length)return '';
+  return `<div class="card plan-due"><h2 class="h3">Vaste inleg</h2>${due.map(({pl,open})=>`<div class="row-between plan-row">
+    <span><b class="m">${money(pl.amount,2)}</b> ${esc(pl.name)} <span class="label">voor ${ymLabel(open[0])}${open.length>1?` (nog ${open.length-1} maand${open.length>2?'en':''} open)`:''}</span></span>
+    <span class="plan-btns"><button type="button" class="btn-inline btn sec" data-act="planskip" data-id="${esc(pl.id)}" data-ym="${open[0]}">Overslaan</button><button type="button" class="btn-inline btn" data-act="plando" data-id="${esc(pl.id)}" data-ym="${open[0]}">Invoeren</button></span></div>`).join('')}
+    <p class="note-after hint">"Invoeren" opent het formulier, vooraf ingevuld met het bedrag, de plandag en de koers van die dag. Neem bij voorkeur de exacte bedragen van je afschrift over.</p></div>`}
+function plansCard(){   // beheer in Rapporten
+  const pls=live(data.plans);
+  return `<div class="card"><div class="row-between kv-h"><h2 class="h-inline h3">Vaste inleg</h2><button type="button" class="link" data-act="addplan">+ Plan</button></div>
+  ${pls.length?pls.map(pl=>{const ms=planMonths(pl),n=ms.filter(ym=>pl.done?.[ym]&&pl.done[ym]!=='skip').length,o=ms.filter(ym=>!pl.done?.[ym]).length;
+    return `<div class="goal" data-plan="${esc(pl.id)}"><div class="goal-top"><button type="button" class="rowlink" data-act="editplan" data-id="${esc(pl.id)}"><b class="m">${money(pl.amount,2)}</b> <b>${esc(pl.name)}</b><span class="sr-only"> – plan bewerken</span></button><span class="label">elke ${pl.day}e</span></div>
+      <div class="goal-status label">Sinds ${ymLabel(pl.start)} · ${n} van ${ms.length} maand${ms.length===1?'':'en'} ingevoerd${o?` · <span class="warn-mark">${o} open</span>`:''}${pl.acct?' · '+esc(pl.acct):''}</div></div>`}).join('')
+  :'<p class="note-after hint">Leg vast dat je elke maand een vast bedrag in een munt steekt, bijvoorbeeld € 100 in Bitcoin op de 5e. Op de plandag herinnert het overzicht je eraan, en met één tik open je het ingevulde formulier.</p>'}</div>`}
+function openPlan(id){
+  const pl=id?(data.plans||[]).find(x=>x.id===id):null,cs=coinChoices();
+  if(!pl&&!cs.length)return toast('Voeg eerst een munt toe (aankoop of volglijst)');
+  openSheet(`<h2 class="h3">${pl?'Plan bewerken':'Nieuw plan voor vaste inleg'}</h2><form class="js-form" novalidate>
+  <div class="field"><label for="pl_coin">Munt</label><select id="pl_coin">${cs.map(c=>`<option value="${esc(c.id)}"${pl?.coinId===c.id?' selected':''}>${esc(c.name)} (${esc((c.symbol||'').toUpperCase())})</option>`).join('')}</select></div>
+  <div class="two"><div class="field"><label for="pl_amount">Bedrag per maand (€, incl. kosten)</label><input type="text" id="pl_amount" inputmode="decimal" value="${pl?plainNum(pl.amount):''}" placeholder="100"></div>
+  <div class="field"><label for="pl_day">Dag van de maand</label><select id="pl_day">${Array.from({length:28},(_,i)=>i+1).map(d=>`<option${(pl?.day||Math.min(28,new Date().getDate()))===d?' selected':''}>${d}</option>`).join('')}</select></div></div>
+  <div class="two"><div class="field"><label for="pl_start">Vanaf</label><input id="pl_start" type="month" value="${esc(pl?.start||ymOf(new Date()))}"></div>
+  <div class="field"><label for="pl_acct">Broker / wallet</label><input type="text" id="pl_acct" list="plAcct" value="${esc(pl?pl.acct||'':settings.lastAcct||topAcct())}" autocomplete="off"><datalist id="plAcct">${accounts().map(a=>`<option value="${esc(a)}">`).join('')}</datalist></div></div>
+  <button type="submit" class="btn" data-act="saveplan" data-id="${esc(pl?.id||'')}">Opslaan</button></form>
+  ${pl?`<button type="button" class="btn danger" data-act="delplan" data-id="${esc(pl.id)}">Plan verwijderen</button>`:''}`);
+}
+function savePlan(id){
+  const amount=num($('#pl_amount').value),day=+$('#pl_day').value,start=$('#pl_start').value,cid=$('#pl_coin').value;
+  if(!(amount>0))return fieldErr('pl_amount','Vul een bedrag in');if(!/^\d{4}-\d{2}$/.test(start))return fieldErr('pl_start','Kies een maand');
+  const c=coinChoices().find(x=>x.id===cid);if(!c)return fieldErr('pl_coin','Kies een munt');
+  const now=Date.now(),e=id&&(data.plans||[]).find(x=>x.id===id),v={coinId:c.id,name:c.name,symbol:c.symbol,image:c.image,amount,day,start,acct:$('#pl_acct').value.trim(),mod:now};
+  if(e)Object.assign(e,v);else(data.plans||(data.plans=[])).push({id:uid(),done:{},...v});
+  saveData();closeSheet();render();toast('Plan opgeslagen');
+}
+function planDo(id,ym){   // formulier openen, vooraf ingevuld
+  const pl=(data.plans||[]).find(x=>x.id===id);if(!pl)return;
+  const [y,m]=ym.split('-').map(Number),cur=ym===ymOf(new Date()),d=cur?null:new Date(y,m-1,pl.day,12,0);
+  const hp=d?(priceAt(pl.coinId,d.getTime())??priceEst(pl.coinId,d.getTime())):null;   // eerdere maand: koers van die dag
+  openTx({coinId:pl.coinId,type:'buy',total:pl.amount,price:hp,acct:pl.acct,date:d?new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,16):null,plan:{id,ym}});
+}
+function planMark(id,ym,val){const pl=(data.plans||[]).find(x=>x.id===id);if(!pl)return;pl.done={...(pl.done||{}),[ym]:val};pl.mod=Date.now()}
+
+// "Had je elke maand een vast bedrag gekocht": zelfde totale inleg per munt, gelijk verdeeld over de maanden
+// vanaf je eerste aankoop, op dezelfde dag van de maand. Verkopen tellen niet mee (vergelijking van de aankopen zelf).
+function dcaRows(){
+  const now=Date.now(),rows=[];
+  for(const id of coinIds()){const c=computeCoin(id),buys=c.txs.filter(t=>t.type==='buy');if(!buys.length||c.price==null)continue;
+    const T=buys.reduce((a,t)=>a+txTotal(t),0),Q=buys.reduce((a,t)=>a+ +t.qty,0),F=buys.reduce((a,t)=>a+(+t.fee||0),0);if(!(T>0&&Q>0))continue;
+    const f0=new Date(Math.min(...buys.map(txTime))),dates=[];
+    for(let d=new Date(f0);d.getTime()<=now;d.setMonth(d.getMonth()+1))dates.push(d.getTime());
+    if(dates.length<2)continue;
+    const per=T/dates.length,r=F/T;let q=0,est=false;
+    for(const ts of dates){let p=priceAt(id,ts);if(p==null){p=priceEst(id,ts);est=true}if(!(p>0)){q=NaN;break}q+=per*(1-r)/p}
+    if(!(q>0))continue;
+    rows.push({c,T,n:dates.length,per,avgYou:T/Q,avgDca:T/q,valYou:Q*c.price,valDca:q*c.price,est,from:f0})}
+  return rows}
+function dcaCard(){
+  const rows=dcaRows();if(!rows.length)return '';
+  const tY=rows.reduce((a,r)=>a+r.valYou,0),tD=rows.reduce((a,r)=>a+r.valDca,0),est=rows.some(r=>r.est);
+  return `<div class="card"><h2 class="h3">Vaste inleg vergeleken</h2>
+  <p class="mt-0 hint">Stel dat je per munt hetzelfde totaalbedrag had ingelegd, maar gelijk verdeeld over elke maand sinds je eerste aankoop. "Jij" en "Vast" zijn de gemiddelde aankoopprijzen: lager is beter. "Verschil" is wat jouw aankopen nu meer (+) of minder (−) waard zijn. Verkopen tellen niet mee.</p>
+  <table class="rt"><caption class="sr-only">Jouw aankopen vergeleken met een vaste maandelijkse inleg</caption><tr><th scope="col">Munt</th><th scope="col">Jij</th><th scope="col">Vast</th><th scope="col">Verschil</th></tr>
+  ${rows.map(r=>{const dv=r.valYou-r.valDca;return `<tr><th scope="row">${esc(r.c.meta.name)}<div class="label note-xs">${r.n}× ${money(r.per,2)}</div></th><td class="m">${money(r.avgYou)}</td><td class="m">${r.est?'≈ ':''}${money(r.avgDca)}</td><td class="m ${cls(dv)}">${r.est?'≈ ':''}${signed(dv)}</td></tr>`}).join('')}
+  <tr><th scope="row"><b>Totaal</b></th><td></td><td></td><td class="m ${cls(tY-tD)}"><b>${est?'≈ ':''}${signed(tY-tD)}</b></td></tr></table>
+  <p class="note-after hint">${tY>=tD?`Jouw timing leverde <b class="up">${money(tY-tD,2)}</b> meer op dan een vaste maandelijkse inleg.`:`Met een vaste maandelijkse inleg had je <b class="down">${money(tD-tY,2)}</b> meer gehad.`} Waarde gemeten tegen de huidige koersen.${est?' ≈ = voor sommige maanden geschat uit de dichtstbijzijnde bekende koersen.':''}</p></div>`}
 
 /* ---------- vergelijking met één munt (benchmark) ---------- */
 // Elke storting (of, zonder cash: elke aankoop) gaat in gedachten direct naar de gekozen munt; opnames/verkopen halen er weer uit.
@@ -1350,9 +1426,11 @@ function openTx(opts={}){
   else if(opts.coinId){const c=computeCoin(opts.coinId);coin={id:opts.coinId,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image}}
   form={id:t?.id,coin,type:t?.type||opts.type||'buy',amount:t?.amount!=null?plainNum(t.amount):'',qty:t?.qty!=null?plainNum(t.qty):'',price:t&&!isOther(t.type)&&t.price!=null?plainNum(t.price):'',
     total:t&&t.qty&&!isOther(t.type)?plainNum(Math.round(txTotal(t)*100)/100):'',fee:t?.fee?plainNum(t.fee):'',feeQty:t?.feeQty?plainNum(t.feeQty):'',
-    acct:t?(t.acct||''):(settings.lastAcct||topAcct()),to:t?.to||'',date:t?.date||nowLocal(),note:t?.note||'',edits:t?['qty','price']:[]};
+    acct:t?(t.acct||''):(opts.acct||settings.lastAcct||topAcct()),to:t?.to||'',date:t?.date||opts.date||nowLocal(),plan:opts.plan||null,note:t?.note||'',edits:t?['qty','price']:[]};
   if(coin&&!t&&prices[coin.id]?.price){form.price=plainNum(prices[coin.id].price);form.edits=['price']}
-  renderTxSheet();
+  if(opts.price>0){form.price=plainNum(+(+opts.price).toPrecision(10));form.edits=['price']}
+  if(opts.total){form.total=plainNum(opts.total);form.edits=['total',...form.edits]}
+  renderTxSheet();if(opts.total)recalc('total');
   if(coin&&!t&&!prices[coin.id]?.price)fetchPrice(coin.id).then(p=>{const el=$('#f_price');if(p&&form&&el&&!el.value&&form.edits.length<2){form.price=el.value=plainNum(p);recalc('price')}});
 }
 function renderTxSheet(){
@@ -1449,6 +1527,7 @@ function saveTx(){
       tx={...base,...coin,qty,price,fee};
     }
   }
+  if(f.plan&&!f.id)planMark(f.plan.id,f.plan.ym,tx.id);   // plan: deze maand is ingevoerd
   if(acct)settings.lastAcct=acct;
   const i=data.txs.findIndex(t=>t.id===tx.id);if(i>=0)data.txs[i]=tx;else data.txs.push(tx);
   saveData();closeSheet();
@@ -1482,6 +1561,7 @@ function openSettings(){
   <div class="field"><label for="s_pass">Versleutelwachtwoord</label><input id="s_pass" name="sync-password" type="password" value="${esc(g.pass)}" autocomplete="${g.pass?'current-password':'new-password'}" placeholder="Zelfde op elk apparaat"></div>
   <p class="hint">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
   <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
+  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':''}
   <div class="section-t">Koersdata</div>
   <p class="mt-0 hint">Koersen laatst bijgewerkt: <b>${lastCgTs()?fmtTs(lastCgTs()):'nog niet'}</b>${cgState.s==='err'?` (laatste poging mislukt: ${esc(cgState.msg)})`:''}</p>
   <p class="mt-0 hint">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer">coingecko.com/en/api</a> → Demo (gratis account).</p>
@@ -1509,7 +1589,7 @@ function exportData(){
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
-    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
+    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
 
@@ -1529,12 +1609,63 @@ function merge(a,b){
   const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
   for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals)};
+  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans)};
 }
-const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
 function setSync(s,msg=''){syncState={s,msg};updBadges()}
 let syncing=false,syncAgain=false;
+/* ---------- eerdere versie terugzetten (GitHub-geschiedenis) ---------- */
+// Elke synchronisatie maakt een commit. Die versies kun je bekijken en terugzetten.
+function ghCtx(){const g=settings.gh;return {g,api:`https://api.github.com/repos/${g.repo.trim()}`,path:g.path.split('/').map(encodeURIComponent).join('/'),
+  h:{Authorization:'Bearer '+g.token.trim(),Accept:'application/vnd.github.object'}}}
+async function ghFileAt(ref){   // versleuteld bestand zoals het was in commit/branch 'ref'
+  const {api,path,h}=ghCtx(),url=`${api}/contents/${path}?ref=${encodeURIComponent(ref)}`;
+  const r=await fetchT(url,{headers:h,cache:'no-store'});if(!r.ok)throw new Error('GitHub gaf fout '+r.status);
+  const j=await r.json();if(j.content&&j.encoding==='base64')return b64ToUtf8(j.content);
+  const rr=await fetchT(url,{headers:{...h,Accept:'application/vnd.github.raw'},cache:'no-store'});if(!rr.ok)throw new Error('GitHub gaf fout '+rr.status);return rr.text()}
+let verList=null,verPick=null;
+async function openVersions(){
+  const g=settings.gh;if(!g.token||!g.repo||!g.pass)return toast('Zet eerst GitHub-synchronisatie aan');
+  verList=null;verPick=null;openSheet(`<h2 class="h3">Eerdere versie terugzetten</h2><p class="mt-0 hint" id="verMsg">Versies ophalen…</p><div id="verOut"></div>`);
+  try{if(!navigator.onLine)throw new Error('Geen internetverbinding');
+    await syncNow(true);   // eerst de huidige stand opslaan, zodat ook die een versie is (en je terug kunt)
+    const {api,path,h}=ghCtx(),r=await fetchT(`${api}/commits?path=${path}&sha=${encodeURIComponent(g.branch)}&per_page=40`,{headers:{...h,Accept:'application/vnd.github+json'},cache:'no-store'});
+    if(!r.ok)throw new Error(r.status===401?'Token ongeldig of verlopen':'GitHub gaf fout '+r.status);
+    verList=(await r.json()).map(c=>({sha:c.sha,ts:Date.parse(c.commit?.committer?.date||c.commit?.author?.date)})).filter(v=>v.sha&&isFinite(v.ts));
+    renderVersions()}
+  catch(e){if($('#verMsg'))$('#verMsg').textContent=e.message||'Versies ophalen mislukt'}}
+function renderVersions(){
+  const out=$('#verOut');if(!out||!verList)return;
+  $('#verMsg').innerHTML=verList.length?`Elke synchronisatie bewaart een versie op GitHub. Kies er een om te bekijken. De bovenste is de huidige stand. <span class="label">(laatste ${verList.length})</span>`:'Nog geen eerdere versies gevonden.';
+  out.innerHTML=`<ul class="list ver-list">${verList.map((v,i)=>`<li class="row"><button type="button" class="rowlink grow" data-act="verpick" data-sha="${esc(v.sha)}">${tm(v.ts,new Date(v.ts).toLocaleString('nl-NL',{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),true)}${i===0?' <span class="label">· huidige stand</span>':''}</button><span class="label" aria-hidden="true">›</span></li>`).join('')}</ul>`}
+const verSummary=d=>{const tx=(d.txs||[]).filter(t=>!(d.deleted||[]).includes(t.id)),last=tx.map(t=>t.date).sort().pop();return {n:tx.length,last}};
+async function pickVersion(sha){
+  const v=verList?.find(x=>x.sha===sha);if(!v)return;
+  openSheet(`<h2 class="h3">Versie van ${new Date(v.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</h2><p class="mt-0 hint" id="verMsg">Versie ophalen en ontsleutelen…</p><div id="verOut"></div>`);
+  try{const snap=await decryptObj(JSON.parse(await ghFileAt(sha)),settings.gh.pass);verPick={sha,ts:v.ts,snap};
+    const a=verSummary(snap),b=verSummary(data),ids=new Set(snap.txs.map(t=>t.id)),cur=new Set(data.txs.map(t=>t.id));
+    const added=data.txs.filter(t=>!ids.has(t.id)).length,gone=snap.txs.filter(t=>!cur.has(t.id)).length;
+    $('#verMsg').textContent='';
+    $('#verOut').innerHTML=`<div class="kv card-alt card">
+      <div><span class="label">Transacties in deze versie</span><b class="m">${a.n}</b></div>
+      <div><span class="label">Nu</span><b class="m">${b.n}</b></div>
+      <div><span class="label">Sindsdien toegevoegd</span><b class="m">${added}</b></div>
+      <div><span class="label">Sindsdien verwijderd</span><b class="m">${gone}</b></div>
+      <div><span class="label">Laatste transactie in deze versie</span><b>${a.last?tm(a.last,fmtDate(a.last),a.last.length>10):'–'}</b></div></div>
+      <p class="hint">Terugzetten maakt je gegevens weer precies zoals in deze versie: transacties, volglijst, alerts, doelen en vaste-inlegplannen. Je instellingen en het koersarchief blijven zoals ze nu zijn. Je andere apparaten nemen de teruggezette stand over bij hun volgende synchronisatie.<br>Spijt? De huidige stand blijft ook als versie bewaard, dus je kunt hem later weer terugzetten.</p>
+      <button type="button" class="btn danger" data-act="verrestore">Deze versie terugzetten</button><button type="button" class="btn sec" data-act="versions">Terug naar de lijst</button>`}
+  catch(e){$('#verMsg').textContent=(e.message||'Ophalen mislukt')+(/wachtwoord/i.test(e.message||'')?' Deze versie is waarschijnlijk met een ander versleutelwachtwoord gemaakt.':'')}}
+// Zet 'snap' terug. Verwijderen blijft definitief bij het samenvoegen, dus: wat er sindsdien bij kwam wordt verwijderd,
+// en wat sindsdien verwijderd is komt terug onder een nieuwe id. Alles krijgt een nieuw tijdstempel, zodat het overal wint.
+function restoreSnapshot(snap){
+  const now=Date.now(),del=new Set(data.deleted||[]),snapDel=new Set(snap.deleted||[]),keep=snap.txs.filter(t=>!snapDel.has(t.id)),keepIds=new Set(keep.map(t=>t.id));
+  for(const t of data.txs)if(!keepIds.has(t.id))del.add(t.id);
+  const txs=keep.map((t,i)=>del.has(t.id)?{...t,id:t.id+'-r'+now.toString(36)+i,mod:now,created:t.created||now}:{...t,mod:now});
+  const lists={};for(const k of ['watch','alerts','goals','plans']){const sv=new Map((snap[k]||[]).map(x=>[x.id,x]));
+    lists[k]=[...(snap[k]||[]).map(x=>({...x,mod:now})),...(data[k]||[]).filter(x=>!sv.has(x.id)).map(x=>({...x,del:true,mod:now}))]}
+  data={...data,txs,deleted:[...del],...lists,updated:now};
+}
 async function syncNow(silent){
   const g=settings.gh;if(locked||!g.token||!g.repo||!g.pass)return;
   if(syncing){syncAgain=true;return}
@@ -1724,6 +1855,15 @@ document.addEventListener('click',e=>{
     case 'reload':location.reload();break;
     case 'addgoal':openGoal();break;
     case 'savegoal':saveGoal(a.dataset.id);break;
+    case 'versions':openVersions();break;
+    case 'verpick':pickVersion(a.dataset.sha);break;
+    case 'verrestore':if(verPick&&confirm('Je gegevens terugzetten naar de versie van '+new Date(verPick.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'?')){restoreSnapshot(verPick.snap);saveData();closeSheet();render();refreshPrices();toast('Versie teruggezet')}break;
+    case 'addplan':openPlan();break;
+    case 'editplan':openPlan(a.dataset.id);break;
+    case 'saveplan':savePlan(a.dataset.id);break;
+    case 'delplan':{const pl=(data.plans||[]).find(x=>x.id===a.dataset.id);if(pl&&confirm('Dit plan verwijderen? Ingevoerde transacties blijven bestaan.')){pl.del=true;pl.mod=Date.now();saveData();closeSheet();render()}break}
+    case 'plando':planDo(a.dataset.id,a.dataset.ym);break;
+    case 'planskip':planMark(a.dataset.id,a.dataset.ym,'skip');saveData();render();toast(ymLabel(a.dataset.ym)+' overgeslagen');break;
     case 'delgoal':{const g=(data.goals||[]).find(x=>x.id===a.dataset.id);if(g&&confirm('Dit doel verwijderen?')){g.del=true;g.mod=Date.now();saveData();closeSheet();render()}break}
     case 'zoomret':renderRetZoom();break;
     case 'zoomclose':closeZoom();break;
