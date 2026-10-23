@@ -6,6 +6,33 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v73 – 23 oktober 2026
+Nieuw tabblad Analyse in Rapporten, met een wat-als-calculator (wens W1) en risico-inzicht (wens W9).
+
+### Toegevoegd
+- **Tabblad Analyse** tussen Rendement en Plannen. Rendement laat zien wat er gebeurd is; Analyse vergelijkt en rekent scenario's door. "Vergelijking" en "Vaste inleg vergeleken" zijn daarom van Rendement naar Analyse verhuisd.
+- **Wat als…** (wens W1)
+  - Kies één munt of "Alle munten tegelijk" en verschuif de koers met de schuifregelaar (−90% tot +300%). Je kunt ook een percentage typen, of bij één munt direct een koers.
+  - Je ziet de portfoliowaarde nu en dan, met het verschil.
+  - Per munt zie je de koers en waarde dan, het resultaat ten opzichte van wat je betaalde, en de **break-even-koers inclusief verkoopkosten**, met hoeveel de koers daarvoor moet stijgen of dalen.
+  - Bij één munt zie je onder "Per aankoop die je nog hebt" het resultaat per aankoop die volgens FIFO nog in je bezit is. Ontvangen munten, zoals staking, staan samen op één regel.
+  - Er wordt niets opgeslagen.
+- **Risico** (wens W9)
+  - **Spreiding:** bijvoorbeeld "57% van je crypto zit in Bitcoin". Daarnaast het aandeel van je grootste drie munten en het aandeel cash. Het "effectief aantal munten" geeft aan over hoeveel munten in gelijke delen je verdeling neerkomt.
+  - **Per munt en voor je crypto samen, over het afgelopen jaar:**
+    - Beweeglijkheid: dagelijkse schommeling, omgerekend naar een jaar.
+    - Grootste daling: van een top naar een later dal.
+    - Hoe ver de koers nu onder de jaartop staat.
+  - **"Je crypto samen"** rekent met je huidige verdeling, alsof je die het hele jaar had gehad. Zo tellen stortingen en aankopen niet als koersbeweging.
+
+### Gewijzigd
+- **Rendement** bevat nu: rendement per periode, inleg, rendementskalender en beste en slechtste munt.
+- **Tabbladen:** de vier tabbladen passen op een iPhone. Op heel smalle schermen (320 pixels) wordt de tekst iets kleiner.
+
+### Technisch
+- **Koersen ophalen:** ontbreken voor het risico-overzicht dagkoersen van het afgelopen jaar, dan haalt de app ze één keer per sessie op, munt voor munt. Daarna komen ze uit het koersarchief.
+- **Brede tabellen:** past een tabel op een smal scherm niet, dan scrolt alleen dat blok opzij. Het blok is dan ook met het toetsenbord te bedienen.
+
 ## v72 – 23 oktober 2026
 Rapporten opgesplitst in drie tabbladen.
 

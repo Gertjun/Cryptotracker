@@ -11,17 +11,8 @@ Functies die zijn voorgesteld, maar nog niet zijn ingebouwd.
 
 ## Inzicht in je portfolio
 
-### W1 – Wat-als-calculator
-Kies een munt en verschuif de koers, bijvoorbeeld "Bitcoin naar € 100.000". Je ziet meteen wat je portfolio dan waard is en wat je winst per munt en per transactie wordt. Daarbij staat de break-even-koers per munt, inclusief de kosten van verkopen.
-
 ### W5 – Kostenoverzicht
 De betaalde kosten per broker en per jaar, en als percentage van je aankopen. Je ziet bijvoorbeeld of kleine aankopen je relatief veel kosten.
-
-### W9 – Risico-inzicht
-Per munt en voor je hele portfolio:
-- de grootste daling vanaf de top (drawdown)
-- hoe beweeglijk de koers is (volatiliteit)
-- hoe geconcentreerd je bent, zoals "62% van je crypto zit in één munt"
 
 ### W10 – Maandafsluiting
 De eerste keer dat je de app in een nieuwe maand opent, zie je een korte samenvatting van de vorige maand: resultaat, inleg, beste en slechtste munt, betaalde kosten en hoe je ervoor staat ten opzichte van je doelen.

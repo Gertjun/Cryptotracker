@@ -514,11 +514,18 @@ fieldset.ranges{padding:0}
 .hold-tbl th,.hold-tbl td{padding-inline:9px}
 .hold-tbl abbr{text-decoration:none}
 .rep-tabs{display:flex;gap:4px;padding:4px;margin:0 0 14px;background:var(--card);border-radius:12px}
-.rep-tabs a{flex:1;display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px 6px;border-radius:9px;font-weight:650;color:var(--muted);text-decoration:none;text-align:center}
+.rep-tabs a{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px 6px;border-radius:9px;font-weight:650;color:var(--muted);text-decoration:none;text-align:center}
 .rep-tabs a:hover{color:var(--text)}
 .rep-tabs a.on{background:var(--card2);color:var(--text)}
 @media (min-width:900px){.rep-tabs{max-width:520px}}
-@media (max-width:370px){.rep-tabs a{font-size:14px;padding-inline:2px}}
+@media (max-width:430px){.rep-tabs{gap:2px}.rep-tabs a{font-size:14px;padding-inline:4px}}
+@media (max-width:360px){.rep-tabs a{font-size:12.5px;padding-inline:2px}}
+.tbl-scroll{overflow-x:auto}
+.h-cap{caption-side:top;text-align:left;font-weight:650;font-size:14px;padding:6px 0}
+.risk-lead{margin:4px 0 6px}
+.what-if input[type=range]{width:100%;min-height:44px;accent-color:var(--accent);margin:0}
+.wi-lots summary{cursor:pointer;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
+@media (max-width:420px){:is(.what-if,.risk) .rt td,:is(.what-if,.risk) .rt th[scope=row]{font-size:12px}:is(.what-if,.risk) .rt td,:is(.what-if,.risk) .rt th{padding-inline:2px}}
 </style>
 </head>
 <body>
