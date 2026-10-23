@@ -6,6 +6,23 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v74 – 23 oktober 2026
+Portfoliografiek: periodes van een uur en vier uur, een y-as en een vergroot venster.
+
+### Toegevoegd
+- **Periodes 1U en 4U** naast 24U, 1W, 1M, 3M, 1J en Max. Ze tonen het afgelopen uur en de afgelopen 4 uur, met een punt per 5 minuten (de fijnste stap die CoinGecko geeft). Er gaan geen extra verzoeken naar CoinGecko: de koersen komen uit dezelfde aanvraag als de 24-uursgrafiek.
+  - Bij 1U en 4U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet. De stippellijn (geïnvesteerd of netto gestort) valt dan meestal buiten beeld.
+  - Onder de grafiek staat "Rendement afgelopen uur" of "Rendement afgelopen 4 uur".
+- **Y-as:** rechts van de grafiek staan ronde bedragen met hulplijnen, in de eenheid die je gekozen hebt (euro, dollar of bitcoin).
+- **Vergroten ⤢** (rechts naast het rendement onder de grafiek): opent de grafiek groot op het hele scherm.
+  - Je kunt er alle periodes kiezen; de keuze geldt ook voor het Overzicht.
+  - Een tijd- of datumas staat onder de grafiek.
+  - Met de muis of je vinger zie je bovenaan de waarde en het resultaat op elk moment.
+  - Sluiten met het kruisje of Esc; de focus gaat terug naar de knop Vergroten.
+
+### Technisch
+- Het tekenen van de portfoliografiek is één functie geworden die zowel het Overzicht als het vergrote venster gebruikt.
+
 ## v73 – 23 oktober 2026
 Nieuw tabblad Analyse in Rapporten, met een wat-als-calculator (wens W1) en risico-inzicht (wens W9).
 

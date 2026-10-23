@@ -526,6 +526,22 @@ fieldset.ranges{padding:0}
 .what-if input[type=range]{width:100%;min-height:44px;accent-color:var(--accent);margin:0}
 .wi-lots summary{cursor:pointer;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
 @media (max-width:420px){:is(.what-if,.risk) .rt td,:is(.what-if,.risk) .rt th[scope=row]{font-size:12px}:is(.what-if,.risk) .rt td,:is(.what-if,.risk) .rt th{padding-inline:2px}}
+.pc{display:flex;align-items:stretch}
+.pc-plot{position:relative;flex:1 1 auto;min-width:0}
+.pc-axis{flex:none;font-size:11px;color:var(--muted);padding-left:6px}
+.pc-axis-in{position:relative;height:100%}
+.pc-axis span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap;line-height:1}
+.pc-grid{stroke:var(--line);stroke-width:1}
+.pz .pc-plot,.pz .pc-axis{padding-bottom:22px}
+.pc-x{position:absolute;left:0;right:0;bottom:0;height:16px;font-size:11px;color:var(--muted)}
+.pc-x span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.pc-x span:first-child{transform:none}.pc-x span:last-child{transform:translateX(-100%)}
+.pz{margin:6px 0 0}
+#pzchart svg{height:min(60vh,520px)}#pzchart .chart-msg{height:min(60vh,520px)}
+.pz-info{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;min-height:44px;font-size:14px}
+.pz-info b{font-size:20px}
+.zoom .ranges{max-width:560px}
+.period .pz-open{float:none;margin:0;font-size:13px}
 </style>
 </head>
 <body>
