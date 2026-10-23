@@ -2,8 +2,62 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-vNN`).
+Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## v70 – 23 oktober 2026
+Nieuwe functie: meerdere portefeuilles (wens W14).
+
+### Toegevoegd
+- **Instellingen › Portefeuilles:** maak extra portefeuilles aan, bijvoorbeeld voor je partner, een kind of een zakelijke rekening. Je kunt ze hernoemen en verwijderen. Ook je eigen portefeuille ("Mijn portefeuille") kun je een andere naam geven.
+- **Wisselen:** zodra er meer dan één portefeuille is, staat bovenaan Overzicht, Transacties en Rapporten een knop "Portefeuille …". Die opent een lijst met per portefeuille het aantal transacties en de huidige waarde.
+- **Alles samen:** een extra keuze in die lijst, met al je portefeuilles bij elkaar opgeteld.
+  - Heeft een portefeuille geen cash-transacties, dan tellen de aankopen daarin als inleg. Ze verlagen dus niet de cash van een andere portefeuille.
+- **Per portefeuille apart:** transacties, cash, brokers/wallets, rapporten, doelen, vaste-inlegplannen en "Sinds je vorige bezoek".
+- **Gedeeld door alle portefeuilles:** volglijst, prijsalerts en koersarchief.
+- **Transactieformulier:** krijgt een keuzeveld "Portefeuille". Standaard is dat de portefeuille die je bekijkt; bij "Alles samen" is het je eigen portefeuille.
+- **Bitvavo-import:** krijgt een keuzeveld "Importeren in portefeuille". Dubbele transacties worden binnen die portefeuille herkend.
+- **Portefeuille verwijderen:** de transacties, doelen en plannen erin worden ook verwijderd, op al je apparaten. Je krijgt eerst een bevestiging. Via "Eerdere versie terugzetten" kun je het weer ongedaan maken.
+
+### Technisch
+- **Eén bestand:** alles blijft in één versleuteld bestand op GitHub. Een transactie, doel of plan uit een extra portefeuille krijgt een portefeuillelabel; zonder label hoort hij bij je eigen portefeuille.
+- **Oude gegevens en apparaten:** bestaande gegevens hoeven niet omgezet te worden.
+- **Synchronisatie:** portefeuilles (namen, toevoegen, verwijderen) worden op dezelfde manier samengevoegd als doelen en plannen. Ook de back-up (JSON) en het terugzetten van een eerdere versie nemen ze mee.
+- **Zonder extra portefeuilles:** de app ziet er precies hetzelfde uit als in v69, op de nieuwe sectie in Instellingen na. Dat is per pixel vergeleken.
+
+## v69 – 23 oktober 2026
+Nieuwe functie: bedragen tonen in euro, dollar of bitcoin (wens W13).
+
+### Toegevoegd
+- **Instellingen › Weergave › Bedragen tonen in:** kies Euro €, Dollar $ of Bitcoin ₿. Je gegevens blijven gewoon in euro opgeslagen; alleen de weergave verandert.
+- **Waar het geldt:** Overzicht (inclusief grafiek en "Sinds je vorige bezoek"), de munt-pagina's, Transacties en de zijbalk.
+- **Dollar:** alles omgerekend tegen de koers van nu.
+- **Bitcoin:** rekent zo dat je ziet of je beter deed dan gewoon bitcoin aanhouden.
+  - Huidige waarden staan tegen de bitcoinkoers van nu.
+  - Elke aankoop, verkoop, storting en elk bedrag in de transactielijst telt tegen de bitcoinkoers van dat moment.
+  - Daardoor geven winst/verlies, gemiddelde aankoopprijs, "Geïnvesteerd" en "Rendement" het resultaat in bitcoin.
+  - Voorbeeld uit de testdata: Ethereum staat in euro op +24,4% en tegenover bitcoin op +18,0%. Bitcoin zelf staat in bitcoin op −0,25%, wat precies je betaalde kosten zijn.
+  - De koersgrafiek van een munt toont de koers in bitcoin, en de 24-uursverandering is ten opzichte van bitcoin.
+- **Blijft altijd in euro:** formulieren, de gemiddelde-prijs-calculator, prijsalerts, doelen, vaste inleg, Marktinformatie, Rapporten (met een melding bovenaan) en het jaaroverzicht. Dat is bewust, voor je administratie en belastingaangifte.
+
+### Technisch
+- **Wisselkoers:** de bitcoinkoers in euro en dollar wordt bij elke koersupdate opgehaald (één extra aanvraag), maar alleen als je niet in euro kijkt.
+- **Oude bitcoinkoersen:** die komen uit het koersarchief. Ontbreken ze, dan haalt de app één keer het afgelopen jaar op. Voor transacties die ouder zijn dan het archief, wordt de bitcoinkoers geschat uit de dichtstbijzijnde bekende koers.
+- **Resultaat bij "Sinds je vorige bezoek":** wordt nu berekend als waardeverandering min wat je er sindsdien in stopte. In euro geeft dat exact hetzelfde als voorheen; ik heb dat nagerekend.
+
+## v68 – 23 oktober 2026
+Nieuwe functie: gemiddelde-prijs-calculator (wens W12).
+
+### Toegevoegd
+- **Waar:** op de pagina van een munt die je bezit staat het blok "Gemiddelde aankoopprijs berekenen". Het rekent met je huidige positie: aantal en gemiddelde aankoopprijs, volgens FIFO en inclusief kosten.
+- **Twee manieren van rekenen:**
+  - **Bijkopen voor bedrag:** "wat wordt mijn gemiddelde als ik voor € 200 bijkoop?" Je ziet hoeveel munten dat zijn, de kosten, het nieuwe gemiddelde (met de verandering in procenten) en hoeveel je daarna bezit.
+  - **Naar doelgemiddelde:** "hoeveel moet ik bijkopen om op € 73.000 gemiddeld uit te komen?" Je ziet het benodigde bedrag en aantal munten.
+- **Koers en kosten aanpasbaar:** de koers staat op de huidige koers en de kosten op je eigen gemiddelde kostenpercentage voor deze munt. Je kunt beide aanpassen, bijvoorbeeld om te zien wat er nodig is als de koers eerst daalt.
+- **Uitleg als het niet kan:** is een doel onhaalbaar, dan zegt de calculator waarom. Bijvoorbeeld: je gemiddelde verlagen kan niet als de koers boven je gemiddelde ligt.
+- **Als aankoop invoeren:** opent het transactieformulier, al ingevuld met bedrag, koers en kosten.
+- **Invoer blijft staan:** wat je invult, blijft bewaard als de koersen tussendoor worden bijgewerkt.
 
 ## v67 – 23 oktober 2026
 Nieuwe functie: een eerdere versie terugzetten vanuit de GitHub-geschiedenis.

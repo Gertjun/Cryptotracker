@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='67 (23 okt 2026)';
+const APP_VERSION='70 (23 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -46,7 +46,25 @@ function bestText(c){const l=lum(c);return 1.05/(l+0.05)>=(l+0.05)/0.05?'#ffffff
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 function num(s){s=String(s??'').trim().replace(/\s/g,'').replace(/€/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'');s=s.replace(',','.');const n=parseFloat(s);return isFinite(n)?n:NaN}
 function decFor(v){const a=Math.abs(v);return !a||a>=1?2:Math.min(20,Math.ceil(-Math.log10(a))+3)}
-function money(v,d){if(v==null||!isFinite(v))return '–';if(Math.abs(v)<1e-9)v=0;d=d??decFor(v);return new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',minimumFractionDigits:Math.min(2,d),maximumFractionDigits:d}).format(v)}
+/* ---------- weergave in euro, dollar of bitcoin (wens W13) ---------- */
+// Alles blijft in euro opgeslagen en berekend. Alleen de schermen Overzicht, Munt en Transacties tonen (via money())
+// de gekozen eenheid; formulieren, rapporten en het jaaroverzicht blijven altijd in euro.
+// Dollar: omgerekend tegen de huidige koers. Bitcoin: huidige waarden tegen de bitcoinkoers van nu, maar aankopen,
+// verkopen en stortingen tegen de bitcoinkoers van dat moment. Zo laat 'winst' in bitcoin zien of je beter deed dan
+// gewoon bitcoin aanhouden. Intern: bedragen op moment t × K(t) = euro-equivalent van de bitcoin van toen, tegen de koers van nu.
+let UNIT_ON=false,fx=load('cpt.fx',{});
+const unitNow=()=>UNIT_ON&&settings.unit&&settings.unit!=='EUR'&&fx.btcEur>0&&fx.btcUsd>0?settings.unit:'EUR';
+function inUnit(fn){const o=UNIT_ON;UNIT_ON=true;try{return fn()}finally{UNIT_ON=o}}
+function inEUR(fn){const o=UNIT_ON;UNIT_ON=false;try{return fn()}finally{UNIT_ON=o}}
+function btcAt(ts){if(Date.now()-ts<15*6e4)return fx.btcEur;return priceAt('bitcoin',ts)??priceEst('bitcoin',ts)??fx.btcEur}
+function K(ts){if(unitNow()!=='BTC')return 1;const b=btcAt(ts);return b>0?fx.btcEur/b:1}
+const atT=(v,t)=>v==null?v:v*K(typeof t==='number'?t:txTime(t));
+const chU=ch=>ch==null||unitNow()!=='BTC'||fx.btcCh24==null?ch:((1+ch/100)/(1+fx.btcCh24/100)-1)*100;   // 24-uursverandering t.o.v. bitcoin
+function money(v,d){if(v==null||!isFinite(v))return '–';const u=unitNow();
+  if(u==='BTC'){v=v/fx.btcEur;if(Math.abs(v)<1e-13)v=0;const a=Math.abs(v),dd=d!=null&&d<=2?8:a>=1?4:Math.min(12,Math.max(4,decFor(v)));
+    return (v<0?'-':'')+'₿ '+new Intl.NumberFormat('nl-NL',{minimumFractionDigits:Math.min(2,dd),maximumFractionDigits:dd}).format(a)}
+  if(u==='USD')v=v*fx.btcUsd/fx.btcEur;
+  if(Math.abs(v)<1e-9)v=0;d=d??decFor(v);return new Intl.NumberFormat('nl-NL',{style:'currency',currency:u==='USD'?'USD':'EUR',currencyDisplay:'narrowSymbol',minimumFractionDigits:Math.min(2,d),maximumFractionDigits:d}).format(v)}
 function signed(v,d){if(v==null||!isFinite(v))return '–';d=d??2;if(Math.abs(v)<0.5*10**-d)v=0;return (v>=0?'+':'−')+money(Math.abs(v),d)}
 function pct(p){if(p==null||!isFinite(p))return '–';if(Math.abs(p)<0.005)p=0;return (p>=0?'+':'−')+Math.abs(p).toFixed(2).replace('.',',')+'%'}
 function qtyf(q){return new Intl.NumberFormat('nl-NL',{maximumFractionDigits:20}).format(+(+q).toPrecision(15))}
@@ -58,8 +76,8 @@ function priceR(v){const a=Math.abs(v),d=(plainNum(v).split(',')[1]||'').length;
   const sig6=a>=1?Math.max(0,6-String(Math.floor(a)).length):Math.ceil(-Math.log10(a))+5;
   if(d<=Math.max(2,sig6))return {s:money(v,Math.max(2,Math.min(20,d))),r:false};
   return {s:money(v,decFor(v)),r:true}}
-function priceF(v){if(v==null||!isFinite(v))return '–';const o=priceR(v);return (o.r?'≈ ':'')+o.s}
-function priceH(v){if(v==null||!isFinite(v))return '–';const o=priceR(v);return o.r?`<span class="approx" title="Exacte koers: € ${plainNum(v)}"><span class="muted">≈ </span>${o.s}</span>`:`<span class="nowrap">${o.s}</span>`}
+function priceF(v){if(v==null||!isFinite(v))return '–';if(unitNow()!=='EUR')return money(v);const o=priceR(v);return (o.r?'≈ ':'')+o.s}
+function priceH(v){if(v==null||!isFinite(v))return '–';if(unitNow()!=='EUR')return money(v);const o=priceR(v);return o.r?`<span class="approx" title="Exacte koers: € ${plainNum(v)}"><span class="muted">≈ </span>${o.s}</span>`:`<span class="nowrap">${o.s}</span>`}
 const cls=v=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'flat':v>0?'up':'down';
 function fmtDate(s){const d=new Date(s);if(isNaN(d))return s;return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
 function nowLocal(){const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
@@ -80,7 +98,67 @@ const ICONS={
 };
 
 /* ---------- berekeningen (FIFO per transactie) ---------- */
-function coinIds(){return [...new Set(data.txs.filter(t=>t.coinId).map(t=>t.coinId))]}
+/* ---------- meerdere portefeuilles (wens W14) ---------- */
+// Alles blijft in één (versleuteld) bestand. Transacties, doelen en vaste-inlegplannen hebben een label 'pf'
+// (zonder label = 'main', je eerste portefeuille). TX() geeft de transacties van de gekozen portefeuille, of van
+// alles samen. Volglijst, prijsalerts, instellingen en het koersarchief zijn gedeeld.
+const pfOf=x=>x.pf||'main';
+const pfOthers=()=>live(data.portfolios).filter(p=>p.id!=='main');
+const multiPf=()=>pfOthers().length>0;
+function pfList(){const m=(data.portfolios||[]).find(p=>p.id==='main');return [{id:'main',name:m?.name||'Mijn portefeuille'},...pfOthers()]}
+function curPf(){const p=settings.pf||'main';if(p==='__all')return multiPf()?p:'main';return p==='main'||pfOthers().some(x=>x.id===p)?p:'main'}
+const pfName=id=>id==='__all'?'Alles samen':(pfList().find(p=>p.id===id)?.name||'Mijn portefeuille');
+const pfMatch=x=>curPf()==='__all'||pfOf(x)===curPf();
+const pfNew=()=>curPf()==='__all'?'main':curPf();   // nieuw item zonder keuze: in de huidige portefeuille
+let _tx={k:'',src:null,v:[]};
+function TX(){const pf=curPf();if(pf==='__all'||!multiPf())return data.txs;const k=pf+'|'+data.txs.length+'|'+data.updated;
+  if(_tx.k!==k||_tx.src!==data.txs)_tx={k,src:data.txs,v:data.txs.filter(t=>pfOf(t)===pf)};return _tx.v}
+function withPf(id,fn){const o=settings.pf;settings.pf=id;try{return fn()}finally{settings.pf=o}}
+function pfStats(id){return withPf(id,()=>{const n=TX().length;if(!n)return{n,v:null};const v=visitNow();return{n,v:v.missing?null:v.total}})}
+function pfBarHTML(){if(!multiPf())return '';
+  return `<div class="pf-bar"><button type="button" class="pf-btn" data-act="pfpick" aria-haspopup="dialog"><span class="label">Portefeuille</span> <b>${esc(pfName(curPf()))}</b> <span aria-hidden="true">▾</span></button></div>`}
+function openPfPick(){
+  const opts=[...pfList().map(p=>p.id),'__all'];
+  openSheet(`<h2 class="h3">Portefeuille kiezen</h2><ul class="pf-list">${inUnit(()=>opts.map(id=>{const st=pfStats(id),on=curPf()===id;
+    return `<li><button type="button" class="pf-opt${on?' on':''}" data-act="pfset" data-id="${esc(id)}" aria-pressed="${on}"><span><b>${esc(pfName(id))}</b><span class="label note-sm">${st.n} ${st.n===1?'transactie':'transacties'}</span></span><span class="num m">${st.n?(st.v==null?'…':money(st.v)):''}</span></button></li>`}).join(''))}</ul>
+  <button type="button" class="btn sec" data-act="pfmanage">Portefeuilles beheren</button>`);
+}
+function setPf(id){
+  if(id!=='__all'&&id!=='main'&&!pfOthers().some(p=>p.id===id))id='main';
+  if(curPf()===id)return;saveVisit();settings.pf=id;saveSettings();
+  txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};lastView=null;prevVisit=getVisit(id)?{...getVisit(id)}:null;sinceDismissed=false;
+  if(/^#coin\//.test(location.hash))location.hash='';render();
+}
+function pfSettingsHTML(){
+  return `<div class="section-t">Portefeuilles</div>
+  <p class="mt-0 hint">Houd aparte portefeuilles bij, bijvoorbeeld voor je partner of een zakelijke rekening. Elke portefeuille heeft eigen transacties, cash, doelen, plannen en rapporten. Volglijst en prijsalerts gelden voor alle portefeuilles.</p>
+  <ul class="pf-list">${pfList().map(p=>`<li class="pf-row"><b>${esc(p.name)}</b><button type="button" class="link" data-act="pfedit" data-id="${esc(p.id)}">Wijzig<span class="sr-only"> ${esc(p.name)}</span></button></li>`).join('')}</ul>
+  <button type="button" class="btn sec" data-act="pfedit" data-id="">+ Portefeuille toevoegen</button>`}
+function openPfEdit(id){
+  const p=id?pfList().find(x=>x.id===id):null;
+  openSheet(`<h2 class="h3">${p?'Portefeuille wijzigen':'Nieuwe portefeuille'}</h2><form class="js-form" novalidate>
+  <div class="field"><label for="pf_name">Naam</label><input type="text" id="pf_name" value="${esc(p?.name||'')}" placeholder="bijv. Partner" maxlength="40"></div>
+  <button type="submit" class="btn" data-act="pfsave" data-id="${esc(p?.id||'')}">Opslaan</button><button type="button" class="btn sec" data-act="settings">Annuleren</button></form>
+  ${p&&p.id!=='main'?`<button type="button" class="btn danger" data-act="pfdel" data-id="${esc(p.id)}">Portefeuille verwijderen</button>`:''}`);
+  $('#pf_name').focus();
+}
+function savePf(id){
+  const name=$('#pf_name').value.trim();if(!name)return fieldErr('pf_name','Vul een naam in');
+  if(pfList().some(p=>p.id!==id&&p.name.toLowerCase()===name.toLowerCase()))return fieldErr('pf_name','Die naam bestaat al');
+  const L=data.portfolios||(data.portfolios=[]),now=Date.now();let e=id&&L.find(x=>x.id===id);
+  if(e)Object.assign(e,{name,mod:now});else if(id==='main')L.push({id:'main',name,mod:now});
+  else{e={id:uid(),name,mod:now};L.push(e);saveData();toast('Portefeuille “'+name+'” gemaakt');closeSheet();setPf(e.id);return}
+  saveData();render();toast('Opgeslagen');openSettings();
+}
+function delPf(id){
+  const p=pfOthers().find(x=>x.id===id);if(!p)return;const tx=data.txs.filter(t=>pfOf(t)===id);
+  if(!confirm(`Portefeuille “${p.name}” verwijderen?${tx.length?` De ${tx.length} ${tx.length===1?'transactie':'transacties'} erin worden ook verwijderd, op al je apparaten.`:''}`))return;
+  const now=Date.now(),ids=new Set(tx.map(t=>t.id));data.txs=data.txs.filter(t=>!ids.has(t.id));data.deleted.push(...ids);
+  for(const k of ['goals','plans'])for(const x of data[k]||[])if(pfOf(x)===id&&!x.del){x.del=true;x.mod=now}
+  p.del=true;p.mod=now;if(settings.pf===id){settings.pf='main';saveSettings();prevVisit=getVisit('main')?{...getVisit('main')}:null}
+  saveData();lastView=null;render();toast('Portefeuille verwijderd');openSettings();
+}
+function coinIds(){return [...new Set(TX().filter(t=>t.coinId).map(t=>t.coinId))]}
 // Volglijst en prijsalerts: lijsten met 'del'-markering, zodat verwijderen ook via sync naar andere apparaten gaat
 const live=a=>(a||[]).filter(x=>!x.del);
 function mergeList(a,b){const m=new Map();for(const x of [...(a||[]),...(b||[])]){const e=m.get(x.id);if(!e||(x.mod||0)>(e.mod||0))m.set(x.id,x)}return[...m.values()]}
@@ -91,13 +169,19 @@ function priceIds(){return [...new Set([...coinIds(),...live(data.watch).map(w=>
 const txTotal=t=>t.type==='receive'||t.type==='transfer'?0:t.qty*t.price+(t.type==='sell'?-1:1)*(t.fee||0);
 const isIn=t=>t.type==='buy'||t.type==='receive';   // voegt munten toe met een aankoopprijs (ontvangen = € 0)
 const isOther=t=>t==='receive'||t==='transfer';
-function totalF(t){if(isOther(t.type))return '–';const v=txTotal(t),off=Math.abs(v*100-Math.round(v*100))>1e-6;
-  return (off?`<span class="warn-mark" title="Geen hele centen (${plainNum(v)}): controleer aantal, betaald bedrag en kosten met je afschrift">≈ </span>`:'')+money(v,2)}
+function totalF(t){if(isOther(t.type))return '–';const v=txTotal(t),off=unitNow()==='EUR'&&Math.abs(v*100-Math.round(v*100))>1e-6;
+  return (off?`<span class="warn-mark" title="Geen hele centen (${plainNum(v)}): controleer aantal, betaald bedrag en kosten met je afschrift">≈ </span>`:'')+money(atT(v,t),2)}
 const isCash=t=>t==='deposit'||t==='withdraw';
 const TYPE_L={buy:'Koop',sell:'Verkoop',deposit:'Storting',withdraw:'Opname',receive:'Ontvangen',transfer:'Overboeking'};
-const hasCashTx=()=>data.txs.some(t=>isCash(t.type));
+const hasCashTx=()=>TX().some(t=>isCash(t.type));
 // Effect van een transactie op je cash en op 'netto gestort' (stortingen − opnames)
+// 'Alles samen': in een portefeuille zonder cash-transacties telt een aankoop als inleg (en een verkoop als opname),
+// net zoals die portefeuille los wordt getoond; anders zou zijn aankoop de cash van een andere portefeuille verlagen.
+let _cp={k:'',src:null,v:null};
+function noCashPf(x){if(curPf()!=='__all')return false;const k=data.txs.length+'|'+data.updated;
+  if(_cp.k!==k||_cp.src!==data.txs){const s=new Set();data.txs.forEach(t=>{if(isCash(t.type))s.add(pfOf(t))});_cp={k,src:data.txs,v:s}}return !_cp.v.has(pfOf(x))}
 function cashEffect(x){const f=x.fee||0;
+  if((x.type==='buy'||x.type==='sell')&&noCashPf(x))return[0,x.type==='buy'?txTotal(x):-txTotal(x)];
   if(x.type==='deposit')return[x.amount-f,x.amount];
   if(x.type==='withdraw')return[-(x.amount+f),-x.amount];
   if(x.type==='buy')return[-(x.qty*x.price+f),0];
@@ -105,14 +189,14 @@ function cashEffect(x){const f=x.fee||0;
   return[x.qty*x.price-f,0];
 }
 function computeCoin(coinId){
-  const txs=data.txs.filter(t=>t.coinId===coinId).sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0));
+  const txs=TX().filter(t=>t.coinId===coinId).sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0));
   const last=txs[txs.length-1]||{};
   const w=live(data.watch).find(x=>x.id===coinId)||live(data.alerts).find(x=>x.coinId===coinId)||{};
   const meta={coinId,name:last.name||w.name,symbol:last.symbol||w.symbol,image:last.image||w.image};
   const lots=[],sellInfo={};let realized=0,totalBought=0;
   for(const t of txs){
     const fee=t.fee||0;
-    if(isIn(t)){const pr=t.price||0,unit=(t.qty*pr+fee)/t.qty;lots.push({tx:t,remaining:t.qty,unit});totalBought+=t.qty*pr+fee}
+    if(isIn(t)){const pr=t.price||0,k=K(txTime(t)),unit=(t.qty*pr+fee)/t.qty*k;lots.push({tx:t,remaining:t.qty,unit});totalBought+=(t.qty*pr+fee)*k}
     else if(t.type==='transfer'){   // overboeking: alleen de netwerkkosten (in munten) verdwijnen uit je bezit
       let left=t.feeQty||0,cost=0;
       for(const l of lots){if(left<=1e-12)break;const take=Math.min(l.remaining,left);l.remaining-=take;left-=take;cost+=take*l.unit;if(l.remaining<1e-12)l.remaining=0}
@@ -122,7 +206,7 @@ function computeCoin(coinId){
       let left=t.qty,cost=0;
       for(const l of lots){if(left<=1e-12)break;const take=Math.min(l.remaining,left);l.remaining-=take;left-=take;cost+=take*l.unit;if(l.remaining<1e-12)l.remaining=0}
       const matched=t.qty-left;
-      const proceeds=matched*t.price-fee*(t.qty?matched/t.qty:1);
+      const proceeds=(matched*t.price-fee*(t.qty?matched/t.qty:1))*K(txTime(t));
       const pl=proceeds-cost;realized+=pl;
       sellInfo[t.id]={pl,cost,pct:cost>0?(proceeds/cost-1)*100:null,oversold:left>1e-12};
     }
@@ -133,14 +217,14 @@ function computeCoin(coinId){
   const P=prices[coinId];const price=P?.price;
   const value=price!=null?qty*price:null;
   const unreal=value!=null?value-cost:null;
-  return{coinId,meta,txs,lotMap,sellInfo,qty,cost,avg:qty>1e-12?cost/qty:null,price,ch24:P?.ch24,value,unreal,unrealPct:cost>0&&unreal!=null?unreal/cost*100:null,realized,totalBought};
+  return{coinId,meta,txs,lotMap,sellInfo,qty,cost,avg:qty>1e-12?cost/qty:null,price,ch24:chU(P?.ch24),value,unreal,unrealPct:cost>0&&unreal!=null?unreal/cost*100:null,realized,totalBought};
 }
 /* ---------- brokers en wallets ---------- */
-const accounts=()=>[...new Set(data.txs.flatMap(t=>[t.acct,t.to]).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+const accounts=()=>[...new Set(TX().flatMap(t=>[t.acct,t.to]).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
 // Bezit en cash per broker/wallet. Overboeking: 'aantal' gaat eruit bij Van, (aantal − netwerkkosten) komt binnen bij Naar.
 function acctSummary(){
   const m={},A=n=>m[n||'']||(m[n||'']={name:n||'',coins:{},cash:0,hasCash:false});
-  for(const t of data.txs){
+  for(const t of TX()){
     const a=A(t.acct);
     if(isCash(t.type)){a.hasCash=true;a.cash+=cashEffect(t)[0];continue}
     if(t.type==='transfer'){a.coins[t.coinId]=(a.coins[t.coinId]||0)-t.qty;const b=A(t.to);b.coins[t.coinId]=(b.coins[t.coinId]||0)+t.qty-(t.feeQty||0);continue}
@@ -164,7 +248,7 @@ function portfolio(){
   for(const c of open){cost+=c.cost;if(c.value==null){missing=true;continue}value+=c.value;if(c.ch24!=null)ch+=c.value-c.value/(1+c.ch24/100)}
   const unreal=value-cost;
   const hasCash=hasCashTx();let cash=0,dep=0;
-  if(hasCash)for(const x of data.txs){const [c,d]=cashEffect(x);cash+=c;dep+=d}
+  if(hasCash)for(const x of TX()){const [c,d]=cashEffect(x);cash+=c;dep+=d*K(txTime(x))}
   cash=Math.round(cash*1e8)/1e8;dep=Math.round(dep*1e8)/1e8;   // rekenruis (0,000000000009) wegwerken
   const total=value+cash,ret=total-dep;
   return{open,closed,value,cost,unreal,unrealPct:cost>0?unreal/cost*100:null,ch24:ch,ch24Pct:value-ch>0?ch/(value-ch)*100:null,realized,missing,
@@ -197,6 +281,17 @@ async function cg(path){
 const BUSY='CoinGecko is even druk; de app probeert het zo opnieuw';
 
 let priceBusy=false;
+async function refreshFx(){   // bitcoinkoers in euro en dollar (alleen nodig als je niet in euro kijkt)
+  if(!settings.unit||settings.unit==='EUR'||locked)return;
+  try{const r=await cg('/simple/price?ids=bitcoin&vs_currencies=eur,usd&include_24hr_change=true');if(!r.ok)return;const j=await r.json();
+    if(j.bitcoin?.eur>0&&j.bitcoin?.usd>0){fx={btcEur:j.bitcoin.eur,btcUsd:j.bitcoin.usd,btcCh24:j.bitcoin.eur_24h_change??null,ts:Date.now()};try{localStorage.setItem('cpt.fx',JSON.stringify(fx))}catch(e){}}}catch(e){}}
+async function ensureBtcHist(){   // bitcoinkoersen van vroeger, voor de weergave in bitcoin
+  if(settings.unit!=='BTC'||locked)return;const h=data.hist?.bitcoin,first=Math.min(...data.txs.map(txTime).filter(isFinite));
+  const have=h?Object.keys(h).length:0;if(have>=300||(have&&first>=Date.now()-have*DAY))return;
+  try{await fetchChart('bitcoin','365')}catch(e){}}
+async function setUnit(u,btn){settings.unit=u;saveSettings();document.querySelectorAll('[data-unit]').forEach(b=>b.classList.toggle('on',b.dataset.unit===u));
+  if(u!=='EUR'){toast('Koers ophalen…');await refreshFx();if(u==='BTC')await ensureBtcHist();if(!(fx.btcEur>0)){toast('Koers niet beschikbaar; bedragen blijven in euro tot de koers binnen is')}}
+  render();toast(u==='EUR'?'Bedragen in euro':u==='USD'?'Bedragen in dollar':'Bedragen in bitcoin')}
 async function refreshPrices(force){
   const ids=priceIds();if(locked||!ids.length||priceBusy)return;
   priceBusy=true;cgState={s:'busy',msg:''};updBadges();
@@ -208,7 +303,7 @@ async function refreshPrices(force){
     for(const c of arr)prices[c.id]={price:c.current_price,ch24:c.price_change_percentage_24h,image:c.image,ts:Date.now(),
       m:{ch7:c.price_change_percentage_7d_in_currency,ch30:c.price_change_percentage_30d_in_currency,cap:c.market_cap,rank:c.market_cap_rank,vol:c.total_volume,
          hi:c.high_24h,lo:c.low_24h,ath:c.ath,athPct:c.ath_change_percentage,athDate:c.ath_date,atl:c.atl,atlDate:c.atl_date,circ:c.circulating_supply,max:c.max_supply}};
-    cgState={s:'ok',msg:''};savePrices();checkAlerts();render();saveVisit();
+    cgState={s:'ok',msg:''};savePrices();checkAlerts();await refreshFx();render();saveVisit();
   }catch(e){cgState={s:'err',msg:e.message||'Geen verbinding'};updBadges();if(force)toast(e.message||'Geen verbinding')}
   finally{priceBusy=false}
 }
@@ -283,20 +378,21 @@ function focusKey(e){if(!e||e===document.body)return null;if(e.id)return '#'+CSS
   const row=e.closest?.('[data-tx],[data-coin],[data-goal]');if(row){const k=row.dataset.tx!=null?'tx':row.dataset.coin!=null?'coin':'goal';return `[data-${k}="${CSS.escape(row.dataset[k])}"] .rowlink`}
   return null}
 function keepFocus(fn){const k=focusKey(document.activeElement);fn();if(k&&(document.activeElement===document.body||!document.activeElement)){const el=[...document.querySelectorAll(k)].find(x=>x.getClientRects().length);if(el)el.focus({preventScroll:true})}}
-function render(){keepFocus(renderInner);setTimeout(markScrollers,0)}
+function render(){keepFocus(()=>inUnit(renderInner));setTimeout(markScrollers,0)}
 function renderInner(){
   if(locked)return renderLock();
   document.body.classList.toggle('private',!!settings.privacy);
   const m=location.hash.match(/^#coin\/(.+)$/);
-  const cid=m&&(data.txs.some(t=>t.coinId===decodeURIComponent(m[1]))||isWatched(decodeURIComponent(m[1])))?decodeURIComponent(m[1]):null;
+  const cid=m&&(TX().some(t=>t.coinId===decodeURIComponent(m[1]))||isWatched(decodeURIComponent(m[1])))?decodeURIComponent(m[1]):null;
   const isTx=location.hash==='#transacties',isRep=location.hash==='#rapporten';
-  if(isRep){renderReports();lastView='rep';renderSide('__rep')}
+  const bar=()=>{if(multiPf())$('#view').insertAdjacentHTML('afterbegin',pfBarHTML())};
+  if(isRep){inEUR(renderReports);bar();lastView='rep';renderSide('__rep')}
   else if(isTx){
     if(lastView==='tx'&&$('#txOut')){$('#topbar').innerHTML=topbarHTML(null,'Transacties');fillTxs()}  // focus in zoekveld behouden
-    else renderTxs();
+    else{renderTxs();bar()}
     lastView='tx';renderSide('__tx');
   }else{
-    if(cid)renderCoin(cid);else renderHome();
+    if(cid)renderCoin(cid);else{renderHome();bar()}
     lastView=cid?'coin':'home';renderSide(cid);
   }
   document.querySelectorAll('.tabbar a').forEach(b=>{const on=b.dataset.tab===(isRep?'reps':isTx?'txs':'home');b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
@@ -313,7 +409,7 @@ function renderSide(cid){
   ${p.hasCash?`<div class="side-t">Cash</div><a class="side-coin" href="#transacties" data-act="cashtx"><div class="coin-ph cash-ic">€</div><div class="grow"><div class="name-sm name">Beschikbaar</div><div class="meta m">${money(p.cash,2)}</div></div></a>`:''}
   ${list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="chg ${cls(c.unreal)}">${pct(c.unrealPct)}</div></a>`).join('')}`:''}
   ${p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div></div><div class="chg ${cls(c.realized)} m">${signed(c.realized)}</div></a>`).join('')}`:''}
-  ${watchOnly().length?`<div class="side-t">Volglijst</div>${watchOnly().map(x=>{const P=prices[x.id]||{};return `<a class="side-coin ${x.id===cid?'on':''}" href="#coin/${encodeURIComponent(x.id)}" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name-sm name">${esc(x.name)}</div><div class="meta">${money(P.price)}</div></div><div class="chg ${cls(P.ch24)}">${pct(P.ch24)}</div></a>`}).join('')}`:''}
+  ${watchOnly().length?`<div class="side-t">Volglijst</div>${watchOnly().map(x=>{const P=prices[x.id]||{};return `<a class="side-coin ${x.id===cid?'on':''}" href="#coin/${encodeURIComponent(x.id)}" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name-sm name">${esc(x.name)}</div><div class="meta">${money(P.price)}</div></div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></a>`}).join('')}`:''}
   <div class="side-foot">Koersdata: CoinGecko</div>`;
 }
 function topbarHTML(c,pageTitle){
@@ -329,9 +425,9 @@ function topbarHTML(c,pageTitle){
 let txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};
 function renderTxs(){
   $('#topbar').innerHTML=topbarHTML(null,'Transacties');
-  if(!data.txs.length){$('#view').innerHTML=`<div class="empty"><b>Nog geen transacties</b>Tik op + om je eerste aankoop toe te voegen,<br>of <button type="button" class="link-lg link" data-act="bvimport">importeer ze uit Bitvavo</button>.</div>`;return}
+  if(!TX().length){$('#view').innerHTML=`<div class="empty"><b>Nog geen transacties</b>Tik op + om je eerste aankoop toe te voegen,<br>of <button type="button" class="link-lg link" data-act="bvimport">importeer ze uit Bitvavo</button>.</div>`;return}
   const coins=coinIds().map(computeCoin).sort((a,b)=>(a.meta.name||'').localeCompare(b.meta.name||''));
-  const years=[...new Set(data.txs.map(t=>t.date.slice(0,4)))].sort().reverse();
+  const years=[...new Set(TX().map(t=>t.date.slice(0,4)))].sort().reverse();
   if(txf.coin!=='all'&&!coins.some(c=>c.coinId===txf.coin))txf.coin='all';
   if(txf.year!=='all'&&!years.includes(txf.year))txf.year='all';
   const accts=accounts();if(txf.acct!=='all'&&!accts.includes(txf.acct))txf.acct='all';
@@ -352,9 +448,9 @@ function txWhat(t,sym){   // korte omschrijving: aantal @ koers / ontvangen / va
   const q=`<span class="m">${qtyf(t.qty)}</span> ${sym}`;
   if(t.type==='receive')return `${q} <span class="sym">ontvangen</span>`;
   if(t.type==='transfer')return `${q} <span class="sym">${esc(t.acct||'?')} → ${esc(t.to||'?')}</span>`;
-  return `${q} <span class="sym">@ ${priceH(t.price)}</span>`;
+  return `${q} <span class="sym">@ ${priceH(atT(t.price,t))}</span>`;
 }
-const feeTxt=(t,sym)=>t.type==='transfer'?(t.feeQty?`${qtyf(t.feeQty)} ${sym}`:'–'):(t.fee?money(t.fee,2):'–');
+const feeTxt=(t,sym)=>t.type==='transfer'?(t.feeQty?`${qtyf(t.feeQty)} ${sym}`:'–'):(t.fee?money(atT(t.fee,t),2):'–');
 function txOutcome(t,c){
   if(!c)return{};
   if(isIn(t)){const l=c.lotMap[t.id];
@@ -367,16 +463,17 @@ function txOutcome(t,c){
   return{realized:true,pl:s.pl,pp:s.pct};
 }
 let txLimit=100;   // transacties per keer tonen (sneller bij een lange lijst)
-function fillTxs(){
+function fillTxs(){inUnit(fillTxsInner)}
+function fillTxsInner(){
   const out=$('#txOut');if(!out)return;
   document.querySelectorAll('[data-tf]').forEach(b=>b.classList.toggle('on',b.dataset.tf===txf.type));
   const cm={};coinIds().forEach(id=>cm[id]=computeCoin(id));
   const q=txf.q.trim().toLowerCase();
-  let list=data.txs.filter(t=>(txf.type==='all'||t.type===txf.type||(txf.type==='cash'&&isCash(t.type))||(txf.type==='other'&&isOther(t.type)))&&(txf.acct==='all'||t.acct===txf.acct||t.to===txf.acct)&&(txf.coin==='all'||t.coinId===txf.coin)&&(txf.year==='all'||t.date.startsWith(txf.year))
+  let list=TX().filter(t=>(txf.type==='all'||t.type===txf.type||(txf.type==='cash'&&isCash(t.type))||(txf.type==='other'&&isOther(t.type)))&&(txf.acct==='all'||t.acct===txf.acct||t.to===txf.acct)&&(txf.coin==='all'||t.coinId===txf.coin)&&(txf.year==='all'||t.date.startsWith(txf.year))
       &&(!q||[t.name,t.symbol,t.note,t.acct,t.to,TYPE_L[t.type],isCash(t.type)?'cash':''].some(x=>(x||'').toLowerCase().includes(q))))
     .sort((a,b)=>b.date.localeCompare(a.date)||(b.created||0)-(a.created||0));
   let bought=0,sold=0,fees=0,real=0,dep=0;const showDep=hasCashTx();
-  for(const t of list){fees+=t.fee||0;if(isCash(t.type)){dep+=t.type==='deposit'?t.amount:-t.amount;continue}const tot=txTotal(t);if(t.type==='buy')bought+=tot;else if(t.type==='sell')sold+=tot;if(t.type==='sell'||t.type==='transfer'){const o=txOutcome(t,cm[t.coinId]);if(o.pl!=null)real+=o.pl}}
+  for(const t of list){fees+=atT(t.fee||0,t);if(isCash(t.type)){dep+=atT(t.type==='deposit'?t.amount:-t.amount,t);continue}const tot=atT(txTotal(t),t);if(t.type==='buy')bought+=tot;else if(t.type==='sell')sold+=tot;if(t.type==='sell'||t.type==='transfer'){const o=txOutcome(t,cm[t.coinId]);if(o.pl!=null)real+=o.pl}}
   const sum=`<div class="tx-sum${showDep?'':' odd'}">
     <div class="stat"><div class="label">Transacties</div><div class="val">${list.length}</div></div>
     <div class="stat"><div class="label">Gekocht</div><div class="val m">${money(bought,2)}</div></div>
@@ -395,7 +492,7 @@ function fillTxs(){
       items+=`<li class="row" data-tx="${esc(t.id)}"><div class="coin-ph cash-ic">€</div>
       <div class="grow"><div class="name"><button type="button" class="rowlink">Cash<span class="sr-only"> – transactie bewerken</span></button> <span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></div>
       <div class="meta">${isNaN(d)?esc(t.date):tm(d,d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}))}${t.acct?' · '+esc(t.acct):''}${t.note?' · '+esc(t.note):''}</div></div>
-      <div class="right"><div class="v m ${sg>0?'up':''}">${sg>0?'+':'−'}${money(t.amount,2)}</div>${t.fee?`<div class="note-xs label">kosten <span class="m">${money(t.fee,2)}</span></div>`:''}</div></li>`;continue}
+      <div class="right"><div class="v m ${sg>0?'up':''}">${sg>0?'+':'−'}${money(atT(t.amount,t),2)}</div>${t.fee?`<div class="note-xs label">kosten <span class="m">${money(atT(t.fee,t),2)}</span></div>`:''}</div></li>`;continue}
     const right=o.sold?'<div class="note-sm label">volledig verkocht</div>':o.pl==null?'':`<div class="chg ${cls(o.pl)}"><span class="m">${signed(o.pl)}</span>${o.pp==null?'':' '+pct(o.pp)}</div>${o.realized?'<div class="note-xs label">gerealiseerd</div>':o.transfer?'<div class="note-xs label">netwerkkosten</div>':''}`;
     items+=`<li class="row" data-tx="${esc(t.id)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image})}
       <div class="grow"><div class="name nt"><button type="button" class="rowlink nm">${esc(t.name)}<span class="sr-only"> – transactie bewerken</span></button><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></div>
@@ -404,10 +501,10 @@ function fillTxs(){
   }
   flush();
   const tbl=`<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Transacties</caption><thead><tr><th scope="col" class="l">Datum</th><th scope="col" class="l">Munt</th><th scope="col" class="l">Type</th><th scope="col">Aantal</th><th scope="col">Koers</th><th scope="col">Totaal</th><th scope="col">Kosten</th><th scope="col" class="l">Broker · notitie</th><th scope="col">Waarde nu</th><th scope="col">Winst/verlies</th><th scope="col">%</th></tr></thead><tbody>${list.map(t=>{
-    if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell"><div class="ph-sm coin-ph cash-ic">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(t.amount,2)}</td><td class="m">${t.fee?money(t.fee,2):'–'}</td><td class="l note-cell">${esc([t.acct,t.note].filter(Boolean).join(' · '))}</td><td>–</td><td>–</td><td>–</td></tr>`;
+    if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell"><div class="ph-sm coin-ph cash-ic">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(atT(t.amount,t),2)}</td><td class="m">${t.fee?money(atT(t.fee,t),2):'–'}</td><td class="l note-cell">${esc([t.acct,t.note].filter(Boolean).join(' · '))}</td><td>–</td><td>–</td><td>–</td></tr>`;
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
     const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.transfer?'<span class="label">overboeking</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="note-xs label">nog ${qtyf(o.rem)} ${sym}</div>`:''):'–';
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(t.price)}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
   out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl+(all>list.length?`<button type="button" class="mt-14 btn sec" data-act="txmore">Toon meer (${list.length} van ${all})</button>`:'');
 }
 function holdingsTable(list){
@@ -426,7 +523,7 @@ function txTable(txs,c){
       else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="note-xs label">nog ${qtyf(l.remaining)} ${sym}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=l.unit>0?(c.price/l.unit-1)*100:null}}
     else if(t.type==='transfer'){const s=c.sellInfo[t.id]||{};pl=s.pl??null;val='<span class="label">overboeking</span>'}
     else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="l"><button type="button" class="rowlink">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(t.price)}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pp==null?(t.type==='receive'?'<span class="w-normal label">gratis</span>':'–'):pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="l"><button type="button" class="rowlink">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pp==null?(t.type==='receive'?'<span class="w-normal label">gratis</span>':'–'):pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
 // <time datetime="…"> voor datums in de HTML (machineleesbaar; de tekst blijft Nederlands)
 const isoD=v=>{const d=new Date(v);if(isNaN(d))return '';const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`};
@@ -453,7 +550,7 @@ window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer o
 function renderHome(){
   $('#topbar').innerHTML=topbarHTML(null);
   const p=portfolio();
-  if(!data.txs.length){
+  if(!TX().length){
     $('#view').innerHTML=`<div class="empty"><b>Nog geen investeringen</b>Tik op + om je eerste aankoop toe te voegen.<br>Koersen worden automatisch opgehaald.</div>${watchSection()}`;return;
   }
   const mode=settings.plMode;
@@ -478,7 +575,7 @@ function renderHome(){
     <div><span class="label">Laatste 24 uur</span><b class="${cls(p.ch24)}"><span class="m">${signed(p.ch24)}</span> <small>${pct(p.ch24Pct)}</small></b></div>
     <div><span class="label">Gerealiseerd</span><b class="m ${cls(p.realized)}">${signed(p.realized)}</b></div>
     <div><span class="label">Open posities</span><b>${p.open.length}</b></div></div>`;
-  $('#view').innerHTML=`${issuesBanner()}${sinceCard()}${planDueCard()}<div class="home-grid"><div class="panel">
+  $('#view').innerHTML=`${issuesBanner()}${sinceCard()}${inEUR(planDueCard)}<div class="home-grid"><div class="panel">
   <section class="hero">
     <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
     <div class="big m" id="heroVal">${money(p.hasCash?p.total:p.value,2)}</div>
@@ -488,7 +585,7 @@ function renderHome(){
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${[['1','24U'],['7','1W'],['30','1M'],['90','3M'],['365','1J'],['max','Max']].map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
   <div class="period" id="pperiod"></div></div>
-  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${goalsCard(true)}${kv}</div></div>
+  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${inEUR(()=>goalsCard(true))}${kv}</div></div>
   <div class="list-head"><h2>Bezittingen</h2>
     <label class="sr-only" for="sortSel">Sorteer bezittingen op</label><select id="sortSel" data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
   ${sorted.length?`<ul class="list only-m">${sorted.map(c=>{
@@ -567,7 +664,7 @@ function importPlan(){
   const dups=[];
   for(const i of ready){
     const coinId=i.sym?imp.map[i.sym]:null;
-    const m=data.txs.find(t=>!t.ext&&!used.has(t.id)&&t.type===i.type&&t.date.slice(0,10)===i.date.slice(0,10)&&(coinId?t.coinId===coinId&&Math.abs(t.qty-i.qty)<=1e-9+1e-6*i.qty:Math.abs((t.amount||0)-i.amount)<0.005));
+    const m=data.txs.filter(t=>pfOf(t)===(imp?.pf||pfNew())).find(t=>!t.ext&&!used.has(t.id)&&t.type===i.type&&t.date.slice(0,10)===i.date.slice(0,10)&&(coinId?t.coinId===coinId&&Math.abs(t.qty-i.qty)<=1e-9+1e-6*i.qty:Math.abs((t.amount||0)-i.amount)<0.005));
     if(m){used.add(m.id);dups.push([i,m])}
   }
   return{fresh,ready,already,unmapped,dups};
@@ -576,6 +673,7 @@ function renderImport(){
   if(!imp)return;const P=importPlan(),cnt={};P.ready.forEach(i=>cnt[i.type]=(cnt[i.type]||0)+1);
   const syms=Object.keys(imp.map);
   openSheet(`<h2 class="h3">Importeren uit Bitvavo</h2><p class="mt-0 hint">${esc(imp.fname)} · ${imp.items.length+imp.skipped.length} regels</p>
+  ${multiPf()?`<div class="field"><label for="imp_pf">Importeren in portefeuille</label><select id="imp_pf">${pfList().map(p=>`<option value="${esc(p.id)}"${(imp.pf||pfNew())===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select></div>`:''}
   <div class="card-alt card kv">
     <div><span class="label">Nieuw om te importeren</span><b>${P.ready.length}</b></div>
     ${Object.entries(cnt).map(([t,n])=>`<div><span class="indent label">${TYPE_L[t]}</span><span>${n}</span></div>`).join('')}
@@ -593,6 +691,7 @@ function renderImport(){
   const rc=$('#imp_rep');if(rc)rc.onchange=()=>{imp.replace=rc.checked;renderImport()};
 }
 function doImport(){
+  if($('#imp_pf'))imp.pf=$('#imp_pf').value;
   const P=importPlan(),dupIds=new Map(P.dups.map(([i,m])=>[i.id,m])),now=Date.now();let n=0,k=0;
   for(const i of P.ready){
     const m=dupIds.get(i.id);
@@ -600,7 +699,7 @@ function doImport(){
     if(m){data.txs=data.txs.filter(t=>t.id!==m.id);data.deleted.push(m.id);k++}
     const c=i.sym?(imp.cands[i.sym].find(x=>x.id===imp.map[i.sym])||{id:imp.map[i.sym],name:i.sym.toUpperCase(),symbol:i.sym}):null;
     const {sym,row,...t}=i;
-    data.txs.push({...t,...(c?{coinId:c.id,name:c.name,symbol:c.symbol,image:c.image}:{}),note:m?.note||t.note||'',created:now+n,mod:now,dev:devId()});n++;
+    const tp=imp.pf||pfNew();data.txs.push({...t,...(c?{coinId:c.id,name:c.name,symbol:c.symbol,image:c.image}:{}),note:m?.note||t.note||'',created:now+n,mod:now,dev:devId(),...(tp!=='main'?{pf:tp}:{})});n++;
   }
   imp=null;saveData();closeSheet();refreshPrices();setTimeout(collectHistory,3000);render();
   toast(`${n} transacties geïmporteerd${k?` (${k} handmatige vervangen)`:''}`);
@@ -633,11 +732,11 @@ function priceEst(id,ts){const a=knownPts(id);if(!a.length)return null;const i=l
 function snapshot(ts,S){   // stand van je portfolio op tijdstip ts
   const o={coins:[],crypto:0,inv:0,real:0,cash:0,dep:0,missing:[]};
   for(const id in S){const st=S[id],i=lastAtOrBefore(st,ts);if(i<0)continue;const [,q,cost,r]=st[i];o.inv+=cost;o.real+=r;if(q<=1e-12)continue;
-    const c=data.txs.find(t=>t.coinId===id)||{};let pr=priceAt(id,ts),v;
+    const c=TX().find(t=>t.coinId===id)||{};let pr=priceAt(id,ts),v;
     if(pr!=null)v=q*pr;else{o.missing.push((c.symbol||id).toUpperCase());pr=priceEst(id,ts);v=pr!=null?q*pr:cost}   // geschat
     o.crypto+=v;
     o.coins.push({id,name:c.name,symbol:c.symbol,qty:q,price:pr,value:v,est:o.missing.includes((c.symbol||id).toUpperCase())})}
-  for(const x of data.txs)if(txTime(x)<=ts){const [c,d]=cashEffect(x);o.cash+=c;o.dep+=d}
+  for(const x of TX())if(txTime(x)<=ts){const [c,d]=cashEffect(x);o.cash+=c;o.dep+=d}
   o.cash=Math.round(o.cash*1e8)/1e8;o.total=o.crypto+o.cash;o.coins.sort((a,b)=>(b.value??0)-(a.value??0));return o;
 }
 // bedragen in de staafdiagrammen: € 1.000 (heel bedrag) of € 43,50 (altijd 2 decimalen)
@@ -677,7 +776,7 @@ function pLabel(u,ts,long){const d=new Date(ts);
 // rendementsreeks per periode (los van het rapportscherm, ook gebruikt door het vergrote scherm)
 function retSeries(u,n){
   const S={};coinIds().forEach(id=>S[id]=coinStates(id));
-  const hc=hasCashTx(),now=Date.now(),first=Math.min(...data.txs.map(txTime)),metric=o=>hc?o.total-o.dep:o.crypto-o.inv+o.real;
+  const hc=hasCashTx(),now=Date.now(),first=Math.min(...TX().map(txTime)),metric=o=>hc?o.total-o.dep:o.crypto-o.inv+o.real;
   const st=pList(u,first,now).slice(-n);let prev=snapshot(st[0],S);
   return st.map(a=>{const o=snapshot(Math.min(pNext(u,a),now),S),r={ts:a,v:metric(o)-metric(prev),end:hc?o.total:o.crypto,miss:o.missing.length>0||prev.missing.length>0};prev=o;return r});
 }
@@ -741,9 +840,9 @@ const pSeg=(key,u)=>`<fieldset class="seg mini"><legend class="sr-only">Periode 
 const monthLbl=(ts,o={month:'short'})=>new Date(ts).toLocaleDateString('nl-NL',o).replace('.','');
 function renderReports(){
   $('#topbar').innerHTML=topbarHTML(null,'Rapporten');
-  if(!data.txs.length){$('#view').innerHTML=`<div class="empty"><b>Nog geen gegevens</b>Voeg transacties toe om rapporten te zien.</div>`;return}
+  if(!TX().length){$('#view').innerHTML=`<div class="empty"><b>Nog geen gegevens</b>Voeg transacties toe om rapporten te zien.</div>`;return}
   const S={};coinIds().forEach(id=>S[id]=coinStates(id));
-  const p=portfolio(),hasCash=p.hasCash,now=Date.now(),first=Math.min(...data.txs.map(txTime)),fd=new Date(first),nd=new Date(now);
+  const p=portfolio(),hasCash=p.hasCash,now=Date.now(),first=Math.min(...TX().map(txTime)),fd=new Date(first),nd=new Date(now);
   const metric=o=>hasCash?o.total-o.dep:o.crypto-o.inv+o.real;   // resultaat tot dan toe (stortingen/aankopen tellen niet als winst)
 
   // 1. waarde op 1 januari
@@ -776,7 +875,7 @@ function renderReports(){
 
   // 4. inleg per dag/week/maand/jaar
   const iu=PU[settings.repIn]?settings.repIn:'month',[IL,il,IN]=PU[iu];
-  const flowFor=(u,n)=>pList(u,first,now).slice(-n).map(a=>{const b=pNext(u,a);let v=0;for(const t of data.txs){const tt=txTime(t);if(tt<a||tt>=b)continue;
+  const flowFor=(u,n)=>pList(u,first,now).slice(-n).map(a=>{const b=pNext(u,a);let v=0;for(const t of TX()){const tt=txTime(t);if(tt<a||tt>=b)continue;
     if(hasCash){if(t.type==='deposit')v+=t.amount;else if(t.type==='withdraw')v-=t.amount}else if(t.type==='buy')v+=txTotal(t);else if(t.type==='sell')v-=txTotal(t)}return{ts:a,v}});
   const avgOf=fl=>{const f=fl.findIndex(x=>Math.abs(x.v)>0.005),n=f<0?fl.length:fl.length-f;return{n,avg:fl.slice(-n).reduce((s,x)=>s+x.v,0)/n}};
   const inflow=flowFor(iu,IN),A=avgOf(inflow),M=avgOf(flowFor('month',12));   // vooruitblik altijd op basis van het maandgemiddelde
@@ -799,7 +898,7 @@ function renderReports(){
   // volgorde: rendement en inleg naast elkaar, daaronder beste/slechtste munt en brokers, onderaan 1 januari
   // laptop: links rendement + beste/slechtste munt, rechts inleg + brokers + 1 januari; telefoon: alles onder elkaar
   const ord=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
-  $('#view').innerHTML=`<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(calCard(),4)}${ord(perfCard,5)}${ord(benchCard(),6)}${ord(dcaCard(),6)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(plansCard(),3)}${ord(checkCard(),7)}${ord(accCard,8)}${ord(janCard,9)}${ord(exportCard(),10)}</div></div>`;
+  $('#view').innerHTML=`${settings.unit&&settings.unit!=='EUR'?'<p class="hint rep-note">Rapporten staan altijd in euro, ook als je bedragen elders in '+(settings.unit==='USD'?'dollar':'bitcoin')+' bekijkt.</p>':''}<div class="rep-grid"><div class="rep-col">${ord(retCard,1)}${ord(calCard(),4)}${ord(perfCard,5)}${ord(benchCard(),6)}${ord(dcaCard(),6)}</div><div class="rep-col">${ord(inCard,2)}${ord(goalsCard(false),3)}${ord(plansCard(),3)}${ord(checkCard(),7)}${ord(accCard,8)}${ord(janCard,9)}${ord(exportCard(),10)}</div></div>`;
   fitBars();
 }
 /* ---------- sinds je vorige bezoek ---------- */
@@ -808,18 +907,23 @@ let prevVisit=null,sinceDismissed=false;
 function visitNow(){const p=portfolio(),P={};coinIds().forEach(id=>{const pr=prices[id]?.price;if(pr!=null)P[id]=pr});
   return{ts:Date.now(),total:p.hasCash?p.total:p.value,metric:p.hasCash?p.ret:p.value-p.cost+p.realized,prices:P,missing:p.missing}}
 function devId(){if(!settings.dev){settings.dev=uid();saveSettings()}return settings.dev}   // herkent transacties die op dít apparaat zijn gemaakt
-function saveVisit(){if(locked||!data.txs.length)return;const v=visitNow();if(v.missing)return;delete v.missing;settings.visit=v;saveSettings()}
+function getVisit(pf){const v=settings.visit;if(!v)return null;if(v.ts)return pf==='main'?v:null;return v[pf]||null}   // oud formaat: één bezoek
+function setVisit(pf,val){let v=settings.visit;if(!v||v.ts)v=v?.ts?{main:v}:{};v[pf]=val;settings.visit=v}
+function saveVisit(){if(locked||!TX().length)return;const v=visitNow();if(v.missing)return;delete v.missing;setVisit(curPf(),v);saveSettings()}
 function sinceCard(){
   const v=prevVisit;if(!v||sinceDismissed||Date.now()-v.ts<3600e3)return '';
-  const n=visitNow(),dv=n.total-v.total,dm=n.metric-v.metric;
-  const mv=coinIds().map(computeCoin).filter(c=>c.qty>1e-12&&v.prices[c.coinId]&&c.price!=null).map(c=>({c,ch:(c.price/v.prices[c.coinId]-1)*100,eur:c.qty*(c.price-v.prices[c.coinId])})).sort((a,b)=>b.ch-a.ch);
-  const hits=live(data.alerts).filter(a=>a.hit&&a.hit>v.ts),newTx=data.txs.filter(t=>(t.created||0)>v.ts&&t.dev!==devId()).length;
+  // Resultaat = waardeverandering min wat je er sindsdien in stopte (stortingen, of zonder cash: aankopen − verkopen).
+  // In bitcoin telt alles tegen de bitcoinkoers van het moment zelf (K).
+  const n=visitNow(),k0=K(v.ts),hc=hasCashTx(),flow=TX().filter(t=>txTime(t)>v.ts).reduce((a,t)=>a+K(txTime(t))*(hc?cashEffect(t)[1]:t.type==='buy'?txTotal(t):t.type==='sell'?-txTotal(t):0),0);
+  const vt=v.total*k0,dv=n.total-vt,dm=dv-flow;
+  const mv=coinIds().map(computeCoin).filter(c=>c.qty>1e-12&&v.prices[c.coinId]&&c.price!=null).map(c=>{const b=v.prices[c.coinId]*k0;return {c,ch:(c.price/b-1)*100,eur:c.qty*(c.price-b)}}).sort((a,b)=>b.ch-a.ch);
+  const hits=live(data.alerts).filter(a=>a.hit&&a.hit>v.ts),newTx=TX().filter(t=>(t.created||0)>v.ts&&t.dev!==devId()).length;
   const d=new Date(v.ts),dd=Math.round((pStart('day',Date.now())-pStart('day',v.ts))/864e5);
   const when=(dd===0?'vandaag':dd===1?'gisteren':dd<7?d.toLocaleDateString('nl-NL',{weekday:'long'}):d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}))+' '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
   const mvTxt=x=>`${esc((x.c.meta.symbol||'').toUpperCase())} <span class="${cls(x.ch)}">${pct(x.ch)}</span><span class="mv-eur label m ${cls(x.eur)}">${signed(x.eur)}</span>`;
   return `<div class="card since"><button type="button" class="x" data-act="sinceclose" aria-label="Sluiten">×</button><b>Sinds je vorige bezoek</b> <span class="label">(${when})</span>
   <div class="since-g">
-    <div><span class="label">Waarde</span><b class="m">${money(n.total,2)}</b><span class="note-sm label m">was ${money(v.total,2)}</span></div>
+    <div><span class="label">Waarde</span><b class="m">${money(n.total,2)}</b><span class="note-sm label m">was ${money(vt,2)}</span></div>
     <div><span class="label">Resultaat</span><b class="m ${cls(dm)}">${signed(dm)}</b><span class="note-sm label">${Math.abs(dv-dm)>0.005?`zonder ${hasCashTx()?'stortingen':'aankopen'}`:'koersverandering'}</span></div>
     <div><span class="label">Grootste stijger</span><b>${mv.length&&mv[0].ch>0.005?mvTxt(mv[0]):'–'}</b></div>
     <div><span class="label">Grootste daler</span><b>${mv.length&&mv[mv.length-1].ch<-0.005?mvTxt(mv[mv.length-1]):'–'}</b></div>
@@ -835,9 +939,9 @@ function retRange(u,from,to){   // resultaat per periode voor periodes die begin
   return st.map(a=>{const o=snapshot(Math.min(pNext(u,a),now),S),r={ts:a,v:metric(o)-metric(prev),miss:o.missing.length>0};prev=o;return r});
 }
 function calCard(){
-  const now=Date.now(),cur=pStart('month',now),minM=pStart('month',Math.min(...data.txs.map(txTime)));
+  const now=Date.now(),cur=pStart('month',now),minM=pStart('month',Math.min(...TX().map(txTime)));
   let m=+settings.calMonth||cur;if(m>cur)m=cur;if(m<minM)m=minM;
-  const first=Math.min(...data.txs.map(txTime)),res=retRange('day',m,pNext('month',m)-1),by={};res.forEach(r=>by[r.ts]=r);
+  const first=Math.min(...TX().map(txTime)),res=retRange('day',m,pNext('month',m)-1),by={};res.forEach(r=>by[r.ts]=r);
   const mx=Math.max(1e-9,...res.map(r=>Math.abs(r.v))),tot=res.reduce((s,r)=>s+r.v,0),pos=res.filter(r=>r.v>0.005).length,neg=res.filter(r=>r.v<-0.005).length;
   const lead=(new Date(m).getDay()+6)%7,days=pList('day',m,pNext('month',m)-1),today=pStart('day',now);
   const cell=ts=>{const r=by[ts],dn=new Date(ts).getDate();
@@ -871,7 +975,7 @@ function printYear(Y){
   const S={};coinIds().forEach(id=>S[id]=coinStates(id));
   const a=new Date(Y,0,1).getTime(),bEnd=new Date(Y+1,0,1).getTime(),now=Date.now(),isCur=bEnd>now,b=isCur?now:bEnd;
   const o1=snapshot(a,S),o2=snapshot(b,S),hc=hasCashTx(),metric=o=>hc?o.total-o.dep:o.crypto-o.inv+o.real;
-  const inY=data.txs.filter(t=>{const tt=txTime(t);return tt>=a&&tt<bEnd}).sort((x,y)=>x.date.localeCompare(y.date));
+  const inY=TX().filter(t=>{const tt=txTime(t);return tt>=a&&tt<bEnd}).sort((x,y)=>x.date.localeCompare(y.date));
   let real=0,fees=0,dep=0,wd=0,buy=0,sell=0;
   for(const id of coinIds()){const c=computeCoin(id);for(const t of c.txs){const tt=txTime(t);if(tt<a||tt>=bEnd)continue;const si=c.sellInfo[t.id];if(si?.pl!=null)real+=si.pl}}
   for(const t of inY){fees+=t.fee||0;if(t.type==='deposit')dep+=t.amount;else if(t.type==='withdraw')wd+=t.amount;else if(t.type==='buy')buy+=txTotal(t);else if(t.type==='sell')sell+=txTotal(t)}
@@ -898,7 +1002,7 @@ function printYear(Y){
   window.addEventListener('afterprint',done);setTimeout(()=>window.print(),50);
 }
 function exportCard(){
-  const ys=[...new Set(data.txs.map(t=>+t.date.slice(0,4)))].sort((a,b)=>b-a);
+  const ys=[...new Set(TX().map(t=>+t.date.slice(0,4)))].sort((a,b)=>b-a);
   return `<div class="card"><h2 class="h3">Exporteren</h2><p class="hint">Je transacties voor Excel, of een jaaroverzicht om te bewaren of af te drukken (kies "Opslaan als PDF" in het printvenster).</p>
   <div class="export-row"><label class="sr-only" for="py">Jaar voor het jaaroverzicht</label><select class="bench-sel" id="py">${ys.map(y=>`<option>${y}</option>`).join('')}</select>
   <button type="button" class="btn-inline btn sec" data-act="printyear">Jaaroverzicht (PDF)</button>
@@ -913,17 +1017,17 @@ function dataIssues(){
     if(a.hasCash&&a.cash<-0.005&&Math.abs(a.cash-p.cash)>0.005)out.push({lvl:'warn',t:`${esc(a.name||'Zonder broker/wallet')}: cash staat negatief (${money(a.cash,2)}).`,act:'cashtx'});
     for(const c of a.coins)if(c.qty<-1e-9)out.push({lvl:'warn',t:`${esc(a.name||'Zonder broker/wallet')}: ${qtyf(c.qty)} ${esc((c.symbol||'').toUpperCase())}, dat kan niet. Controleer de overboekingen van en naar deze plek.`});
   }
-  if(accounts().length){const noA=data.txs.filter(t=>!t.acct);if(noA.length)out.push({lvl:'info',t:`${noA.length} transactie${noA.length>1?'s hebben':' heeft'} geen broker/wallet. Die tellen apart mee als "Niet ingevuld" in het overzicht per broker; vul de broker in voor een kloppende stand per plek.`,tx:noA.length===1?noA[0].id:undefined})}
+  if(accounts().length){const noA=TX().filter(t=>!t.acct);if(noA.length)out.push({lvl:'info',t:`${noA.length} transactie${noA.length>1?'s hebben':' heeft'} geen broker/wallet. Die tellen apart mee als "Niet ingevuld" in het overzicht per broker; vul de broker in voor een kloppende stand per plek.`,tx:noA.length===1?noA[0].id:undefined})}
   for(const id of coinIds()){const c=computeCoin(id);
     for(const t of c.txs)if(c.sellInfo[t.id]?.oversold)out.push({lvl:'warn',t:`Verkoop ${qtyf(t.qty)} ${S(t)} op ${d(txTime(t))}: meer verkocht dan je op dat moment had.`,tx:t.id});
     if(c.qty>1e-12&&c.price==null)out.push({lvl:'info',t:`Nog geen actuele koers voor ${esc(c.meta.name)}. Klopt de munt-koppeling?`});
   }
-  const off=data.txs.filter(t=>(t.type==='buy'||t.type==='sell')&&Math.abs(txTotal(t)*100-Math.round(txTotal(t)*100))>1e-6);
+  const off=TX().filter(t=>(t.type==='buy'||t.type==='sell')&&Math.abs(txTotal(t)*100-Math.round(txTotal(t)*100))>1e-6);
   off.slice(0,5).forEach(t=>out.push({lvl:'warn',t:`${esc(t.name)} op ${d(txTime(t))}: totaal ${plainNum(txTotal(t))} is geen heel bedrag in centen. Neem het betaalde bedrag over van je afschrift.`,tx:t.id}));
   if(off.length>5)out.push({lvl:'warn',t:`En nog ${off.length-5} transactie${off.length-5>1?'s':''} met een totaal dat niet op hele centen uitkomt (zie ≈ bij Transacties).`});
-  data.txs.filter(t=>txTime(t)>Date.now()+6e4).forEach(t=>out.push({lvl:'warn',t:`${TYPE_L[t.type]} ${isCash(t.type)?money(t.amount,2):esc(t.name)} heeft een datum in de toekomst (${d(txTime(t))}).`,tx:t.id}));
-  const seen={};for(const t of data.txs){const k=[t.type,t.coinId,t.qty??t.amount,t.date.slice(0,16)].join('|');if(seen[k])out.push({lvl:'info',t:`Mogelijk dubbel ingevoerd: ${TYPE_L[t.type]} ${isCash(t.type)?money(t.amount,2):qtyf(t.qty)+' '+S(t)} op ${d(txTime(t))}.`,tx:t.id});seen[k]=1}
-  data.txs.filter(t=>t.type==='receive'&&/externe wallet/i.test(t.note||'')).slice(0,3).forEach(t=>out.push({lvl:'info',t:`${qtyf(t.qty)} ${S(t)} van een externe wallet (${d(txTime(t))}) staat op aankoopprijs € 0. Was dit een aankoop elders, voer die dan in als Koop.`,tx:t.id}));
+  TX().filter(t=>txTime(t)>Date.now()+6e4).forEach(t=>out.push({lvl:'warn',t:`${TYPE_L[t.type]} ${isCash(t.type)?money(t.amount,2):esc(t.name)} heeft een datum in de toekomst (${d(txTime(t))}).`,tx:t.id}));
+  const seen={};for(const t of TX()){const k=[t.type,t.coinId,t.qty??t.amount,t.date.slice(0,16)].join('|');if(seen[k])out.push({lvl:'info',t:`Mogelijk dubbel ingevoerd: ${TYPE_L[t.type]} ${isCash(t.type)?money(t.amount,2):qtyf(t.qty)+' '+S(t)} op ${d(txTime(t))}.`,tx:t.id});seen[k]=1}
+  TX().filter(t=>t.type==='receive'&&/externe wallet/i.test(t.note||'')).slice(0,3).forEach(t=>out.push({lvl:'info',t:`${qtyf(t.qty)} ${S(t)} van een externe wallet (${d(txTime(t))}) staat op aankoopprijs € 0. Was dit een aankoop elders, voer die dan in als Koop.`,tx:t.id}));
   if(syncState.s==='err')out.push({lvl:'info',t:`GitHub-synchronisatie mislukt: ${esc(syncState.msg)}.`,act:'settings'});
   if(data.txs.length&&!(settings.gh.token&&settings.gh.repo)&&Date.now()-(settings.lastExport||0)>60*864e5)out.push({lvl:'info',t:'Je gegevens staan alleen op dit apparaat. Maak een back-up of zet GitHub-synchronisatie aan.',act:'export'});
   return out;
@@ -937,13 +1041,13 @@ function openIssues(){openSheet(`<h2 class="h3">Controle</h2>${issuesList(dataIs
 // Doel: streefbedrag op een datum. Voortgang = je huidige waarde (crypto + cash als je cash bijhoudt).
 function monthlyInflow(){   // gemiddelde netto inleg per maand over de laatste 12 maanden
   const hc=hasCashTx(),now=Date.now(),a=pStart('month',now),from=new Date(a);from.setMonth(from.getMonth()-11);let v=0,firstT=Infinity;
-  for(const t of data.txs){const tt=txTime(t);if(hc?isCash(t.type):(t.type==='buy'||t.type==='sell')){firstT=Math.min(firstT,tt);if(tt>=from.getTime())v+=hc?(t.type==='deposit'?t.amount:-t.amount):(t.type==='buy'?txTotal(t):-txTotal(t))}}
+  for(const t of TX()){const tt=txTime(t);if(hc?isCash(t.type):(t.type==='buy'||t.type==='sell')){firstT=Math.min(firstT,tt);if(tt>=from.getTime())v+=hc?(t.type==='deposit'?t.amount:-t.amount):(t.type==='buy'?txTotal(t):-txTotal(t))}}
   if(!isFinite(firstT))return 0;
   const months=Math.min(12,Math.max(1,(new Date(now).getFullYear()-new Date(Math.max(firstT,from.getTime())).getFullYear())*12+new Date(now).getMonth()-new Date(Math.max(firstT,from.getTime())).getMonth()+1));
   return v/months;
 }
 function goalsHTML(compact){
-  const gl=live(data.goals).sort((a,b)=>a.date.localeCompare(b.date));if(!gl.length)return '';
+  const gl=live(data.goals).filter(pfMatch).sort((a,b)=>a.date.localeCompare(b.date));if(!gl.length)return '';
   const p=portfolio(),cur=p.hasCash?p.total:p.value,avg=monthlyInflow(),nd=new Date();
   return gl.map(g=>{
     const [y,m]=g.date.split('-').map(Number),left=Math.max(0,(y-nd.getFullYear())*12+(m-1-nd.getMonth())),pc=Math.max(0,Math.min(100,cur/g.target*100)),done=cur>=g.target;
@@ -975,7 +1079,7 @@ function saveGoal(id){
   const target=num($('#g_target').value),date=$('#g_date').value;
   if(!(target>0))return fieldErr('g_target','Vul een streefbedrag in');if(!/^\d{4}-\d{2}$/.test(date))return fieldErr('g_date','Kies een maand');
   const now=Date.now(),name=$('#g_name').value.trim(),e=id&&(data.goals||[]).find(x=>x.id===id);
-  if(e)Object.assign(e,{name,target,date,mod:now});else(data.goals||(data.goals=[])).push({id:uid(),name,target,date,mod:now});
+  if(e)Object.assign(e,{name,target,date,mod:now});else(data.goals||(data.goals=[])).push({id:uid(),name,target,date,mod:now,...(pfNew()!=='main'?{pf:pfNew()}:{})});
   saveData();closeSheet();render();toast('Doel opgeslagen');
 }
 
@@ -991,13 +1095,13 @@ const planOpen=pl=>planMonths(pl).filter(ym=>!pl.done?.[ym]);
 const coinChoices=()=>{const m=new Map();coinIds().forEach(id=>{const c=computeCoin(id);m.set(id,{id,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image})});
   live(data.watch).forEach(w=>{if(!m.has(w.id))m.set(w.id,{id:w.id,name:w.name,symbol:w.symbol,image:w.image})});return [...m.values()].sort((a,b)=>(a.name||'').localeCompare(b.name||''))};
 function planDueCard(){   // herinnering op het overzicht
-  const due=live(data.plans).map(pl=>({pl,open:planOpen(pl)})).filter(x=>x.open.length);if(!due.length)return '';
+  const due=live(data.plans).filter(pfMatch).map(pl=>({pl,open:planOpen(pl)})).filter(x=>x.open.length);if(!due.length)return '';
   return `<div class="card plan-due"><h2 class="h3">Vaste inleg</h2>${due.map(({pl,open})=>`<div class="row-between plan-row">
     <span><b class="m">${money(pl.amount,2)}</b> ${esc(pl.name)} <span class="label">voor ${ymLabel(open[0])}${open.length>1?` (nog ${open.length-1} maand${open.length>2?'en':''} open)`:''}</span></span>
     <span class="plan-btns"><button type="button" class="btn-inline btn sec" data-act="planskip" data-id="${esc(pl.id)}" data-ym="${open[0]}">Overslaan</button><button type="button" class="btn-inline btn" data-act="plando" data-id="${esc(pl.id)}" data-ym="${open[0]}">Invoeren</button></span></div>`).join('')}
     <p class="note-after hint">"Invoeren" opent het formulier, vooraf ingevuld met het bedrag, de plandag en de koers van die dag. Neem bij voorkeur de exacte bedragen van je afschrift over.</p></div>`}
 function plansCard(){   // beheer in Rapporten
-  const pls=live(data.plans);
+  const pls=live(data.plans).filter(pfMatch);
   return `<div class="card"><div class="row-between kv-h"><h2 class="h-inline h3">Vaste inleg</h2><button type="button" class="link" data-act="addplan">+ Plan</button></div>
   ${pls.length?pls.map(pl=>{const ms=planMonths(pl),n=ms.filter(ym=>pl.done?.[ym]&&pl.done[ym]!=='skip').length,o=ms.filter(ym=>!pl.done?.[ym]).length;
     return `<div class="goal" data-plan="${esc(pl.id)}"><div class="goal-top"><button type="button" class="rowlink" data-act="editplan" data-id="${esc(pl.id)}"><b class="m">${money(pl.amount,2)}</b> <b>${esc(pl.name)}</b><span class="sr-only"> – plan bewerken</span></button><span class="label">elke ${pl.day}e</span></div>
@@ -1020,14 +1124,14 @@ function savePlan(id){
   if(!(amount>0))return fieldErr('pl_amount','Vul een bedrag in');if(!/^\d{4}-\d{2}$/.test(start))return fieldErr('pl_start','Kies een maand');
   const c=coinChoices().find(x=>x.id===cid);if(!c)return fieldErr('pl_coin','Kies een munt');
   const now=Date.now(),e=id&&(data.plans||[]).find(x=>x.id===id),v={coinId:c.id,name:c.name,symbol:c.symbol,image:c.image,amount,day,start,acct:$('#pl_acct').value.trim(),mod:now};
-  if(e)Object.assign(e,v);else(data.plans||(data.plans=[])).push({id:uid(),done:{},...v});
+  if(e)Object.assign(e,v);else(data.plans||(data.plans=[])).push({id:uid(),done:{},...v,...(pfNew()!=='main'?{pf:pfNew()}:{})});
   saveData();closeSheet();render();toast('Plan opgeslagen');
 }
 function planDo(id,ym){   // formulier openen, vooraf ingevuld
   const pl=(data.plans||[]).find(x=>x.id===id);if(!pl)return;
   const [y,m]=ym.split('-').map(Number),cur=ym===ymOf(new Date()),d=cur?null:new Date(y,m-1,pl.day,12,0);
   const hp=d?(priceAt(pl.coinId,d.getTime())??priceEst(pl.coinId,d.getTime())):null;   // eerdere maand: koers van die dag
-  openTx({coinId:pl.coinId,type:'buy',total:pl.amount,price:hp,acct:pl.acct,date:d?new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,16):null,plan:{id,ym}});
+  openTx({coinId:pl.coinId,type:'buy',total:pl.amount,price:hp,acct:pl.acct,pf:pfOf(pl),date:d?new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,16):null,plan:{id,ym}});
 }
 function planMark(id,ym,val){const pl=(data.plans||[]).find(x=>x.id===id);if(!pl)return;pl.done={...(pl.done||{}),[ym]:val};pl.mod=Date.now()}
 
@@ -1060,7 +1164,7 @@ function dcaCard(){
 let benchFetch={};
 function benchData(bid){
   const hc=hasCashTx(),now=Date.now();
-  const flows=data.txs.filter(t=>hc?isCash(t.type):(t.type==='buy'||t.type==='sell')).map(t=>({t:txTime(t),v:hc?cashEffect(t)[0]:(t.type==='buy'?txTotal(t):-txTotal(t))})).sort((a,b)=>a.t-b.t);
+  const flows=TX().filter(t=>hc?isCash(t.type)||(t.type==='buy'||t.type==='sell')&&noCashPf(t):(t.type==='buy'||t.type==='sell')).map(t=>({t:txTime(t),v:hc?cashEffect(t)[isCash(t.type)?0:1]:(t.type==='buy'?txTotal(t):-txTotal(t))})).sort((a,b)=>a.t-b.t);
   if(!flows.length)return null;
   const h=data.hist?.[bid];let firstKnown=Infinity;if(h)for(const d in h)firstKnown=Math.min(firstKnown,h[d][0]);
   const px=t=>priceAt(bid,Math.max(t,firstKnown))??priceAt(bid,t);
@@ -1106,7 +1210,7 @@ function watchSection(){
   return `<div class="list-head"><h2>Volglijst</h2><button type="button" class="link" data-act="addwatch">+ Toevoegen</button></div>
   ${w.length?`<ul class="list">${w.map(x=>{const P=prices[x.id]||{},n=live(data.alerts).filter(a=>a.coinId===x.id&&!a.hit).length;
     return `<li class="row" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(x.id)}">${esc(x.name)}</a></div><div class="meta">${esc((x.symbol||'').toUpperCase())}${n?` · ${n} alert${n>1?'s':''}`:''}</div></div>
-    <div class="right"><div class="v">${money(P.price)}</div><div class="chg ${cls(P.ch24)}">${pct(P.ch24)}</div></div></li>`}).join('')}</ul>`
+    <div class="right"><div class="v">${money(P.price)}</div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></div></li>`}).join('')}</ul>`
   :'<div class="empty-card empty-sm card">Volg munten die je (nog) niet hebt: koers, grafiek en prijsalerts.</div>'}`;
 }
 function openWatchAdd(){
@@ -1122,15 +1226,63 @@ function setWatch(c,on){
 /* ---------- prijsalerts ---------- */
 let alertForm=null;
 // grote bedragen leesbaar: € 1,23 bln · € 45,6 mld · € 789 mln
-function bigEur(v){if(v==null||!isFinite(v))return '–';const a=Math.abs(v),f=(x,u)=>'€ '+x.toLocaleString('nl-NL',{maximumFractionDigits:x<10?2:x<100?1:0})+' '+u;
-  return a>=1e12?f(a/1e12,'bln'):a>=1e9?f(a/1e9,'mld'):a>=1e6?f(a/1e6,'mln'):money(v,0)}
+function bigEur(v){if(v==null||!isFinite(v))return '–';const un=unitNow();if(un==='USD')v=v*fx.btcUsd/fx.btcEur;if(un==='BTC'&&Math.abs(v)<1e9*fx.btcEur)return money(v,2);if(un==='BTC')v=v/fx.btcEur;
+  const a=Math.abs(v),f=(x,u)=>(un==='BTC'?'₿ ':un==='USD'?'$ ':'€ ')+x.toLocaleString('nl-NL',{maximumFractionDigits:x<10?2:x<100?1:0})+' '+u;
+  return a>=1e12?f(a/1e12,'bln'):a>=1e9?f(a/1e9,'mld'):a>=1e6?f(a/1e6,'mln'):un==='EUR'?money(v,0):inEUR(()=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:un==='USD'?'USD':'EUR',currencyDisplay:'narrowSymbol',maximumFractionDigits:0}).format(v))}
 function bigNum(v){if(v==null||!isFinite(v))return '–';const a=Math.abs(v),f=(x,u)=>x.toLocaleString('nl-NL',{maximumFractionDigits:x<10?2:x<100?1:0})+' '+u;
   return a>=1e9?f(a/1e9,'mld'):a>=1e6?f(a/1e6,'mln'):Math.round(a).toLocaleString('nl-NL')}
+/* ---------- gemiddelde-prijs-calculator (wens W12) ---------- */
+// Wat wordt je gemiddelde aankoopprijs als je bijkoopt, of hoeveel moet je bijkopen voor een bepaald gemiddelde?
+// Rekent met je huidige positie (FIFO, kosten inbegrepen) en een kostenpercentage over het aankoopbedrag.
+let avgMode='amount',avgIn={coin:null};   // invoer blijft bewaard als de pagina ververst (koersupdate)
+function coinFeePct(c){const b=c.txs.filter(t=>t.type==='buy'),T=b.reduce((a,t)=>a+txTotal(t),0),F=b.reduce((a,t)=>a+(+t.fee||0),0);return T>0&&F>0?F/T*100:0.25}
+function avgCalcCard(c){
+  if(!(c.qty>1e-12)||c.price==null||!c.avg)return '';
+  const sym=esc((c.meta.symbol||'').toUpperCase());if(avgIn.coin!==c.coinId)avgIn={coin:c.coinId};const v=k=>esc(avgIn[k]??'');
+  return `<div class="card avg-calc"><h2 class="h3">Gemiddelde aankoopprijs berekenen</h2>
+  <p class="mt-0 hint">Nu: <b class="m">${qtyf(c.qty)} ${sym}</b> met een gemiddelde van <b class="m">${money(c.avg)}</b>.</p>
+  <fieldset class="seg"><legend class="sr-only">Wat wil je berekenen</legend><button type="button" data-avgmode="amount" class="all ${avgMode==='amount'?'on':''}">Bijkopen voor bedrag</button><button type="button" data-avgmode="target" class="all ${avgMode==='target'?'on':''}">Naar doelgemiddelde</button></fieldset>
+  <div class="field"${avgMode==='amount'?'':' hidden'}><label for="ac_amount">Bedrag (€, incl. kosten)</label><input type="text" id="ac_amount" inputmode="decimal" enterkeyhint="done" placeholder="bijv. 200" value="${v('amount')}"></div>
+  <div class="field"${avgMode==='target'?'':' hidden'}><label for="ac_target">Gewenst gemiddelde (€)</label><input type="text" id="ac_target" inputmode="decimal" enterkeyhint="done" placeholder="${plainNum(+(c.avg*0.95).toPrecision(4))}" value="${v('target')}"></div>
+  <div class="two"><div class="field"><label for="ac_price">Koers bij aankoop (€)</label><input type="text" id="ac_price" inputmode="decimal" value="${avgIn.price??plainNum(+c.price.toPrecision(8))}"></div>
+  <div class="field"><label for="ac_fee">Kosten (%)</label><input type="text" id="ac_fee" inputmode="decimal" value="${avgIn.fee??plainNum(+coinFeePct(c).toFixed(3))}"></div></div>
+  <output id="ac_out" for="ac_amount ac_target ac_price ac_fee" class="ac-out" aria-live="polite"></output>
+  <button type="button" class="btn sec" data-act="avgbuy" hidden>Als aankoop invoeren</button></div>`}
+let avgBuy=null;
+function initAvgCalc(c){
+  const card=$('.avg-calc');if(!card)return;
+  const sym=esc((c.meta.symbol||'').toUpperCase()),out=$('#ac_out'),btn=card.querySelector('[data-act=avgbuy]');
+  const calc=()=>{const P=num($('#ac_price').value),f=(num($('#ac_fee').value)||0)/100,Q=c.qty,C=c.cost,avg=C/Q;avgBuy=null;btn.hidden=true;
+    if(!(P>0)||!(f>=0&&f<1)){out.innerHTML='<span class="hint">Vul een geldige koers en kosten in.</span>';return}
+    let A;
+    if(avgMode==='amount'){A=num($('#ac_amount').value);if(!(A>0)){out.innerHTML='';return}}
+    else{const X=num($('#ac_target').value);if(!(X>0)){out.innerHTML='';return}
+      const lim=P/(1-f);   // grens: lager (of hoger) dan de bijkoopprijs incl. kosten kan je gemiddelde nooit komen
+      if(Math.abs(X-avg)/avg<1e-6){out.innerHTML='<span class="hint">Dat is al je huidige gemiddelde.</span>';return}
+      A=(X*Q-C)/(1-X*(1-f)/P);
+      if(!(A>0)||!isFinite(A)){const why=X<avg
+          ?(lim>=avg?`Je gemiddelde verlagen kan nu niet: de koers met kosten (${money(lim)}) ligt boven je gemiddelde (${money(avg)}), dus bijkopen verhoogt het. Vul hierboven een lagere koers in om te zien wat er nodig is als de koers daalt.`
+                    :`Lager dan ${money(lim)} kan niet: bijkopen tegen ${money(P)} (met kosten ${money(lim)}) brengt je gemiddelde nooit verder omlaag dan dat.`)
+          :(lim<=avg?`Je gemiddelde verhogen kan alleen door duurder bij te kopen dan je huidige gemiddelde (${money(avg)}). Vul hierboven een hogere koers in.`
+                    :`Hoger dan ${money(lim)} kan niet: bijkopen tegen ${money(P)} (met kosten ${money(lim)}) brengt je gemiddelde nooit verder omhoog dan dat.`);
+        out.innerHTML=`<span class="warn-mark">${why}</span>`;return}}
+    const nq=A*(1-f)/P,fee=A*f,na=(C+A)/(Q+nq),ch=(na/avg-1)*100;
+    out.innerHTML=`<div class="kv"><div><span class="label">${avgMode==='amount'?'Je koopt':'Nodig'}</span><b class="m">${money(A,2)}</b></div>
+      <div><span class="label">Dat is</span><b class="m">${qtyf(+nq.toPrecision(8))} ${sym}</b></div>
+      <div><span class="label">Kosten</span><span class="m">${money(fee,2)}</span></div>
+      <div><span class="label">Nieuw gemiddelde</span><b class="m">${money(na)} <span class="${cls(-ch)}">(${pct(ch)})</span></b></div>
+      <div><span class="label">Daarna in bezit</span><span class="m">${qtyf(+(Q+nq).toPrecision(10))} ${sym}</span></div></div>`;
+    avgBuy={coinId:c.coinId,total:Math.round(A*100)/100,price:P,fee:fee};btn.hidden=false};
+  card.querySelectorAll('input').forEach(i=>i.oninput=()=>{avgIn[i.id.slice(3)]=i.value;calc()});
+  card.querySelectorAll('[data-avgmode]').forEach(b=>b.onclick=()=>{avgMode=b.dataset.avgmode;card.querySelectorAll('[data-avgmode]').forEach(x=>x.classList.toggle('on',x===b));
+    $('#ac_amount').closest('.field').hidden=avgMode!=='amount';$('#ac_target').closest('.field').hidden=avgMode!=='target';calc();(avgMode==='amount'?$('#ac_amount'):$('#ac_target')).focus()});
+  calc()}
+
 function marketCard(c){
   const P=prices[c.coinId]||{},m=P.m;if(!m)return '';
   const sym=esc((c.meta.symbol||'').toUpperCase()),dd=s=>s?new Date(s).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}):'';
   const range=m.lo!=null&&m.hi!=null&&m.hi>m.lo&&P.price!=null?Math.max(0,Math.min(100,(P.price-m.lo)/(m.hi-m.lo)*100)):null;
-  return `<div class="mt-10 card kv"><div class="kv-h"><b>Marktinformatie</b>${m.rank?`<span class="label">#${m.rank} op marktwaarde</span>`:''}</div>
+  return `<div class="mt-10 card kv"><div class="kv-h"><b>Marktinformatie${settings.unit&&settings.unit!=='EUR'?' <span class="label w-normal">(in euro)</span>':''}</b>${m.rank?`<span class="label">#${m.rank} op marktwaarde</span>`:''}</div>
   <div class="chg-grid">${[['24 uur',P.ch24],['7 dagen',m.ch7],['30 dagen',m.ch30]].map(([l,v])=>`<div class="chg-cell"><div class="note-sm label">${l}</div><b class="${cls(v)}">${pct(v)}</b></div>`).join('')}</div>
   ${range!=null?`<div class="block"><div class="spread-row"><span class="label">Dagbereik</span><span class="label">${money(m.lo)} – ${money(m.hi)}</span></div>
     <div class="range-bar gbar"><i class="range-fill" style="width:${range.toFixed(1)}%"></i></div></div>`:''}
@@ -1195,25 +1347,26 @@ function sorter(){
 // Per tijdstip: wat je toen in bezit had × de koers van dat moment, plus je geïnvesteerde bedrag (FIFO).
 const txTime=t=>new Date(t.date).getTime();
 function coinStates(id){
-  const txs=data.txs.filter(t=>t.coinId===id).sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0));
+  const txs=TX().filter(t=>t.coinId===id).sort((a,b)=>a.date.localeCompare(b.date)||(a.created||0)-(b.created||0));
   const lots=[],st=[];let q=0,real=0;
   for(const t of txs){
     const fee=t.fee||0;
-    if(isIn(t)){lots.push({rem:t.qty,unit:(t.qty*(t.price||0)+fee)/t.qty});q+=t.qty}
+    if(isIn(t)){lots.push({rem:t.qty,unit:(t.qty*(t.price||0)+fee)/t.qty*K(txTime(t))});q+=t.qty}
     else if(t.type==='transfer'){let left=t.feeQty||0,c=0;for(const l of lots){if(left<=1e-12)break;const k=Math.min(l.rem,left);l.rem-=k;left-=k;c+=k*l.unit}real-=c;q-=(t.feeQty||0)-left}
-    else{let left=t.qty,c=0;for(const l of lots){if(left<=1e-12)break;const k=Math.min(l.rem,left);l.rem-=k;left-=k;c+=k*l.unit}const m=t.qty-left;real+=m*t.price-fee*(t.qty?m/t.qty:1)-c;q-=m}
+    else{let left=t.qty,c=0;for(const l of lots){if(left<=1e-12)break;const k=Math.min(l.rem,left);l.rem-=k;left-=k;c+=k*l.unit}const m=t.qty-left;real+=(m*t.price-fee*(t.qty?m/t.qty:1))*K(txTime(t))-c;q-=m}
     st.push([txTime(t),Math.max(0,q),lots.reduce((s,l)=>s+l.rem*l.unit,0),real]);
   }
   return st;
 }
 function lastAtOrBefore(arr,t){let lo=0,hi=arr.length-1,r=-1;while(lo<=hi){const m=(lo+hi)>>1;if(arr[m][0]<=t){r=m;lo=m+1}else hi=m-1}return r}
-async function portfolioSeries(range){
+async function portfolioSeries(range,unit){
   const ids=coinIds(),now=Date.now();
-  const first=Math.min(...data.txs.map(txTime).filter(isFinite));
+  const first=Math.min(...TX().map(txTime).filter(isFinite));
   const days=range==='max'?String(Math.min(365,Math.max(1,Math.ceil((now-first)/864e5)+1))):range;
   const charts={},queue=[...ids];let err=null;
   await Promise.all([0,1].map(async()=>{while(queue.length){const id=queue.shift();try{charts[id]=await fetchChart(id,days)}catch(e){err=e}}}));
   if(err&&!Object.keys(charts).length)throw err;
+  const U0=UNIT_ON;UNIT_ON=!!unit;try{   // na het wachten: rekenen in de gekozen eenheid
   const states={};ids.forEach(id=>states[id]=coinStates(id));
   let grid,t0,earliest=Infinity;
   if(range==='max'){
@@ -1227,7 +1380,7 @@ async function portfolioSeries(range){
     grid=[t0,...base.map(p=>p[0]).filter(t=>t>t0&&t<now-60000),now];
   }
   // Met cash: totale waarde (crypto + cash) afgezet tegen netto gestort; anders crypto tegen geïnvesteerd.
-  const withCash=hasCashTx(),cev=withCash?data.txs.map(x=>[txTime(x),...cashEffect(x)]).sort((a,b)=>a[0]-b[0]):[];
+  const withCash=hasCashTx(),cev=withCash?TX().map(x=>[txTime(x),...cashEffect(x)]).sort((a,b)=>a[0]-b[0]):[];
   let ci=0,cumC=0,cumD=0;
   const pts=grid.map(t=>{
     let value=0,inv=0,real=0;
@@ -1240,10 +1393,12 @@ async function portfolioSeries(range){
       if(px==null){const c=charts[id];px=c?.length?c[c.length-1][1]:0}
       value+=q*px;
     }
-    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2];ci++}return[t,value+cumC,cumD,0,{v:value,cash:cumC,inv,real}]}
-    return[t,value,inv,real,{v:value,cash:0,inv,real}];
+    const k=K(t);
+    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2]*K(cev[ci][0]);ci++}return[t,(value+cumC)*k,cumD,0,{v:value*k,cash:cumC*k,inv,real}]}
+    return[t,value*k,inv,real,{v:value*k,cash:0,inv,real}];
   });
   return{pts,partial:!!err,from:range==='max'&&first<t0-2*DAY?t0:null};
+  }finally{UNIT_ON=U0}
 }
 let pChartTok=0;
 // Tekstalternatief voor grafieken (schermlezers): korte samenvatting in plaats van de tekening
@@ -1255,8 +1410,9 @@ function seriesAlt(items,what,neutral){   // items: {v,title} — titel is bijv.
 async function drawPortfolioChart(){
   const my=++pChartTok;if(!$('#pchart'))return;chartAlt($('#pchart'),'');
   let res;
-  try{res=await portfolioSeries(settings.pRange)}catch(e){if(my===pChartTok&&$('#pchart'))$('#pchart').innerHTML=`<div class="chart-msg">${esc(e.message||'Grafiek niet beschikbaar')}</div>`;return}
+  try{res=await portfolioSeries(settings.pRange,true)}catch(e){if(my===pChartTok&&$('#pchart'))$('#pchart').innerHTML=`<div class="chart-msg">${esc(e.message||'Grafiek niet beschikbaar')}</div>`;return}
   const wrap=$('#pchart');if(my!==pChartTok||!wrap)return;
+  return inUnit(()=>{   // tekenen in de gekozen weergave-eenheid
   const pts=res.pts;
   if(pts.length<2){wrap.innerHTML='<div class="chart-msg">Nog te weinig gegevens</div>';return}
   const W=360,H=170,pt=12,pb=12,t0=pts[0][0],t1=pts[pts.length-1][0];
@@ -1298,8 +1454,9 @@ async function drawPortfolioChart(){
     hv.textContent=money(p[1],2);
     if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
     hp.innerHTML=`<span class="static pl-toggle ${cls(pl)}"><span class="m">${signed(pl)}</span> <span>(${pct(p[2]>0?pl/p[2]*100:null)})</span> <small>${d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:short?undefined:'numeric'})}${short?' '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):''}</small></span>`};
-  wrap.onmousemove=move;wrap.ontouchmove=move;wrap.ontouchstart=move;wrap.onmouseleave=reset;wrap.ontouchend=reset;
-}
+  const mvU=e=>inUnit(()=>move(e)),rsU=()=>inUnit(reset);
+  wrap.onmousemove=mvU;wrap.ontouchmove=mvU;wrap.ontouchstart=mvU;wrap.onmouseleave=rsU;wrap.ontouchend=rsU;
+  })}
 
 let chartToken=0;
 function renderCoin(id){
@@ -1325,11 +1482,11 @@ function renderCoin(id){
     <div class="stat"><div class="label">Geïnvesteerd</div><div class="val m">${money(c.cost,2)}</div></div>
     <div class="stat"><div class="label">Koers t.o.v. gemiddelde</div><div class="val ${cls(c.price-c.avg)}">${c.price!=null&&c.avg?pct((c.price/c.avg-1)*100):'–'}</div></div>
     <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(c.realized)}">${Math.abs(c.realized)>0.005?signed(c.realized):'–'}</div></div>
-  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val-lg val m ${cls(c.realized)}">${signed(c.realized)}</div></div></div>`}${marketCard(c)}${alertsCard(c)}</div></div>
+  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val-lg val m ${cls(c.realized)}">${signed(c.realized)}</div></div></div>`}${inEUR(()=>avgCalcCard(computeCoin(c.coinId)))}${inEUR(()=>marketCard(c))}${inEUR(()=>alertsCard(c))}</div></div>
   ${c.txs.length?`<div class="list-head"><h2>Transacties</h2><span class="label">${c.txs.length}</span></div>
   <ul class="list only-m">${txs.map(t=>txRow(t,c)).join('')}</ul>${txTable(txs,c)}
   <div class="note">Winst per transactie wordt berekend met FIFO: verkopen worden afgeboekt op je oudste aankopen eerst. Transactiekosten tellen mee in de aankoopprijs.</div>`:''}`;
-  drawChart(c);
+  drawChart(c);initAvgCalc(inEUR(()=>computeCoin(c.coinId)));
 }
 function txRow(t,c){
   const sym=(c.meta.symbol||'').toUpperCase();
@@ -1359,13 +1516,15 @@ async function drawChart(c){
   try{pts=await fetchChart(c.coinId,settings.range);if(settings.range==='max')pts=withHist(c.coinId,pts)}catch(e){if(my===chartToken&&$('#chart'))$('#chart').innerHTML=`<div class="chart-msg">${esc(e.message)}</div>`;return}
   if(my!==chartToken||!$('#chart'))return;
   if(!pts.length){$('#chart').innerHTML='<div class="chart-msg">Geen koersdata</div>';return}
+  return inUnit(()=>{   // tekenen in de gekozen weergave-eenheid (koers in bitcoin: koers ÷ bitcoinkoers van dat moment)
+  c=computeCoin(c.coinId);if(unitNow()==='BTC')pts=pts.map(p=>[p[0],p[1]*K(p[0])]);
   if(c.price!=null&&Date.now()-pts[pts.length-1][0]>6e4)pts=[...pts,[Date.now(),c.price]];
   const W=360,H=190,pt=14,pb=14;
   const t0=pts[0][0],t1=pts[pts.length-1][0];
   let lo=Math.min(...pts.map(p=>p[1])),hi=Math.max(...pts.map(p=>p[1]));
   const avg=c.qty>1e-12?c.avg:null;
   // Stip = prijs incl. kosten (betaald ÷ aantal), net als de gemiddelde aankoopprijs
-  const buys=c.txs.filter(t=>t.type==='buy').map(t=>({t:new Date(t.date).getTime(),p:txTotal(t)/t.qty,k:t.price})).filter(b=>b.t>=t0&&b.t<=t1);
+  const buys=c.txs.filter(t=>t.type==='buy').map(t=>({t:new Date(t.date).getTime(),p:atT(txTotal(t)/t.qty,t),k:atT(t.price,t)})).filter(b=>b.t>=t0&&b.t<=t1);
   const showAvg=avg&&avg>lo*0.6&&avg<hi*1.4;
   if(showAvg){lo=Math.min(lo,avg);hi=Math.max(hi,avg)}
   buys.forEach(b=>{lo=Math.min(lo,b.p);hi=Math.max(hi,b.p)});
@@ -1393,8 +1552,9 @@ async function drawChart(c){
     const p=pts[i];line.setAttribute('x1',X(p[0]));line.setAttribute('x2',X(p[0]));line.style.display='';
     $('#pxMain').textContent=money(p[1]);const ch=(p[1]/pts[0][1]-1)*100;$('#pxSub').className=cls(ch);
     const dt=new Date(p[0]);$('#pxSub').innerHTML=`${pct(ch)} <span class="sym">${dt.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:settings.range==='1'?undefined:'numeric'})}${['1','7'].includes(settings.range)?' '+dt.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):''}</span>`};
-  wrap.onmousemove=move;wrap.ontouchmove=move;wrap.ontouchstart=move;wrap.onmouseleave=reset;wrap.ontouchend=reset;
-}
+  const mvU=e=>inUnit(()=>move(e)),rsU=()=>inUnit(reset);
+  wrap.onmousemove=mvU;wrap.ontouchmove=mvU;wrap.ontouchstart=mvU;wrap.onmouseleave=rsU;wrap.ontouchend=rsU;
+  })}
 
 /* ---------- bladen (sheets) ---------- */
 // Bladen zijn een <dialog> (showModal): de achtergrond is dan niet bereikbaar met Tab, Esc sluit,
@@ -1418,15 +1578,15 @@ $('#sheetBg').onclick=closeSheet;
 
 let form=null;
 // meest gebruikte broker/wallet (voor een nieuw formulier als je nog niets handmatig hebt ingevoerd, bijv. na een import)
-function topAcct(){const n={};for(const t of data.txs)if(t.acct)n[t.acct]=(n[t.acct]||0)+1;return Object.keys(n).sort((a,b)=>n[b]-n[a])[0]||''}
+function topAcct(){const n={};for(const t of TX())if(t.acct)n[t.acct]=(n[t.acct]||0)+1;return Object.keys(n).sort((a,b)=>n[b]-n[a])[0]||''}
 function openTx(opts={}){
   const t=opts.txId?data.txs.find(x=>x.id===opts.txId):null;
   let coin=null;
   if(t&&t.coinId)coin={id:t.coinId,name:t.name,symbol:t.symbol,image:t.image};
   else if(opts.coinId){const c=computeCoin(opts.coinId);coin={id:opts.coinId,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image}}
   form={id:t?.id,coin,type:t?.type||opts.type||'buy',amount:t?.amount!=null?plainNum(t.amount):'',qty:t?.qty!=null?plainNum(t.qty):'',price:t&&!isOther(t.type)&&t.price!=null?plainNum(t.price):'',
-    total:t&&t.qty&&!isOther(t.type)?plainNum(Math.round(txTotal(t)*100)/100):'',fee:t?.fee?plainNum(t.fee):'',feeQty:t?.feeQty?plainNum(t.feeQty):'',
-    acct:t?(t.acct||''):(opts.acct||settings.lastAcct||topAcct()),to:t?.to||'',date:t?.date||opts.date||nowLocal(),plan:opts.plan||null,note:t?.note||'',edits:t?['qty','price']:[]};
+    total:t&&t.qty&&!isOther(t.type)?plainNum(Math.round(txTotal(t)*100)/100):'',fee:t?.fee?plainNum(t.fee):opts.fee>0?plainNum(Math.round(opts.fee*100)/100):'',feeQty:t?.feeQty?plainNum(t.feeQty):'',
+    acct:t?(t.acct||''):(opts.acct||settings.lastAcct||topAcct()),to:t?.to||'',date:t?.date||opts.date||nowLocal(),plan:opts.plan||null,note:t?.note||'',pf:t?pfOf(t):(opts.pf||pfNew()),edits:t?['qty','price']:[]};
   if(coin&&!t&&prices[coin.id]?.price){form.price=plainNum(prices[coin.id].price);form.edits=['price']}
   if(opts.price>0){form.price=plainNum(+(+opts.price).toPrecision(10));form.edits=['price']}
   if(opts.total){form.total=plainNum(opts.total);form.edits=['total',...form.edits]}
@@ -1463,6 +1623,7 @@ function renderTxSheet(){
   <p class="hint">${f.type==='sell'?'Opbrengst = aantal × koers − kosten.':'Totaal = aantal × koers + kosten.'} Vul twee van de drie velden in; het derde wordt berekend.<br><b>Tip:</b> neem het aantal en het ${f.type==='sell'?'ontvangen':'betaalde'} bedrag en de kosten precies over van je afschrift. De app berekent dan de exacte koers, zodat je cash op de cent klopt.</p>
   <div class="two">${dateF}${feeF}</div>${acctF('f_acct','Broker / wallet',f.acct)}`;
   openSheet(`<h2 class="h3">${f.id?'Transactie bewerken':'Transactie toevoegen'}</h2><form class="js-form" novalidate>${seg}${body}${dl}
+  ${multiPf()?`<div class="field"><label for="f_pf">Portefeuille</label><select id="f_pf">${pfList().map(p=>`<option value="${esc(p.id)}"${(f.pf||pfNew())===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select></div>`:''}
   <div class="field"><label for="f_note">Notitie (optioneel)</label><input type="text" id="f_note" value="${esc(f.note)}" placeholder="${f.type==='receive'?'bijv. Staking, airdrop':'optioneel'}"></div>
   <button type="submit" class="btn" data-act="savetx">${f.id?'Opslaan':'Toevoegen'}</button></form>
   ${f.id?'<button type="button" class="btn danger" data-act="deltx">Transactie verwijderen</button>':''}`);
@@ -1497,7 +1658,7 @@ async function searchCoins(q,attr='pick'){
   }catch(e){ul.innerHTML='<li class="muted">Zoeken mislukt (offline?)</li>'}
 }
 function readForm(){
-  const v=(id,k)=>{const el=$('#'+id);if(el)form[k]=el.value};
+  const v=(id,k)=>{const el=$('#'+id);if(el)form[k]=el.value};v('f_pf','pf');
   v('f_qty','qty');v('f_price','price');v('f_total','total');v('f_amount','amount');v('f_fee','fee');v('f_feeq','feeQty');v('f_acct','acct');v('f_to','to');v('f_date','date');v('f_note','note');
 }
 function saveTx(){
@@ -1507,7 +1668,7 @@ function saveTx(){
   if(!f.date)return fieldErr('f_date','Vul een datum en tijd in');
   const prevD=f.id?data.txs.find(t=>t.id===f.id)?.date:null;if(prevD&&f.date.slice(0,16)===prevD.slice(0,16))f.date=prevD;   // seconden van een import bewaren als de tijd niet is aangepast
   const now=Date.now(),created=f.id?(data.txs.find(t=>t.id===f.id)?.created||now):now,acct=(f.acct||'').trim();
-  const prev=f.id?data.txs.find(t=>t.id===f.id):null,base={id:f.id||uid(),type:f.type,date:f.date,note:(f.note||'').trim(),acct,created,mod:now,dev:prev?prev.dev:devId(),...(prev?.ext?{ext:prev.ext}:{})};
+  const prev=f.id?data.txs.find(t=>t.id===f.id):null,tpf=f.pf||pfNew(),base={...(tpf!=='main'?{pf:tpf}:{}),id:f.id||uid(),type:f.type,date:f.date,note:(f.note||'').trim(),acct,created,mod:now,dev:prev?prev.dev:devId(),...(prev?.ext?{ext:prev.ext}:{})};
   let tx;
   if(isCash(f.type)){
     const amount=num(f.amount);if(!(amount>0))return fieldErr('f_amount','Vul een bedrag in');
@@ -1546,6 +1707,10 @@ function openSettings(){
   openSheet(`<h2 class="h3">Instellingen</h2>
   <div class="section-t">Weergave</div>
   <fieldset class="seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch'],['dark','Donker'],['light','Licht']].map(([v,l])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
+  <p class="mt-8 hint">Bedragen tonen in:</p>
+  <fieldset class="seg"><legend class="sr-only">Bedragen tonen in</legend>${[['EUR','Euro €'],['USD','Dollar $'],['BTC','Bitcoin ₿']].map(([v,l])=>`<button type="button" data-unit="${v}" class="${(settings.unit||'EUR')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
+  <p class="mt-0 hint">Geldt voor Overzicht, munten en Transacties. Dollar: omgerekend tegen de koers van nu. Bitcoin: aankopen, verkopen en stortingen tegen de bitcoinkoers van dat moment, dus je winst in bitcoin laat zien of je beter deed dan bitcoin aanhouden. Formulieren, rapporten en het jaaroverzicht blijven in euro.${settings.unit&&settings.unit!=='EUR'&&fx.ts?` Koers bijgewerkt ${fmtTs(fx.ts)}.`:''}</p>
+  ${pfSettingsHTML()}
   <div class="section-t">Beveiliging</div>
   ${lockCfg?`
   ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="note-sm label">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button type="button" data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="mt-0 hint">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
@@ -1589,7 +1754,7 @@ function exportData(){
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
-    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
+    data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans,portfolios:j.portfolios});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
 
@@ -1609,9 +1774,9 @@ function merge(a,b){
   const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
   for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans)};
+  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios)};
 }
-const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[]),...(d.portfolios||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
 function setSync(s,msg=''){syncState={s,msg};updBadges()}
 let syncing=false,syncAgain=false;
@@ -1662,7 +1827,7 @@ function restoreSnapshot(snap){
   const now=Date.now(),del=new Set(data.deleted||[]),snapDel=new Set(snap.deleted||[]),keep=snap.txs.filter(t=>!snapDel.has(t.id)),keepIds=new Set(keep.map(t=>t.id));
   for(const t of data.txs)if(!keepIds.has(t.id))del.add(t.id);
   const txs=keep.map((t,i)=>del.has(t.id)?{...t,id:t.id+'-r'+now.toString(36)+i,mod:now,created:t.created||now}:{...t,mod:now});
-  const lists={};for(const k of ['watch','alerts','goals','plans']){const sv=new Map((snap[k]||[]).map(x=>[x.id,x]));
+  const lists={};for(const k of ['watch','alerts','goals','plans','portfolios']){const sv=new Map((snap[k]||[]).map(x=>[x.id,x]));
     lists[k]=[...(snap[k]||[]).map(x=>({...x,mod:now})),...(data[k]||[]).filter(x=>!sv.has(x.id)).map(x=>({...x,del:true,mod:now}))]}
   data={...data,txs,deleted:[...del],...lists,updated:now};
 }
@@ -1828,7 +1993,8 @@ let pressT=0;new MutationObserver(()=>{if(!pressT)pressT=requestAnimationFrame((
 // Skip link: springt naar de hoofdinhoud zonder de #-route (die de app voor schermen gebruikt) te wijzigen
 document.querySelector('.skip-link')?.addEventListener('click',e=>{e.preventDefault();const m=$('#view');m.focus();m.scrollIntoView({block:'start'})});
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal],[data-unit]');if(!a)return;
+  if(a.dataset.unit){setUnit(a.dataset.unit,a);return}
   if(a.dataset.cal){const now=Date.now();let m=+settings.calMonth||pStart('month',now);const d=new Date(m);d.setMonth(d.getMonth()+(+a.dataset.cal));settings.calMonth=d.getTime();saveSettings();keepFocus(renderReports);return}
   if(a.dataset.goal){openGoal(a.dataset.goal);return}
   if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));return}
@@ -1849,7 +2015,7 @@ document.addEventListener('click',e=>{
     case 'lock':lockNow();break;
     case 'sinceclose':sinceDismissed=true;render();break;
     case 'issues':openIssues();break;
-    case 'csvall':exportCSV(data.txs);break;
+    case 'csvall':exportCSV(TX());break;
     case 'csvfiltered':{const ids=new Set([...document.querySelectorAll('#txOut .only-m [data-tx]')].map(e=>e.dataset.tx));exportCSV(data.txs.filter(t=>ids.has(t.id)));break}
     case 'printyear':printYear(+($('#py')?.value||new Date().getFullYear()));break;
     case 'reload':location.reload();break;
@@ -1858,6 +2024,7 @@ document.addEventListener('click',e=>{
     case 'versions':openVersions();break;
     case 'verpick':pickVersion(a.dataset.sha);break;
     case 'verrestore':if(verPick&&confirm('Je gegevens terugzetten naar de versie van '+new Date(verPick.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'?')){restoreSnapshot(verPick.snap);saveData();closeSheet();render();refreshPrices();toast('Versie teruggezet')}break;
+    case 'avgbuy':if(avgBuy)openTx({coinId:avgBuy.coinId,type:'buy',total:avgBuy.total,price:avgBuy.price,fee:avgBuy.fee});break;
     case 'addplan':openPlan();break;
     case 'editplan':openPlan(a.dataset.id);break;
     case 'saveplan':savePlan(a.dataset.id);break;
@@ -1888,6 +2055,12 @@ document.addEventListener('click',e=>{
     case 'lockon':case 'lockon2':case 'addpk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
     case 'settings':openSettings();break;
+    case 'pfpick':openPfPick();break;
+    case 'pfset':closeSheet();setPf(a.dataset.id);break;
+    case 'pfmanage':openSettings();setTimeout(()=>$('[data-act="pfedit"]')?.scrollIntoView({block:'center'}),50);break;
+    case 'pfedit':openPfEdit(a.dataset.id);break;
+    case 'pfsave':savePf(a.dataset.id);break;
+    case 'pfdel':delPf(a.dataset.id);break;
     case 'home':if(location.hash)location.hash='';else window.scrollTo(0,0);break;
     case 'txs':location.hash='#transacties';break;
     case 'reps':location.hash='#rapporten';break;
@@ -1909,7 +2082,7 @@ document.addEventListener('click',e=>{
   }
 });
 $('#bvFile').onchange=e=>{const f=e.target.files[0];if(f){closeSheet();startImport(f)}};
-document.addEventListener('change',e=>{if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
+document.addEventListener('change',e=>{if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
 $('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
 window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);render()});
 // Plusknop opzij bij omlaag scrollen (dekt dan geen knoppen of totalen af), terug bij omhoog scrollen of bovenaan
@@ -1930,7 +2103,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented
 let hiddenAt=0;
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){hiddenAt=Date.now();saveVisit();return}
-  if(hiddenAt&&Date.now()-hiddenAt>3600e3&&settings.visit){prevVisit={...settings.visit};sinceDismissed=false}
+  if(hiddenAt&&Date.now()-hiddenAt>3600e3&&getVisit(curPf())){prevVisit={...getVisit(curPf())};sinceDismissed=false}
   const al=lockCfg?.autoLock??5;
   if(lockCfg&&!locked&&hiddenAt&&al>=0&&Date.now()-hiddenAt>=al*60000){lockNow();return}
   refreshPrices();syncNow(true);
@@ -1940,7 +2113,7 @@ setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
 setInterval(()=>{if(!document.hidden)collectHistory()},6*3600e3);
 
 let histTimer=null;
-function start(){document.body.classList.remove('locked');prevVisit=settings.visit?{...settings.visit}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
+function start(){document.body.classList.remove('locked');if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();syncNow(true)}
 if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
