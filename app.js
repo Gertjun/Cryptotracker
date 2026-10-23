@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='70 (23 okt 2026)';
+const APP_VERSION='71 (23 okt 2026)';
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -57,6 +57,8 @@ const unitNow=()=>UNIT_ON&&settings.unit&&settings.unit!=='EUR'&&fx.btcEur>0&&fx
 function inUnit(fn){const o=UNIT_ON;UNIT_ON=true;try{return fn()}finally{UNIT_ON=o}}
 function inEUR(fn){const o=UNIT_ON;UNIT_ON=false;try{return fn()}finally{UNIT_ON=o}}
 function btcAt(ts){if(Date.now()-ts<15*6e4)return fx.btcEur;return priceAt('bitcoin',ts)??priceEst('bitcoin',ts)??fx.btcEur}
+// 7/30-dagenverandering; in bitcoin-weergave ten opzichte van bitcoin over dezelfde periode
+function chP(ch,days){if(ch==null||unitNow()!=='BTC')return ch??null;const b0=btcAt(Date.now()-days*864e5);return b0>0&&fx.btcEur?((1+ch/100)/(fx.btcEur/b0)-1)*100:null}
 function K(ts){if(unitNow()!=='BTC')return 1;const b=btcAt(ts);return b>0?fx.btcEur/b:1}
 const atT=(v,t)=>v==null?v:v*K(typeof t==='number'?t:txTime(t));
 const chU=ch=>ch==null||unitNow()!=='BTC'||fx.btcCh24==null?ch:((1+ch/100)/(1+fx.btcCh24/100)-1)*100;   // 24-uursverandering t.o.v. bitcoin
@@ -217,7 +219,7 @@ function computeCoin(coinId){
   const P=prices[coinId];const price=P?.price;
   const value=price!=null?qty*price:null;
   const unreal=value!=null?value-cost:null;
-  return{coinId,meta,txs,lotMap,sellInfo,qty,cost,avg:qty>1e-12?cost/qty:null,price,ch24:chU(P?.ch24),value,unreal,unrealPct:cost>0&&unreal!=null?unreal/cost*100:null,realized,totalBought};
+  return{coinId,meta,txs,lotMap,sellInfo,qty,cost,avg:qty>1e-12?cost/qty:null,price,ch24:chU(P?.ch24),ch7:chP(P?.m?.ch7,7),ch30:chP(P?.m?.ch30,30),value,unreal,unrealPct:cost>0&&unreal!=null?unreal/cost*100:null,realized,totalBought};
 }
 /* ---------- brokers en wallets ---------- */
 const accounts=()=>[...new Set(TX().flatMap(t=>[t.acct,t.to]).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -509,9 +511,9 @@ function fillTxsInner(){
 }
 function holdingsTable(list){
   const th=(l,k,cl='')=>`<th scope="col" class="${cl} ${settings.sort===k?'on':''}"${settings.sort===k?' aria-sort="descending"':''}><button type="button" class="rowlink" data-sort="${k}">${l}${settings.sort===k?' <span aria-hidden="true">↓</span>':''}</button></th>`;
-  return `<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Bezittingen</caption><thead><tr>${th('Munt','name','l')}<th scope="col">Aantal</th><th scope="col">Gem. aankoopprijs</th><th scope="col">Koers</th><th scope="col">24 uur</th>${th('Waarde','value')}<th scope="col">Geïnvesteerd</th>${th('Winst/verlies','plabs')}${th('%','pl')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
-    <td class="l"><div class="coin-cell">${coinIcon(c.meta)}<div><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${esc((c.meta.symbol||'').toUpperCase())}</div></div></div></td>
-    <td class="m">${qtyf(c.qty)}</td><td class="m">${money(c.avg)}</td><td>${money(c.price)}</td><td class="${cls(c.ch24)}">${pct(c.ch24)}</td>
+  return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">Bezittingen</caption><thead><tr>${th('Munt','name','l')}<th scope="col">Aantal</th><th scope="col"><abbr title="Gemiddelde aankoopprijs">Gem. prijs</abbr></th><th scope="col">Koers</th><th scope="col">24 uur</th><th scope="col">7 dagen</th><th scope="col">30 dagen</th>${th('Waarde','value')}<th scope="col">Geïnvesteerd</th>${th('Winst/verlies','plabs')}${th('%','pl')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
+    <td class="l"><div class="coin-cell" title="${esc(c.meta.name)}">${coinIcon(c.meta)}<div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc((c.meta.symbol||'').toUpperCase()||c.meta.name)}<span class="sr-only"> ${esc(c.meta.name)}</span></a></div></div></td>
+    <td class="m">${qtyf(c.qty)}</td><td class="m">${money(c.avg)}</td><td>${money(c.price)}</td><td class="${cls(c.ch24)}">${pct(c.ch24)}</td><td class="${cls(c.ch7)}">${pct(c.ch7)}</td><td class="${cls(c.ch30)}">${pct(c.ch30)}</td>
     <td class="m"><b>${money(c.value,2)}</b></td><td class="m">${money(c.cost,2)}</td><td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td><td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td></tr>`).join('')}</tbody></table></div>`;
 }
 function txTable(txs,c){

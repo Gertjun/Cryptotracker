@@ -6,6 +6,22 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v71 – 23 oktober 2026
+Meer marktinformatie in de tabel Bezittingen op het Overzicht (laptop/desktop).
+
+### Toegevoegd
+- **Kolommen "7 dagen" en "30 dagen"** naast "24 uur": de koersverandering van elke munt over die periode.
+  - De cijfers komen uit dezelfde koersaanvraag als nu, dus er gaan geen extra verzoeken naar CoinGecko.
+  - In bitcoin-weergave zijn ze, net als "24 uur", ten opzichte van bitcoin over dezelfde periode.
+
+### Gewijzigd
+- **Munt-kolom:** toont nu de ticker (BTC, ETH, ADA …) in plaats van de volledige naam.
+  - De volledige naam zie je als je met de muis over de munt gaat, en een schermlezer leest hem voor.
+  - Sorteren op "Munt" gaat nog steeds op naam.
+- **Kopje "Gem. aankoopprijs"** heet nu "Gem. prijs", met de volledige tekst als uitleg bij de muis.
+- **Iets minder ruimte tussen de kolommen.**
+- **Resultaat:** de tabel is smaller dan in v70, ondanks de twee extra kolommen. Op een scherm van 1440 pixels breed past hij nu helemaal; in v70 moest je daar bij een lange naam als "Artificial Superintelligence Alliance" nog opzij scrollen.
+
 ## v70 – 23 oktober 2026
 Nieuwe functie: meerdere portefeuilles (wens W14).
 
