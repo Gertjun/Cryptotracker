@@ -6,6 +6,18 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v78 – 23 oktober 2026
+Bovenbalk op de iPhone niet meer vaag.
+
+### Opgelost
+- **Vage bovenste regel:** als de app vanaf het beginscherm van de iPhone draait, was de bovenste regel van de statusknop ("GitHub …") vaag. iOS tekent een vervaagde strook onder de statusbalk, en die liep tot over de bovenbalk van de app.
+- **Oplossing:** in die situatie krijgt de bovenkant 14 punten extra ruimte, zodat de knoppen en statusregels net onder de strook staan. Het vergrote grafiekvenster en de melding over een nieuwe versie schuiven mee.
+- **Elders niets veranderd:** in Safari, op de laptop en in andere browsers blijft alles hetzelfde.
+
+### Technisch
+- **Herkenning:** de app ziet aan `display-mode: standalone` of hij als app draait. Op oudere iOS-versies gebruikt hij daarvoor `navigator.standalone`.
+- **Aanpassen:** de extra ruimte staat in de CSS-variabele `--top-extra`, zodat hij eenvoudig te verkleinen of vergroten is.
+
 ## v77 – 23 oktober 2026
 Nieuwe functie: doelverdeling en herbalanceren (wens W3).
 
