@@ -6,6 +6,21 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v88 – 26 oktober 2026
+Portfoliografiek: vierde weergave "% Totaal".
+
+### Toegevoegd
+- **Vier standen:** de schakelaar heeft nu **€ Totaal · % Totaal · € per munt · % per munt**.
+- **% Totaal:** één lijn met het rendement van je hele portfolio sinds het begin van de gekozen periode, in procenten.
+  - **Rekenwijze (tijdgewogen rendement):** stortingen, opnames, aankopen en verkopen tellen niet als winst of verlies, alleen hoe je bezit in waarde veranderde. Een storting van € 100 geeft dus geen sprong in de lijn.
+  - De lijn is groen als de periode in de plus eindigt en rood als hij in de min eindigt. De 0%-lijn is iets duidelijker getekend.
+  - Onder de grafiek staat het rendement in euro én in procent, bijvoorbeeld "Rendement deze maand: +€ 177,59 (+11,3%)".
+  - Met muis of vinger zie je het percentage op elk moment.
+
+### Gewijzigd
+- **Naam van de stand:** "Totaal" heet nu "€ Totaal".
+- **Kleine schermen:** op telefoons zijn de knoppen van de schakelaar iets compacter, zodat ze alle vier passen, ook op een scherm van 320 pixels breed. "Vergroten" staat daar zo nodig op de regel eronder.
+
 ## v87 – 26 oktober 2026
 Valutaknop: pijltje in plaats van stippellijn.
 
