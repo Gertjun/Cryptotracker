@@ -6,6 +6,21 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v80 – 24 oktober 2026
+Weergave voor tablets in portretstand (bijvoorbeeld een iPad rechtop).
+
+### Gewijzigd
+- **Schermen van 700 tot 1000 pixels breed** krijgen een eigen tabletweergave. Voorheen kreeg zo'n scherm de telefoonweergave: een smalle kolom van maximaal 560 pixels in het midden, met veel lege ruimte links en rechts.
+  - De inhoud gebruikt nu de volle breedte, tot 900 pixels.
+  - De tabbalk onderin blijft, zodat er genoeg ruimte is voor de inhoud.
+  - **Overzicht:** onder de grafiek staat de verdeling over de volle breedte, en daaronder staan Cash en Doelen naast elkaar. De grafiek is hoger. "Sinds je vorige bezoek" toont vier cijfers naast elkaar.
+  - **Rapporten:** twee kolommen, zoals op de laptop.
+  - **Transacties:** de zes totalen staan in drie kolommen.
+  - **Munt-pagina:** de koersgrafiek is hoger.
+  - **Bezittingen:** dit blijft een lijst. De laptoptabel is te breed voor een tablet in portret.
+- **Niets veranderd:** de telefoonweergave en de laptopweergave (vanaf 1000 pixels, dus ook een iPad in landschap).
+- **Getest** op de gangbare iPad-breedtes in portret: 744, 820 en 834 pixels. Nergens hoeft de pagina opzij te scrollen.
+
 ## v79 – 23 oktober 2026
 Vervaging bovenin de iPhone-app opgelost met een ondoorzichtige statusbalk. Gebouwd op v77; de aanpassing uit v78 is teruggedraaid.
 

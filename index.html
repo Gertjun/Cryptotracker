@@ -559,6 +559,21 @@ fieldset.ranges{padding:0}
 #sbTint{display:none}
 @media (display-mode: standalone){#sbTint{display:block;position:fixed;top:0;left:0;right:0;height:1px;background:var(--bg);z-index:100;pointer-events:none}}
 :root.ios-standalone #sbTint{display:block;position:fixed;top:0;left:0;right:0;height:1px;background:var(--bg);z-index:100;pointer-events:none}
+/* Tablet in portret (bijv. iPad, 700–999 px): telefoonopbouw met tabbalk, maar de breedte benut */
+@media (min-width:700px) and (max-width:999px){
+  #app{max-width:900px;padding:0 24px 170px}
+  .side-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;margin-bottom:14px}
+  .side-col .card{margin-bottom:0}
+  .side-col>.card:first-child:not(:only-child){grid-column:1/-1}
+  #pchart svg{height:240px}#pchart .chart-msg{height:240px}
+  #chart svg{height:260px}#chart .chart-msg{height:260px}
+  .since-g{grid-template-columns:repeat(4,1fr)}
+  .rep-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .rep-col{display:grid;gap:16px;align-content:start;grid-template-columns:minmax(0,1fr);min-width:0}
+  .tx-sum{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tx-sum .stat:first-child{grid-column:auto}
+  .rep-tabs{max-width:560px}
+}
 </style>
 </head>
 <body>
