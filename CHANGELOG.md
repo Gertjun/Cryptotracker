@@ -6,6 +6,23 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v87 – 26 oktober 2026
+Valutaknop: pijltje in plaats van stippellijn.
+
+### Gewijzigd
+- **Herkenning van de valutaknop** bij de totale waarde: de stippellijn onder het €-, $- of ₿-teken is weg. Ernaast staat nu een klein grijs pijltje: "€ ▾ 1.812,12".
+  - Dat is hetzelfde teken als bij de knop "Portefeuille … ▾", dus je herkent het als iets dat een keuze opent.
+  - Op de laptop krijgt de knop een lichte achtergrond als je er met de muis overheen gaat.
+- **Schermlezer:** het pijltje wordt niet voorgelezen; de knop heet nog steeds "Valuta: Euro. Wijzigen".
+
+## v86 – 26 oktober 2026
+Valutamenu opent weer bij het valutateken.
+
+### Opgelost
+- **Menu linksboven in het scherm:** soms opende het valutamenu linksboven in het scherm in plaats van onder het €-teken. Dat gebeurde nadat je met de muis of vinger over de grafiek was gegaan.
+- **Oorzaak:** tijdens het bewegen over de grafiek tekent de app de totale waarde, inclusief de valutaknop, opnieuw. Het menu onthield nog de oude knop, die niet meer op het scherm stond, en kon daardoor zijn plek niet bepalen.
+- **Oplossing:** het menu zoekt de knop nu pas op op het moment dat het opent. Getest door eerst over de grafiek te bewegen: met v85 opende het menu linksboven, met v86 direct onder het €-teken.
+
 ## v85 – 26 oktober 2026
 Valuta wisselen vanaf het Overzicht.
 

@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='85 (26 okt 2026)';
+const APP_VERSION='87 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -295,12 +295,13 @@ async function ensureBtcHist(){   // bitcoinkoersen van vroeger, voor de weergav
 // Valuta wisselen vanaf het Overzicht: tik op het valutateken bij de totale waarde
 const UNITS=[['EUR','Euro','€'],['USD','Dollar','$'],['BTC','Bitcoin','₿']];
 function heroValHTML(v){const u=unitNow(),[,name,sym]=UNITS.find(x=>x[0]===u)||UNITS[0],s=money(v,2),num=s.replace(sym,'').replace(/^[\s\u00a0]+/,'');
-  return `<button type="button" class="unit-btn" data-act="unitmenu" popovertarget="unitMenu" aria-haspopup="menu" aria-label="Valuta: ${name}. Wijzigen">${sym}</button> <span class="m">${num}</span>`}
+  return `<button type="button" class="unit-btn" data-act="unitmenu" popovertarget="unitMenu" aria-haspopup="menu" aria-label="Valuta: ${name}. Wijzigen">${sym}<span class="unit-caret" aria-hidden="true">▾</span></button> <span class="m">${num}</span>`}
 function unitMenuHTML(){const u=settings.unit||'EUR';
   return `<div id="unitMenu" class="unit-menu" popover role="menu" aria-label="Bedragen tonen in">${UNITS.map(([k,n,sy])=>`<button type="button" role="menuitemradio" aria-checked="${u===k}" data-unit="${k}" class="${u===k?'on':''}"><span class="unit-sym" aria-hidden="true">${sy}</span>${n}</button>`).join('')}</div>`}
 const hasPopover=typeof HTMLElement!=='undefined'&&HTMLElement.prototype.hasOwnProperty('popover');
-function placeUnitMenu(){const m=$('#unitMenu'),b=$('.unit-btn');if(!m||!b)return;
-  m.addEventListener('toggle',e=>{if(e.newState!=='open')return;const r=b.getBoundingClientRect(),w=m.offsetWidth;
+// De knop wordt bij het bewegen over de grafiek opnieuw getekend: zoek hem dus pas op bij het openen
+function placeUnitMenu(){const m=$('#unitMenu');if(!m)return;
+  m.addEventListener('toggle',e=>{const b=$('#heroVal .unit-btn');if(e.newState!=='open'||!b)return;const r=b.getBoundingClientRect(),w=m.offsetWidth;
     m.style.top=Math.round(r.bottom+6)+'px';m.style.left=Math.round(Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2)))+'px';
     (m.querySelector('[aria-checked=true]')||m.querySelector('button'))?.focus()})}
 async function setUnit(u,btn){settings.unit=u;saveSettings();document.querySelectorAll('[data-unit]').forEach(b=>b.classList.toggle('on',b.dataset.unit===u));
