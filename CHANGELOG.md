@@ -7,12 +7,23 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.5.4`) en de naam van het zip-bestand (`crypto-tracker-3.5.4.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.5.5`) en de naam van het zip-bestand (`crypto-tracker-3.5.5.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.5.5 – 26 oktober 2026
+"% per munt" volgt nu hetzelfde percentage als de tabel Bezittingen.
+
+### Gewijzigd
+- **Wat de lijn laat zien:** bij "% per munt" toont elke lijn nu op elk moment je resultaat op die munt: de waarde ten opzichte van wat je voor je huidige bezit betaalde (FIFO, met kosten). Voorheen was het de koersverandering sinds het begin van de periode of sinds je aankoop.
+  - **Bijkopen en verkopen tellen mee.** Koop je bij, dan verschuift je gemiddelde aankoopprijs en dus ook het percentage. Dat zie je nu in de lijn.
+  - **Het laatste punt is gelijk aan het percentage in de tabel Bezittingen**, ook in de legenda. Gecontroleerd voor 1U, 1W en Max.
+  - **Zolang je een munt niet had, staat er geen lijn.**
+  - **Lijnen beginnen niet meer op 0%:** ze staan op je resultaat van dat moment. Een munt die je al lang hebt, begint bij 1W dus bijvoorbeeld op +20%.
+- **Uitleg** in het vergrote venster en de tekst voor schermlezers zijn aangepast.
 
 ## 3.5.4 – 26 oktober 2026
 "% per munt" telt een munt pas vanaf het moment dat je hem kocht.

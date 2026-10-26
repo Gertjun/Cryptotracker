@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.5.4 (26 okt 2026)';
+const APP_VERSION='3.5.5 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -1576,7 +1576,7 @@ async function portfolioSeries(range,unit){
   const withCash=hasCashTx(),cev=withCash?TX().map(x=>[txTime(x),...cashEffect(x)]).sort((a,b)=>a[0]-b[0]):[];
   let ci=0,cumC=0,cumD=0;
   const pts=grid.map(t=>{
-    let value=0,inv=0,real=0;const coins={},pxs={};
+    let value=0,inv=0,real=0;const coins={},pxs={},costs={};
     for(const id of ids){
       let px;
       if(t===now||!charts[id]?.length)px=prices[id]?.price;
@@ -1585,11 +1585,11 @@ async function portfolioSeries(range,unit){
       if(px>0)pxs[id]=px;   // koers, ook als je de munt (nog) niet had: voor de weergave '% per munt'
       const st=states[id],i=lastAtOrBefore(st,t);if(i<0)continue;
       const [,q,cost,r]=st[i];inv+=cost;real+=r;if(q<=1e-12)continue;
-      value+=q*px;coins[id]=q*px;
+      value+=q*px;coins[id]=q*px;costs[id]=cost;
     }
     const k=K(t);for(const id in coins)coins[id]*=k;for(const id in pxs)pxs[id]*=k;
-    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2]*K(cev[ci][0]);ci++}return[t,(value+cumC)*k,cumD,0,{v:value*k,cash:cumC*k,inv,real,coins,pxs}]}
-    return[t,value*k,inv,real,{v:value*k,cash:0,inv,real,coins,pxs}];
+    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2]*K(cev[ci][0]);ci++}return[t,(value+cumC)*k,cumD,0,{v:value*k,cash:cumC*k,inv,real,coins,pxs,costs}]}
+    return[t,value*k,inv,real,{v:value*k,cash:0,inv,real,coins,pxs,costs}];
   });
   return{pts,partial:!!err,from:range==='max'&&first<t0-2*DAY?t0:null};
   }finally{UNIT_ON=U0}
@@ -1667,8 +1667,9 @@ function assetSeries(res,pct){
   const pts=res.pts,last=pts[pts.length-1][4]?.coins||{},ids=new Set();pts.forEach(p=>Object.keys(p[4]?.coins||{}).forEach(id=>ids.add(id)));
   const order=[...ids].filter(id=>pts.some(p=>(p[4].coins[id]||0)>0.005)).sort((a,b)=>(last[b]||0)-(last[a]||0)||(Math.max(...pts.map(p=>p[4].coins[b]||0))-Math.max(...pts.map(p=>p[4].coins[a]||0))));
   const top=order.slice(0,6),rest=order.slice(6);
-  // % per munt: een munt telt pas mee vanaf het moment dat je hem had (0% = koers op dat moment); zolang je hem niet had, geen lijn
-  if(pct)return top.map((id,i)=>{const px=pts.map(p=>(p[4].coins?.[id]||0)>1e-9?p[4].pxs?.[id]:null),b=px.find(x=>x>0);return b?{id,name:allocKeyInfo(id).sym,col:PAL[i],v:px.map(x=>x>0?(x/b-1)*100:null)}:null}).filter(Boolean);
+  // % per munt: op elk moment je ongerealiseerde resultaat op die munt, (waarde − wat je nog in bezit hebt gekost) / kosten,
+  // net als het percentage in de tabel Bezittingen; bijkopen en verkopen tellen dus mee. Zolang je de munt niet had: geen lijn.
+  if(pct)return top.map((id,i)=>{const v=pts.map(p=>{const c=p[4].costs?.[id],w=p[4].coins?.[id];return c>0.005&&w>0?(w/c-1)*100:null});return v.some(x=>x!=null)?{id,name:allocKeyInfo(id).sym,col:PAL[i],v}:null}).filter(Boolean);
   const S=top.map((id,i)=>({id,name:allocKeyInfo(id).sym,col:PAL[i],v:pts.map(p=>p[4].coins[id]||0)}));
   if(rest.length)S.push({id:'__rest',name:'Overig',col:PAL[6],v:pts.map(p=>rest.reduce((s,id)=>s+(p[4].coins[id]||0),0))});
   if(hasCashTx()&&pts.some(p=>Math.abs(p[4].cash)>0.005))S.push({id:'__cash',name:'Cash',col:'var(--muted)',dash:true,v:pts.map(p=>p[4].cash)});
@@ -1702,7 +1703,7 @@ function paintAssets(wrap,res,o){
 }
 // Legenda met de waarde per munt op het gekozen moment (standaard: nu)
 function assetLegend(g,i){return `<ul class="pa-legend">${g.S.map(s=>`<li><i style="background:${s.col}"${s.dash?' class="dash"':''}></i>${esc(s.name)} <b class="${g.pct?cls(s.v[i]):'m'}">${g.pct?pct1(s.v[i]):money(s.v[i],2)}</b></li>`).join('')}</ul>`}
-function assetAlt(g){const n=g.pts.length-1;if(g.tot)return `Grafiek resultaat ten opzichte van geïnvesteerd, ${RANGE_L[settings.pRange]||''}: van ${pct1(g.S[0].v.find(x=>x!=null))} naar ${pct1(g.S[0].v[n])}.`;return g.pct?`Grafiek koersverandering per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} ${pct1(s.v[n])}`).join('; ')}.`
+function assetAlt(g){const n=g.pts.length-1;if(g.tot)return `Grafiek resultaat ten opzichte van geïnvesteerd, ${RANGE_L[settings.pRange]||''}: van ${pct1(g.S[0].v.find(x=>x!=null))} naar ${pct1(g.S[0].v[n])}.`;return g.pct?`Grafiek resultaat per munt in procenten, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} ${pct1(s.v[n])}`).join('; ')}.`
   :`Grafiek waarde per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} van ${money(s.v[0],2)} naar ${money(s.v[n],2)}`).join('; ')}.`}
 const pviewSeg=()=>`<span class="seg mini pview" role="group" aria-label="Grafiekweergave">${[['total','€ Totaal'],['ptotal','% Totaal'],['assets','€ per munt'],['pct','% per munt']].map(([v,l])=>`<button type="button" data-act="pview" data-v="${v}" class="${(settings.pView||'total')===v?'on':''}" aria-pressed="${(settings.pView||'total')===v}">${l}</button>`).join('')}</span>`;
 async function drawPortfolioChart(){
@@ -1744,7 +1745,7 @@ async function drawPfZoom(){
     const def=()=>`${line(g.pts[g.pts.length-1])}<span class="label">Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>`;
     const L=p=>as?assetLegend(g,g.pts.indexOf(p)):'',hc=hasCashTx();
     $('#pzHint').textContent='Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. '+(as
-      ?(g.tot?'De lijn is op elk moment hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd, in procenten. Boven 0% sta je in de plus. Het laatste punt is gelijk aan het percentage bij Totaal ongerealiseerd.':g.pct?'Elke lijn is hoeveel de koers van die munt is gestegen of gedaald sinds het begin van de periode, of sinds je hem kocht als dat later was. Zolang je een munt niet had, staat er geen lijn. Alleen je zes grootste munten staan erin.'
+      ?(g.tot?'De lijn is op elk moment hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd, in procenten. Boven 0% sta je in de plus. Het laatste punt is gelijk aan het percentage bij Totaal ongerealiseerd.':g.pct?'Elke lijn is op elk moment je resultaat op die munt: de waarde ten opzichte van wat je ervoor betaalde (gemiddelde aankoopprijs, met kosten). Bijkopen en verkopen tellen mee, en het laatste punt is gelijk aan het percentage in de tabel Bezittingen. Zolang je een munt niet had, staat er geen lijn. Alleen je zes grootste munten staan erin.'
         :`Elke lijn is de waarde van wat je op dat moment van die munt had; aan- en verkopen zie je als sprong.${hc?' Cash is de stippellijn.':''} De zes grootste munten krijgen een eigen lijn, de rest staat samen onder Overig.`)
       :`De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U, 4U en 24U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.`);
     info.innerHTML=def()+L(g.pts[g.pts.length-1]);pfHover(g,p=>{info.innerHTML=line(p)+L(p)},()=>{info.innerHTML=def()+L(g.pts[g.pts.length-1])})});
