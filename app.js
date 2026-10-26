@@ -3,8 +3,11 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.6.0 (26 okt 2026)';
+const APP_VERSION='3.7.0 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
+// Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
+let updReady=false;
+const appVerHTML=()=>updReady?'<button type="button" class="app-ver upd" data-act="reload" title="Klik om de nieuwe versie te laden">update beschikbaar</button>':`<span class="app-ver">v${APP_VERSION.split(' ')[0]}</span>`;
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
@@ -419,7 +422,7 @@ let lastView=null;
 function renderSide(cid){
   const el=$('#side');if(!el)return;
   const p=portfolio(),list=[...p.open].sort((a,b)=>(b.value??0)-(a.value??0));
-  el.innerHTML=`<div class="brand"><img src="icon.svg" alt="" width="32" height="32">Crypto Portfolio</div>
+  el.innerHTML=`<div class="brand"><img src="icon.svg" alt="" width="32" height="32">Crypto Portfolio ${appVerHTML()}</div>
   <nav aria-label="Hoofdnavigatie"><a class="nav ${cid?'':'on'}" href="#"${cid?'':' aria-current="page"'}>${ICONS.home} Overzicht</a>
   <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}>${ICONS.list} Transacties</a>
   <a class="nav ${cid==='__rep'?'on':''}" href="#rapporten"${cid==='__rep'?' aria-current="page"':''}>${ICONS.reps} Rapporten</a></nav>
@@ -2455,4 +2458,6 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
   }).catch(()=>{});
 }
-function showUpdate(){if($('#upd'))return;const d=document.createElement('div');d.id='upd';d.innerHTML='Nieuwe versie beschikbaar <button type="button" data-act="reload">Vernieuwen</button>';document.body.appendChild(d)}
+function showUpdate(){updReady=true;document.querySelectorAll('.app-ver').forEach(e=>e.outerHTML=appVerHTML());
+  if([...document.querySelectorAll('.app-ver')].some(e=>e.getClientRects().length))return;   // laptop: de knop naast de naam is genoeg
+  if($('#upd'))return;const d=document.createElement('div');d.id='upd';d.innerHTML='Nieuwe versie beschikbaar <button type="button" data-act="reload">Vernieuwen</button>';document.body.appendChild(d)}

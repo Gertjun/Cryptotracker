@@ -7,12 +7,21 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.6.0`) en de naam van het zip-bestand (`crypto-tracker-3.6.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.7.0`) en de naam van het zip-bestand (`crypto-tracker-3.7.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.7.0 – 26 oktober 2026
+Versienummer naast de appnaam, met een knop als er een update klaarstaat.
+
+### Toegevoegd
+- **Versienummer in de zijbalk:** op de laptop staat het versienummer nu in het grijs onder de naam "Crypto Portfolio", bijvoorbeeld "v3.7.0".
+- **Knop bij een nieuwe versie:** staat er een nieuwe versie klaar, dan verandert het versienummer in de blauwe knop **"update beschikbaar"**. Klik erop en de app laadt de nieuwe versie.
+  - De app kijkt elke 30 minuten, en telkens als je naar de app terugkeert, of er een nieuwe versie is.
+- **Telefoon en tablet:** daar is geen zijbalk, dus daar blijft de melding "Nieuwe versie beschikbaar · Vernieuwen" bovenin verschijnen. Op de laptop komt die melding niet meer, want de knop naast de naam is genoeg.
 
 ## 3.6.0 – 26 oktober 2026
 Aankoopmomenten in de portfoliografiek.
