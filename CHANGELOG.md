@@ -1,22 +1,46 @@
 # Changelog – Crypto Portfolio
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-vNN`).
+
+**Versienummers** hebben de vorm `MAJOR.MINOR.PATCH`:
+- **MAJOR** omhoog bij een wijziging waarbij je iets moet doen, zoals opnieuw koppelen of alle apparaten tegelijk bijwerken.
+- **MINOR** omhoog bij een nieuwe functie.
+- **PATCH** omhoog bij een kleine verbetering of foutoplossing.
+
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.5.2`) en de naam van het zip-bestand (`crypto-tracker-3.5.2.zip`).
+Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
+
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
 
-## v89 – 26 oktober 2026
+## 3.5.2 – 26 oktober 2026
+Nieuwe versienummering: `MAJOR.MINOR.PATCH`.
+
+### Gewijzigd
+- **Versienummer:** onder Instellingen staat het nu als bijvoorbeeld "versie 3.5.2". De cache-naam in `sw.js` en de naam van het zip-bestand volgen hetzelfde nummer.
+  - **MAJOR:** je moet iets doen, zoals opnieuw koppelen of alle apparaten tegelijk bijwerken.
+  - **MINOR:** een nieuwe functie.
+  - **PATCH:** een kleine verbetering of foutoplossing.
+- **Met terugwerkende kracht omgezet:**
+  - v1–v33 samen zijn 1.0.0.
+  - De testronde en de HTML-controle (v34–v65) zijn 1.0.1 t/m 1.0.32.
+  - De eerste nieuwe functie, vaste inleg (v66), is 1.1.0.
+  - **2.0.0 (v70):** meerdere portefeuilles. Alle apparaten moesten eerst worden bijgewerkt.
+  - **3.0.0 (v79):** de app moest opnieuw op het beginscherm worden gezet.
+- **Verwijzingen in de changelog:** alle verwijzingen naar oude versies zijn omgezet. Bij elke versie staat het oude nummer erbij, bijvoorbeeld "voorheen v89".
+
+## 3.5.1 – 26 oktober 2026 · voorheen v89
 "% Totaal" toont nu je resultaat ten opzichte van wat je op dat moment had geïnvesteerd.
 
 ### Gewijzigd
-- **Nieuwe rekenwijze voor % Totaal:** de grafiek begon in v88 steeds op 0%, omdat hij het rendement sinds het begin van de periode toonde. Nu laat de lijn op elk moment zien hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd: (waarde crypto − geïnvesteerd) / geïnvesteerd.
+- **Nieuwe rekenwijze voor % Totaal:** de grafiek begon in 3.5.0 steeds op 0%, omdat hij het rendement sinds het begin van de periode toonde. Nu laat de lijn op elk moment zien hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd: (waarde crypto − geïnvesteerd) / geïnvesteerd.
   - Het laatste punt is gelijk aan het percentage bij "Totaal ongerealiseerd" bovenaan.
   - Boven 0% sta je in de plus, eronder in de min. De lijn is groen of rood naar je huidige stand.
 - **Korte periodes:** bij 1U, 4U en 24U loopt de schaal alleen over de lijn zelf, met percentages in twee decimalen, zodat je kleine bewegingen ziet. Vanaf 1W staat 0% altijd in beeld.
 - **Rendement onder de grafiek:** daar staat weer alleen het eurobedrag over de periode. Het percentage zou daar verwarrend zijn, omdat de lijn nu iets anders laat zien.
 
-## v88 – 26 oktober 2026
+## 3.5.0 – 26 oktober 2026 · voorheen v88
 Portfoliografiek: vierde weergave "% Totaal".
 
 ### Toegevoegd
@@ -31,7 +55,7 @@ Portfoliografiek: vierde weergave "% Totaal".
 - **Naam van de stand:** "Totaal" heet nu "€ Totaal".
 - **Kleine schermen:** op telefoons zijn de knoppen van de schakelaar iets compacter, zodat ze alle vier passen, ook op een scherm van 320 pixels breed. "Vergroten" staat daar zo nodig op de regel eronder.
 
-## v87 – 26 oktober 2026
+## 3.4.2 – 26 oktober 2026 · voorheen v87
 Valutaknop: pijltje in plaats van stippellijn.
 
 ### Gewijzigd
@@ -40,15 +64,15 @@ Valutaknop: pijltje in plaats van stippellijn.
   - Op de laptop krijgt de knop een lichte achtergrond als je er met de muis overheen gaat.
 - **Schermlezer:** het pijltje wordt niet voorgelezen; de knop heet nog steeds "Valuta: Euro. Wijzigen".
 
-## v86 – 26 oktober 2026
+## 3.4.1 – 26 oktober 2026 · voorheen v86
 Valutamenu opent weer bij het valutateken.
 
 ### Opgelost
 - **Menu linksboven in het scherm:** soms opende het valutamenu linksboven in het scherm in plaats van onder het €-teken. Dat gebeurde nadat je met de muis of vinger over de grafiek was gegaan.
 - **Oorzaak:** tijdens het bewegen over de grafiek tekent de app de totale waarde, inclusief de valutaknop, opnieuw. Het menu onthield nog de oude knop, die niet meer op het scherm stond, en kon daardoor zijn plek niet bepalen.
-- **Oplossing:** het menu zoekt de knop nu pas op op het moment dat het opent. Getest door eerst over de grafiek te bewegen: met v85 opende het menu linksboven, met v86 direct onder het €-teken.
+- **Oplossing:** het menu zoekt de knop nu pas op op het moment dat het opent. Getest door eerst over de grafiek te bewegen: met 3.4.0 opende het menu linksboven, met 3.4.1 direct onder het €-teken.
 
-## v85 – 26 oktober 2026
+## 3.4.0 – 26 oktober 2026 · voorheen v85
 Valuta wisselen vanaf het Overzicht.
 
 ### Toegevoegd
@@ -65,7 +89,7 @@ Valuta wisselen vanaf het Overzicht.
 - **Menu:** het menu gebruikt de ingebouwde Popover API van de browser.
 - **Oudere browsers:** browsers zonder die API (bijvoorbeeld iOS ouder dan 17) wisselen bij elke tik naar de volgende valuta.
 
-## v84 – 26 oktober 2026
+## 3.3.2 – 26 oktober 2026 · voorheen v84
 Updates komen nu direct binnen, ook op een laptop die al eerder de app had geladen.
 
 ### Opgelost
@@ -75,13 +99,13 @@ Updates komen nu direct binnen, ook op een laptop die al eerder de app had gelad
 - **Oplossing:**
   - De app vraagt bij het laden nu altijd aan GitHub of een bestand veranderd is. Is er niets veranderd, dan is dat een heel klein verzoek zonder de inhoud opnieuw te downloaden.
   - Een nieuwe versie haalt bij het installeren alle bestanden vers op.
-- **Nagebootst en getest:** een server die net als GitHub Pages 10 minuten cache meegeeft. Met v83 bleef de oude app.js staan, met v84 komt de nieuwe direct binnen.
+- **Nagebootst en getest:** een server die net als GitHub Pages 10 minuten cache meegeeft. Met 3.3.1 bleef de oude app.js staan, met 3.3.2 komt de nieuwe direct binnen.
 
 ### Technisch
 - **Bestaande controle:** de app keek al elke 30 minuten, en telkens als hij weer op de voorgrond komt, of er een nieuwe versie is. Daarvoor negeert de browser nu ook zijn cache voor `sw.js` (`updateViaCache: 'none'`).
-- **Laatste keer met vertraging:** een apparaat dat nog op v83 of ouder staat, krijgt v84 nog met die vertraging van maximaal ongeveer 10 minuten. Vanaf v84 gaat het direct.
+- **Laatste keer met vertraging:** een apparaat dat nog op 3.3.1 of ouder staat, krijgt 3.3.2 nog met die vertraging van maximaal ongeveer 10 minuten. Vanaf 3.3.2 gaat het direct.
 
-## v83 – 26 oktober 2026
+## 3.3.1 – 26 oktober 2026 · voorheen v83
 Weergaveschakelaar en Vergroten staan nu rechtsboven in het grafiekblok.
 
 ### Gewijzigd
@@ -94,7 +118,7 @@ Weergaveschakelaar en Vergroten staan nu rechtsboven in het grafiekblok.
 ### Technisch
 - **Plaatsing:** een container query bepaalt of de knoppen rechtsboven passen, zodat ze nooit over de totale waarde heen vallen.
 
-## v82 – 26 oktober 2026
+## 3.3.0 – 26 oktober 2026 · voorheen v82
 Portfoliografiek: extra weergave "% per munt".
 
 ### Toegevoegd
@@ -110,7 +134,7 @@ Portfoliografiek: extra weergave "% per munt".
 ### Gewijzigd
 - **Naam van de stand:** "Per munt" heet nu "€ per munt".
 
-## v81 – 26 oktober 2026
+## 3.2.0 – 26 oktober 2026 · voorheen v81
 Portfoliografiek: nieuwe weergave "Per munt", met een lijn voor elke munt.
 
 ### Toegevoegd
@@ -128,7 +152,7 @@ Portfoliografiek: nieuwe weergave "Per munt", met een lijn voor elke munt.
   - De schakelaar geeft met `aria-pressed` aan welke weergave aan staat, en de focus blijft na het wisselen op de knop.
   - Een schermlezer leest per munt de waarde aan het begin en eind van de periode voor.
 
-## v80 – 24 oktober 2026
+## 3.1.0 – 24 oktober 2026 · voorheen v80
 Weergave voor tablets in portretstand (bijvoorbeeld een iPad rechtop).
 
 ### Gewijzigd
@@ -143,13 +167,13 @@ Weergave voor tablets in portretstand (bijvoorbeeld een iPad rechtop).
 - **Niets veranderd:** de telefoonweergave en de laptopweergave (vanaf 1000 pixels, dus ook een iPad in landschap).
 - **Getest** op de gangbare iPad-breedtes in portret: 744, 820 en 834 pixels. Nergens hoeft de pagina opzij te scrollen.
 
-## v79 – 23 oktober 2026
-Vervaging bovenin de iPhone-app opgelost met een ondoorzichtige statusbalk. Gebouwd op v77; de aanpassing uit v78 is teruggedraaid.
+## 3.0.0 – 23 oktober 2026 · voorheen v79
+Vervaging bovenin de iPhone-app opgelost met een ondoorzichtige statusbalk. Gebouwd op 2.5.0; de aanpassing uit 2.5.1 is teruggedraaid.
 
 ### Opgelost
 - **Vage bovenrand in de iPhone-app:** sinds iOS 26/27 tekent iOS bij apps op het beginscherm een "Liquid Glass"-vervaging over de bovenkant. Dat gebeurt alleen bij de statusbalk-instelling `black-translucent`.
   - De app gebruikt nu `default`. De statusbalk is daardoor een effen balk en de pagina begint eronder, dus iOS tekent geen vervaging meer.
-  - De extra ruimte van v78 (14 punten) was te weinig, want de vervaging loopt zo'n 35–40 punten door. Die ruimte is weer weg.
+  - De extra ruimte van 2.5.1 (14 punten) was te weinig, want de vervaging loopt zo'n 35–40 punten door. Die ruimte is weer weg.
 - **Kleur van de statusbalk:** helemaal bovenin staat een onzichtbaar element van 1 pixel in de achtergrondkleur van de app. iOS neemt die kleur over voor de statusbalk.
   - Wissel je in de app tussen licht en donker, dan wisselt die kleur direct mee.
   - Bij het thema "Automatisch" houdt iOS licht of donker vast zolang de app open is. Statusbalk en app blijven dan gelijk; het wisselt pas na herstarten van de app.
@@ -168,7 +192,7 @@ iOS leest de statusbalk-instelling alleen als je de app aan het beginscherm toev
 - **Overige weergave:** in Safari en op de laptop verandert er niets.
 - **Bron van de oplossing:** een bevestigde oplossing uit de PWA-community (r/PWA, "iOS 27 beta blurs the top edge of installed PWAs").
 
-## v78 – 23 oktober 2026
+## 2.5.1 – 23 oktober 2026 · voorheen v78
 Bovenbalk op de iPhone niet meer vaag.
 
 ### Opgelost
@@ -180,7 +204,7 @@ Bovenbalk op de iPhone niet meer vaag.
 - **Herkenning:** de app ziet aan `display-mode: standalone` of hij als app draait. Op oudere iOS-versies gebruikt hij daarvoor `navigator.standalone`.
 - **Aanpassen:** de extra ruimte staat in de CSS-variabele `--top-extra`, zodat hij eenvoudig te verkleinen of vergroten is.
 
-## v77 – 23 oktober 2026
+## 2.5.0 – 23 oktober 2026 · voorheen v77
 Nieuwe functie: doelverdeling en herbalanceren (wens W3).
 
 ### Toegevoegd
@@ -200,24 +224,24 @@ Nieuwe functie: doelverdeling en herbalanceren (wens W3).
 - **Opslag:** de doelverdeling staat in je versleutelde gegevens (`allocs`) en synchroniseert, wordt geback-upt en teruggezet zoals doelen en plannen.
 - **Portefeuille verwijderen:** dan wordt ook de doelverdeling ervan verwijderd.
 
-## v76 – 23 oktober 2026
+## 2.4.2 – 23 oktober 2026 · voorheen v76
 Portfoliografiek 24U toont kleine bewegingen beter.
 
 ### Gewijzigd
-- **24U schaalt op de waarde zelf**, net als 1U en 4U sinds v74. Een beweging van een paar tientjes is nu goed te zien en loopt niet meer vlak weg naast de stippellijn (geïnvesteerd of netto gestort). Die stippellijn valt bij 24U daardoor meestal buiten beeld.
+- **24U schaalt op de waarde zelf**, net als 1U en 4U sinds 2.4.0. Een beweging van een paar tientjes is nu goed te zien en loopt niet meer vlak weg naast de stippellijn (geïnvesteerd of netto gestort). Die stippellijn valt bij 24U daardoor meestal buiten beeld.
 - **Vanaf 1W** blijft de stippellijn in beeld, zoals voorheen.
 - **Uitleg in het vergrote venster** aangepast: daar staat nu "Bij 1U, 4U en 24U".
 
-## v75 – 23 oktober 2026
+## 2.4.1 – 23 oktober 2026 · voorheen v75
 Koersverandering over 24 uur, 7 dagen en 30 dagen nu ook in de lijst Bezittingen op de telefoon.
 
 ### Toegevoegd
-- **Extra regel per munt** in de lijst Bezittingen op het Overzicht (telefoon): "24u · 7d · 30d" met de koersverandering over die periodes, in groen of rood. Dezelfde cijfers staan sinds v71 al in de tabel op de laptop.
+- **Extra regel per munt** in de lijst Bezittingen op het Overzicht (telefoon): "24u · 7d · 30d" met de koersverandering over die periodes, in groen of rood. Dezelfde cijfers staan sinds 2.1.0 al in de tabel op de laptop.
   - De regel loopt over de hele breedte van de rij, zodat de naam, de waarde en je resultaat blijven staan waar ze stonden.
   - In bitcoin-weergave zijn de cijfers ten opzichte van bitcoin, net als in de tabel.
   - Een schermlezer leest "Koersverandering: 24 uur …, 7 dagen …, 30 dagen …".
 
-## v74 – 23 oktober 2026
+## 2.4.0 – 23 oktober 2026 · voorheen v74
 Portfoliografiek: periodes van een uur en vier uur, een y-as en een vergroot venster.
 
 ### Toegevoegd
@@ -234,7 +258,7 @@ Portfoliografiek: periodes van een uur en vier uur, een y-as en een vergroot ven
 ### Technisch
 - Het tekenen van de portfoliografiek is één functie geworden die zowel het Overzicht als het vergrote venster gebruikt.
 
-## v73 – 23 oktober 2026
+## 2.3.0 – 23 oktober 2026 · voorheen v73
 Nieuw tabblad Analyse in Rapporten, met een wat-als-calculator (wens W1) en risico-inzicht (wens W9).
 
 ### Toegevoegd
@@ -261,7 +285,7 @@ Nieuw tabblad Analyse in Rapporten, met een wat-als-calculator (wens W1) en risi
 - **Koersen ophalen:** ontbreken voor het risico-overzicht dagkoersen van het afgelopen jaar, dan haalt de app ze één keer per sessie op, munt voor munt. Daarna komen ze uit het koersarchief.
 - **Brede tabellen:** past een tabel op een smal scherm niet, dan scrolt alleen dat blok opzij. Het blok is dan ook met het toetsenbord te bedienen.
 
-## v72 – 23 oktober 2026
+## 2.2.0 – 23 oktober 2026 · voorheen v72
 Rapporten opgesplitst in drie tabbladen.
 
 ### Gewijzigd
@@ -281,7 +305,7 @@ Rapporten opgesplitst in drie tabbladen.
 - **Minder rekenwerk:** het jaaroverzicht per 1 januari en het overzicht per broker worden alleen berekend als je Administratie opent. Daardoor laadt Rendement iets sneller.
 - **Toegankelijkheid:** de tabbladen zijn gewone links in een `<nav>` met `aria-current="page"`. Ze werken met toetsenbord en schermlezer, en de focus blijft na het wisselen op het gekozen tabblad.
 
-## v71 – 23 oktober 2026
+## 2.1.0 – 23 oktober 2026 · voorheen v71
 Meer marktinformatie in de tabel Bezittingen op het Overzicht (laptop/desktop).
 
 ### Toegevoegd
@@ -295,10 +319,13 @@ Meer marktinformatie in de tabel Bezittingen op het Overzicht (laptop/desktop).
   - Sorteren op "Munt" gaat nog steeds op naam.
 - **Kopje "Gem. aankoopprijs"** heet nu "Gem. prijs", met de volledige tekst als uitleg bij de muis.
 - **Iets minder ruimte tussen de kolommen.**
-- **Resultaat:** de tabel is smaller dan in v70, ondanks de twee extra kolommen. Op een scherm van 1440 pixels breed past hij nu helemaal; in v70 moest je daar bij een lange naam als "Artificial Superintelligence Alliance" nog opzij scrollen.
+- **Resultaat:** de tabel is smaller dan in 2.0.0, ondanks de twee extra kolommen. Op een scherm van 1440 pixels breed past hij nu helemaal; in 2.0.0 moest je daar bij een lange naam als "Artificial Superintelligence Alliance" nog opzij scrollen.
 
-## v70 – 23 oktober 2026
+## 2.0.0 – 23 oktober 2026 · voorheen v70
 Nieuwe functie: meerdere portefeuilles (wens W14).
+
+### Let op
+- **Werk eerst al je apparaten bij** naar deze versie voordat je een tweede portefeuille aanmaakt. Een oudere versie kent geen portefeuilles en toont alle transacties door elkaar.
 
 ### Toegevoegd
 - **Instellingen › Portefeuilles:** maak extra portefeuilles aan, bijvoorbeeld voor je partner, een kind of een zakelijke rekening. Je kunt ze hernoemen en verwijderen. Ook je eigen portefeuille ("Mijn portefeuille") kun je een andere naam geven.
@@ -315,9 +342,9 @@ Nieuwe functie: meerdere portefeuilles (wens W14).
 - **Eén bestand:** alles blijft in één versleuteld bestand op GitHub. Een transactie, doel of plan uit een extra portefeuille krijgt een portefeuillelabel; zonder label hoort hij bij je eigen portefeuille.
 - **Oude gegevens en apparaten:** bestaande gegevens hoeven niet omgezet te worden.
 - **Synchronisatie:** portefeuilles (namen, toevoegen, verwijderen) worden op dezelfde manier samengevoegd als doelen en plannen. Ook de back-up (JSON) en het terugzetten van een eerdere versie nemen ze mee.
-- **Zonder extra portefeuilles:** de app ziet er precies hetzelfde uit als in v69, op de nieuwe sectie in Instellingen na. Dat is per pixel vergeleken.
+- **Zonder extra portefeuilles:** de app ziet er precies hetzelfde uit als in 1.4.0, op de nieuwe sectie in Instellingen na. Dat is per pixel vergeleken.
 
-## v69 – 23 oktober 2026
+## 1.4.0 – 23 oktober 2026 · voorheen v69
 Nieuwe functie: bedragen tonen in euro, dollar of bitcoin (wens W13).
 
 ### Toegevoegd
@@ -337,7 +364,7 @@ Nieuwe functie: bedragen tonen in euro, dollar of bitcoin (wens W13).
 - **Oude bitcoinkoersen:** die komen uit het koersarchief. Ontbreken ze, dan haalt de app één keer het afgelopen jaar op. Voor transacties die ouder zijn dan het archief, wordt de bitcoinkoers geschat uit de dichtstbijzijnde bekende koers.
 - **Resultaat bij "Sinds je vorige bezoek":** wordt nu berekend als waardeverandering min wat je er sindsdien in stopte. In euro geeft dat exact hetzelfde als voorheen; ik heb dat nagerekend.
 
-## v68 – 23 oktober 2026
+## 1.3.0 – 23 oktober 2026 · voorheen v68
 Nieuwe functie: gemiddelde-prijs-calculator (wens W12).
 
 ### Toegevoegd
@@ -350,7 +377,7 @@ Nieuwe functie: gemiddelde-prijs-calculator (wens W12).
 - **Als aankoop invoeren:** opent het transactieformulier, al ingevuld met bedrag, koers en kosten.
 - **Invoer blijft staan:** wat je invult, blijft bewaard als de koersen tussendoor worden bijgewerkt.
 
-## v67 – 23 oktober 2026
+## 1.2.0 – 23 oktober 2026 · voorheen v67
 Nieuwe functie: een eerdere versie terugzetten vanuit de GitHub-geschiedenis.
 
 ### Toegevoegd
@@ -366,7 +393,7 @@ Nieuwe functie: een eerdere versie terugzetten vanuit de GitHub-geschiedenis.
 - **Ander versleutelwachtwoord:** een versie die met een ander versleutelwachtwoord is gemaakt, kan niet worden geopend. Je krijgt dan een melding.
 - **Teruggezette transacties:** krijgen intern een nieuwe code. Importeer je daarna hetzelfde Bitvavo-bestand opnieuw, dan worden ze niet dubbel toegevoegd.
 
-## v66 – 23 oktober 2026
+## 1.1.0 – 23 oktober 2026 · voorheen v66
 Nieuwe functie: vaste maandelijkse inleg (DCA).
 
 ### Toegevoegd
@@ -379,7 +406,7 @@ Nieuwe functie: vaste maandelijkse inleg (DCA).
 - **Overzicht per plan:** hoeveel maanden ingevoerd zijn en hoeveel nog open staan.
 - **Vergelijking (Rapporten › Vaste inleg vergeleken):** per munt wordt jouw gemiddelde aankoopprijs vergeleken met wat je had betaald als je hetzelfde totaalbedrag gelijk verdeeld had over elke maand sinds je eerste aankoop. Daarbij staat het verschil in huidige waarde, per munt en in totaal, met de conclusie "jouw timing leverde € X meer op" of "met een vaste inleg had je € X meer gehad". Verkopen tellen niet mee. Maanden zonder bewaarde koers worden geschat (≈).
 
-## v65 – 22 oktober 2026
+## 1.0.32 – 22 oktober 2026 · voorheen v65
 Codekwaliteit punt 27: datums zijn machineleesbaar en de HTML is netjes ingesprongen.
 
 ### Verbeterd
@@ -392,13 +419,13 @@ Codekwaliteit punt 27: datums zijn machineleesbaar en de HTML is netjes ingespro
 
 ### Opgelost
 - **Twee tooltips uit eerdere versies van deze reeks:**
-  - De uitleg bij de statusknop als je offline bent (sinds v39).
-  - Het bedrag per dag in de rendementskalender (sinds v43).
+  - De uitleg bij de statusknop als je offline bent (sinds 1.0.6).
+  - Het bedrag per dag in de rendementskalender (sinds 1.0.10).
 
   Door een dubbel aanhalingsteken (`title=""…`) verschenen ze niet. Ze werken weer.
-- **Controle:** de HTML-validator meldt geen fouten meer, behalve de 19 bewust inline gehouden stijlen uit gegevens (zie v52).
+- **Controle:** de HTML-validator meldt geen fouten meer, behalve de 19 bewust inline gehouden stijlen uit gegevens (zie 1.0.19).
 
-## v64 – 22 oktober 2026
+## 1.0.31 – 22 oktober 2026 · voorheen v64
 Snelheid punt 26: de app maakt vroeg verbinding met de servers die hij nodig heeft.
 
 ### Verbeterd
@@ -406,7 +433,7 @@ Snelheid punt 26: de app maakt vroeg verbinding met de servers die hij nodig hee
 - **Muntlogo's:** `preconnect` naar `coin-images.coingecko.com`, de server van de logo's.
 - **GitHub:** `dns-prefetch` naar `api.github.com`. Dat is lichter, omdat synchronisatie niet altijd aan staat.
 
-## v63 – 22 oktober 2026
+## 1.0.30 – 22 oktober 2026 · voorheen v63
 Privacy punt 25: geen verwijzer meer naar andere sites.
 
 ### Verbeterd
@@ -414,7 +441,7 @@ Privacy punt 25: geen verwijzer meer naar andere sites.
 - **Hele app:** `<meta name="referrer" content="no-referrer">`. Ook bij het ophalen van koersen (CoinGecko) en het synchroniseren (GitHub) wordt het adres van je app niet meer meegestuurd. Zo is niet te zien op welke GitHub Pages-site je de app draait.
 - **Getest:** synchronisatie, koersen en afbeeldingen werken zoals voorheen.
 
-## v62 – 22 oktober 2026
+## 1.0.29 – 22 oktober 2026 · voorheen v62
 Weergave punt 24: `color-scheme` ingesteld.
 
 ### Verbeterd
@@ -427,7 +454,7 @@ Weergave punt 24: `color-scheme` ingesteld.
 
   In het donkere thema is het kalendericoontje bij "Datum en tijd" nu licht en dus goed zichtbaar.
 
-## v61 – 22 oktober 2026
+## 1.0.28 – 22 oktober 2026 · voorheen v61
 Gemak punt 23: de Enter-toets op het iPhone-toetsenbord zegt wat hij doet.
 
 ### Verbeterd
@@ -436,7 +463,7 @@ Gemak punt 23: de Enter-toets op het iPhone-toetsenbord zegt wat hij doet.
 - **Vergrendelscherm:** in het wachtwoordveld heet de toets "Ga".
 - **Munt zoeken in het transactieformulier:** Enter kiest het eerste zoekresultaat. Het formulier wordt dan niet al opgeslagen en je krijgt geen foutmelding.
 
-## v60 – 22 oktober 2026
+## 1.0.27 – 22 oktober 2026 · voorheen v60
 Toegankelijkheid punt 22: knopgroepen hebben een groepsnaam en laten zien welke keuze aan staat.
 
 ### Verbeterd
@@ -451,7 +478,7 @@ Toegankelijkheid punt 22: knopgroepen hebben een groepsnaam en laten zien welke 
 ### Opgelost
 - **Blok Inleg (Rapporten):** onder de periodeknoppen stond een dun lijntje dat er per ongeluk was. Dat is weg. Verder is alles pixel voor pixel gelijk.
 
-## v59 – 22 oktober 2026
+## 1.0.26 – 22 oktober 2026 · voorheen v59
 Formulieren punt 21: echte formulieren, fouten bij het veld en geen dubbele invoer.
 
 ### Verbeterd
@@ -463,7 +490,7 @@ Formulieren punt 21: echte formulieren, fouten bij het veld en geen dubbele invo
   - Zodra je in het veld typt, verdwijnt de melding.
 - **Geen dubbele invoer:** dubbel tikken op "Toevoegen" of "Opslaan" voegt de transactie maar één keer toe.
 
-## v58 – 22 oktober 2026
+## 1.0.25 – 22 oktober 2026 · voorheen v58
 Toegankelijkheid punt 20: iconen worden niet meer apart voorgelezen.
 
 ### Verbeterd
@@ -471,7 +498,7 @@ Toegankelijkheid punt 20: iconen worden niet meer apart voorgelezen.
 - **Lijnen in grafieken:** de cumulatieve lijn en de vergelijkingsgrafiek zijn ook verborgen voor schermlezers. Hun inhoud staat al in de samenvatting (punt 9) of in de tekst eronder.
 - **Uiterlijk:** pixel voor pixel gelijk.
 
-## v57 – 22 oktober 2026
+## 1.0.24 – 22 oktober 2026 · voorheen v57
 Toegankelijkheid punt 19: tabellen met bijschrift en kop-koppeling.
 
 ### Verbeterd
@@ -480,7 +507,7 @@ Toegankelijkheid punt 19: tabellen met bijschrift en kop-koppeling.
 - **Rijkoppen:** in de rendements- en brokertabellen is de eerste cel van elke rij een rijkop (`<th scope="row">`), zoals "oktober 2026" of "Bitvavo". Een schermlezer leest bij elk bedrag voor bij welke maand en kolom het hoort.
 - **Uiterlijk:** pixel voor pixel gelijk.
 
-## v56 – 22 oktober 2026
+## 1.0.23 – 22 oktober 2026 · voorheen v56
 Toegankelijkheid punt 18: navigatie met een eigen label.
 
 ### Verbeterd
@@ -488,7 +515,7 @@ Toegankelijkheid punt 18: navigatie met een eigen label.
 - **Tabbalk (mobiel):** heeft het label "Tabbalk". De drie tabs zijn links (`<a href>`) in plaats van knoppen, omdat ze naar een ander scherm gaan. De actieve tab heeft `aria-current="page"`, zodat een schermlezer zegt welk scherm open is.
 - **Uiterlijk en werking:** ongewijzigd en pixel voor pixel gelijk.
 
-## v55 – 22 oktober 2026
+## 1.0.22 – 22 oktober 2026 · voorheen v55
 Toegankelijkheid punt 17: skip link "Naar hoofdinhoud".
 
 ### Toegevoegd
@@ -496,7 +523,7 @@ Toegankelijkheid punt 17: skip link "Naar hoofdinhoud".
 - **Onzichtbaar voor anderen:** wie de muis of het touchscreen gebruikt, ziet de knop niet.
 - **Huidige scherm blijft staan:** de skip link verandert het adres (de `#`) niet, dus je blijft op het scherm waar je was.
 
-## v54 – 22 oktober 2026
+## 1.0.21 – 22 oktober 2026 · voorheen v54
 Prestaties punt 16: afbeeldingen hebben vaste afmetingen.
 
 ### Verbeterd
@@ -504,7 +531,7 @@ Prestaties punt 16: afbeeldingen hebben vaste afmetingen.
 - **Logo's van CoinGecko:** worden lui geladen (`loading="lazy"`) en asynchroon gedecodeerd (`decoding="async"`). Het app-logo laadt direct.
 - **Uiterlijk:** pixel voor pixel gelijk aan de vorige versie.
 
-## v53 – 22 oktober 2026
+## 1.0.20 – 22 oktober 2026 · voorheen v53
 Codekwaliteit punt 15: de `<head>` volgt de afgesproken volgorde en inhoud.
 
 ### Verbeterd
@@ -518,7 +545,7 @@ Codekwaliteit punt 15: de `<head>` volgt de afgesproken volgorde en inhoud.
 ### Let op
 - **Upload ook het nieuwe bestand `icon-180.png`.**
 
-## v52 – 22 oktober 2026
+## 1.0.19 – 22 oktober 2026 · voorheen v52
 Codekwaliteit punt 14: vaste opmaak staat in CSS in plaats van in inline `style=""`.
 
 ### Verbeterd
@@ -530,14 +557,14 @@ Codekwaliteit punt 14: vaste opmaak staat in CSS in plaats van in inline `style=
 ### Opmerking
 - **CSP:** de 19 stijlen uit gegevens zijn de reden dat de beveiligingsregels inline stijlen nog toestaan (`style-src 'unsafe-inline'`). Inline scripts blijven geblokkeerd. Het risico van inline stijlen is veel kleiner dan dat van scripts.
 
-## v51 – 22 oktober 2026
+## 1.0.18 – 22 oktober 2026 · voorheen v51
 Codekwaliteit punt 13: elke knop heeft een expliciet `type`.
 
 ### Verbeterd
 - **`type="button"`:** alle 62 knopsjablonen hebben het nu (op het scherm zijn dat er honderden). Alleen de knop "Ontgrendel met wachtwoord" heeft `type="submit"`.
 - **Waarom:** een knop zonder `type` gedraagt zich in een formulier als verzendknop. Dat kan bij de formulieren uit punt 21 onbedoeld een formulier versturen. Voor jou verandert er niets.
 
-## v50 – 22 oktober 2026
+## 1.0.17 – 22 oktober 2026 · voorheen v50
 Toegankelijkheid en gemak punt 12: wachtwoordmanagers werken mee.
 
 ### Verbeterd
@@ -552,14 +579,14 @@ Toegankelijkheid en gemak punt 12: wachtwoordmanagers werken mee.
 ### Opgelost
 - **Ongeldig attribuut:** `autocapitalize` stond op een wachtwoordveld, waar het niet hoort. Het is weggehaald.
 
-## v49 – 22 oktober 2026
+## 1.0.16 – 22 oktober 2026 · voorheen v49
 Toegankelijkheid punt 11: vakken die opzij scrollen zijn met het toetsenbord te bedienen.
 
 ### Verbeterd
 - **Grafiek in het vergrote rendementsscherm:** is met Tab te bereiken en met de pijltjestoetsen opzij te scrollen. Een schermlezer noemt hem "Grafiek rendement per maand, scroll opzij met de pijltjestoetsen".
 - **Brede tabellen op smalle schermen:** dit geldt bijvoorbeeld voor "Per broker / wallet" op een scherm van 320 px. Ze krijgen hetzelfde, maar alleen als ze echt opzij scrollen en er zelf geen knoppen of links in staan.
 
-## v48 – 22 oktober 2026
+## 1.0.15 – 22 oktober 2026 · voorheen v48
 Toegankelijkheid punt 10: de app houdt rekening met "Beweging verminderen".
 
 ### Verbeterd
@@ -571,7 +598,7 @@ Toegankelijkheid punt 10: de app houdt rekening met "Beweging verminderen".
 - **Waar staat de instelling:** op de iPhone onder Instellingen › Toegankelijkheid › Beweging, op de Mac onder Systeeminstellingen › Toegankelijkheid › Weergave.
 - **Werking:** alles blijft hetzelfde; er beweegt alleen niets meer.
 
-## v47 – 22 oktober 2026
+## 1.0.14 – 22 oktober 2026 · voorheen v47
 Toegankelijkheid punt 9: grafieken hebben een tekstalternatief.
 
 ### Verbeterd
@@ -581,7 +608,7 @@ Toegankelijkheid punt 9: grafieken hebben een tekstalternatief.
 - **Losse grafiekonderdelen:** asgetallen, maandletters en de gekleurde verdelingsbalk worden niet meer los voorgelezen. De legenda met percentages blijft wel leesbaar.
 - **Bijgewerkte samenvatting:** bij elke andere periode (24U, 1W, 1M …) wordt de samenvatting opnieuw gemaakt.
 
-## v46 – 22 oktober 2026
+## 1.0.13 – 22 oktober 2026 · voorheen v46
 Toegankelijkheid punt 8: logische kopstructuur (h1 → h2), zonder niveaus over te slaan.
 
 ### Verbeterd
@@ -591,14 +618,14 @@ Toegankelijkheid punt 8: logische kopstructuur (h1 → h2), zonder niveaus over 
 - **Knop "Vergroten":** staat niet meer in de kop zelf. Een schermlezer leest de kop nu als "Rendement per maand".
 - **Uiterlijk:** ongewijzigd.
 
-## v45 – 22 oktober 2026
+## 1.0.12 – 22 oktober 2026 · voorheen v45
 Toegankelijkheid punt 7: meldingen worden voorgelezen.
 
 ### Verbeterd
 - **Schermlezers lezen meldingen voor:** de korte meldingen onderin, zoals "Gesynchroniseerd", "Weer online" en "Kies eerst een munt", hebben `role="status"` en `aria-live="polite"`. Een schermlezer leest ze voor zonder je af te breken.
 - **Herhaalde melding:** komt dezelfde melding twee keer achter elkaar, dan wordt hij ook de tweede keer voorgelezen.
 
-## v44 – 22 oktober 2026
+## 1.0.11 – 22 oktober 2026 · voorheen v44
 Beveiliging punt 6: Content Security Policy (CSP) toegevoegd.
 
 ### Toegevoegd
@@ -615,7 +642,7 @@ Beveiliging punt 6: Content Security Policy (CSP) toegevoegd.
 - **`frame-ancestors`:** werkt alleen als HTTP-header, en die kan GitHub Pages niet instellen. Dit onderdeel ontbreekt dus.
 - **Getest onder de CSP:** GitHub-synchronisatie (ook boven 1 MB), CoinGecko-koersen en -afbeeldingen, CSV-export, het jaaroverzicht (PDF) en de Bitvavo-import.
 
-## v43 – 22 oktober 2026
+## 1.0.10 – 22 oktober 2026 · voorheen v43
 Toegankelijkheid punt 5: alle tekst haalt de vereiste contrast (minstens 4,5:1), in het donkere en het lichte thema.
 
 ### Verbeterd
@@ -633,7 +660,7 @@ Toegankelijkheid punt 5: alle tekst haalt de vereiste contrast (minstens 4,5:1),
 - **Rendementskalender:** de app kiest per dag zelf witte of zwarte tekst, afhankelijk van hoe fel het vakje is. Toekomstige dagen zijn niet meer half doorzichtig, maar leesbaar grijs.
 - **Portfoliografiek:** de lijnen volgen de themakleuren en zijn daardoor in het lichte thema beter zichtbaar.
 
-## v42 – 22 oktober 2026
+## 1.0.9 – 22 oktober 2026 · voorheen v42
 Toegankelijkheid punt 4: elk invoerveld en elke keuzelijst heeft een gekoppeld label.
 
 ### Verbeterd
@@ -645,7 +672,7 @@ Toegankelijkheid punt 4: elk invoerveld en elke keuzelijst heeft een gekoppeld l
   - de muntkoppeling bij de Bitvavo-import
 - **Placeholder:** wordt nergens meer als enige label gebruikt.
 
-## v41 – 22 oktober 2026
+## 1.0.8 – 22 oktober 2026 · voorheen v41
 Toegankelijkheid punt 3: schuifbladen en het vergrote rendementsscherm zijn echte dialoogvensters (`<dialog>` met `showModal()`).
 
 ### Verbeterd
@@ -655,7 +682,7 @@ Toegankelijkheid punt 3: schuifbladen en het vergrote rendementsscherm zijn echt
 - **Schermlezers:** die horen nu dat er een venster open is en lezen de titel voor, zoals "Instellingen".
 - **Meldingen:** blijven zichtbaar boven een open venster (bijvoorbeeld "Kies eerst een munt").
 
-## v40 – 22 oktober 2026
+## 1.0.7 – 22 oktober 2026 · voorheen v40
 Toegankelijkheid punt 2: je ziet altijd waar de toetsenbordfocus staat.
 
 ### Verbeterd
@@ -664,7 +691,7 @@ Toegankelijkheid punt 2: je ziet altijd waar de toetsenbordfocus staat.
 - **Rijen:** staat de focus op een munt- of transactierij, dan wordt de hele rij omrand en licht hij op.
 - **Mobiel:** een gefocust element schuift niet meer achter de tabbalk onderaan (`scroll-padding-bottom`).
 
-## v39 – 22 oktober 2026
+## 1.0.6 – 22 oktober 2026 · voorheen v39
 Toegankelijkheid punt 1: alles wat je kunt aanklikken, werkt nu ook met het toetsenbord (Tab en Enter).
 
 ### Verbeterd
@@ -677,7 +704,7 @@ Toegankelijkheid punt 1: alles wat je kunt aanklikken, werkt nu ook met het toet
   - Bij waarschuwingen in de datacontrole leest een schermlezer "Waarschuwing:" voor.
 - **Focus na verversen:** de toetsenbordfocus blijft op dezelfde plek staan als het scherm opnieuw wordt opgebouwd, bijvoorbeeld na het wisselen van periode of na synchroniseren.
 
-## v38 – 22 oktober 2026
+## 1.0.5 – 22 oktober 2026 · voorheen v38
 Verbeteringen uit de testronde (punten 11–18 en 20).
 
 ### Verbeterd
@@ -696,7 +723,7 @@ Verbeteringen uit de testronde (punten 11–18 en 20).
 - **Transactiescherm:** toont 100 transacties tegelijk, met een knop "Toon meer". De totalen bovenaan tellen altijd alle transacties mee.
 - **Sinds je vorige bezoek:** bij de grootste stijger en daler staat nu ook het bedrag in euro's.
 
-## v37 – 22 oktober 2026
+## 1.0.4 – 22 oktober 2026 · voorheen v37
 Kleinere fouten uit de testronde (punten 4–10).
 
 ### Opgelost
@@ -712,7 +739,7 @@ Kleinere fouten uit de testronde (punten 4–10).
   - Blijft ook weg zolang hij een kleine knop zou bedekken, zoals "Max" of "+ Storting / opname".
 - **Statusbolletje:** is weer rond en wordt niet meer uitgerekt.
 
-## v36 – 22 oktober 2026
+## 1.0.3 – 22 oktober 2026 · voorheen v36
 ### Opgelost
 - **Rapporten bij ontbrekende koersgeschiedenis:**
   - CoinGecko levert gratis maar 365 dagen geschiedenis. Voor oudere perioden werden munten daardoor als € 0 gerekend (bijvoorbeeld september 2025: −€ 95).
@@ -722,7 +749,7 @@ Kleinere fouten uit de testronde (punten 4–10).
   - Boven 1 MB stuurt GitHub de inhoud niet meer mee in het gewone antwoord.
   - De app haalt het bestand dan apart op als *raw*-download. Dat werkt tot 100 MB.
 
-## v35 – 22 oktober 2026
+## 1.0.2 – 22 oktober 2026 · voorheen v35
 ### Verbeterd
 - **Koersen in overzichten:**
   - Berekende koersen worden afgerond: € 1 of meer op 2 decimalen, onder € 1 op 4 significante cijfers. Voorbeeld: € 0,508902834668094 wordt ≈ € 0,5089.
@@ -731,7 +758,7 @@ Kleinere fouten uit de testronde (punten 4–10).
   - De CSV-export bevat altijd alle decimalen.
   - Berekeningen gebruiken altijd de exacte waarde.
 
-## v34 – 22 oktober 2026
+## 1.0.1 – 22 oktober 2026 · voorheen v34
 ### Opgelost
 - **Rapporten op iPhone:**
   - Het scherm was breder dan het beeld (blokken van 478 px op een scherm van 390 px). Daardoor schoof de pagina opzij en viel het tandwiel buiten beeld.
@@ -739,11 +766,12 @@ Kleinere fouten uit de testronde (punten 4–10).
   - Gecontroleerd van 320 tot 1440 px breed, inclusief het vergrote rendementsscherm en Instellingen geopend vanuit Rapporten.
 
 ### Toegevoegd
-- **Testbestand:** een dummy Bitvavo-export (85 regels) waarmee alle functies op laptop en iPhone zijn doorgelopen. De uitkomst was een testrapport met 20 fouten en verbeteringen, die in v34–v38 zijn afgewerkt.
+- **Testbestand:** een dummy Bitvavo-export (85 regels) waarmee alle functies op laptop en iPhone zijn doorgelopen. De uitkomst was een testrapport met 20 fouten en verbeteringen, die in 1.0.1–1.0.5 zijn afgewerkt.
 
 ---
 
-## Eerdere versies (v1 – v33) – oktober 2026
+## 1.0.0 – oktober 2026 · voorheen v1 – v33
+De eerste versie.
 De eerste versies zijn in één doorlopende reeks gebouwd. Hieronder staan de functies per onderwerp, in de volgorde waarin ze zijn toegevoegd.
 
 ### Basis
