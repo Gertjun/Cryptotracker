@@ -6,6 +6,16 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v89 – 26 oktober 2026
+"% Totaal" toont nu je resultaat ten opzichte van wat je op dat moment had geïnvesteerd.
+
+### Gewijzigd
+- **Nieuwe rekenwijze voor % Totaal:** de grafiek begon in v88 steeds op 0%, omdat hij het rendement sinds het begin van de periode toonde. Nu laat de lijn op elk moment zien hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd: (waarde crypto − geïnvesteerd) / geïnvesteerd.
+  - Het laatste punt is gelijk aan het percentage bij "Totaal ongerealiseerd" bovenaan.
+  - Boven 0% sta je in de plus, eronder in de min. De lijn is groen of rood naar je huidige stand.
+- **Korte periodes:** bij 1U, 4U en 24U loopt de schaal alleen over de lijn zelf, met percentages in twee decimalen, zodat je kleine bewegingen ziet. Vanaf 1W staat 0% altijd in beeld.
+- **Rendement onder de grafiek:** daar staat weer alleen het eurobedrag over de periode. Het percentage zou daar verwarrend zijn, omdat de lijn nu iets anders laat zien.
+
 ## v88 – 26 oktober 2026
 Portfoliografiek: vierde weergave "% Totaal".
 

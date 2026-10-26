@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='88 (26 okt 2026)';
+const APP_VERSION='89 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -1659,10 +1659,10 @@ function pfAlt(res){const a=res.pts[0],z=res.pts[res.pts.length-1],ch=a[1]?(z[1]
   return `Grafiek portfoliowaarde, ${RANGE_L[settings.pRange]||''}: van ${money(a[1],2)} naar ${money(z[1],2)}${ch!=null?' ('+pct(ch)+')':''}. Geïnvesteerd aan het eind: ${money(z[2],2)}.`}
 // Grafiekweergave "Per munt": een lijn per munt (de 6 grootste, de rest samen als Overig) en voor cash
 const PAL=['#4f8cff','#1fd17a','#f5b942','#b56cff','#ff7a59','#34c6d3','#8b93a5'];
-// '% Totaal': tijdgewogen rendement van je hele portfolio sinds het begin van de periode.
-// Per stap: verandering in resultaat gedeeld door de waarde ervoor, zodat stortingen, aan- en verkopen niet als winst tellen.
-function twrSeries(res){const pts=res.pts,tr=p=>p[1]-p[2]+p[3];let I=1;const v=pts.map((p,i)=>{if(i){const prev=pts[i-1][1];if(prev>0.005)I*=1+(tr(p)-tr(pts[i-1]))/prev}return (I-1)*100});
-  return[{id:'__tot',name:'Portfolio',col:v[v.length-1]>=0?'#1fd17a':'#ff5a5f',v}]}
+// '% Totaal': op elk moment je ongerealiseerde resultaat ten opzichte van wat je op dat moment had geïnvesteerd
+// (waarde crypto − geïnvesteerd) / geïnvesteerd; het laatste punt is gelijk aan het percentage bij 'Totaal ongerealiseerd'.
+function twrSeries(res){const v=res.pts.map(p=>{const x=p[4];return x&&x.inv>0.005?(x.v-x.inv)/x.inv*100:null});const last=[...v].reverse().find(x=>x!=null)??0;
+  return[{id:'__tot',name:'Portfolio',col:last>=0?'#1fd17a':'#ff5a5f',v}]}
 function assetSeries(res,pct){
   const pts=res.pts,last=pts[pts.length-1][4]?.coins||{},ids=new Set();pts.forEach(p=>Object.keys(p[4]?.coins||{}).forEach(id=>ids.add(id)));
   const order=[...ids].filter(id=>pts.some(p=>(p[4].coins[id]||0)>0.005)).sort((a,b)=>(last[b]||0)-(last[a]||0)||(Math.max(...pts.map(p=>p[4].coins[b]||0))-Math.max(...pts.map(p=>p[4].coins[a]||0))));
@@ -1677,10 +1677,12 @@ function paintAssets(wrap,res,o){
   if(pts.length<2){wrap.innerHTML='<div class="chart-msg">Nog te weinig gegevens</div>';return null}
   const pc=!!o.pct,S=o.tot?twrSeries(res):assetSeries(res,pc);if(!S.length){wrap.innerHTML='<div class="chart-msg">Nog geen bezit in deze periode</div>';return null}
   const W=360,H=170,pt=10,pb=10,t0=pts[0][0],t1=pts[pts.length-1][0],all=S.flatMap(s=>s.v).filter(v=>v!=null);
-  let lo=Math.min(0,...all),hi=Math.max(0,...all);if(hi-lo<1e-9)hi=lo+1;const pd=(hi-lo)*.06;hi+=pd;if(pc&&lo<0)lo-=pd;
+  // '% Totaal' bij 1U, 4U en 24U: schaal op de lijn zelf (zoals bij € Totaal), anders zie je de beweging niet naast de 0%-lijn
+  const tight=o.tot&&['1h','4h','1'].includes(settings.pRange);
+  let lo=tight?Math.min(...all):Math.min(0,...all),hi=tight?Math.max(...all):Math.max(0,...all);if(hi-lo<(tight?0.02:1e-9)){const m=(hi+lo)/2;lo=m-0.01;hi=m+0.01}const pd=(hi-lo)*.06;hi+=pd;if((pc&&lo<0)||tight)lo-=pd;
   const X=t=>(t-t0)/(t1-t0||1)*W,Y=v=>pt+(1-(v-lo)/(hi-lo))*(H-pt-pb);
   const f=pc?1:unitF(),A=axisTicks(lo*f,hi*f,big?6:4),ticks=A.t.map(v=>v/f).filter(v=>Y(v)>=2&&Y(v)<=H-2);
-  const pLbl=v=>(v>0?'+':v<0?'−':'')+new Intl.NumberFormat('nl-NL',{maximumFractionDigits:A.step<1?1:0}).format(Math.abs(v))+'%';
+  const pLbl=v=>(v>0?'+':v<0?'−':'')+(d=>new Intl.NumberFormat('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d}))(A.step<1?Math.max(1,Math.ceil(-Math.log10(A.step)-1e-9)):0).format(Math.abs(v))+'%';
   const labs=ticks.map(v=>pc?pLbl(v):tickLbl(v*f,A.step)),aw=Math.max(...labs.map(l=>l.length),4);
   const grid=ticks.map(v=>`<line class="pc-grid${pc&&Math.abs(v)<1e-9?' z':''}" x1="0" x2="${W}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}" vector-effect="non-scaling-stroke"/>`).join('');
   const lines=S.map(s=>`<path d="${s.v.map((v,i)=>v==null?'':(i&&s.v[i-1]!=null?'L':'M')+X(pts[i][0]).toFixed(1)+' '+Y(v).toFixed(1)).join('')}" fill="none" style="stroke:${s.col}" stroke-width="2" ${s.dash?'stroke-dasharray="4 4" ':''}vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`).join('');
@@ -1693,7 +1695,7 @@ function paintAssets(wrap,res,o){
 }
 // Legenda met de waarde per munt op het gekozen moment (standaard: nu)
 function assetLegend(g,i){return `<ul class="pa-legend">${g.S.map(s=>`<li><i style="background:${s.col}"${s.dash?' class="dash"':''}></i>${esc(s.name)} <b class="${g.pct?cls(s.v[i]):'m'}">${g.pct?pct1(s.v[i]):money(s.v[i],2)}</b></li>`).join('')}</ul>`}
-function assetAlt(g){const n=g.pts.length-1;if(g.tot)return `Grafiek rendement portfolio in procenten, ${RANGE_L[settings.pRange]||''}: ${pct1(g.S[0].v[n])}.`;return g.pct?`Grafiek koersverandering per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} ${pct1(s.v[n])}`).join('; ')}.`
+function assetAlt(g){const n=g.pts.length-1;if(g.tot)return `Grafiek resultaat ten opzichte van geïnvesteerd, ${RANGE_L[settings.pRange]||''}: van ${pct1(g.S[0].v.find(x=>x!=null))} naar ${pct1(g.S[0].v[n])}.`;return g.pct?`Grafiek koersverandering per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} ${pct1(s.v[n])}`).join('; ')}.`
   :`Grafiek waarde per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} van ${money(s.v[0],2)} naar ${money(s.v[n],2)}`).join('; ')}.`}
 const pviewSeg=()=>`<span class="seg mini pview" role="group" aria-label="Grafiekweergave">${[['total','€ Totaal'],['ptotal','% Totaal'],['assets','€ per munt'],['pct','% per munt']].map(([v,l])=>`<button type="button" data-act="pview" data-v="${v}" class="${(settings.pView||'total')===v?'on':''}" aria-pressed="${(settings.pView||'total')===v}">${l}</button>`).join('')}</span>`;
 async function drawPortfolioChart(){
@@ -1706,7 +1708,7 @@ async function drawPortfolioChart(){
   if(leg)leg.innerHTML=g&&as?assetLegend(g,g.pts.length-1):'';
   if(!g){$('#pperiod').innerHTML='';return}
   chartAlt(wrap,as?assetAlt(g):pfAlt(res));
-  $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b>${g.tot?` <b class="${cls(g.S[0].v[g.S[0].v.length-1])}">(${pct1(g.S[0].v[g.S[0].v.length-1])})</b>`:''}</span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
+  $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
   const hv=$('#heroVal'),hp=$('#heroPl'),hs=$('#heroSub'),oV=hv.innerHTML,oP=hp.innerHTML,oS=hs?hs.innerHTML:'',wc=hasCashTx();
   pfHover(g,p=>{const pl=p[1]-p[2];hv.innerHTML=heroValHTML(p[1]);if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
       hp.innerHTML=`<span class="static pl-toggle ${cls(pl)}"><span class="m">${signed(pl)}</span> <span>(${pct(p[2]>0?pl/p[2]*100:null)})</span> <small>${pfWhen(p)}</small></span>`;
@@ -1732,10 +1734,10 @@ async function drawPfZoom(){
   const wrap=el();if(my!==pzTok||!wrap)return;
   inUnit(()=>{const pv=settings.pView,as=['assets','pct','ptotal'].includes(pv),g=as?paintAssets(wrap,res,{big:true,pct:pv!=='assets',tot:pv==='ptotal'}):paintPf(wrap,res,{my:'z'+my,big:true});if(!g){$('#pzInfo').innerHTML='';return}chartAlt(wrap,as?assetAlt(g):pfAlt(res));
     const info=$('#pzInfo'),line=p=>{const pl=p[1]-p[2];return `<span class="label">${p===g.pts[g.pts.length-1]?'Nu':pfWhen(p)}</span><b class="m">${money(p[1],2)}</b><span class="m ${cls(pl)}">${signed(pl)} (${pct(p[2]>0?pl/p[2]*100:null)})</span>`};
-    const def=()=>`${line(g.pts[g.pts.length-1])}<span class="label">Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b>${g.tot?` <b class="${cls(g.S[0].v[g.S[0].v.length-1])}">(${pct1(g.S[0].v[g.S[0].v.length-1])})</b>`:''}</span>`;
+    const def=()=>`${line(g.pts[g.pts.length-1])}<span class="label">Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>`;
     const L=p=>as?assetLegend(g,g.pts.indexOf(p)):'',hc=hasCashTx();
     $('#pzHint').textContent='Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. '+(as
-      ?(g.tot?'De lijn is het rendement van je hele portfolio sinds het begin van de periode, in procenten. Stortingen, aan- en verkopen tellen niet als winst of verlies: alleen hoe je bezit in waarde veranderde (tijdgewogen rendement).':g.pct?'Elke lijn is hoeveel de koers van die munt sinds het begin van de periode is gestegen of gedaald, los van wat je kocht of verkocht. Zo zie je welke munt het in deze periode het best deed. Alleen je zes grootste munten staan erin.'
+      ?(g.tot?'De lijn is op elk moment hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd, in procenten. Boven 0% sta je in de plus. Het laatste punt is gelijk aan het percentage bij Totaal ongerealiseerd.':g.pct?'Elke lijn is hoeveel de koers van die munt sinds het begin van de periode is gestegen of gedaald, los van wat je kocht of verkocht. Zo zie je welke munt het in deze periode het best deed. Alleen je zes grootste munten staan erin.'
         :`Elke lijn is de waarde van wat je op dat moment van die munt had; aan- en verkopen zie je als sprong.${hc?' Cash is de stippellijn.':''} De zes grootste munten krijgen een eigen lijn, de rest staat samen onder Overig.`)
       :`De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U, 4U en 24U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.`);
     info.innerHTML=def()+L(g.pts[g.pts.length-1]);pfHover(g,p=>{info.innerHTML=line(p)+L(p)},()=>{info.innerHTML=def()+L(g.pts[g.pts.length-1])})});
