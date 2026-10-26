@@ -6,6 +6,39 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v85 – 26 oktober 2026
+Valuta wisselen vanaf het Overzicht.
+
+### Toegevoegd
+- **Valutateken is een knop:** het teken bij de totale waarde op het Overzicht (€, $ of ₿) is nu een knop, herkenbaar aan de stippellijn eronder.
+  - Tik of klik erop en er opent een klein menu met Euro €, Dollar $ en Bitcoin ₿. De huidige keuze staat aangevinkt.
+  - Kies je een andere valuta, dan werkt de app direct bij, net als bij de keuze onder Instellingen › Weergave. Beide plekken blijven gelijk.
+- **Bediening:**
+  - Het menu sluit met Esc, met een tik ernaast of na je keuze.
+  - Met het toetsenbord gaat de focus naar de huidige keuze en daarna terug naar het valutateken.
+  - Een schermlezer leest "Valuta: Euro. Wijzigen".
+- **Bedragen verbergen:** met het oogje wordt het bedrag vervaagd, maar het valutateken blijft zichtbaar en bruikbaar.
+
+### Technisch
+- **Menu:** het menu gebruikt de ingebouwde Popover API van de browser.
+- **Oudere browsers:** browsers zonder die API (bijvoorbeeld iOS ouder dan 17) wisselen bij elke tik naar de volgende valuta.
+
+## v84 – 26 oktober 2026
+Updates komen nu direct binnen, ook op een laptop die al eerder de app had geladen.
+
+### Opgelost
+- **Laptop bleef op een oude versie hangen**, ook na verversen of de browser opnieuw starten. De oorzaak: GitHub Pages laat browsers bestanden 10 minuten bewaren. Daardoor kon de app op twee plekken een oude app.js krijgen:
+  - bij het ophalen van de pagina, want de app vraagt eerst het netwerk, maar de browser antwoordde uit zijn eigen cache;
+  - bij het installeren van een nieuwe versie, want de nieuwe versie sloeg dan het oude app.js op.
+- **Oplossing:**
+  - De app vraagt bij het laden nu altijd aan GitHub of een bestand veranderd is. Is er niets veranderd, dan is dat een heel klein verzoek zonder de inhoud opnieuw te downloaden.
+  - Een nieuwe versie haalt bij het installeren alle bestanden vers op.
+- **Nagebootst en getest:** een server die net als GitHub Pages 10 minuten cache meegeeft. Met v83 bleef de oude app.js staan, met v84 komt de nieuwe direct binnen.
+
+### Technisch
+- **Bestaande controle:** de app keek al elke 30 minuten, en telkens als hij weer op de voorgrond komt, of er een nieuwe versie is. Daarvoor negeert de browser nu ook zijn cache voor `sw.js` (`updateViaCache: 'none'`).
+- **Laatste keer met vertraging:** een apparaat dat nog op v83 of ouder staat, krijgt v84 nog met die vertraging van maximaal ongeveer 10 minuten. Vanaf v84 gaat het direct.
+
 ## v83 – 26 oktober 2026
 Weergaveschakelaar en Vergroten staan nu rechtsboven in het grafiekblok.
 

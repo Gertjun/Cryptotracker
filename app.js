@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='83 (26 okt 2026)';
+const APP_VERSION='85 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -292,9 +292,21 @@ async function ensureBtcHist(){   // bitcoinkoersen van vroeger, voor de weergav
   if(settings.unit!=='BTC'||locked)return;const h=data.hist?.bitcoin,first=Math.min(...data.txs.map(txTime).filter(isFinite));
   const have=h?Object.keys(h).length:0;if(have>=300||(have&&first>=Date.now()-have*DAY))return;
   try{await fetchChart('bitcoin','365')}catch(e){}}
+// Valuta wisselen vanaf het Overzicht: tik op het valutateken bij de totale waarde
+const UNITS=[['EUR','Euro','€'],['USD','Dollar','$'],['BTC','Bitcoin','₿']];
+function heroValHTML(v){const u=unitNow(),[,name,sym]=UNITS.find(x=>x[0]===u)||UNITS[0],s=money(v,2),num=s.replace(sym,'').replace(/^[\s\u00a0]+/,'');
+  return `<button type="button" class="unit-btn" data-act="unitmenu" popovertarget="unitMenu" aria-haspopup="menu" aria-label="Valuta: ${name}. Wijzigen">${sym}</button> <span class="m">${num}</span>`}
+function unitMenuHTML(){const u=settings.unit||'EUR';
+  return `<div id="unitMenu" class="unit-menu" popover role="menu" aria-label="Bedragen tonen in">${UNITS.map(([k,n,sy])=>`<button type="button" role="menuitemradio" aria-checked="${u===k}" data-unit="${k}" class="${u===k?'on':''}"><span class="unit-sym" aria-hidden="true">${sy}</span>${n}</button>`).join('')}</div>`}
+const hasPopover=typeof HTMLElement!=='undefined'&&HTMLElement.prototype.hasOwnProperty('popover');
+function placeUnitMenu(){const m=$('#unitMenu'),b=$('.unit-btn');if(!m||!b)return;
+  m.addEventListener('toggle',e=>{if(e.newState!=='open')return;const r=b.getBoundingClientRect(),w=m.offsetWidth;
+    m.style.top=Math.round(r.bottom+6)+'px';m.style.left=Math.round(Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2)))+'px';
+    (m.querySelector('[aria-checked=true]')||m.querySelector('button'))?.focus()})}
 async function setUnit(u,btn){settings.unit=u;saveSettings();document.querySelectorAll('[data-unit]').forEach(b=>b.classList.toggle('on',b.dataset.unit===u));
   if(u!=='EUR'){toast('Koers ophalen…');await refreshFx();if(u==='BTC')await ensureBtcHist();if(!(fx.btcEur>0)){toast('Koers niet beschikbaar; bedragen blijven in euro tot de koers binnen is')}}
-  render();toast(u==='EUR'?'Bedragen in euro':u==='USD'?'Bedragen in dollar':'Bedragen in bitcoin')}
+  const fromMenu=!!btn?.closest?.('#unitMenu');try{$('#unitMenu')?.hidePopover?.()}catch(e){}
+  render();if(fromMenu)$('.unit-btn')?.focus();toast(u==='EUR'?'Bedragen in euro':u==='USD'?'Bedragen in dollar':'Bedragen in bitcoin')}
 async function refreshPrices(force){
   const ids=priceIds();if(locked||!ids.length||priceBusy)return;
   priceBusy=true;cgState={s:'busy',msg:''};updBadges();
@@ -582,7 +594,7 @@ function renderHome(){
   $('#view').innerHTML=`${issuesBanner()}${sinceCard()}${inEUR(planDueCard)}<div class="home-grid"><div class="panel">
   <section class="hero">
     <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
-    <div class="big m" id="heroVal">${money(p.hasCash?p.total:p.value,2)}</div>
+    <div class="big" id="heroVal">${heroValHTML(p.hasCash?p.total:p.value)}</div>${unitMenuHTML()}
     <div id="heroPl"><button type="button" class="pl-toggle ${cls(plV)}" data-act="plmode"><span class="m">${signed(plV)}</span> <span>(${pct(plP)})</span> <small>${mode==='24h'?'24 uur':'Totaal ongerealiseerd'} ⇄</small></button></div>
     <div class="sub" id="heroSub">${heroSub(p.hasCash,p.value,p.cash,p.cost,p.realized)}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
   </section>
@@ -601,7 +613,7 @@ function renderHome(){
       <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}
   ${watchSection()}`;
-  drawPortfolioChart();
+  drawPortfolioChart();placeUnitMenu();
 }
 /* ---------- import uit Bitvavo (CSV) ---------- */
 // Kolommen: Timezone, Date, Time, Type, Currency, Amount, Quote Currency, Quote Price, Received / Paid Currency,
@@ -1691,7 +1703,7 @@ async function drawPortfolioChart(){
   chartAlt(wrap,as?assetAlt(g):pfAlt(res));
   $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
   const hv=$('#heroVal'),hp=$('#heroPl'),hs=$('#heroSub'),oV=hv.innerHTML,oP=hp.innerHTML,oS=hs?hs.innerHTML:'',wc=hasCashTx();
-  pfHover(g,p=>{const pl=p[1]-p[2];hv.textContent=money(p[1],2);if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
+  pfHover(g,p=>{const pl=p[1]-p[2];hv.innerHTML=heroValHTML(p[1]);if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
       hp.innerHTML=`<span class="static pl-toggle ${cls(pl)}"><span class="m">${signed(pl)}</span> <span>(${pct(p[2]>0?pl/p[2]*100:null)})</span> <small>${pfWhen(p)}</small></span>`;
       if(as&&leg)leg.innerHTML=assetLegend(g,g.pts.indexOf(p))},
     ()=>{hv.innerHTML=oV;hp.innerHTML=oP;if(hs)hs.innerHTML=oS;if(as&&leg)leg.innerHTML=assetLegend(g,g.pts.length-1)});
@@ -2305,6 +2317,7 @@ document.addEventListener('click',e=>{
     case 'zoomret':renderRetZoom();break;
     case 'zoomclose':closeZoom();break;
     case 'pzoom':renderPfZoom();break;
+    case 'unitmenu':if(!hasPopover){const i=UNITS.findIndex(x=>x[0]===(settings.unit||'EUR'));setUnit(UNITS[(i+1)%3][0],a)}break;
     case 'pview':settings.pView=a.dataset.v;saveSettings();document.querySelectorAll('[data-act=pview]').forEach(b=>{const on=b.dataset.v===a.dataset.v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});drawPortfolioChart();if($('#pzchart'))drawPfZoom();break;
     case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
     case 'doimport':doImport();break;
@@ -2394,7 +2407,7 @@ else start();
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   let hadCtrl=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtrl)showUpdate();hadCtrl=true});
-  navigator.serviceWorker.register('sw.js').then(reg=>{
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
     const chk=()=>reg.update().catch(()=>{});setInterval(chk,30*60e3);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
   }).catch(()=>{});
