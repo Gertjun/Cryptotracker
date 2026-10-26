@@ -6,6 +6,40 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v82 – 26 oktober 2026
+Portfoliografiek: extra weergave "% per munt".
+
+### Toegevoegd
+- **Derde stand in de schakelaar:** de schakelaar heet nu **Totaal · € per munt · % per munt**.
+- **% per munt:** per munt een lijn met hoeveel de koers sinds het begin van de gekozen periode is gestegen of gedaald.
+  - Alle lijnen beginnen op 0%, dus je ziet direct welke munt het in die periode het best en het slechtst deed. Dat werkt ook bij korte periodes als 1U en 24U, waar "€ per munt" vlak blijft.
+  - Het gaat om de koers zelf, los van wat je kocht of verkocht. Een munt die je halverwege de periode kocht, staat er dus vanaf het begin van de periode in.
+  - De 0%-lijn is iets duidelijker getekend en de y-as toont percentages.
+  - De legenda toont het percentage per munt in groen of rood, nu of op het moment waar je muis of vinger staat.
+  - Je zes grootste munten krijgen een lijn. Cash en "Overig" staan niet in deze weergave.
+- **In bitcoin-weergave:** de percentages zijn ten opzichte van bitcoin.
+
+### Gewijzigd
+- **Naam van de stand:** "Per munt" heet nu "€ per munt".
+
+## v81 – 26 oktober 2026
+Portfoliografiek: nieuwe weergave "Per munt", met een lijn voor elke munt.
+
+### Toegevoegd
+- **Schakelaar "Totaal | Per munt"** onder de grafiek op het Overzicht, naast Vergroten. Ook in het vergrote venster.
+  - **Totaal:** de grafiek zoals je hem kende, met de totale waarde en de stippellijn voor geïnvesteerd of netto gestort.
+  - **Per munt:** een gekleurde lijn per munt met de waarde van wat je op dat moment had. Aankopen en verkopen zie je als sprong. Cash staat erbij als grijze stippellijn.
+    - De zes grootste munten krijgen een eigen lijn, in dezelfde kleuren als de verdelingsbalk. Kleinere munten staan samen onder "Overig".
+- **Legenda onder de grafiek:** de waarde per munt nu. Beweeg je met de muis of vinger over de grafiek, dan toont de legenda de waarden op dat moment, en bovenaan staat het totaal.
+- **Werkt overal:** voor alle periodes (1U tot Max), in euro, dollar en bitcoin.
+- **Onthoudt je keuze:** de app opent de volgende keer in de weergave die je het laatst koos.
+
+### Technisch
+- **Geen extra koersverzoeken:** de waarde per munt komt uit dezelfde berekening als de totale waarde.
+- **Toegankelijkheid:**
+  - De schakelaar geeft met `aria-pressed` aan welke weergave aan staat, en de focus blijft na het wisselen op de knop.
+  - Een schermlezer leest per munt de waarde aan het begin en eind van de periode voor.
+
 ## v80 – 24 oktober 2026
 Weergave voor tablets in portretstand (bijvoorbeeld een iPad rechtop).
 

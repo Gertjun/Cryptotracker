@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='80 (24 okt 2026)';
+const APP_VERSION='82 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -376,6 +376,7 @@ async function fetchChart(id,days){
 /* ---------- weergave ---------- */
 // Na het opnieuw opbouwen van het scherm de toetsenbordfocus terugzetten op hetzelfde element
 function focusKey(e){if(!e||e===document.body)return null;if(e.id)return '#'+CSS.escape(e.id);
+  if(e.dataset?.act==='pview')return `[data-act="pview"][data-v="${CSS.escape(e.dataset.v)}"]`;
   for(const k of ['act','sort','prange','range','tf','rp','theme','cal','type'])if(e.dataset?.[k]!=null)return `[data-${k}="${CSS.escape(e.dataset[k])}"]`;
   if(e.getAttribute?.('href'))return `a[href="${CSS.escape(e.getAttribute('href'))}"]`;
   const row=e.closest?.('[data-tx],[data-coin],[data-goal]');if(row){const k=row.dataset.tx!=null?'tx':row.dataset.coin!=null?'coin':'goal';return `[data-${k}="${CSS.escape(row.dataset[k])}"] .rowlink`}
@@ -585,7 +586,7 @@ function renderHome(){
     <div id="heroPl"><button type="button" class="pl-toggle ${cls(plV)}" data-act="plmode"><span class="m">${signed(plV)}</span> <span>(${pct(plP)})</span> <small>${mode==='24h'?'24 uur':'Totaal ongerealiseerd'} ⇄</small></button></div>
     <div class="sub" id="heroSub">${heroSub(p.hasCash,p.value,p.cash,p.cost,p.realized)}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
   </section>
-  <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div>
+  <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div><div id="plegend"></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${PRANGES.map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
   <div class="period" id="pperiod"></div></div>
   <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${inEUR(()=>goalsCard(true))}${kv}</div></div>
@@ -1561,19 +1562,20 @@ async function portfolioSeries(range,unit){
   const withCash=hasCashTx(),cev=withCash?TX().map(x=>[txTime(x),...cashEffect(x)]).sort((a,b)=>a[0]-b[0]):[];
   let ci=0,cumC=0,cumD=0;
   const pts=grid.map(t=>{
-    let value=0,inv=0,real=0;
+    let value=0,inv=0,real=0;const coins={},pxs={};
     for(const id of ids){
-      const st=states[id],i=lastAtOrBefore(st,t);if(i<0)continue;
-      const [,q,cost,r]=st[i];inv+=cost;real+=r;if(q<=1e-12)continue;
       let px;
       if(t===now||!charts[id]?.length)px=prices[id]?.price;
       else{const c=charts[id],j=lastAtOrBefore(c,t);px=c[Math.max(0,j)][1]}
       if(px==null){const c=charts[id];px=c?.length?c[c.length-1][1]:0}
-      value+=q*px;
+      if(px>0)pxs[id]=px;   // koers, ook als je de munt (nog) niet had: voor de weergave '% per munt'
+      const st=states[id],i=lastAtOrBefore(st,t);if(i<0)continue;
+      const [,q,cost,r]=st[i];inv+=cost;real+=r;if(q<=1e-12)continue;
+      value+=q*px;coins[id]=q*px;
     }
-    const k=K(t);
-    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2]*K(cev[ci][0]);ci++}return[t,(value+cumC)*k,cumD,0,{v:value*k,cash:cumC*k,inv,real}]}
-    return[t,value*k,inv,real,{v:value*k,cash:0,inv,real}];
+    const k=K(t);for(const id in coins)coins[id]*=k;for(const id in pxs)pxs[id]*=k;
+    if(withCash){while(ci<cev.length&&cev[ci][0]<=t){cumC+=cev[ci][1];cumD+=cev[ci][2]*K(cev[ci][0]);ci++}return[t,(value+cumC)*k,cumD,0,{v:value*k,cash:cumC*k,inv,real,coins,pxs}]}
+    return[t,value*k,inv,real,{v:value*k,cash:0,inv,real,coins,pxs}];
   });
   return{pts,partial:!!err,from:range==='max'&&first<t0-2*DAY?t0:null};
   }finally{UNIT_ON=U0}
@@ -1641,19 +1643,59 @@ function pfHover(g,onPoint,onReset){
 const pfWhen=p=>{const d=new Date(p[0]),s=shortRange(settings.pRange);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:s?undefined:'numeric'})+(s?' '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')};
 function pfAlt(res){const a=res.pts[0],z=res.pts[res.pts.length-1],ch=a[1]?(z[1]/a[1]-1)*100:null;
   return `Grafiek portfoliowaarde, ${RANGE_L[settings.pRange]||''}: van ${money(a[1],2)} naar ${money(z[1],2)}${ch!=null?' ('+pct(ch)+')':''}. Geïnvesteerd aan het eind: ${money(z[2],2)}.`}
+// Grafiekweergave "Per munt": een lijn per munt (de 6 grootste, de rest samen als Overig) en voor cash
+const PAL=['#4f8cff','#1fd17a','#f5b942','#b56cff','#ff7a59','#34c6d3','#8b93a5'];
+function assetSeries(res,pct){
+  const pts=res.pts,last=pts[pts.length-1][4]?.coins||{},ids=new Set();pts.forEach(p=>Object.keys(p[4]?.coins||{}).forEach(id=>ids.add(id)));
+  const order=[...ids].filter(id=>pts.some(p=>(p[4].coins[id]||0)>0.005)).sort((a,b)=>(last[b]||0)-(last[a]||0)||(Math.max(...pts.map(p=>p[4].coins[b]||0))-Math.max(...pts.map(p=>p[4].coins[a]||0))));
+  const top=order.slice(0,6),rest=order.slice(6);
+  if(pct)return top.map((id,i)=>{const px=pts.map(p=>p[4].pxs?.[id]),b=px.find(x=>x>0);return b?{id,name:allocKeyInfo(id).sym,col:PAL[i],v:px.map(x=>x>0?(x/b-1)*100:null)}:null}).filter(Boolean);
+  const S=top.map((id,i)=>({id,name:allocKeyInfo(id).sym,col:PAL[i],v:pts.map(p=>p[4].coins[id]||0)}));
+  if(rest.length)S.push({id:'__rest',name:'Overig',col:PAL[6],v:pts.map(p=>rest.reduce((s,id)=>s+(p[4].coins[id]||0),0))});
+  if(hasCashTx()&&pts.some(p=>Math.abs(p[4].cash)>0.005))S.push({id:'__cash',name:'Cash',col:'var(--muted)',dash:true,v:pts.map(p=>p[4].cash)});
+  return S}
+function paintAssets(wrap,res,o){
+  const pts=res.pts,big=!!o.big;
+  if(pts.length<2){wrap.innerHTML='<div class="chart-msg">Nog te weinig gegevens</div>';return null}
+  const pc=!!o.pct,S=assetSeries(res,pc);if(!S.length){wrap.innerHTML='<div class="chart-msg">Nog geen bezit in deze periode</div>';return null}
+  const W=360,H=170,pt=10,pb=10,t0=pts[0][0],t1=pts[pts.length-1][0],all=S.flatMap(s=>s.v).filter(v=>v!=null);
+  let lo=Math.min(0,...all),hi=Math.max(0,...all);if(hi-lo<1e-9)hi=lo+1;const pd=(hi-lo)*.06;hi+=pd;if(pc&&lo<0)lo-=pd;
+  const X=t=>(t-t0)/(t1-t0||1)*W,Y=v=>pt+(1-(v-lo)/(hi-lo))*(H-pt-pb);
+  const f=pc?1:unitF(),A=axisTicks(lo*f,hi*f,big?6:4),ticks=A.t.map(v=>v/f).filter(v=>Y(v)>=2&&Y(v)<=H-2);
+  const pLbl=v=>(v>0?'+':v<0?'−':'')+new Intl.NumberFormat('nl-NL',{maximumFractionDigits:A.step<1?1:0}).format(Math.abs(v))+'%';
+  const labs=ticks.map(v=>pc?pLbl(v):tickLbl(v*f,A.step)),aw=Math.max(...labs.map(l=>l.length),4);
+  const grid=ticks.map(v=>`<line class="pc-grid${pc&&Math.abs(v)<1e-9?' z':''}" x1="0" x2="${W}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}" vector-effect="non-scaling-stroke"/>`).join('');
+  const lines=S.map(s=>`<path d="${s.v.map((v,i)=>v==null?'':(i&&s.v[i-1]!=null?'L':'M')+X(pts[i][0]).toFixed(1)+' '+Y(v).toFixed(1)).join('')}" fill="none" style="stroke:${s.col}" stroke-width="2" ${s.dash?'stroke-dasharray="4 4" ':''}vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`).join('');
+  const xs=big?[0,.25,.5,.75,1].map(k=>t0+k*(t1-t0)):[];
+  wrap.innerHTML=`<div class="pc"><div class="pc-plot"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${grid}${lines}
+    <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/></svg>${big?`<div class="pc-x" aria-hidden="true">${xs.map((t,i)=>`<span style="left:${(i*25)}%">${xLbl(t,settings.pRange)}</span>`).join('')}</div>`:''}</div>
+  <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
+  const tr=p=>p[1]-p[2]+p[3];
+  return{pts,X,t0,t1,S,pct:pc,dPL:tr(pts[pts.length-1])-tr(pts[0]),plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
+}
+// Legenda met de waarde per munt op het gekozen moment (standaard: nu)
+function assetLegend(g,i){return `<ul class="pa-legend">${g.S.map(s=>`<li><i style="background:${s.col}"${s.dash?' class="dash"':''}></i>${esc(s.name)} <b class="${g.pct?cls(s.v[i]):'m'}">${g.pct?pct1(s.v[i]):money(s.v[i],2)}</b></li>`).join('')}</ul>`}
+function assetAlt(g){const n=g.pts.length-1;return g.pct?`Grafiek koersverandering per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} ${pct1(s.v[n])}`).join('; ')}.`
+  :`Grafiek waarde per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} van ${money(s.v[0],2)} naar ${money(s.v[n],2)}`).join('; ')}.`}
+const pviewSeg=()=>`<span class="seg mini pview" role="group" aria-label="Grafiekweergave">${[['total','Totaal'],['assets','€ per munt'],['pct','% per munt']].map(([v,l])=>`<button type="button" data-act="pview" data-v="${v}" class="${(settings.pView||'total')===v?'on':''}" aria-pressed="${(settings.pView||'total')===v}">${l}</button>`).join('')}</span>`;
 async function drawPortfolioChart(){
   const my=++pChartTok;if(!$('#pchart'))return;chartAlt($('#pchart'),'');
   let res;
   try{res=await portfolioSeries(settings.pRange,true)}catch(e){if(my===pChartTok&&$('#pchart'))$('#pchart').innerHTML=`<div class="chart-msg">${esc(e.message||'Grafiek niet beschikbaar')}</div>`;return}
   const wrap=$('#pchart');if(my!==pChartTok||!wrap)return;
   return inUnit(()=>{   // tekenen in de gekozen weergave-eenheid
-  const g=paintPf(wrap,res,{my});if(!g)return;
-  chartAlt(wrap,pfAlt(res));
-  $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}<button type="button" class="link zoom-hint pz-open" data-act="pzoom">Vergroten <span aria-hidden="true">⤢</span></button>`;
+  const as=['assets','pct'].includes(settings.pView),g=as?paintAssets(wrap,res,{pct:settings.pView==='pct'}):paintPf(wrap,res,{my}),leg=$('#plegend');
+  if(leg)leg.innerHTML=g&&as?assetLegend(g,g.pts.length-1):'';
+  if(!g){$('#pperiod').innerHTML=pviewSeg();return}
+  chartAlt(wrap,as?assetAlt(g):pfAlt(res));
+  const pf0=document.activeElement?.closest?.('#pperiod')?focusKey(document.activeElement):null;
+  $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}${pviewSeg()}<button type="button" class="link zoom-hint pz-open" data-act="pzoom">Vergroten <span aria-hidden="true">⤢</span></button>`;
+  if(pf0)$('#pperiod '+pf0)?.focus();
   const hv=$('#heroVal'),hp=$('#heroPl'),hs=$('#heroSub'),oV=hv.innerHTML,oP=hp.innerHTML,oS=hs?hs.innerHTML:'',wc=hasCashTx();
   pfHover(g,p=>{const pl=p[1]-p[2];hv.textContent=money(p[1],2);if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
-      hp.innerHTML=`<span class="static pl-toggle ${cls(pl)}"><span class="m">${signed(pl)}</span> <span>(${pct(p[2]>0?pl/p[2]*100:null)})</span> <small>${pfWhen(p)}</small></span>`},
-    ()=>{hv.innerHTML=oV;hp.innerHTML=oP;if(hs)hs.innerHTML=oS});
+      hp.innerHTML=`<span class="static pl-toggle ${cls(pl)}"><span class="m">${signed(pl)}</span> <span>(${pct(p[2]>0?pl/p[2]*100:null)})</span> <small>${pfWhen(p)}</small></span>`;
+      if(as&&leg)leg.innerHTML=assetLegend(g,g.pts.indexOf(p))},
+    ()=>{hv.innerHTML=oV;hp.innerHTML=oP;if(hs)hs.innerHTML=oS;if(as&&leg)leg.innerHTML=assetLegend(g,g.pts.length-1)});
   })}
 // Vergroot venster met de portfoliografiek
 function renderPfZoom(){
@@ -1661,8 +1703,9 @@ function renderPfZoom(){
   const hc=hasCashTx();
   z.innerHTML=`<div class="zoom-in"><div class="zoom-top"><h2>${hc?'Totale waarde':'Portfoliowaarde'}</h2><button type="button" class="icon-btn" data-act="zoomclose" aria-label="Sluiten"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${PRANGES.map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
+  <div class="pz-view">${pviewSeg()}</div>
   <div class="card"><div class="pz-info" id="pzInfo"></div><div class="chart-wrap pz" id="pzchart"><div class="chart-msg">Grafiek laden…</div></div>
-  <p class="mt-8 hint mb-0">Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U, 4U en 24U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.</p></div></div>`;
+  <p class="mt-8 hint mb-0" id="pzHint"></p></div></div>`;
   titleDialog(z,'zoomTitle');if(fresh&&!z.open){try{z.showModal()}catch(e){z.setAttribute('open','')}}
   drawPfZoom();
 }
@@ -1671,10 +1714,15 @@ async function drawPfZoom(){
   const my=++pzTok;let res;const el=()=>$('#pzchart');if(!el())return;
   try{res=await portfolioSeries(settings.pRange,true)}catch(e){if(my===pzTok&&el())el().innerHTML=`<div class="chart-msg">${esc(e.message||'Grafiek niet beschikbaar')}</div>`;return}
   const wrap=el();if(my!==pzTok||!wrap)return;
-  inUnit(()=>{const g=paintPf(wrap,res,{my:'z'+my,big:true});if(!g)return;chartAlt(wrap,pfAlt(res));
+  inUnit(()=>{const as=['assets','pct'].includes(settings.pView),g=as?paintAssets(wrap,res,{big:true,pct:settings.pView==='pct'}):paintPf(wrap,res,{my:'z'+my,big:true});if(!g){$('#pzInfo').innerHTML='';return}chartAlt(wrap,as?assetAlt(g):pfAlt(res));
     const info=$('#pzInfo'),line=p=>{const pl=p[1]-p[2];return `<span class="label">${p===g.pts[g.pts.length-1]?'Nu':pfWhen(p)}</span><b class="m">${money(p[1],2)}</b><span class="m ${cls(pl)}">${signed(pl)} (${pct(p[2]>0?pl/p[2]*100:null)})</span>`};
     const def=()=>`${line(g.pts[g.pts.length-1])}<span class="label">Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>`;
-    info.innerHTML=def();pfHover(g,p=>{info.innerHTML=line(p)},()=>{info.innerHTML=def()})});
+    const L=p=>as?assetLegend(g,g.pts.indexOf(p)):'',hc=hasCashTx();
+    $('#pzHint').textContent='Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. '+(as
+      ?(g.pct?'Elke lijn is hoeveel de koers van die munt sinds het begin van de periode is gestegen of gedaald, los van wat je kocht of verkocht. Zo zie je welke munt het in deze periode het best deed. Alleen je zes grootste munten staan erin.'
+        :`Elke lijn is de waarde van wat je op dat moment van die munt had; aan- en verkopen zie je als sprong.${hc?' Cash is de stippellijn.':''} De zes grootste munten krijgen een eigen lijn, de rest staat samen onder Overig.`)
+      :`De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U, 4U en 24U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.`);
+    info.innerHTML=def()+L(g.pts[g.pts.length-1]);pfHover(g,p=>{info.innerHTML=line(p)+L(p)},()=>{info.innerHTML=def()+L(g.pts[g.pts.length-1])})});
 }
 
 let chartToken=0;
@@ -2258,6 +2306,7 @@ document.addEventListener('click',e=>{
     case 'zoomret':renderRetZoom();break;
     case 'zoomclose':closeZoom();break;
     case 'pzoom':renderPfZoom();break;
+    case 'pview':settings.pView=a.dataset.v;saveSettings();document.querySelectorAll('[data-act=pview]').forEach(b=>{const on=b.dataset.v===a.dataset.v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});drawPortfolioChart();if($('#pzchart'))drawPfZoom();break;
     case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
     case 'doimport':doImport();break;
     case 'cancelimport':imp=null;closeSheet();break;

@@ -532,6 +532,7 @@ fieldset.ranges{padding:0}
 .pc-axis-in{position:relative;height:100%}
 .pc-axis span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap;line-height:1}
 .pc-grid{stroke:var(--line);stroke-width:1}
+.pc-grid.z{stroke:var(--muted)}
 .pz .pc-plot,.pz .pc-axis{padding-bottom:22px}
 .pc-x{position:absolute;left:0;right:0;bottom:0;height:16px;font-size:11px;color:var(--muted)}
 .pc-x span{position:absolute;transform:translateX(-50%);white-space:nowrap}
@@ -574,6 +575,18 @@ fieldset.ranges{padding:0}
   .tx-sum .stat:first-child{grid-column:auto}
   .rep-tabs{max-width:560px}
 }
+.period .seg.mini.pview{margin:0;display:inline-flex}
+.seg.mini.pview button{padding:4px 12px;min-height:32px;flex:none}
+.pz-view{margin:-6px 0 12px}.pz-view .seg{display:inline-flex}
+.pa-legend{list-style:none;margin:2px 0 10px;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;font-size:13px;color:var(--muted)}
+.pa-legend li{display:flex;align-items:center;gap:6px}
+.pa-legend b{color:var(--text);font-weight:600}
+.pa-legend b.up{color:var(--green)}.pa-legend b.down{color:var(--red)}
+.pa-legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.pa-legend i.dash{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 7px)!important}
+.pz-info .pa-legend{flex-basis:100%;justify-content:flex-start;margin:4px 0 0}
+.pz-info .pa-legend b{font-size:14px}
+@media (min-width:1000px){.pa-legend{justify-content:flex-start}}
 </style>
 </head>
 <body>
