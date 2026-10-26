@@ -7,12 +7,21 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.7.0`) en de naam van het zip-bestand (`crypto-tracker-3.7.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.7.1`) en de naam van het zip-bestand (`crypto-tracker-3.7.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.7.1 – 26 oktober 2026
+Elk blad heeft een sluitknop.
+
+### Opgelost
+- **Instellingen niet te sluiten op de iPhone:** een blad sloot alleen als je erbuiten tikte. Bij een lang blad zoals Instellingen bleef daar op de iPhone bijna geen ruimte over, waardoor je het niet meer dicht kreeg.
+- **Sluitknop (✕) rechtsboven:** alle bladen hebben die nu, ook Instellingen, het transactieformulier en de import. De knop blijft in beeld als je naar beneden scrolt.
+- **Andere manieren om te sluiten:** buiten het blad tikken en Esc op de laptop werken nog steeds.
+- **Focus na sluiten:** die gaat terug naar de knop waarmee je het blad opende.
 
 ## 3.7.0 – 26 oktober 2026
 Versienummer naast de appnaam, met een knop als er een update klaarstaat.

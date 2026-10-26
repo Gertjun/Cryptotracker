@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.7.0 (26 okt 2026)';
+const APP_VERSION='3.7.1 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -1892,7 +1892,9 @@ function titleDialog(d,id){const h=d.querySelector('h1,h2,h3');d.querySelectorAl
 function enterHints(root){root.querySelectorAll('form.js-form input:not([enterkeyhint]):not([type=hidden])').forEach(i=>i.setAttribute('enterkeyhint','done'))}
 document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!e.target.matches?.('#f_search,#w_search'))return;e.preventDefault();
   const first=$('#f_results [data-pick] .rowlink,#f_results [data-wpick] .rowlink');if(first)first.click()});
-function openSheet(html){const d=$('#sheet');$('#sheetCard').innerHTML='<div class="grab" aria-hidden="true"></div>'+html;enterHints($('#sheetCard'));titleDialog(d,'sheetTitle');
+// Elk blad heeft een sluitknop rechtsboven die bij scrollen in beeld blijft (op de iPhone was buiten het blad tikken soms niet mogelijk)
+const SHEET_X='<div class="sheet-x-wrap"><button type="button" class="icon-btn sheet-x" data-act="closesheet" aria-label="Sluiten"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>';
+function openSheet(html){const d=$('#sheet');$('#sheetCard').innerHTML='<div class="grab" aria-hidden="true"></div>'+SHEET_X+html;enterHints($('#sheetCard'));titleDialog(d,'sheetTitle');
   if(!d.open){sheetReturn=rememberFocus();d.classList.remove('hidden');try{d.showModal()}catch(e){d.setAttribute('open','')}}
   document.body.style.overflow='hidden'}
 function closeSheet(){const d=$('#sheet');if(!d.open&&d.classList.contains('hidden'))return;d.classList.add('hidden');if(d.open)d.close();
@@ -2363,6 +2365,7 @@ document.addEventListener('click',e=>{
     case 'zoomret':renderRetZoom();break;
     case 'zoomclose':closeZoom();break;
     case 'pzoom':renderPfZoom();break;
+    case 'closesheet':closeSheet();break;
     case 'unitmenu':if(!hasPopover){const i=UNITS.findIndex(x=>x[0]===(settings.unit||'EUR'));setUnit(UNITS[(i+1)%3][0],a)}break;
     case 'pview':settings.pView=a.dataset.v;saveSettings();document.querySelectorAll('[data-act=pview]').forEach(b=>{const on=b.dataset.v===a.dataset.v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});drawPortfolioChart();if($('#pzchart'))drawPfZoom();break;
     case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
