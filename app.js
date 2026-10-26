@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.5.2 (26 okt 2026)';
+const APP_VERSION='3.5.4 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -1667,11 +1667,13 @@ function assetSeries(res,pct){
   const pts=res.pts,last=pts[pts.length-1][4]?.coins||{},ids=new Set();pts.forEach(p=>Object.keys(p[4]?.coins||{}).forEach(id=>ids.add(id)));
   const order=[...ids].filter(id=>pts.some(p=>(p[4].coins[id]||0)>0.005)).sort((a,b)=>(last[b]||0)-(last[a]||0)||(Math.max(...pts.map(p=>p[4].coins[b]||0))-Math.max(...pts.map(p=>p[4].coins[a]||0))));
   const top=order.slice(0,6),rest=order.slice(6);
-  if(pct)return top.map((id,i)=>{const px=pts.map(p=>p[4].pxs?.[id]),b=px.find(x=>x>0);return b?{id,name:allocKeyInfo(id).sym,col:PAL[i],v:px.map(x=>x>0?(x/b-1)*100:null)}:null}).filter(Boolean);
+  // % per munt: een munt telt pas mee vanaf het moment dat je hem had (0% = koers op dat moment); zolang je hem niet had, geen lijn
+  if(pct)return top.map((id,i)=>{const px=pts.map(p=>(p[4].coins?.[id]||0)>1e-9?p[4].pxs?.[id]:null),b=px.find(x=>x>0);return b?{id,name:allocKeyInfo(id).sym,col:PAL[i],v:px.map(x=>x>0?(x/b-1)*100:null)}:null}).filter(Boolean);
   const S=top.map((id,i)=>({id,name:allocKeyInfo(id).sym,col:PAL[i],v:pts.map(p=>p[4].coins[id]||0)}));
   if(rest.length)S.push({id:'__rest',name:'Overig',col:PAL[6],v:pts.map(p=>rest.reduce((s,id)=>s+(p[4].coins[id]||0),0))});
   if(hasCashTx()&&pts.some(p=>Math.abs(p[4].cash)>0.005))S.push({id:'__cash',name:'Cash',col:'var(--muted)',dash:true,v:pts.map(p=>p[4].cash)});
   return S}
+let ptClip=0;
 function paintAssets(wrap,res,o){
   const pts=res.pts,big=!!o.big;
   if(pts.length<2){wrap.innerHTML='<div class="chart-msg">Nog te weinig gegevens</div>';return null}
@@ -1686,8 +1688,13 @@ function paintAssets(wrap,res,o){
   const labs=ticks.map(v=>pc?pLbl(v):tickLbl(v*f,A.step)),aw=Math.max(...labs.map(l=>l.length),4);
   const grid=ticks.map(v=>`<line class="pc-grid${pc&&Math.abs(v)<1e-9?' z':''}" x1="0" x2="${W}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}" vector-effect="non-scaling-stroke"/>`).join('');
   const lines=S.map(s=>`<path d="${s.v.map((v,i)=>v==null?'':(i&&s.v[i-1]!=null?'L':'M')+X(pts[i][0]).toFixed(1)+' '+Y(v).toFixed(1)).join('')}" fill="none" style="stroke:${s.col}" stroke-width="2" ${s.dash?'stroke-dasharray="4 4" ':''}vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`).join('');
+  // '% Totaal': boven 0% groen, eronder rood (zelfde lijn twee keer, elk afgeknipt op de 0%-lijn)
+  let lines2=lines;if(o.tot){const y0=Math.max(-10,Math.min(H+10,Y(0))).toFixed(2),id='pt'+(++ptClip),d=lines.match(/ d="([^"]*)"/)[1];
+    lines2=`<defs><clipPath id="${id}a"><rect x="0" y="-10" width="${W}" height="${(+y0+10).toFixed(2)}"/></clipPath><clipPath id="${id}b"><rect x="0" y="${y0}" width="${W}" height="${(H+10-y0).toFixed(2)}"/></clipPath></defs>
+    <path d="${d}" fill="none" style="stroke:#1fd17a" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" clip-path="url(#${id}a)"/>
+    <path d="${d}" fill="none" style="stroke:#ff5a5f" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" clip-path="url(#${id}b)"/>`}
   const xs=big?[0,.25,.5,.75,1].map(k=>t0+k*(t1-t0)):[];
-  wrap.innerHTML=`<div class="pc"><div class="pc-plot"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${grid}${lines}
+  wrap.innerHTML=`<div class="pc"><div class="pc-plot"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${grid}${lines2}
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/></svg>${big?`<div class="pc-x" aria-hidden="true">${xs.map((t,i)=>`<span style="left:${(i*25)}%">${xLbl(t,settings.pRange)}</span>`).join('')}</div>`:''}</div>
   <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
   const tr=p=>p[1]-p[2]+p[3];
@@ -1737,7 +1744,7 @@ async function drawPfZoom(){
     const def=()=>`${line(g.pts[g.pts.length-1])}<span class="label">Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>`;
     const L=p=>as?assetLegend(g,g.pts.indexOf(p)):'',hc=hasCashTx();
     $('#pzHint').textContent='Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. '+(as
-      ?(g.tot?'De lijn is op elk moment hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd, in procenten. Boven 0% sta je in de plus. Het laatste punt is gelijk aan het percentage bij Totaal ongerealiseerd.':g.pct?'Elke lijn is hoeveel de koers van die munt sinds het begin van de periode is gestegen of gedaald, los van wat je kocht of verkocht. Zo zie je welke munt het in deze periode het best deed. Alleen je zes grootste munten staan erin.'
+      ?(g.tot?'De lijn is op elk moment hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd, in procenten. Boven 0% sta je in de plus. Het laatste punt is gelijk aan het percentage bij Totaal ongerealiseerd.':g.pct?'Elke lijn is hoeveel de koers van die munt is gestegen of gedaald sinds het begin van de periode, of sinds je hem kocht als dat later was. Zolang je een munt niet had, staat er geen lijn. Alleen je zes grootste munten staan erin.'
         :`Elke lijn is de waarde van wat je op dat moment van die munt had; aan- en verkopen zie je als sprong.${hc?' Cash is de stippellijn.':''} De zes grootste munten krijgen een eigen lijn, de rest staat samen onder Overig.`)
       :`De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U, 4U en 24U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.`);
     info.innerHTML=def()+L(g.pts[g.pts.length-1]);pfHover(g,p=>{info.innerHTML=line(p)+L(p)},()=>{info.innerHTML=def()+L(g.pts[g.pts.length-1])})});

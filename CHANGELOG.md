@@ -7,12 +7,31 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.5.2`) en de naam van het zip-bestand (`crypto-tracker-3.5.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.5.4`) en de naam van het zip-bestand (`crypto-tracker-3.5.4.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.5.4 – 26 oktober 2026
+"% per munt" telt een munt pas vanaf het moment dat je hem kocht.
+
+### Gewijzigd
+- **Start van de lijn:** bij "% per munt" begint de lijn van een munt die je binnen de gekozen periode kocht nu op 0% op het moment van je aankoop. Voorheen begon hij aan het begin van de periode, en telde een stijging of daling van vóór je aankoop dus mee.
+  - Voorbeeld: kocht je een munt halverwege de week, dan zie je bij 1W alleen hoe hij het sindsdien deed. Een koerspiek en daling van daarvoor tellen niet meer mee.
+  - Had je de munt al aan het begin van de periode, dan verandert er niets.
+  - Zolang je een munt niet had, bijvoorbeeld na een volledige verkoop, staat er geen lijn.
+- **Startpunt van 0%:** dat is de marktkoers op het moment van aankoop, net als voor de rest van de lijn.
+- **Uitleg in het vergrote venster** aangepast.
+
+## 3.5.3 – 26 oktober 2026
+"% Totaal": de lijn kleurt mee met plus en min.
+
+### Gewijzigd
+- **Kleur van de lijn:** bij "% Totaal" is de lijn nu groen waar hij boven 0% ligt en rood waar hij eronder ligt. Voorheen had de hele lijn één kleur, naar je huidige stand.
+- **Kantelpunt:** de kleur wisselt precies op de 0%-lijn, zodat je ziet wanneer je portfolio in de plus of in de min stond.
+- **Waar het geldt:** op het Overzicht en in het vergrote venster.
 
 ## 3.5.2 – 26 oktober 2026
 Nieuwe versienummering: `MAJOR.MINOR.PATCH`.
