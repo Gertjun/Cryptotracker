@@ -587,6 +587,12 @@ fieldset.ranges{padding:0}
 .pz-info .pa-legend{flex-basis:100%;justify-content:flex-start;margin:4px 0 0}
 .pz-info .pa-legend b{font-size:14px}
 @media (min-width:1000px){.pa-legend{justify-content:flex-start}}
+.pc-tools{display:flex;justify-content:flex-end;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 -2px}
+.pc-tools .seg.mini.pview{margin:0;display:inline-flex}
+.pc-tools .pz-open{float:none;margin:0;font-size:13px}
+/* rechtsboven in het grafiekblok zodra daar naast de waarde ruimte voor is; anders rechts boven de grafiek */
+@media (min-width:1000px){.home-grid>.panel{position:relative;container-type:inline-size}}
+@container (min-width:600px){.pc-tools{position:absolute;top:22px;right:26px;margin:0}}
 </style>
 </head>
 <body>

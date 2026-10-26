@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='82 (26 okt 2026)';
+const APP_VERSION='83 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -586,6 +586,7 @@ function renderHome(){
     <div id="heroPl"><button type="button" class="pl-toggle ${cls(plV)}" data-act="plmode"><span class="m">${signed(plV)}</span> <span>(${pct(plP)})</span> <small>${mode==='24h'?'24 uur':'Totaal ongerealiseerd'} ⇄</small></button></div>
     <div class="sub" id="heroSub">${heroSub(p.hasCash,p.value,p.cash,p.cost,p.realized)}${p.missing?' · koers ontbreekt voor sommige munten':''}</div>
   </section>
+  <div class="pc-tools">${pviewSeg()}<button type="button" class="link zoom-hint pz-open" data-act="pzoom">Vergroten <span aria-hidden="true">⤢</span></button></div>
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div><div id="plegend"></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${PRANGES.map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
   <div class="period" id="pperiod"></div></div>
@@ -1686,11 +1687,9 @@ async function drawPortfolioChart(){
   return inUnit(()=>{   // tekenen in de gekozen weergave-eenheid
   const as=['assets','pct'].includes(settings.pView),g=as?paintAssets(wrap,res,{pct:settings.pView==='pct'}):paintPf(wrap,res,{my}),leg=$('#plegend');
   if(leg)leg.innerHTML=g&&as?assetLegend(g,g.pts.length-1):'';
-  if(!g){$('#pperiod').innerHTML=pviewSeg();return}
+  if(!g){$('#pperiod').innerHTML='';return}
   chartAlt(wrap,as?assetAlt(g):pfAlt(res));
-  const pf0=document.activeElement?.closest?.('#pperiod')?focusKey(document.activeElement):null;
-  $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}${pviewSeg()}<button type="button" class="link zoom-hint pz-open" data-act="pzoom">Vergroten <span aria-hidden="true">⤢</span></button>`;
-  if(pf0)$('#pperiod '+pf0)?.focus();
+  $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
   const hv=$('#heroVal'),hp=$('#heroPl'),hs=$('#heroSub'),oV=hv.innerHTML,oP=hp.innerHTML,oS=hs?hs.innerHTML:'',wc=hasCashTx();
   pfHover(g,p=>{const pl=p[1]-p[2];hv.textContent=money(p[1],2);if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
       hp.innerHTML=`<span class="static pl-toggle ${cls(pl)}"><span class="m">${signed(pl)}</span> <span>(${pct(p[2]>0?pl/p[2]*100:null)})</span> <small>${pfWhen(p)}</small></span>`;

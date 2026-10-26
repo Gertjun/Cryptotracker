@@ -6,6 +6,19 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ---
 
+## v83 – 26 oktober 2026
+Weergaveschakelaar en Vergroten staan nu rechtsboven in het grafiekblok.
+
+### Gewijzigd
+- **Nieuwe plek:** de schakelaar "Totaal · € per munt · % per munt" en de knop "Vergroten" stonden onder de grafiek. Ze staan nu bovenaan, rechts.
+  - **Laptop:** rechtsboven in het grafiekblok, naast de totale waarde, als het blok daar breed genoeg voor is. Bij een smaller laptopscherm staan ze rechts direct boven de grafiek.
+  - **Telefoon en tablet:** rechts direct boven de grafiek.
+- **Onder de grafiek** staat nu alleen nog het rendement over de gekozen periode.
+- **Direct zichtbaar:** de knoppen staan er meteen en niet pas nadat de grafiek geladen is.
+
+### Technisch
+- **Plaatsing:** een container query bepaalt of de knoppen rechtsboven passen, zodat ze nooit over de totale waarde heen vallen.
+
 ## v82 – 26 oktober 2026
 Portfoliografiek: extra weergave "% per munt".
 
