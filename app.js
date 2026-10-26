@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.5.5 (26 okt 2026)';
+const APP_VERSION='3.6.0 (26 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Object.assign(d,v):d}catch(e){return d}}
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
@@ -1572,6 +1572,7 @@ async function portfolioSeries(range,unit){
     t0=hrs?Math.max(first,now-hrs*3600e3):base.length?Math.max(first,base[0][0]):first;
     grid=[t0,...base.map(p=>p[0]).filter(t=>t>t0&&t<now-60000),now];
   }
+  {const tt=TX().map(txTime).filter(t=>t>t0&&t<now-60000);if(tt.length)grid=[...new Set([...grid,...tt])].sort((a,b)=>a-b)}
   // Met cash: totale waarde (crypto + cash) afgezet tegen netto gestort; anders crypto tegen geïnvesteerd.
   const withCash=hasCashTx(),cev=withCash?TX().map(x=>[txTime(x),...cashEffect(x)]).sort((a,b)=>a[0]-b[0]):[];
   let ci=0,cumC=0,cumD=0;
@@ -1646,7 +1647,7 @@ function paintPf(wrap,res,o){
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>${big?`<div class="pc-x" aria-hidden="true">${xs.map((t,i)=>`<span style="left:${(i*25)}%">${xLbl(t,settings.pRange)}</span>`).join('')}</div>`:''}</div>
   <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
-  return{pts,X,t0,t1,dPL,plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
+  return{pts,X,Y,W,H,t0,t1,dPL,plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
 }
 function pfHover(g,onPoint,onReset){
   const move=e=>{const r=g.plot.getBoundingClientRect(),x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
@@ -1699,13 +1700,39 @@ function paintAssets(wrap,res,o){
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/></svg>${big?`<div class="pc-x" aria-hidden="true">${xs.map((t,i)=>`<span style="left:${(i*25)}%">${xLbl(t,settings.pRange)}</span>`).join('')}</div>`:''}</div>
   <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
   const tr=p=>p[1]-p[2]+p[3];
-  return{pts,X,t0,t1,S,pct:pc,tot:!!o.tot,dPL:tr(pts[pts.length-1])-tr(pts[0]),plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
+  return{pts,X,Y,W,H,t0,t1,S,pct:pc,tot:!!o.tot,dPL:tr(pts[pts.length-1])-tr(pts[0]),plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
 }
 // Legenda met de waarde per munt op het gekozen moment (standaard: nu)
 function assetLegend(g,i){return `<ul class="pa-legend">${g.S.map(s=>`<li><i style="background:${s.col}"${s.dash?' class="dash"':''}></i>${esc(s.name)} <b class="${g.pct?cls(s.v[i]):'m'}">${g.pct?pct1(s.v[i]):money(s.v[i],2)}</b></li>`).join('')}</ul>`}
 function assetAlt(g){const n=g.pts.length-1;if(g.tot)return `Grafiek resultaat ten opzichte van geïnvesteerd, ${RANGE_L[settings.pRange]||''}: van ${pct1(g.S[0].v.find(x=>x!=null))} naar ${pct1(g.S[0].v[n])}.`;return g.pct?`Grafiek resultaat per munt in procenten, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} ${pct1(s.v[n])}`).join('; ')}.`
   :`Grafiek waarde per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} van ${money(s.v[0],2)} naar ${money(s.v[n],2)}`).join('; ')}.`}
 const pviewSeg=()=>`<span class="seg mini pview" role="group" aria-label="Grafiekweergave">${[['total','€ Totaal'],['ptotal','% Totaal'],['assets','€ per munt'],['pct','% per munt']].map(([v,l])=>`<button type="button" data-act="pview" data-v="${v}" class="${(settings.pView||'total')===v?'on':''}" aria-pressed="${(settings.pView||'total')===v}">${l}</button>`).join('')}</span>`;
+// Aankoopmomenten als stip op de lijn, met een venstertje met de aankoopgegevens (muis erover of erop tikken)
+function txDots(g,mode){
+  const plot=g?.plot;if(!plot)return;const pts=g.pts;
+  const buys=TX().filter(t=>t.type==='buy'&&t.coinId&&txTime(t)>=g.t0&&txTime(t)<=g.t1);if(!buys.length)return;
+  const at=t=>{let i=Math.max(0,lastAtOrBefore(pts,t));if(pts[i][0]<t&&i<pts.length-1)i++;return i};   // eerste punt ná de aankoop
+  const groups=new Map();
+  for(const t of buys){const i=at(txTime(t));let key=i,val,col;
+    if(mode==='total')val=pts[i][1];
+    else if(mode==='ptotal')val=g.S[0].v[i];
+    else{const s=g.S.find(x=>x.id===t.coinId)||(mode==='assets'?g.S.find(x=>x.id==='__rest'):null);if(!s)continue;val=s.v[i];key=s.id+'|'+i;col=s.col}
+    if(val==null||!isFinite(val))continue;
+    const gr=groups.get(key)||{i,val,col,txs:[]};gr.txs.push(t);groups.set(key,gr)}
+  const G=[...groups.values()];if(!G.length)return;
+  plot.insertAdjacentHTML('beforeend',G.map((gr,n)=>`<span class="pdot" aria-hidden="true" data-n="${n}" style="left:${(g.X(pts[gr.i][0])/g.W*100).toFixed(3)}%;top:${(g.Y(gr.val)/g.H*100).toFixed(3)}%${gr.col?';border-color:'+gr.col:''}"></span>`).join('')+'<div class="pdot-tip" role="tooltip" hidden></div>');
+  const tip=plot.querySelector('.pdot-tip');
+  const tipHTML=gr=>inUnit(()=>`<b>${gr.txs.length>1?'Aankopen':'Aankoop'} · ${esc(fmtDate(gr.txs[0].date))}</b>`+gr.txs.map(t=>{const sym=esc((t.symbol||'').toUpperCase()||t.name||'');
+    return `<div><span class="m">${qtyf(+(+t.qty).toPrecision(8))}</span> ${sym} à <span class="m">${money(atT(t.price,t))}</span> = <b class="m">${money(atT(txTotal(t),t),2)}</b>${t.fee?` <span class="label">(kosten <span class="m">${money(atT(t.fee,t),2)}</span>)</span>`:''}${t.acct?` <span class="label">· ${esc(t.acct)}</span>`:''}</div>`}).join(''));
+  const show=d=>{const gr=G[+d.dataset.n];tip.innerHTML=tipHTML(gr);tip.hidden=false;tip.style.left=d.style.left;tip.style.top=d.style.top;
+    tip.classList.remove('below');tip.style.marginLeft='0';const r=tip.getBoundingClientRect(),pr=plot.getBoundingClientRect();
+    if(r.top<8)tip.classList.add('below');   // te dicht bij de bovenkant: venster onder de stip
+    const box=(plot.closest('.panel,.card')||document.documentElement).getBoundingClientRect(),over=r.right-Math.min(innerWidth-8,box.right-8),under=Math.max(8,box.left+8)-r.left;tip.style.marginLeft=over>0?(-over)+'px':under>0?under+'px':'0';};
+  const hide=()=>{tip.hidden=true};
+  plot.addEventListener('pointerover',e=>{const d=e.target.closest?.('.pdot');if(d)show(d)});
+  plot.addEventListener('pointerout',e=>{if(e.target.closest?.('.pdot')&&e.pointerType==='mouse')hide()});
+  plot.addEventListener('pointerdown',e=>{const d=e.target.closest?.('.pdot');if(d)show(d);else hide()});
+}
 async function drawPortfolioChart(){
   const my=++pChartTok;if(!$('#pchart'))return;chartAlt($('#pchart'),'');
   let res;
@@ -1715,6 +1742,7 @@ async function drawPortfolioChart(){
   const pv=settings.pView,as=['assets','pct','ptotal'].includes(pv),g=as?paintAssets(wrap,res,{pct:pv!=='assets',tot:pv==='ptotal'}):paintPf(wrap,res,{my}),leg=$('#plegend');
   if(leg)leg.innerHTML=g&&as?assetLegend(g,g.pts.length-1):'';
   if(!g){$('#pperiod').innerHTML='';return}
+  txDots(g,pv==='ptotal'?'ptotal':as?pv:'total');
   chartAlt(wrap,as?assetAlt(g):pfAlt(res));
   $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
   const hv=$('#heroVal'),hp=$('#heroPl'),hs=$('#heroSub'),oV=hv.innerHTML,oP=hp.innerHTML,oS=hs?hs.innerHTML:'',wc=hasCashTx();
@@ -1740,7 +1768,7 @@ async function drawPfZoom(){
   const my=++pzTok;let res;const el=()=>$('#pzchart');if(!el())return;
   try{res=await portfolioSeries(settings.pRange,true)}catch(e){if(my===pzTok&&el())el().innerHTML=`<div class="chart-msg">${esc(e.message||'Grafiek niet beschikbaar')}</div>`;return}
   const wrap=el();if(my!==pzTok||!wrap)return;
-  inUnit(()=>{const pv=settings.pView,as=['assets','pct','ptotal'].includes(pv),g=as?paintAssets(wrap,res,{big:true,pct:pv!=='assets',tot:pv==='ptotal'}):paintPf(wrap,res,{my:'z'+my,big:true});if(!g){$('#pzInfo').innerHTML='';return}chartAlt(wrap,as?assetAlt(g):pfAlt(res));
+  inUnit(()=>{const pv=settings.pView,as=['assets','pct','ptotal'].includes(pv),g=as?paintAssets(wrap,res,{big:true,pct:pv!=='assets',tot:pv==='ptotal'}):paintPf(wrap,res,{my:'z'+my,big:true});if(!g){$('#pzInfo').innerHTML='';return}txDots(g,pv==='ptotal'?'ptotal':as?pv:'total');chartAlt(wrap,as?assetAlt(g):pfAlt(res));
     const info=$('#pzInfo'),line=p=>{const pl=p[1]-p[2];return `<span class="label">${p===g.pts[g.pts.length-1]?'Nu':pfWhen(p)}</span><b class="m">${money(p[1],2)}</b><span class="m ${cls(pl)}">${signed(pl)} (${pct(p[2]>0?pl/p[2]*100:null)})</span>`};
     const def=()=>`${line(g.pts[g.pts.length-1])}<span class="label">Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>`;
     const L=p=>as?assetLegend(g,g.pts.indexOf(p)):'',hc=hasCashTx();

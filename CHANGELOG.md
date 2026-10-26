@@ -7,12 +7,27 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.5.5`) en de naam van het zip-bestand (`crypto-tracker-3.5.5.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.6.0`) en de naam van het zip-bestand (`crypto-tracker-3.6.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.6.0 – 26 oktober 2026
+Aankoopmomenten in de portfoliografiek.
+
+### Toegevoegd
+- **Stip per aankoop:** in alle vier de weergaven van de portfoliografiek (€ Totaal, % Totaal, € per munt, % per munt) staat bij elke aankoop een kleine stip op de lijn.
+  - **€ Totaal en % Totaal:** de stip staat op de totaallijn.
+  - **Per munt:** de stip staat op de lijn van die munt, in dezelfde kleur. Kleinere munten die onder "Overig" vallen, krijgen bij "€ per munt" een stip op de Overig-lijn.
+  - De stip staat precies op het moment van aankoop, en de lijn loopt er gewoon doorheen.
+- **Venstertje met de aankoop:** ga je met de muis over een stip, of tik je erop, dan zie je datum en tijd, het aantal, de koers, het bedrag, de kosten en de broker. Aankopen op hetzelfde moment staan samen in één venster.
+  - Het venster blijft altijd binnen het grafiekblok. Op een smal scherm loopt de tekst door op een volgende regel.
+- **Ook in het vergrote venster.**
+
+### Technisch
+- **Precies op de lijn:** de tijdstippen van je transacties zijn nu ook punten in de grafiek. Daardoor staat een stip precies op de lijn en zie je een sprong door een aankoop op het juiste moment.
 
 ## 3.5.5 – 26 oktober 2026
 "% per munt" volgt nu hetzelfde percentage als de tabel Bezittingen.
