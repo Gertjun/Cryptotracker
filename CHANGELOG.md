@@ -7,12 +7,46 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.0`) en de naam van het zip-bestand (`crypto-tracker-3.10.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.2`) en de naam van het zip-bestand (`crypto-tracker-3.10.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.10.2 – 27 oktober 2026
+Kennis over de app gesplitst in vaste en actuele documentatie.
+
+### Toegevoegd
+- **`ARCHITECTUUR.md`:** de vaste kennis over de app, die zelden verandert: wat de app is, de bestanden, waar wat zit in `app.js`, de conventies, en nieuw een overzicht van de stijl. Daarin staan de kleuren voor donker en licht, de grafiekkleuren, het lettertype, de bouwstenen en de teksttoon.
+
+### Gewijzigd
+- **`NOTES.md`** bevat nu alleen de actuele stand: werkwijze, testen, open punten en sessielog.
+- **`CLAUDE.md`:** Claude leest aan het begin ARCHITECTUUR, NOTES en DECISIONS, en werkt ARCHITECTUUR alleen bij als de opbouw verandert.
+
+### Let op
+- **Upload ook het nieuwe bestand `ARCHITECTUUR.md`.** De app zelf verandert niet.
+
+## 3.10.1 – 27 oktober 2026
+Documentatie voor wie verder werkt aan de app.
+
+### Toegevoegd
+- **`NOTES.md`:** de stand van zaken in één bestand:
+  - wat de app is, welke bestanden er zijn en waar wat zit in `app.js`;
+  - de afspraken (taal, toegankelijkheid, schermbreedtes, versienummers, changelog);
+  - de werkwijze, hoe je test, de bekende problemen en open punten, en een kort sessielog.
+- **`DECISIONS.md`:** een logboek van 16 belangrijke keuzes tot nu toe, telkens met wat er besloten is, waarom, en wat er niet gekozen is. Voorbeelden: synchroniseren via één versleuteld bestand, FIFO, hoe de percentages in de grafiek berekend worden, de oplossing voor de iOS-statusbalk en het tempo van CoinGecko.
+- **`CLAUDE.md`:** werkafspraken voor Claude.
+  - Aan het begin van een sessie alleen `NOTES.md`, `DECISIONS.md` en de relevante code lezen, niet de hele geschiedenis.
+  - Aan het eind van elke sessie beide bestanden bijwerken, ook in het claude.ai-project.
+- **Map `tools/`:**
+  - `release.py` brengt een nieuwe versie uit: versienummer, cache-naam, changelog en zip.
+  - `wish.py` haalt een ingebouwde wens van de wishlist.
+  - Die stonden eerst alleen in de tijdelijke werkomgeving.
+
+### Let op
+- **Upload ook de nieuwe bestanden** `NOTES.md`, `DECISIONS.md` en `CLAUDE.md`, en de nieuwe map `tools/`.
+- **De app zelf verandert niet.**
 
 ## 3.10.0 – 27 oktober 2026
 Nieuwe functie: verkoopsimulator op de pagina van een munt (wens W2).
