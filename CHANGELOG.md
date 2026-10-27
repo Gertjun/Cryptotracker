@@ -7,12 +7,142 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.7.1`) en de naam van het zip-bestand (`crypto-tracker-3.7.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.9.1`) en de naam van het zip-bestand (`crypto-tracker-3.9.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.9.1 – 27 oktober 2026
+Portfoliografiek met het toetsenbord te bedienen.
+
+### Toegevoegd
+- **Met Tab naar de grafiek:** de grafiek op het Overzicht en in het vergrote venster is nu met Tab te bereiken, met een duidelijke focusrand.
+  - **← / →** (of ↓ / ↑): één punt terug of verder in de tijd.
+  - **Shift + pijltje** of **PageUp / PageDown**: een tiende van de periode verder.
+  - **Home / End**: begin of eind van de periode.
+  - **Esc**: terug naar nu. In het vergrote venster sluit een tweede Esc het venster.
+- **Net als met de muis** zie je bovenaan de waarde en het resultaat op dat moment, bij de weergaven per munt ook in de legenda. Kom je op een aan- of verkoopmoment, dan verschijnt het venstertje met de gegevens.
+- **Schermlezers:** de grafiek werkt als schuifregelaar. Bij elke stap wordt datum, tijd, totale waarde en de waarde per munt voorgelezen, en of er op dat moment een aan- of verkoop was.
+
+### Technisch
+- **Nieuwe test:** de testset controleert de toetsenbordbediening (`tests/specs/a11y.spec.mjs`).
+
+## 3.9.0 – 27 oktober 2026
+Verkopen in de portfoliografiek.
+
+### Toegevoegd
+- **Verkoopstippen:** naast de aankopen staan nu ook verkopen als stip op de lijn, in alle vier de weergaven.
+  - Een **open stip** is een aankoop, een **dichte stip** een verkoop.
+  - Bij de weergaven per munt hebben ze de kleur van die munt; bij het totaal zijn ze blauw.
+- **Venstertje bij een verkoop:** ga je over de stip of tik je erop, dan zie je het aantal, de koers, wat je ontving, de kosten en de broker. Ook je **gerealiseerde resultaat** op die verkoop staat erbij, in euro en procent, berekend met FIFO zoals in de transactielijst.
+- **Volledig verkochte munt:** de stip staat op het laatste punt van de lijn van die munt.
+- **Uitleg** over open en dichte stippen staat in het vergrote venster.
+
+## 3.8.2 – 27 oktober 2026
+iPhone- en iPad-app: de bovenbalk staat onder de vervaagde strook.
+
+### Opgelost
+- **Vage bovenkant in de app op het beginscherm** (sinds 3.0.0 bekend). iOS 26/27 vervaagt bij apps op het beginscherm een strook van zo'n 35–40 punten onder de statusbalk, en daar kan de app zelf niets aan doen. Daarom begint de app daar nu 40 punten lager, zodat de knoppen en de statusregels er net onder staan.
+  - **Geldt alleen** voor de app op het beginscherm van een iPhone of iPad. In Safari, op de laptop en op Android verandert er niets.
+  - **iPhone in liggende stand:** geen extra ruimte, want dan is er geen statusbalk.
+  - **Schuift mee:** het vergrote grafiekvenster en de melding over een nieuwe versie.
+- **Opmerking:** 2.5.1 (v78) gaf 14 punten extra en dat was te weinig. 40 punten is de diepte die andere ontwikkelaars voor deze vervaging hebben gemeten. De effen statusbalk uit 3.0.0 blijft.
+
+## 3.8.1 – 27 oktober 2026
+Zuiniger met CoinGecko: minder kans op "CoinGecko is even druk".
+
+### Verbeterd
+- **Tempo van de verzoeken:** alle verzoeken aan CoinGecko houden zich nu aan het tempo dat CoinGecko toestaat.
+  - Zonder eigen sleutel gaan er 6 direct en daarna 15 per minuut.
+  - Met een gratis Demo-sleutel gaan er 10 direct en daarna 30 per minuut.
+  - Voorheen gingen ze zo snel mogelijk na elkaar, waardoor je met veel munten sneller tegen de limiet aanliep.
+- **Bij "te veel verzoeken":** wacht de hele app even en gaat daarna verder. Voorheen probeerde elk verzoek het los opnieuw, wat de drukte alleen maar vergrootte.
+- **Voorrang voor wat je ziet:** de koersen en de grafiek op het scherm gaan voor. Het aanvullen van het koersarchief en de jaarkoersen voor het risico-overzicht wachten tot er niets anders openstaat.
+- **Geen dubbel werk:** is dezelfde grafiek op twee plekken tegelijk nodig, bijvoorbeeld op het Overzicht en in Analyse, dan wordt hij maar één keer opgehaald.
+- **Grafieken blijven langer bewaard** voordat ze opnieuw worden opgehaald:
+
+  | Periode | Was | Nu |
+  |---|---|---|
+  | 1 week | 15 minuten | 30 minuten |
+  | 1 maand | 1 uur | 3 uur |
+  | 3 maanden en langer | 6 uur | 12 uur |
+
+  De 24-uursgrafiek (ook 1U en 4U) blijft elke 5 minuten vernieuwd.
+
+### Technisch
+- **Wachttijden:** die worden gemeten met een monotone klok, zodat ze kloppen als de systeemtijd verspringt.
+- **Nieuwe test:** de testset controleert het tempo (`tests/specs/coingecko.spec.mjs`). Tijdens de tests geldt geen wachttijd, omdat de nep-CoinGecko geen limiet heeft.
+
+## 3.8.0 – 27 oktober 2026
+Nieuwe functie: een ander apparaat koppelen met een koppelcode.
+
+### Toegevoegd
+- **Ander apparaat koppelen** (Instellingen › Synchronisatie via GitHub): de app maakt een koppelcode met daarin je repository, token, bestand, branch, versleutelwachtwoord en CoinGecko-sleutel. Met **Kopiëren** zet je hem op het klembord, zodat je hem via AirDrop, Notities of een bericht naar je andere apparaat stuurt.
+- **Pincode:** de code is versleuteld met een willekeurige pincode van 8 tekens, bijvoorbeeld "VJHR-MSQV". Die zie je alleen op dat scherm en typ je op het andere apparaat over.
+  - Zonder pincode is de code onbruikbaar.
+  - Verwarrende tekens zoals 0/O en 1/I/L komen er niet in voor, en hoofd- of kleine letters maken niet uit.
+- **Koppelcode invoeren:** op het nieuwe apparaat staat dit onder Instellingen › Synchronisatie, en op een leeg Overzicht als knop "Al in gebruik op een ander apparaat?". Plak de code en typ de pincode; de app vult alles in en haalt direct je gegevens op.
+  - Bij een verkeerde pincode of een half gekopieerde code krijg je een duidelijke melding bij het veld.
+- **Handig na herinstallatie:** je hoeft je token en wachtwoord niet meer over te typen, bijvoorbeeld na het opnieuw installeren van de app op je iPhone of op een nieuwe telefoon.
+
+### Technisch
+- **Versleuteling:** AES-256-GCM met PBKDF2 (250.000 rondes), dezelfde als voor je gegevens op GitHub.
+- **Geen QR-code:** op de iPhone opent een gescande QR-code altijd Safari, en niet de app op het beginscherm, die zijn gegevens apart bewaart. Kopiëren en plakken werkt wel overal.
+- **Test:** de automatische synchronisatietest koppelt nu ook een nieuw apparaat met code en pincode.
+
+## 3.7.5 – 27 oktober 2026
+Betere indeling op kleinere laptopschermen.
+
+### Gewijzigd
+- **Laptops van 1000 tot 1400 pixels breed:**
+  - **Overzicht:** de grafiek gebruikt nu de volle breedte. De kaarten die rechts stonden (verdeling, cash, doelen, overzicht) staan eronder in twee kolommen. Voorheen was het grafiekblok daar maar zo'n 580 pixels breed, en kwamen het bedrag en de knoppen op elkaar te staan.
+  - **Munt-pagina:** dezelfde indeling. Grafiek en resultaat over de volle breedte, de calculator, marktinformatie en prijsalerts in twee kolommen eronder.
+  - **Knoppen:** de knoppen "€ Totaal · % Totaal · …" en "Vergroten" staan daardoor ook op die schermen weer rechtsboven naast het bedrag.
+- **Niets veranderd:** vanaf 1400 pixels, en op telefoon en tablet.
+
+## 3.7.4 – 27 oktober 2026
+Automatische tests in de repository.
+
+### Toegevoegd
+- **Map `tests/`** met automatische tests. Bij elke versie heb ik al deze controles gedaan; nu staan ze vast in de repository. Ze controleren:
+  - **Schermen:** alle schermen openen zonder fouten of CSP-blokkades.
+  - **Toegankelijkheid:** WCAG 2.2 AA, in licht en donker.
+  - **Berekeningen:** cash, inleg en gerealiseerde winst, en dat grafiek en tabel hetzelfde percentage tonen.
+  - **Synchronisatie:** versleutelde synchronisatie tussen twee apparaten.
+  - **Updates:** een nieuwe versie komt direct binnen.
+  - **HTML:** de HTML voldoet aan de standaard.
+- **Twee schermformaten:** alles draait op telefoon en laptop, met nep-koersen en een vaste datum, zodat de uitkomst elke keer gelijk is.
+- **GitHub Actions (`.github/workflows/tests.yml`):** bij elke upload naar GitHub draaien de tests vanzelf. Je ziet een groen vinkje of een rood kruisje bij de commit, en bij een fout een downloadbaar rapport.
+- **Uitleg:** in `tests/README.md` staat wat er getest wordt en hoe je de tests zelf draait.
+
+### Opgelost
+- **Synchronisatie:** werd iets op twee apparaten op precies hetzelfde moment gewijzigd en verwijderd, dan kon het verwijderde terugkomen. Bij een gelijk tijdstip wint verwijderen nu. De nieuwe synchronisatietest vond dit.
+
+### Let op
+- **Upload ook de nieuwe map `tests/` en de map `.github/`.** Die laatste is een verborgen map: kies bij het uploaden op GitHub de hele inhoud van de zip, of sleep de map `.github` er apart in.
+- **De app zelf verandert niet** door de tests.
+
+## 3.7.3 – 27 oktober 2026
+Netjes afgeronde getallen in een al ingevuld transactieformulier.
+
+### Opgelost
+- **Aantal:** als de app het aantal voor je uitrekent, staat het nu op hoogstens 8 decimalen, zoals brokers aantallen tonen. Voorheen kon er bijvoorbeeld 0,00145013481440358 staan.
+  - Dat gebeurt als je op "Koop" of "Verkoop" tikt bij de doelverdeling of de gemiddelde-prijs-calculator, bij vaste inleg, of als je zelf bedrag en koers invult.
+- **Bedrag:** een voor je ingevuld bedrag staat altijd met twee decimalen, bijvoorbeeld "112,10" in plaats van "112,1".
+- **Berekende koers:** die staat op 8 significante cijfers.
+
+## 3.7.2 – 26 oktober 2026
+Vergroot grafiekvenster gebruikt het hele scherm.
+
+### Opgelost
+- **Ongebruikte ruimte:** het vergrote venster van de portfoliografiek ("Vergroten") was maximaal 1200 pixels breed en de grafiek maximaal 520 pixels hoog. Op een groot laptopscherm bleef daardoor veel ruimte leeg.
+- **Nieuwe afmetingen:**
+  - De breedte loopt nu tot aan de randen van het scherm.
+  - De grafiek is zo hoog als er ruimte overblijft onder de knoppen en boven de uitleg, zonder dat je hoeft te scrollen.
+  - Op 1864 × 944 pixels: grafiek 1764 pixels breed in plaats van 1200, en 544 pixels hoog in plaats van 520. Op een telefoon en een iPad past alles ook zonder te scrollen.
+- **Aankoopstippen in het vergrote venster:** die stonden net onder de lijn, omdat de tijdas onder de grafiek werd meegerekend. Ze staan nu precies op de lijn.
 
 ## 3.7.1 – 26 oktober 2026
 Elk blad heeft een sluitknop.

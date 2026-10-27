@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.7.1 (26 okt 2026)';
+const APP_VERSION='3.9.1 (27 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -167,7 +167,8 @@ function delPf(id){
 function coinIds(){return [...new Set(TX().filter(t=>t.coinId).map(t=>t.coinId))]}
 // Volglijst en prijsalerts: lijsten met 'del'-markering, zodat verwijderen ook via sync naar andere apparaten gaat
 const live=a=>(a||[]).filter(x=>!x.del);
-function mergeList(a,b){const m=new Map();for(const x of [...(a||[]),...(b||[])]){const e=m.get(x.id);if(!e||(x.mod||0)>(e.mod||0))m.set(x.id,x)}return[...m.values()]}
+// nieuwste wijziging wint; bij precies hetzelfde tijdstip wint verwijderen (anders kan iets dat weg is terugkomen)
+function mergeList(a,b){const m=new Map();for(const x of [...(a||[]),...(b||[])]){const e=m.get(x.id);if(!e||(x.mod||0)>(e.mod||0)||((x.mod||0)===(e.mod||0)&&x.del&&!e.del))m.set(x.id,x)}return[...m.values()]}
 const isWatched=id=>live(data.watch).some(w=>w.id===id);
 const watchOnly=()=>{const held=new Set(coinIds().filter(id=>computeCoin(id).qty>1e-12));return live(data.watch).filter(w=>!held.has(w.id))};   // munten die je al hebt staan al bij Bezittingen
 function priceIds(){return [...new Set([...coinIds(),...live(data.watch).map(w=>w.id),...live(data.alerts).filter(a=>!a.hit).map(a=>a.coinId)])]}
@@ -269,7 +270,23 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 // fetch met tijdslimiet: bij slecht of geen netwerk krijg je binnen enkele seconden een melding in plaats van na een minuut
 function fetchT(url,opt={},ms=12000){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
   return fetch(url,{...opt,signal:c.signal}).catch(e=>{throw new Error(navigator.onLine?'Geen antwoord (verbinding te traag)':'Geen internetverbinding')}).finally(()=>clearTimeout(t))}
-async function cg(path){
+// Alle CoinGecko-verzoeken gaan via deze wachtrij: hooguit 2 tegelijk, met een vaste tussenpoos tussen de starts
+// en een 'emmer' die zich vanzelf bijvult volgens de limieten van CoinGecko: zonder sleutel 6 verzoeken direct en daarna
+// 15 per minuut, met een gratis Demo-sleutel 10 direct en daarna 30 per minuut:
+// een paar verzoeken bij het openen gaan direct, een lange reeks wordt rustig gespreid. Bij 'te veel verzoeken' (429)
+// pauzeert de hele wachtrij zo lang als CoinGecko vraagt, in plaats van dat elk verzoek los opnieuw probeert.
+const mono=()=>performance.now();   // monotone klok voor wachttijden (verandert niet als de systeemtijd verspringt)
+let cgTok=6,cgTokAt=mono(),cgPauseUntil=0;
+const cgKeyed=()=>!!(data.cfg?.cgKey||'').trim(),cgFast=()=>globalThis.__cgFast===true,   // __cgFast: alleen voor de automatische tests (nep-CoinGecko kent geen limiet)
+  cgRate=()=>cgFast()?50:cgKeyed()?0.5:0.25,cgCap=()=>cgFast()?50:cgKeyed()?10:6;   // verzoeken per seconde, emmergrootte
+function cgTake(){const now=mono();cgTok=Math.min(cgCap(),cgTok+(now-cgTokAt)/1000*cgRate());cgTokAt=now;
+  if(cgTok>=1){cgTok--;return 0}const w=(1-cgTok)/cgRate()*1000;cgTok--;return w}
+// low=true: achtergrondwerk (koersarchief aanvullen) wacht tot er geen gewone verzoeken meer openstaan
+let cgHigh=0;
+async function cg(path,low){
+  if(low){while(cgHigh>0)await sleep(400)}else cgHigh++;
+  try{return await cg0(path)}finally{if(!low)cgHigh--}}
+async function cg0(path){
   while(cgActive>=2)await new Promise(r=>cgWait.push(r));
   cgActive++;
   try{
@@ -278,9 +295,12 @@ async function cg(path){
     for(let i=0;;i++){
       let r=null;
       if(!navigator.onLine)throw new Error('Geen internetverbinding');
+      const pz=cgPauseUntil-mono();if(pz>0)await sleep(pz);
+      const w=cgTake();if(w>0)await sleep(w);
       try{r=await fetchT(url)}catch(e){if(!navigator.onLine||i>=2)throw new Error(navigator.onLine?'Geen antwoord van CoinGecko (verbinding of te veel verzoeken)':'Geen internetverbinding')}
+      if(r&&r.status===429){const ra=+r.headers.get('retry-after');cgPauseUntil=Math.max(cgPauseUntil,mono()+(ra>0?Math.min(ra,120)*1000:(i?30000:15000)))}
       if(r&&(r.status!==429||i>=2))return r;
-      await sleep([6000,15000][i]);
+      if(!r)await sleep([4000,10000][i]);
     }
   }finally{cgActive--;const n=cgWait.shift();if(n)n()}
 }
@@ -333,7 +353,8 @@ async function fetchPrice(id){
 // Koersgeschiedenis wordt bewaard (versleuteld als de app-vergrendeling aan staat) en pas opnieuw
 // opgehaald als hij verouderd is: 24U na 5 min, 1W na 15 min, 1M na 1 uur, langer na 6 uur.
 let chartCache=lockCfg?{}:load(LS_CHARTS,{});
-const chartTtl=d=>d==='1'?5*6e4:d==='7'?15*6e4:d==='30'?60*6e4:6*3600e3;
+// Hoe lang een opgehaalde grafiek vers blijft (korter bij korte periodes, waar de laatste koersen er meer toe doen)
+const chartTtl=d=>d==='1'?5*6e4:d==='7'?30*6e4:d==='30'?3*3600e3:12*3600e3;
 function thin(pts,max=500){
   const step=Math.max(1,Math.ceil(pts.length/max)),out=[];
   for(let i=0;i<pts.length;i+=step)out.push(pts[i]);
@@ -375,14 +396,17 @@ async function collectHistory(){
   if(locked)return;
   for(const id of coinIds()){
     const n=Object.keys(data.hist?.[id]||{}).length;
-    try{await fetchChart(id,n<300?'365':'30')}catch(e){}   // eerste keer een heel jaar, daarna de laatste maand
+    try{await fetchChart(id,n<300?'365':'30',true)}catch(e){}   // eerste keer een heel jaar, daarna de laatste maand (op de achtergrond)
   }
 }
-async function fetchChart(id,days){
+const chartInflight={};   // dezelfde grafiek die tegelijk op twee plekken nodig is, maar één keer ophalen
+function fetchChart(id,days,low){const key=id+'|'+days,c=chartCache[key];
+  if(c&&Date.now()-c.ts<chartTtl(days))return Promise.resolve(c.pts);
+  return chartInflight[key]||(chartInflight[key]=fetchChart0(id,days,low).finally(()=>{delete chartInflight[key]}))}
+async function fetchChart0(id,days,low){
   const key=id+'|'+days,c=chartCache[key];
-  if(c&&Date.now()-c.ts<chartTtl(days))return c.pts;
   try{
-    let r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=${days}`);
+    let r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=${days}`,low);
     if(!r.ok&&r.status!==429&&days==='max')r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=365`);
     if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Grafiek niet beschikbaar');
     const j=await r.json();addHist(id,j.prices||[]);chartCache[key]={ts:Date.now(),pts:thin(j.prices||[])};saveCharts();return chartCache[key].pts;
@@ -571,7 +595,7 @@ function renderHome(){
   $('#topbar').innerHTML=topbarHTML(null);
   const p=portfolio();
   if(!TX().length){
-    $('#view').innerHTML=`<div class="empty"><b>Nog geen investeringen</b>Tik op + om je eerste aankoop toe te voegen.<br>Koersen worden automatisch opgehaald.</div>${watchSection()}`;return;
+    $('#view').innerHTML=`<div class="empty"><b>Nog geen investeringen</b>Tik op + om je eerste aankoop toe te voegen.<br>Koersen worden automatisch opgehaald.${settings.gh.token?'':'<br><button type="button" class="link-lg link" data-act="pairopen">Al in gebruik op een ander apparaat? Koppelcode invoeren</button>'}</div>${watchSection()}`;return;
   }
   const mode=settings.plMode;
   const plV=mode==='24h'?p.ch24:p.unreal,plP=mode==='24h'?p.ch24Pct:p.unrealPct;
@@ -952,7 +976,7 @@ let riskFetch={},riskQ=null;
 function riskLoad(ids){
   const need=ids.filter(id=>!riskFetch[id]&&dailySeries(id).length<300);if(!need.length||riskQ)return !!riskQ;
   need.forEach(id=>riskFetch[id]=1);
-  riskQ=(async()=>{for(const id of need){try{await fetchChart(id,'365')}catch(e){}}riskQ=null;if(/^#rapporten/.test(location.hash)&&repTab()==='analyse')render()})();return true}
+  riskQ=(async()=>{for(const id of need){try{await fetchChart(id,'365',true)}catch(e){}}riskQ=null;if(/^#rapporten/.test(location.hash)&&repTab()==='analyse')render()})();return true}
 function riskCard(){
   const cs=openCoins(),tot=cs.reduce((s,c)=>s+c.value,0);if(!cs.length||!(tot>0))return '';
   const loading=riskLoad(cs.map(c=>c.coinId));
@@ -1652,12 +1676,29 @@ function paintPf(wrap,res,o){
   <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
   return{pts,X,Y,W,H,t0,t1,dPL,plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
 }
+// Muis/vinger over de grafiek, en met het toetsenbord: de grafiek is een schuifregelaar door de tijd
+// (pijltjes: één punt, Shift+pijltje of PageUp/PageDown: grotere stap, Home/End: begin/eind, Esc: terug naar nu).
 function pfHover(g,onPoint,onReset){
-  const move=e=>{const r=g.plot.getBoundingClientRect(),x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
-    const t=g.t0+Math.max(0,Math.min(1,x))*(g.t1-g.t0);let i=Math.max(0,lastAtOrBefore(g.pts,t));if(i<g.pts.length-1&&t-g.pts[i][0]>g.pts[i+1][0]-t)i++;
-    const p=g.pts[i];g.line.setAttribute('x1',g.X(p[0]));g.line.setAttribute('x2',g.X(p[0]));g.line.style.display='';inUnit(()=>onPoint(p))};
+  const el=g.plot,n=g.pts.length;let ki=null;
+  const showAt=i=>{const p=g.pts[i];g.line.setAttribute('x1',g.X(p[0]));g.line.setAttribute('x2',g.X(p[0]));g.line.style.display='';inUnit(()=>onPoint(p))};
+  const move=e=>{const r=el.getBoundingClientRect(),x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
+    const t=g.t0+Math.max(0,Math.min(1,x))*(g.t1-g.t0);let i=Math.max(0,lastAtOrBefore(g.pts,t));if(i<n-1&&t-g.pts[i][0]>g.pts[i+1][0]-t)i++;showAt(i)};
   const reset=()=>{g.line.style.display='none';inUnit(onReset)};
-  const el=g.plot;el.onmousemove=move;el.ontouchmove=move;el.ontouchstart=move;el.onmouseleave=reset;el.ontouchend=reset}
+  el.onmousemove=move;el.ontouchmove=move;el.ontouchstart=move;el.onmouseleave=()=>{if(ki==null)reset()};el.ontouchend=reset;
+  const vtext=i=>inUnit(()=>{const p=g.pts[i],d0=new Date(p[0]);let t=d0.toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'})+' '+d0.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+': totaal '+money(p[1],2);
+    if(g.S)t+='. '+g.S.map(s=>s.name+' '+(s.v[i]==null?'geen':g.pct?pct1(s.v[i]):money(s.v[i],2))).join(', ');
+    const d=el.querySelector(`.pdot[data-i="${i}"]`);if(d)t+='. '+(d.classList.contains('sell')?'Verkoop':'Aankoop')+' op dit moment';return t});
+  el.tabIndex=0;el.setAttribute('role','slider');el.setAttribute('aria-label',(g.alt||'Grafiek')+' Gebruik de pijltjestoetsen om door de tijd te gaan.');
+  el.setAttribute('aria-valuemin','0');el.setAttribute('aria-valuemax',String(n-1));el.setAttribute('aria-valuenow',String(n-1));el.setAttribute('aria-valuetext',vtext(n-1));
+  const setI=i=>{ki=Math.max(0,Math.min(n-1,i));showAt(ki);el.setAttribute('aria-valuenow',String(ki));el.setAttribute('aria-valuetext',vtext(ki));
+    const d=el.querySelector(`.pdot[data-i="${ki}"]`);if(d)el._showTip?.(d);else el._hideTip?.()};
+  el.onkeydown=e=>{let i=ki??n-1;const big=Math.max(1,Math.ceil(n/10));
+    switch(e.key){case 'ArrowLeft':case 'ArrowDown':i-=e.shiftKey?big:1;break;case 'ArrowRight':case 'ArrowUp':i+=e.shiftKey?big:1;break;
+      case 'PageUp':i-=big;break;case 'PageDown':i+=big;break;case 'Home':i=0;break;case 'End':i=n-1;break;
+      case 'Escape':if(ki==null)return;ki=null;el._hideTip?.();reset();e.preventDefault();e.stopPropagation();return;default:return}
+    e.preventDefault();setI(i)};
+  el.onfocus=()=>{if(el.matches(':focus-visible'))setI(ki??n-1)};
+  el.onblur=()=>{if(ki!=null){ki=null;el._hideTip?.();reset()}}}
 const pfWhen=p=>{const d=new Date(p[0]),s=shortRange(settings.pRange);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:s?undefined:'numeric'})+(s?' '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')};
 function pfAlt(res){const a=res.pts[0],z=res.pts[res.pts.length-1],ch=a[1]?(z[1]/a[1]-1)*100:null;
   return `Grafiek portfoliowaarde, ${RANGE_L[settings.pRange]||''}: van ${money(a[1],2)} naar ${money(z[1],2)}${ch!=null?' ('+pct(ch)+')':''}. Geïnvesteerd aan het eind: ${money(z[2],2)}.`}
@@ -1710,28 +1751,35 @@ function assetLegend(g,i){return `<ul class="pa-legend">${g.S.map(s=>`<li><i sty
 function assetAlt(g){const n=g.pts.length-1;if(g.tot)return `Grafiek resultaat ten opzichte van geïnvesteerd, ${RANGE_L[settings.pRange]||''}: van ${pct1(g.S[0].v.find(x=>x!=null))} naar ${pct1(g.S[0].v[n])}.`;return g.pct?`Grafiek resultaat per munt in procenten, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} ${pct1(s.v[n])}`).join('; ')}.`
   :`Grafiek waarde per munt, ${RANGE_L[settings.pRange]||''}: ${g.S.map(s=>`${s.name} van ${money(s.v[0],2)} naar ${money(s.v[n],2)}`).join('; ')}.`}
 const pviewSeg=()=>`<span class="seg mini pview" role="group" aria-label="Grafiekweergave">${[['total','€ Totaal'],['ptotal','% Totaal'],['assets','€ per munt'],['pct','% per munt']].map(([v,l])=>`<button type="button" data-act="pview" data-v="${v}" class="${(settings.pView||'total')===v?'on':''}" aria-pressed="${(settings.pView||'total')===v}">${l}</button>`).join('')}</span>`;
-// Aankoopmomenten als stip op de lijn, met een venstertje met de aankoopgegevens (muis erover of erop tikken)
+// Aan- en verkoopmomenten als stip op de lijn (aankoop: open stip, verkoop: dichte stip), met een venstertje met de gegevens
 function txDots(g,mode){
   const plot=g?.plot;if(!plot)return;const pts=g.pts;
-  const buys=TX().filter(t=>t.type==='buy'&&t.coinId&&txTime(t)>=g.t0&&txTime(t)<=g.t1);if(!buys.length)return;
+  const buys=TX().filter(t=>(t.type==='buy'||t.type==='sell')&&t.coinId&&txTime(t)>=g.t0&&txTime(t)<=g.t1);if(!buys.length)return;
   const at=t=>{let i=Math.max(0,lastAtOrBefore(pts,t));if(pts[i][0]<t&&i<pts.length-1)i++;return i};   // eerste punt ná de aankoop
   const groups=new Map();
-  for(const t of buys){const i=at(txTime(t));let key=i,val,col;
+  for(const t of buys){const i=at(txTime(t)),kind=t.type;let key=kind+'|'+i,val,col;
     if(mode==='total')val=pts[i][1];
     else if(mode==='ptotal')val=g.S[0].v[i];
-    else{const s=g.S.find(x=>x.id===t.coinId)||(mode==='assets'?g.S.find(x=>x.id==='__rest'):null);if(!s)continue;val=s.v[i];key=s.id+'|'+i;col=s.col}
+    else{const s=g.S.find(x=>x.id===t.coinId)||(mode==='assets'?g.S.find(x=>x.id==='__rest'):null);if(!s)continue;val=s.v[i];key=kind+'|'+s.id+'|'+i;col=s.col}
     if(val==null||!isFinite(val))continue;
-    const gr=groups.get(key)||{i,val,col,txs:[]};gr.txs.push(t);groups.set(key,gr)}
+    // bij een verkoop telt het punt vóór de verkoop (daarna kan de lijn van die munt ophouden)
+    if(kind==='sell'&&mode!=='total'&&mode!=='ptotal'&&(val==null||!isFinite(val))&&i>0){const s=g.S.find(x=>x.id===t.coinId);val=s?.v[i-1]}
+    if(val==null||!isFinite(val))continue;
+    const gr=groups.get(key)||{i,val,col,kind,txs:[]};gr.txs.push(t);groups.set(key,gr)}
   const G=[...groups.values()];if(!G.length)return;
-  plot.insertAdjacentHTML('beforeend',G.map((gr,n)=>`<span class="pdot" aria-hidden="true" data-n="${n}" style="left:${(g.X(pts[gr.i][0])/g.W*100).toFixed(3)}%;top:${(g.Y(gr.val)/g.H*100).toFixed(3)}%${gr.col?';border-color:'+gr.col:''}"></span>`).join('')+'<div class="pdot-tip" role="tooltip" hidden></div>');
+  // laag die precies over de grafiek ligt (in het vergrote venster staat de tijdas eronder)
+  plot.insertAdjacentHTML('beforeend','<div class="pdot-layer"></div>');const layer=plot.querySelector('.pdot-layer');
+  layer.insertAdjacentHTML('beforeend',G.map((gr,n)=>`<span class="pdot${gr.kind==='sell'?' sell':''}" aria-hidden="true" data-n="${n}" data-i="${gr.i}" style="left:${(g.X(pts[gr.i][0])/g.W*100).toFixed(3)}%;top:${(g.Y(gr.val)/g.H*100).toFixed(3)}%${gr.col?';border-color:'+gr.col+(gr.kind==='sell'?';background:'+gr.col:''):''}"></span>`).join('')+'<div class="pdot-tip" role="tooltip" hidden></div>');
   const tip=plot.querySelector('.pdot-tip');
-  const tipHTML=gr=>inUnit(()=>`<b>${gr.txs.length>1?'Aankopen':'Aankoop'} · ${esc(fmtDate(gr.txs[0].date))}</b>`+gr.txs.map(t=>{const sym=esc((t.symbol||'').toUpperCase()||t.name||'');
-    return `<div><span class="m">${qtyf(+(+t.qty).toPrecision(8))}</span> ${sym} à <span class="m">${money(atT(t.price,t))}</span> = <b class="m">${money(atT(txTotal(t),t),2)}</b>${t.fee?` <span class="label">(kosten <span class="m">${money(atT(t.fee,t),2)}</span>)</span>`:''}${t.acct?` <span class="label">· ${esc(t.acct)}</span>`:''}</div>`}).join(''));
+  const tipHTML=gr=>inUnit(()=>{const sell=gr.kind==='sell',si={};if(sell)for(const id of new Set(gr.txs.map(t=>t.coinId)))Object.assign(si,computeCoin(id).sellInfo);
+    return `<b>${sell?(gr.txs.length>1?'Verkopen':'Verkoop'):(gr.txs.length>1?'Aankopen':'Aankoop')} · ${esc(fmtDate(gr.txs[0].date))}</b>`+gr.txs.map(t=>{const sym=esc((t.symbol||'').toUpperCase()||t.name||''),pl=si[t.id]?.pl;
+    return `<div><span class="m">${qtyf(+(+t.qty).toPrecision(8))}</span> ${sym} à <span class="m">${money(atT(t.price,t))}</span> = <b class="m">${money(atT(txTotal(t),t),2)}</b>${t.fee?` <span class="label">(kosten <span class="m">${money(atT(t.fee,t),2)}</span>)</span>`:''}${t.acct?` <span class="label">· ${esc(t.acct)}</span>`:''}${sell&&pl!=null?`<div>Resultaat <b class="m ${cls(pl)}">${signed(pl)}</b>${si[t.id]?.pct!=null?` <span class="${cls(pl)}">${pct(si[t.id].pct)}</span>`:''}</div>`:''}</div>`}).join('')});
   const show=d=>{const gr=G[+d.dataset.n];tip.innerHTML=tipHTML(gr);tip.hidden=false;tip.style.left=d.style.left;tip.style.top=d.style.top;
     tip.classList.remove('below');tip.style.marginLeft='0';const r=tip.getBoundingClientRect(),pr=plot.getBoundingClientRect();
     if(r.top<8)tip.classList.add('below');   // te dicht bij de bovenkant: venster onder de stip
     const box=(plot.closest('.panel,.card')||document.documentElement).getBoundingClientRect(),over=r.right-Math.min(innerWidth-8,box.right-8),under=Math.max(8,box.left+8)-r.left;tip.style.marginLeft=over>0?(-over)+'px':under>0?under+'px':'0';};
   const hide=()=>{tip.hidden=true};
+  plot._showTip=show;plot._hideTip=hide;
   plot.addEventListener('pointerover',e=>{const d=e.target.closest?.('.pdot');if(d)show(d)});
   plot.addEventListener('pointerout',e=>{if(e.target.closest?.('.pdot')&&e.pointerType==='mouse')hide()});
   plot.addEventListener('pointerdown',e=>{const d=e.target.closest?.('.pdot');if(d)show(d);else hide()});
@@ -1746,7 +1794,7 @@ async function drawPortfolioChart(){
   if(leg)leg.innerHTML=g&&as?assetLegend(g,g.pts.length-1):'';
   if(!g){$('#pperiod').innerHTML='';return}
   txDots(g,pv==='ptotal'?'ptotal':as?pv:'total');
-  chartAlt(wrap,as?assetAlt(g):pfAlt(res));
+  chartAlt(wrap,'');g.alt=as?assetAlt(g):pfAlt(res);
   $('#pperiod').innerHTML=`<span>Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>${res.partial?'<span class="warn-mark">niet alle koersen geladen</span>':''}${res.from?`<span>koersen beschikbaar vanaf ${new Date(res.from).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}`;
   const hv=$('#heroVal'),hp=$('#heroPl'),hs=$('#heroSub'),oV=hv.innerHTML,oP=hp.innerHTML,oS=hs?hs.innerHTML:'',wc=hasCashTx();
   pfHover(g,p=>{const pl=p[1]-p[2];hv.innerHTML=heroValHTML(p[1]);if(hs&&p[4])hs.innerHTML=heroSub(wc,p[4].v,p[4].cash,p[4].inv,p[4].real);
@@ -1758,7 +1806,7 @@ async function drawPortfolioChart(){
 function renderPfZoom(){
   let z=$('#zoom'),fresh=!z;if(!z){z=document.createElement('dialog');z.id='zoom';z.className='zoom';z.setAttribute('aria-labelledby','zoomTitle');z.addEventListener('cancel',e=>{e.preventDefault();closeZoom()});document.body.appendChild(z);document.body.style.overflow='hidden';zoomReturn=rememberFocus()}
   const hc=hasCashTx();
-  z.innerHTML=`<div class="zoom-in"><div class="zoom-top"><h2>${hc?'Totale waarde':'Portfoliowaarde'}</h2><button type="button" class="icon-btn" data-act="zoomclose" aria-label="Sluiten"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  z.innerHTML=`<div class="zoom-in pz-wide"><div class="zoom-top"><h2>${hc?'Totale waarde':'Portfoliowaarde'}</h2><button type="button" class="icon-btn" data-act="zoomclose" aria-label="Sluiten"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${PRANGES.map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
   <div class="pz-view">${pviewSeg()}</div>
   <div class="card"><div class="pz-info" id="pzInfo"></div><div class="chart-wrap pz" id="pzchart"><div class="chart-msg">Grafiek laden…</div></div>
@@ -1771,11 +1819,11 @@ async function drawPfZoom(){
   const my=++pzTok;let res;const el=()=>$('#pzchart');if(!el())return;
   try{res=await portfolioSeries(settings.pRange,true)}catch(e){if(my===pzTok&&el())el().innerHTML=`<div class="chart-msg">${esc(e.message||'Grafiek niet beschikbaar')}</div>`;return}
   const wrap=el();if(my!==pzTok||!wrap)return;
-  inUnit(()=>{const pv=settings.pView,as=['assets','pct','ptotal'].includes(pv),g=as?paintAssets(wrap,res,{big:true,pct:pv!=='assets',tot:pv==='ptotal'}):paintPf(wrap,res,{my:'z'+my,big:true});if(!g){$('#pzInfo').innerHTML='';return}txDots(g,pv==='ptotal'?'ptotal':as?pv:'total');chartAlt(wrap,as?assetAlt(g):pfAlt(res));
+  inUnit(()=>{const pv=settings.pView,as=['assets','pct','ptotal'].includes(pv),g=as?paintAssets(wrap,res,{big:true,pct:pv!=='assets',tot:pv==='ptotal'}):paintPf(wrap,res,{my:'z'+my,big:true});if(!g){$('#pzInfo').innerHTML='';return}txDots(g,pv==='ptotal'?'ptotal':as?pv:'total');chartAlt(wrap,'');g.alt=as?assetAlt(g):pfAlt(res);
     const info=$('#pzInfo'),line=p=>{const pl=p[1]-p[2];return `<span class="label">${p===g.pts[g.pts.length-1]?'Nu':pfWhen(p)}</span><b class="m">${money(p[1],2)}</b><span class="m ${cls(pl)}">${signed(pl)} (${pct(p[2]>0?pl/p[2]*100:null)})</span>`};
     const def=()=>`${line(g.pts[g.pts.length-1])}<span class="label">Rendement ${PLBL[settings.pRange]||''}: <b class="m ${cls(g.dPL)}">${signed(g.dPL)}</b></span>`;
     const L=p=>as?assetLegend(g,g.pts.indexOf(p)):'',hc=hasCashTx();
-    $('#pzHint').textContent='Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. '+(as
+    $('#pzHint').textContent='Beweeg de muis of je vinger over de grafiek voor de waarde op elk moment. Een open stip is een aankoop, een dichte stip een verkoop: ga erover of tik erop voor de details. '+(as
       ?(g.tot?'De lijn is op elk moment hoeveel je crypto waard was ten opzichte van wat je er op dat moment in had geïnvesteerd, in procenten. Boven 0% sta je in de plus. Het laatste punt is gelijk aan het percentage bij Totaal ongerealiseerd.':g.pct?'Elke lijn is op elk moment je resultaat op die munt: de waarde ten opzichte van wat je ervoor betaalde (gemiddelde aankoopprijs, met kosten). Bijkopen en verkopen tellen mee, en het laatste punt is gelijk aan het percentage in de tabel Bezittingen. Zolang je een munt niet had, staat er geen lijn. Alleen je zes grootste munten staan erin.'
         :`Elke lijn is de waarde van wat je op dat moment van die munt had; aan- en verkopen zie je als sprong.${hc?' Cash is de stippellijn.':''} De zes grootste munten krijgen een eigen lijn, de rest staat samen onder Overig.`)
       :`De stippellijn is wat je ${hc?'netto hebt gestort':'hebt geïnvesteerd'}; groen erboven is winst, rood eronder verlies. Bij 1U, 4U en 24U loopt de schaal alleen over de waarde zelf, zodat je kleine bewegingen ziet; de stippellijn valt dan meestal buiten beeld.`);
@@ -1915,7 +1963,7 @@ function openTx(opts={}){
     acct:t?(t.acct||''):(opts.acct||settings.lastAcct||topAcct()),to:t?.to||'',date:t?.date||opts.date||nowLocal(),plan:opts.plan||null,note:t?.note||'',pf:t?pfOf(t):(opts.pf||pfNew()),edits:t?['qty','price']:[]};
   if(coin&&!t&&prices[coin.id]?.price){form.price=plainNum(prices[coin.id].price);form.edits=['price']}
   if(opts.price>0){form.price=plainNum(+(+opts.price).toPrecision(10));form.edits=['price']}
-  if(opts.total){form.total=plainNum(opts.total);form.edits=['total',...form.edits]}
+  if(opts.total){form.total=(Math.round(opts.total*100)/100).toFixed(2).replace('.',',');form.edits=['total',...form.edits]}
   renderTxSheet();if(opts.total)recalc('total');
   if(coin&&!t&&!prices[coin.id]?.price)fetchPrice(coin.id).then(p=>{const el=$('#f_price');if(p&&form&&el&&!el.value&&form.edits.length<2){form.price=el.value=plainNum(p);recalc('price')}});
 }
@@ -1970,8 +2018,8 @@ function recalc(src){
   if(!d)return;
   const T=num($('#f_total').value),Q=num($('#f_qty').value),P=num($('#f_price').value),K=num($('#f_fee').value)||0,sg=form.type==='sell'?-1:1;
   if(d==='total'&&isFinite(Q)&&isFinite(P))$('#f_total').value=(Q*P+sg*K).toFixed(2).replace('.',',');
-  else if(d==='qty'&&isFinite(T)&&P>0)$('#f_qty').value=plainNum(Math.max(0,(T-sg*K)/P));
-  else if(d==='price'&&isFinite(T)&&Q>0)$('#f_price').value=plainNum(+((T-sg*K)/Q).toPrecision(12));
+  else if(d==='qty'&&isFinite(T)&&P>0)$('#f_qty').value=plainNum(+Math.max(0,(T-sg*K)/P).toFixed(8));   // 8 decimalen, zoals brokers aantallen tonen
+  else if(d==='price'&&isFinite(T)&&Q>0)$('#f_price').value=plainNum(+((T-sg*K)/Q).toPrecision(8));
 }
 async function searchCoins(q,attr='pick'){
   const ul=$('#f_results');if(!ul)return;q=q.trim();
@@ -2052,7 +2100,7 @@ function openSettings(){
   <div class="field"><label for="s_pass">Versleutelwachtwoord</label><input id="s_pass" name="sync-password" type="password" value="${esc(g.pass)}" autocomplete="${g.pass?'current-password':'new-password'}" placeholder="Zelfde op elk apparaat"></div>
   <p class="hint">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
   <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
-  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':''}
+  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
   <div class="section-t">Koersdata</div>
   <p class="mt-0 hint">Koersen laatst bijgewerkt: <b>${lastCgTs()?fmtTs(lastCgTs()):'nog niet'}</b>${cgState.s==='err'?` (laatste poging mislukt: ${esc(cgState.msg)})`:''}</p>
   <p class="mt-0 hint">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer">coingecko.com/en/api</a> → Demo (gratis account).</p>
@@ -2088,6 +2136,51 @@ async function importFile(e){
 const enc=new TextEncoder(),dec=new TextDecoder();
 const bufToB64=b=>{let s='';new Uint8Array(b).forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
 const b64ToBuf=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+/* ---------- koppelcode: een nieuw apparaat koppelen zonder alles over te typen ---------- */
+// De code bevat repository, token, bestand, branch, versleutelwachtwoord en CoinGecko-sleutel, versleuteld met een
+// willekeurige koppel-pincode die apart wordt getoond. Zonder die pincode is de code onbruikbaar.
+const PAIR_PRE='CPK1.';
+const PIN_CH='23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // zonder 0/O en 1/I/L: makkelijk over te typen
+function newPin(){const r=crypto.getRandomValues(new Uint8Array(8));const s=[...r].map(x=>PIN_CH[x%PIN_CH.length]).join('');return s.slice(0,4)+'-'+s.slice(4)}
+const normPin=p=>String(p||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+async function makePairCode(pin){const g=settings.gh;
+  const o=await encryptObj({repo:g.repo,token:g.token,path:g.path,branch:g.branch,pass:g.pass,cgKey:data.cfg?.cgKey||'',made:Date.now()},normPin(pin));
+  return PAIR_PRE+utf8ToB64(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+async function readPairCode(code,pin){
+  let s=String(code||'').trim().replace(/\s+/g,'');if(!s.startsWith(PAIR_PRE))throw new Error('Dit is geen koppelcode van Crypto Portfolio');
+  s=s.slice(PAIR_PRE.length).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
+  let o;try{o=JSON.parse(dec.decode(b64ToBuf(s)))}catch(e){throw new Error('De koppelcode is niet compleet; kopieer hem opnieuw')}
+  try{return await decryptObj(o,normPin(pin))}catch(e){throw new Error('De pincode klopt niet bij deze koppelcode')}}
+async function openPairOut(){
+  const pin=newPin();openSheet(`<h2 class="h3">Ander apparaat koppelen</h2><p class="mt-0 hint">Koppelcode maken…</p>`);
+  const code=await makePairCode(pin);
+  openSheet(`<h2 class="h3">Ander apparaat koppelen</h2>
+  <ol class="pair-steps hint"><li>Zet de koppelcode op je andere apparaat, bijvoorbeeld met <i>Kopiëren</i> en dan plakken via AirDrop, Notities of een bericht aan jezelf.</li>
+  <li>Open daar de app en kies <b>Instellingen › Synchronisatie › Koppelcode invoeren</b> (of de knop op het lege Overzicht).</li>
+  <li>Plak de code en typ de pincode over. Die pincode zie je alleen hier: stuur hem niet mee met de code.</li></ol>
+  <div class="field"><label for="pair_out">Koppelcode</label><textarea id="pair_out" rows="4" readonly spellcheck="false" class="pair-code">${esc(code)}</textarea></div>
+  <button type="button" class="btn sec" data-act="paircopy">Kopiëren</button>
+  <p class="pair-pin-l label">Pincode</p><p class="pair-pin m" aria-label="Pincode ${pin.split('').join(' ')}">${pin}</p>
+  <p class="hint">De code bevat je GitHub-token en versleutelwachtwoord, versleuteld met deze pincode. Maak je een nieuwe koppelcode, dan blijven oude codes werken zolang je token en wachtwoord niet veranderen.</p>
+  <button type="button" class="btn" data-act="settings">Klaar</button>`);
+}
+function openPairIn(){
+  openSheet(`<h2 class="h3">Koppelcode invoeren</h2><p class="mt-0 hint">Op je andere apparaat vind je de code bij <b>Instellingen › Synchronisatie › Ander apparaat koppelen</b>.</p>
+  <form class="js-form" novalidate><div class="field"><label for="pair_in">Koppelcode</label><textarea id="pair_in" rows="4" spellcheck="false" autocapitalize="off" autocorrect="off" class="pair-code" placeholder="CPK1.…"></textarea></div>
+  <div class="field"><label for="pair_pin">Pincode</label><input type="text" id="pair_pin" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" placeholder="XXXX-XXXX" maxlength="12"></div>
+  <button type="submit" class="btn" data-act="pairin">Koppelen en synchroniseren</button></form>`);
+  $('#pair_in').focus();
+}
+async function doPairIn(btn){
+  const code=$('#pair_in').value,pin=$('#pair_pin').value;
+  if(!code.trim())return fieldErr('pair_in','Plak de koppelcode');if(normPin(pin).length!==8)return fieldErr('pair_pin','De pincode heeft 8 tekens, bijvoorbeeld AB3D-7KMP');
+  btn.disabled=true;
+  try{const c=await readPairCode(code,pin);
+    settings.gh={...settings.gh,repo:c.repo,token:c.token,path:c.path||settings.gh.path,branch:c.branch||'main',pass:c.pass};saveSettings();
+    if(c.cgKey){data.cfg={...(data.cfg||{}),cgKey:c.cgKey,mod:Date.now()};saveData()}
+    closeSheet();render();toast('Gekoppeld, gegevens ophalen…');await syncNow(false);refreshPrices();
+  }catch(e){btn.disabled=false;fieldErr(/pincode/i.test(e.message)?'pair_pin':'pair_in',e.message)}
+}
 async function deriveKey(pass,salt){const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
 async function encryptObj(obj,pass){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const key=await deriveKey(pass,salt);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));return{v:1,alg:'AES-GCM/PBKDF2-SHA256',salt:bufToB64(salt),iv:bufToB64(iv),ct:bufToB64(ct)}}
 async function decryptObj(o,pass){const key=await deriveKey(pass,b64ToBuf(o.salt));try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBuf(o.iv)},key,b64ToBuf(o.ct));return JSON.parse(dec.decode(pt))}catch(e){throw new Error('Versleutelwachtwoord klopt niet')}}
@@ -2406,6 +2499,10 @@ document.addEventListener('click',e=>{
     case 'export':exportData();break;
     case 'import':$('#s_file').click();break;
     case 'refresh':refreshPrices(true).then(()=>toast('Koersen bijgewerkt'));break;
+    case 'pairout':openPairOut().catch(e=>toast(e.message));break;
+    case 'pairopen':openPairIn();break;
+    case 'pairin':doPairIn(a);break;
+    case 'paircopy':{const t=$('#pair_out');t.select();(navigator.clipboard?.writeText(t.value)||Promise.reject()).then(()=>toast('Koppelcode gekopieerd'),()=>{document.execCommand?.('copy');toast('Koppelcode geselecteerd: kopieer hem')});break}
     case 'savesync':
       settings.gh={...settings.gh,repo:$('#s_repo').value.trim(),token:$('#s_token').value.trim(),path:$('#s_path').value.trim()||'crypto-portfolio.enc.json',branch:$('#s_branch').value.trim()||'main',pass:$('#s_pass').value};
       saveSettings();closeSheet();render();

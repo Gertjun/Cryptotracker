@@ -1,0 +1,16 @@
+{
+  "name": "crypto-portfolio-tests",
+  "private": true,
+  "type": "module",
+  "description": "Automatische tests voor Crypto Portfolio (Playwright, axe, html-validate)",
+  "scripts": {
+    "test": "playwright test",
+    "test:html": "html-validate ../index.html",
+    "test:all": "npm run test:html && npm test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.0",
+    "axe-core": "4.14.0",
+    "html-validate": "11.17.0"
+  }
+}
