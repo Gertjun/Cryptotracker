@@ -384,6 +384,12 @@ a{color:var(--accent)}
   .d-top .sync{flex:none;margin-right:8px;font-size:12px}
   .fab{display:none}
   .home-grid,.coin-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+  /* munt-pagina: links de grafiek met daaronder de hulpmiddelen (calculators, alerts), rechts resultaat, cijfers en marktinformatie */
+  .coin-grid{grid-template-areas:"chart side" "tools side";grid-template-rows:auto 1fr}
+  .coin-grid>.panel{grid-area:chart}.coin-grid>.coin-side{grid-area:side}.coin-grid>.coin-tools{grid-area:tools}
+  .coin-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+  .coin-tools>.card{margin:0!important}
+  .coin-tools>.card:last-child:nth-child(odd){grid-column:1/-1}
   .panel{background:var(--card);border-radius:20px;padding:24px 26px 12px}
   .panel .ranges button.on{background:var(--card2)}
   .hero{text-align:left;padding:0 0 4px}
@@ -635,6 +641,8 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
 /* Kleinere laptops (1000–1399 px): grafiek over de volle breedte, de kaarten (verdeling, cash, doelen) in twee kolommen eronder */
 @media (min-width:1000px) and (max-width:1399px){
   .home-grid,.coin-grid{grid-template-columns:minmax(0,1fr)}
+  .coin-grid{grid-template-areas:none;grid-template-rows:none}.coin-grid>.panel,.coin-grid>.coin-side,.coin-grid>.coin-tools{grid-area:auto}
+  .coin-tools{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .home-grid>.side-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
   .home-grid>.side-col .card{margin-bottom:0}
   .home-grid>.side-col>.card:first-child:not(:only-child){grid-column:1/-1}
@@ -652,6 +660,11 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
 @media (orientation:landscape) and (max-height:500px){:root.ios-standalone{--top-extra:0px}}
 .pc-plot:focus{outline:none}
 .pc-plot:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:6px}
+.sell-sim .seg{background:var(--card2)}
+.sell-sim .seg button.on{background:var(--card)}
+.sim-quick{display:flex;gap:14px;margin:-6px 0 10px}
+.sim-quick .link{font-size:13px;min-height:32px}
+.sim-lots summary{cursor:pointer;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
 </style>
 </head>
 <body>

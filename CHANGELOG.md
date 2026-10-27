@@ -7,12 +7,49 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.9.1`) en de naam van het zip-bestand (`crypto-tracker-3.9.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.0`) en de naam van het zip-bestand (`crypto-tracker-3.10.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.10.0 – 27 oktober 2026
+Nieuwe functie: verkoopsimulator op de pagina van een munt (wens W2).
+
+### Toegevoegd
+- **Kaart "Verkoop simuleren"** op de pagina van een munt die je hebt, naast de gemiddelde-prijs-calculator. Er wordt niets opgeslagen.
+- **Hoeveel je verkoopt** geef je op als percentage van je positie, als aantal of als bedrag dat je wilt ontvangen (na kosten).
+  - Met de knoppen 25%, 50% en Alles gaat het snel.
+  - Wissel je tussen percentage, aantal en bedrag, dan rekent de app dezelfde verkoop om.
+- **Je ziet direct:**
+  - hoeveel je verkoopt, de opbrengst, de kosten en wat je ontvangt;
+  - je gerealiseerde resultaat, in euro en procent;
+  - wat je daarna nog hebt, en je nieuwe gemiddelde aankoopprijs;
+  - je cash daarna, als je cash bijhoudt;
+  - onder "Afgeboekte aankopen" welke aankopen via FIFO worden afgeboekt (oudste eerst), met het resultaat per aankoop.
+- **Koers en kosten:** de koers staat standaard op de huidige koers en is aan te passen. De kosten staan op je gemiddelde kostenpercentage bij aankopen.
+- **"Als verkoop invoeren"** opent het verkoopformulier, al ingevuld.
+- **Te veel ingevuld:** dan zegt de app hoeveel je maximaal hebt en wat dat oplevert.
+
+### Gewijzigd
+- **Brede schermen:** de prijsalerts staan nu rechts onder de marktinformatie, zodat links onder de grafiek de calculator en de verkoopsimulator naast elkaar staan en beide kolommen ongeveer even lang zijn.
+
+### Opgelost
+- **Laptops van 1000 tot 1400 pixels breed:** in 3.9.2 lag de koersgrafiek op de munt-pagina over de kaarten eronder, waardoor je daar niet kon klikken. Nu staat alles weer netjes onder elkaar.
+
+### Technisch
+- **Nieuwe test:** de testset controleert de verkoopsimulator.
+
+## 3.9.2 – 27 oktober 2026
+Munt-pagina op brede schermen zonder groot leeg vlak.
+
+### Gewijzigd
+- **Indeling van de munt-pagina (vanaf 1400 pixels breed):**
+  - **Links onder de grafiek** staan nu de hulpmiddelen: de gemiddelde-prijs-calculator en de prijsalerts, naast elkaar.
+  - **Rechts** staat wat je bekijkt: je resultaat, de cijfers en de marktinformatie.
+  - Voorheen stond alles rechts onder elkaar en bleef links onder de grafiek een groot vlak leeg.
+- **Telefoon, tablet en laptops tot 1400 pixels:** alles staat zoals eerder onder elkaar. De marktinformatie staat nu vóór de calculator, zodat eerst komt wat je bekijkt en daarna de hulpmiddelen.
 
 ## 3.9.1 – 27 oktober 2026
 Portfoliografiek met het toetsenbord te bedienen.

@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.9.1 (27 okt 2026)';
+const APP_VERSION='3.10.0 (27 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -1467,6 +1467,63 @@ function avgCalcCard(c){
   <div class="field"><label for="ac_fee">Kosten (%)</label><input type="text" id="ac_fee" inputmode="decimal" value="${avgIn.fee??plainNum(+coinFeePct(c).toFixed(3))}"></div></div>
   <output id="ac_out" for="ac_amount ac_target ac_price ac_fee" class="ac-out" aria-live="polite"></output>
   <button type="button" class="btn sec" data-act="avgbuy" hidden>Als aankoop invoeren</button></div>`}
+/* ---------- verkoopsimulator (wens W2) ---------- */
+// Wat gebeurt er als je (een deel) verkoopt: welke aankopen via FIFO worden afgeboekt, je gerealiseerde resultaat na kosten
+// en wat je overhoudt. Er wordt niets opgeslagen; met de knop open je het verkoopformulier al ingevuld.
+let simMode='pct',simIn={coin:null},simSell=null;
+function sellSimCard(c){
+  if(!(c.qty>1e-12)||c.price==null)return '';
+  const sym=esc((c.meta.symbol||'').toUpperCase());if(simIn.coin!==c.coinId)simIn={coin:c.coinId};const v=k=>esc(simIn[k]??'');
+  const lbl={qty:`Aantal (${sym})`,amount:'Bedrag dat je wilt ontvangen (€, na kosten)',pct:'Deel van je positie (%)'};
+  return `<div class="card sell-sim"><h2 class="h3">Verkoop simuleren</h2>
+  <p class="mt-0 hint">Zie wat een verkoop oplevert en welke aankopen worden afgeboekt (FIFO: oudste eerst). Er wordt niets opgeslagen.</p>
+  <fieldset class="seg"><legend class="sr-only">Hoe wil je de verkoop opgeven</legend>${[['pct','Percentage'],['qty','Aantal'],['amount','Bedrag']].map(([k,l])=>`<button type="button" data-simmode="${k}" class="all ${simMode===k?'on':''}" aria-pressed="${simMode===k}">${l}</button>`).join('')}</fieldset>
+  <div class="field"><label for="ss_val" id="ss_lbl">${lbl[simMode]}</label><input type="text" id="ss_val" inputmode="decimal" enterkeyhint="done" placeholder="${simMode==='pct'?'bijv. 25':simMode==='qty'?plainNum(+(c.qty/2).toPrecision(4)):'bijv. 200'}" value="${v('val')}"></div>
+  <div class="sim-quick">${[25,50,100].map(p=>`<button type="button" class="link" data-simpct="${p}">${p===100?'Alles':p+'%'}</button>`).join('')}</div>
+  <div class="two"><div class="field"><label for="ss_price">Verkoopkoers (€)</label><input type="text" id="ss_price" inputmode="decimal" value="${simIn.price??plainNum(+c.price.toPrecision(8))}"></div>
+  <div class="field"><label for="ss_fee">Kosten (%)</label><input type="text" id="ss_fee" inputmode="decimal" value="${simIn.fee??plainNum(+coinFeePct(c).toFixed(3))}"></div></div>
+  <output id="ss_out" for="ss_val ss_price ss_fee" class="ac-out" aria-live="polite"></output>
+  <button type="button" class="btn sec" data-act="simsell" hidden>Als verkoop invoeren</button></div>`}
+function initSellSim(c){
+  const card=$('.sell-sim');if(!card)return;
+  const sym=esc((c.meta.symbol||'').toUpperCase()),out=$('#ss_out'),btn=card.querySelector('[data-act=simsell]');
+  const lots=c.txs.filter(t=>isIn(t)&&c.lotMap[t.id]?.remaining>1e-12).map(t=>({t,q:c.lotMap[t.id].remaining,unit:c.lotMap[t.id].unit}));
+  const lbl={qty:`Aantal (${sym})`,amount:'Bedrag dat je wilt ontvangen (€, na kosten)',pct:'Deel van je positie (%)'};
+  const calc=()=>inEUR(()=>{simSell=null;btn.hidden=true;
+    const P=num($('#ss_price').value),f=(num($('#ss_fee').value)||0)/100,V=num($('#ss_val').value),Q=c.qty;
+    if(!(P>0)||!(f>=0&&f<1)){out.innerHTML='<span class="hint">Vul een geldige koers en kosten in.</span>';return}
+    if(!(V>0)){out.innerHTML='';return}
+    let q=simMode==='pct'?Q*V/100:simMode==='qty'?V:V/(P*(1-f));
+    if(q>Q*(1+1e-9)){out.innerHTML=`<span class="warn-mark">Je hebt maar ${qtyf(+Q.toPrecision(10))} ${sym}${simMode==='amount'?`; dat levert na kosten hooguit ${money(Q*P*(1-f),2)} op`:''}.</span>`;return}
+    q=Math.min(q,Q);
+    const gross=q*P,fee=gross*f,net=gross-fee;let left=q,cost=0;const used=[];
+    for(const l of lots){if(left<=1e-12)break;const take=Math.min(l.q,left);used.push({...l,take});cost+=take*l.unit;left-=take}
+    const res=net-cost,rest=Q-q,restCost=c.cost-cost,p=portfolio();
+    out.innerHTML=`<div class="kv">
+      <div><span class="label">Je verkoopt</span><b class="m">${qtyf(+q.toPrecision(8))} ${sym}</b></div>
+      <div><span class="label">Opbrengst</span><span class="m">${money(gross,2)} <span class="label">− kosten ${money(fee,2)}</span></span></div>
+      <div><span class="label">Je ontvangt</span><b class="m">${money(net,2)}</b></div>
+      <div><span class="label">Gerealiseerd resultaat</span><b class="m ${cls(res)}">${signed(res)} <span>(${pct(cost>0?res/cost*100:null)})</span></b></div>
+      <div><span class="label">Daarna in bezit</span><span class="m">${rest>1e-12?`${qtyf(+rest.toPrecision(10))} ${sym} · ${money(rest*P,2)}`:'niets meer'}</span></div>
+      ${rest>1e-12?`<div><span class="label">Gemiddelde aankoopprijs daarna</span><span class="m">${money(restCost/rest)} <span class="label">(nu ${money(c.avg)})</span></span></div>`:''}
+      ${p.hasCash?`<div><span class="label">Cash daarna</span><span class="m">${money(p.cash+net,2)}</span></div>`:''}</div>
+      <details class="mt-10 sim-lots"><summary>Afgeboekte aankopen (${used.length})</summary><div class="tbl-scroll"><table class="rt"><caption class="sr-only">Aankopen die bij deze verkoop worden afgeboekt, oudste eerst</caption>
+      <tr><th scope="col">Aankoop</th><th scope="col">Afgeboekt</th><th scope="col">Aankoopkoers</th><th scope="col">Resultaat</th></tr>
+      ${used.map(u=>{const r=u.take*(P*(1-f)-u.unit);return `<tr><th scope="row">${tm(u.t.date,new Date(u.t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'2-digit'}))}${u.t.type==='receive'?'<div class="note-xs label">ontvangen</div>':''}</th><td class="m">${qtyf(+u.take.toPrecision(8))}${u.take<u.q-1e-12?`<div class="note-xs label">van ${qtyf(+u.q.toPrecision(8))}</div>`:''}</td><td class="m">${money(u.unit)}</td><td class="m ${cls(r)}">${signed(r)}</td></tr>`}).join('')}</table></div></details>`;
+    simSell={coinId:c.coinId,total:Math.round(net*100)/100,price:P,fee:Math.round(fee*100)/100};btn.hidden=false;setTimeout(markScrollers,0)});
+  const val=$('#ss_val');
+  card.querySelectorAll('input').forEach(i=>i.oninput=()=>{simIn[i.id.slice(3)]=i.value;calc()});
+  card.querySelectorAll('[data-simmode]').forEach(b=>b.onclick=()=>{
+    // omrekenen naar de nieuwe invoer zodat je dezelfde verkoop houdt
+    const P=num($('#ss_price').value),f=(num($('#ss_fee').value)||0)/100,V=num(val.value),Q=c.qty;let q=null;
+    if(V>0&&P>0)q=simMode==='pct'?Q*V/100:simMode==='qty'?V:V/(P*(1-f));
+    simMode=b.dataset.simmode;card.querySelectorAll('[data-simmode]').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',x===b)});
+    $('#ss_lbl').textContent=lbl[simMode];
+    if(q!=null){val.value=String(simMode==='pct'?+(q/Q*100).toFixed(2):simMode==='qty'?+q.toPrecision(8):+(q*P*(1-f)).toFixed(2)).replace('.',',');simIn.val=val.value}
+    val.placeholder=simMode==='pct'?'bijv. 25':simMode==='qty'?plainNum(+(Q/2).toPrecision(4)):'bijv. 200';calc();val.focus()});
+  card.querySelectorAll('[data-simpct]').forEach(b=>b.onclick=()=>{simMode='pct';card.querySelectorAll('[data-simmode]').forEach(x=>{const on=x.dataset.simmode==='pct';x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
+    $('#ss_lbl').textContent=lbl.pct;val.value=b.dataset.simpct;simIn.val=val.value;calc()});
+  calc()}
 let avgBuy=null;
 function initAvgCalc(c){
   const card=$('.avg-calc');if(!card)return;
@@ -1854,11 +1911,12 @@ function renderCoin(id){
     <div class="stat"><div class="label">Geïnvesteerd</div><div class="val m">${money(c.cost,2)}</div></div>
     <div class="stat"><div class="label">Koers t.o.v. gemiddelde</div><div class="val ${cls(c.price-c.avg)}">${c.price!=null&&c.avg?pct((c.price/c.avg-1)*100):'–'}</div></div>
     <div class="stat"><div class="label">Gerealiseerd</div><div class="val m ${cls(c.realized)}">${Math.abs(c.realized)>0.005?signed(c.realized):'–'}</div></div>
-  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val-lg val m ${cls(c.realized)}">${signed(c.realized)}</div></div></div>`}${inEUR(()=>avgCalcCard(computeCoin(c.coinId)))}${inEUR(()=>marketCard(c))}${inEUR(()=>alertsCard(c))}</div></div>
+  </div>`:`<div class="stats"><div class="stat wide"><div class="label">Positie gesloten · gerealiseerde winst/verlies</div><div class="val-lg val m ${cls(c.realized)}">${signed(c.realized)}</div></div></div>`}${inEUR(()=>marketCard(c))}${inEUR(()=>alertsCard(c))}</div>
+  <div class="coin-tools">${inEUR(()=>avgCalcCard(computeCoin(c.coinId)))}${inEUR(()=>sellSimCard(computeCoin(c.coinId)))}</div></div>
   ${c.txs.length?`<div class="list-head"><h2>Transacties</h2><span class="label">${c.txs.length}</span></div>
   <ul class="list only-m">${txs.map(t=>txRow(t,c)).join('')}</ul>${txTable(txs,c)}
   <div class="note">Winst per transactie wordt berekend met FIFO: verkopen worden afgeboekt op je oudste aankopen eerst. Transactiekosten tellen mee in de aankoopprijs.</div>`:''}`;
-  drawChart(c);initAvgCalc(inEUR(()=>computeCoin(c.coinId)));
+  drawChart(c);initAvgCalc(inEUR(()=>computeCoin(c.coinId)));initSellSim(inEUR(()=>computeCoin(c.coinId)));
 }
 function txRow(t,c){
   const sym=(c.meta.symbol||'').toUpperCase();
@@ -2443,6 +2501,7 @@ document.addEventListener('click',e=>{
     case 'versions':openVersions();break;
     case 'verpick':pickVersion(a.dataset.sha);break;
     case 'verrestore':if(verPick&&confirm('Je gegevens terugzetten naar de versie van '+new Date(verPick.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'?')){restoreSnapshot(verPick.snap);saveData();closeSheet();render();refreshPrices();toast('Versie teruggezet')}break;
+    case 'simsell':if(simSell)openTx({coinId:simSell.coinId,type:'sell',total:simSell.total,price:simSell.price,fee:simSell.fee});break;
     case 'avgbuy':if(avgBuy)openTx({coinId:avgBuy.coinId,type:'buy',total:avgBuy.total,price:avgBuy.price,fee:avgBuy.fee});break;
     case 'addplan':openPlan();break;
     case 'editalloc':openAlloc();break;

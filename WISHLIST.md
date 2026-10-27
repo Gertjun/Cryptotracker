@@ -22,9 +22,6 @@ Kies een periode (maand, kwartaal, jaar) en zie per munt hoeveel euro die bijdro
 
 ## Kopen en verkopen voorbereiden
 
-### W2 – Verkoopsimulator
-Vul in hoeveel je wilt verkopen. Je ziet welke aankopen volgens FIFO worden afgeboekt, wat je gerealiseerde winst na kosten wordt en hoeveel cash je daarna hebt. Er wordt niets opgeslagen.
-
 ### W8 – Winst- en verliesgrens per positie
 Een alert op basis van je eigen positie in plaats van een vaste koers, bijvoorbeeld "waarschuw bij +50% op mijn ETH" of "bij −20% ten opzichte van mijn gemiddelde aankoopprijs". Zo kun je winst nemen of verlies beperken volgens een plan dat je vooraf hebt gemaakt.
 

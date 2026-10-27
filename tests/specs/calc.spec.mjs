@@ -39,3 +39,16 @@ test('ingevuld formulier: hoogstens 8 decimalen, bedrag met 2 decimalen',async({
   const q=await page.locator('#f_qty').inputValue();
   expect(q.split(/[.,]/)[1]?.length??0).toBeLessThanOrEqual(8);
 });
+
+test('verkoopsimulator: 50% verkopen, FIFO en ingevuld verkoopformulier',async({page})=>{
+  await openApp(page);await importCsv(page);
+  await page.evaluate(()=>{location.hash='#coin/ethereum'});await page.locator('.sell-sim').waitFor();
+  await page.locator('[data-simpct="50"]').click();
+  const r=await page.evaluate(()=>{const c=inEUR(()=>computeCoin('ethereum'));return{half:+(c.qty/2).toFixed(8),out:document.querySelector('#ss_out').innerText}});
+  expect(r.out).toContain('Gerealiseerd resultaat');
+  expect(r.out.replace(/\./g,'').replace(',','.')).toContain(String(r.half));
+  await page.fill('#ss_val','99999');await expect(page.locator('#ss_out')).toContainText('Je hebt maar');
+  await page.fill('#ss_val','50');await page.locator('[data-act=simsell]').click();
+  await expect(page.locator('#f_total')).toHaveValue(/,\d\d$/);
+  expect(await page.evaluate(()=>form.type)).toBe('sell');
+});
