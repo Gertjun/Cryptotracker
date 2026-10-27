@@ -7,12 +7,19 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.2`) en de naam van het zip-bestand (`crypto-tracker-3.10.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.3`) en de naam van het zip-bestand (`crypto-tracker-3.10.3.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.10.3 – 27 oktober 2026
+Blokken op de munt-pagina eindigen onderaan op dezelfde hoogte.
+
+### Verbeterd
+- **Munt-pagina op de laptop:** de calculator, de verkoopsimulator en de rechterkolom eindigen onderaan gelijk. Is de rechterkolom hoger, dan rekken de calculator en de simulator mee; is links hoger, dan rekt het blok Prijsalerts mee.
+- **Munt-pagina op een kleine laptop:** blokken die naast elkaar staan (Marktinformatie en Prijsalerts, de calculator en de simulator) zijn even hoog.
 
 ## 3.10.2 – 27 oktober 2026
 Kennis over de app gesplitst in vaste en actuele documentatie.

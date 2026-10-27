@@ -81,7 +81,14 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
   - **1000–1399 px (kleine laptop):** zijbalk, de grafiek over de volle breedte en de kaarten eronder.
   - **≥ 1400 px (laptop):** twee kolommen. Op de munt-pagina links de grafiek met calculator en verkoopsimulator, rechts resultaat, marktinformatie en alerts.
 - **Waarom:** steeds naar aanleiding van screenshots van Geert met te veel lege ruimte of te krappe blokken.
+- **Aanvulling (3.10.3):** blokken naast elkaar op de munt-pagina zijn even hoog. Op de laptop eindigen beide kolommen gelijk: links rekken de hulpmiddelen mee, rechts het onderste blok (Prijsalerts).
 
 ### D16 – Documentatie voor volgende sessies (27 okt 2026)
 - **Besluit:** `NOTES.md` (stand van zaken), `DECISIONS.md` (dit bestand) en `CLAUDE.md` (werkafspraken). Claude leest aan het begin van een sessie alleen deze bestanden en de relevante code, en werkt ze aan het eind bij.
 - **Waarom:** de chatgeschiedenis is te lang om steeds te lezen.
+
+### D17 – Code uit de GitHub-repository in plaats van een zip (27 okt 2026, 3.10.3)
+- **Besluit:** Claude koppelt aan het begin van een sessie de openbare repository `Gertjun/Cryptotracker` en leest daaruit de code.
+- **Waarom:** Geert hoeft niet elke sessie een zip te sturen, en de code is altijd de versie die hij heeft geüpload.
+- **Niet gekozen:** de code in de projectkennis zetten; die loopt achter en kost bij elke chat ruimte.
+- **Let op:** Claude kan alleen lezen, niet pushen. Geert uploadt de zip nog steeds zelf.

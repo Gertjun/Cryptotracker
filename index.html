@@ -387,7 +387,7 @@ a{color:var(--accent)}
   /* munt-pagina: links de grafiek met daaronder de hulpmiddelen (calculators, alerts), rechts resultaat, cijfers en marktinformatie */
   .coin-grid{grid-template-areas:"chart side" "tools side";grid-template-rows:auto 1fr}
   .coin-grid>.panel{grid-area:chart}.coin-grid>.coin-side{grid-area:side}.coin-grid>.coin-tools{grid-area:tools}
-  .coin-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+  .coin-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:stretch}
   .coin-tools>.card{margin:0!important}
   .coin-tools>.card:last-child:nth-child(odd){grid-column:1/-1}
   .panel{background:var(--card);border-radius:20px;padding:24px 26px 12px}
@@ -646,7 +646,7 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
   .home-grid>.side-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
   .home-grid>.side-col .card{margin-bottom:0}
   .home-grid>.side-col>.card:first-child:not(:only-child){grid-column:1/-1}
-  .coin-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+  .coin-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch}
   .coin-side>.pl-card,.coin-side>.stats{grid-column:1/-1}
   .coin-side>.card{margin:0}
 }
@@ -654,6 +654,14 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
 .pair-steps{padding-left:20px;margin:0 0 12px}.pair-steps li{margin:4px 0}
 .pair-pin-l{margin:14px 0 2px}
 .pair-pin{font:700 28px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:3px;margin:0 0 10px}
+/* Laptop (≥ 1400 px), munt-pagina: beide kolommen eindigen onderaan gelijk. De hulpmiddelen links rekken mee
+   met de rechterkolom, en rechts rekt het onderste blok (prijsalerts) mee als links hoger is. */
+@media (min-width:1400px){
+  .coin-grid{align-items:stretch}
+  .coin-grid>.panel{align-self:start}
+  .coin-side{display:flex;flex-direction:column}
+  .coin-side>:last-child{flex:1 0 auto;margin-bottom:0}
+}
 /* iPhone/iPad-app op het beginscherm: iOS 26/27 vervaagt een strook van zo'n 35–40 punten onder de statusbalk,
    wat de pagina ook doet. Daarom begint de app daar 40 punten lager. Niet in liggende stand op de iPhone (geen statusbalk). */
 :root.ios-standalone{--top-extra:40px}
