@@ -35,7 +35,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 
 - **Opslag (localStorage):** `cpt.data` (gegevens), `cpt.settings` (per apparaat), `cpt.prices`, `cpt.charts`, `cpt.fx`, en versleuteld `cpt.lock`, `cpt.vault`, `cpt.vcharts` als de app-vergrendeling aan staat.
 - **Gegevensmodel `data`:**
-  - `txs` (transacties), `deleted` (grafstenen van verwijderde id's), `cfg` (o.a. `cgKey`), `hist` (eigen koersarchief: `hist[coinId][dagnummer]=[ts,prijs]`);
+  - `txs` (transacties), `deleted` (grafstenen van verwijderde id's), `cfg` (o.a. `cgKey` en `hcols`), `hist` (eigen koersarchief: `hist[coinId][dagnummer]=[ts,prijs]`);
   - de lijsten `watch`, `alerts`, `goals`, `plans`, `portfolios`, `allocs`. Elk item heeft `id`, `mod` (tijdstip) en eventueel `del:true`.
   - Een transactie heeft o.a. `type` (`buy`, `sell`, `deposit`, `withdraw`, `receive`, `transfer`, `other`), `coinId`, `qty`, `price`, `fee`, `date`, `acct` en `pf` (portefeuille; leeg = hoofdportefeuille).
 - **Synchronisatie:**
@@ -61,6 +61,8 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Tekenen: `paintPf()` voor € Totaal en `paintAssets()` voor € per munt, % per munt en % Totaal.
   - Overige onderdelen: `txDots()` (aan-/verkoopstippen met venstertje), `pfHover()` (muis, vinger en toetsenbord), `renderPfZoom()`/`drawPfZoom()` (vergroot venster).
   - De periodes staan in `PRANGES`: 1U, 4U, 24U, 1W, 1M, 3M, 1J en Max.
+- **Tabel Bezittingen (laptop):** `holdingsTable()` tekent de kolommen uit `HCOLS` in de volgorde van `holdCols()`. De keuze (volgorde en verborgen kolommen) staat in `data.cfg.hcols = {order, hide}` en synchroniseert mee; geen `hcols` = standaard. Blad: `openHoldCols()`, verplaatsen `moveHoldCol()`, opslaan `setHoldCols()`. Munt staat altijd vooraan. Een nieuwe kolom voeg je toe aan `HCOLS`; bij bestaande keuzes komt hij vanzelf achteraan.
+- **`data.cfg`** is één object dat in zijn geheel samenvoegt (nieuwste `mod` wint). Wijzig het altijd met `{...data.cfg, …, mod:Date.now()}`, anders gaan andere instellingen verloren.
 - **Koersgrafiek op de munt-pagina:** `drawChart(c)`. Gebruikt dezelfde opbouw als de portfoliografiek (`.pc`, `.pc-plot`, `.pc-axis`) en dezelfde y-as-hulpjes `axisTicks()` en `tickLbl()`.
 - **x-as:** `xAxisRow(t0,t1,aw)` zet 5 tijdstippen onder een grafiek (`.pc-xr`, met `margin-right` = breedte y-as); `xFmt()` kiest tijd, dag of maand op basis van de lengte. Het vergrote venster gebruikt nog `.pc-x` met `xLbl()`.
 - **CoinGecko:**

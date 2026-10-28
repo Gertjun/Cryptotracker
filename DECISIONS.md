@@ -97,3 +97,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** Claude heeft schrijfrechten op `Gertjun/Cryptotracker`. Wijzigingen gaan op een eigen branch (`claude/...`) met een pull request. Geert kijkt en drukt op "Merge"; pas dan staat het live.
 - **Waarom:** geen zip downloaden en uploaden meer, en geen bestanden (zoals `.github`) die onderweg wegvallen. De tests draaien vanzelf bij elk voorstel.
 - **Niet gekozen:** rechtstreeks op `main` pushen; dan staat een fout meteen in de app.
+
+### D20 – Kolommen van Bezittingen instelbaar met ↑↓-knoppen, gesynchroniseerd (28 okt 2026, 3.11.0)
+- **Besluit:** knop "Kolommen aanpassen" boven de tabel Bezittingen (alleen vanaf 1000 px; op telefoon en tablet is het een lijst). Een blad met per kolom een vinkje (tonen) en ↑↓-knoppen, plus "Standaard herstellen". Munt staat vast vooraan. Opgeslagen in `data.cfg.hcols`, dus gelijk op alle apparaten.
+- **Waarom:** Geert wilde de volgorde zelf kunnen kiezen, en op alle apparaten hetzelfde.
+- **Niet gekozen:** kolomkoppen versleepbaar maken. Slepen werkt slecht op een touchscreen en is niet met het toetsenbord te bedienen (WCAG 2.5.7). Ook niet in `settings`, want dat is per apparaat.
+- **Let op:** `data.cfg` voegt als geheel samen; overschrijf het nooit zonder de bestaande velden mee te nemen (bij het opslaan van de CoinGecko-sleutel ging dat mis, opgelost in 3.11.0).

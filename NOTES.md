@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 28 oktober 2026 · versie **3.10.7**
+Laatst bijgewerkt: 28 oktober 2026 · versie **3.11.0**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 28 oktober 2026 · versie **3.10.7**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 26 tests op twee schermformaten: rooktest, toegankelijkheid (axe, licht en donker, toetsenbord), berekeningen, synchronisatie met koppelcode, CoinGecko-tempo en updates.
+- Zie `tests/README.md`. Er zijn 28 tests op twee schermformaten: rooktest, toegankelijkheid (axe, licht en donker, toetsenbord), berekeningen, synchronisatie met koppelcode, CoinGecko-tempo, updates en de kolommen van Bezittingen.
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -46,6 +46,7 @@ Laatst bijgewerkt: 28 oktober 2026 · versie **3.10.7**
   - 3.10.5: koersgrafiek op de munt-pagina heeft een y-as met hulplijnen (zoals de portfoliografiek).
   - 3.10.6: `README.md` toegevoegd; die staat als voorpagina op de GitHub-repository.
   - 3.10.7: x-as (5 tijdstippen) onder alle lijngrafieken: portfolio, munt en Vergelijking.
+  - 3.11.0: kolommen van de tabel Bezittingen zelf verplaatsen en verbergen, gesynchroniseerd (D20).
 - **27 okt 2026:**
   - 3.7.3–3.9.1: acht verbeterpunten (afronding, tests in de repository, kleine laptops, koppelcode, CoinGecko-tempo, iOS-bovenbalk, verkoopstippen, grafiek met het toetsenbord).
   - 3.9.2–3.10.0: munt-pagina opnieuw ingedeeld en de verkoopsimulator (W2).

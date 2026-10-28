@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.10.7 (28 okt 2026)';
+const APP_VERSION='3.11.0 (28 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -551,13 +551,45 @@ function fillTxsInner(){
     return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
   out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl+(all>list.length?`<button type="button" class="mt-14 btn sec" data-act="txmore">Toon meer (${list.length} van ${all})</button>`:'');
 }
+// Kolommen van de tabel Bezittingen (laptop). Munt staat altijd vooraan; de rest kun je verplaatsen en verbergen.
+// De keuze staat in data.cfg.hcols = {order:[…], hide:[…]} en synchroniseert dus mee naar je andere apparaten.
+const HCOLS=[
+  {k:'qty',n:'Aantal',td:c=>`<td class="m">${qtyf(c.qty)}</td>`},
+  {k:'avg',n:'Gemiddelde aankoopprijs',h:'<abbr title="Gemiddelde aankoopprijs">Gem. prijs</abbr>',td:c=>`<td class="m">${money(c.avg)}</td>`},
+  {k:'price',n:'Koers',td:c=>`<td>${money(c.price)}</td>`},
+  {k:'ch24',n:'24 uur',td:c=>`<td class="${cls(c.ch24)}">${pct(c.ch24)}</td>`},
+  {k:'ch7',n:'7 dagen',td:c=>`<td class="${cls(c.ch7)}">${pct(c.ch7)}</td>`},
+  {k:'ch30',n:'30 dagen',td:c=>`<td class="${cls(c.ch30)}">${pct(c.ch30)}</td>`},
+  {k:'value',n:'Waarde',s:'value',td:c=>`<td class="m"><b>${money(c.value,2)}</b></td>`},
+  {k:'cost',n:'Geïnvesteerd',td:c=>`<td class="m">${money(c.cost,2)}</td>`},
+  {k:'plabs',n:'Winst/verlies',s:'plabs',td:c=>`<td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td>`},
+  {k:'pl',n:'Winst/verlies %',h:'%',s:'pl',td:c=>`<td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td>`}];
+// alle kolommen in de gekozen volgorde (nieuwe kolommen uit een latere versie komen achteraan), met hide=true/false
+function holdCols(){const h=data.cfg?.hcols||{},by=Object.fromEntries(HCOLS.map(x=>[x.k,x])),hide=new Set(h.hide||[]);
+  const keys=[...(h.order||[]).filter(k=>by[k]),...HCOLS.map(x=>x.k).filter(k=>!(h.order||[]).includes(k))];
+  return keys.map(k=>({...by[k],hide:hide.has(k)}))}
+function setHoldCols(cols){const order=cols.map(x=>x.k),hide=cols.filter(x=>x.hide).map(x=>x.k);
+  const def=!hide.length&&order.join()===HCOLS.map(x=>x.k).join();
+  const cfg={...(data.cfg||{}),mod:Date.now()};if(def)delete cfg.hcols;else cfg.hcols={order,hide};data.cfg=cfg;saveData()}
 function holdingsTable(list){
   const th=(l,k,cl='')=>`<th scope="col" class="${cl} ${settings.sort===k?'on':''}"${settings.sort===k?' aria-sort="descending"':''}><button type="button" class="rowlink" data-sort="${k}">${l}${settings.sort===k?' <span aria-hidden="true">↓</span>':''}</button></th>`;
-  return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">Bezittingen</caption><thead><tr>${th('Munt','name','l')}<th scope="col">Aantal</th><th scope="col"><abbr title="Gemiddelde aankoopprijs">Gem. prijs</abbr></th><th scope="col">Koers</th><th scope="col">24 uur</th><th scope="col">7 dagen</th><th scope="col">30 dagen</th>${th('Waarde','value')}<th scope="col">Geïnvesteerd</th>${th('Winst/verlies','plabs')}${th('%','pl')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
+  const cols=holdCols().filter(x=>!x.hide),head=x=>x.s?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`;
+  return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">Bezittingen</caption><thead><tr>${th('Munt','name','l')}${cols.map(head).join('')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
     <td class="l"><div class="coin-cell" title="${esc(c.meta.name)}">${coinIcon(c.meta)}<div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc((c.meta.symbol||'').toUpperCase()||c.meta.name)}<span class="sr-only"> ${esc(c.meta.name)}</span></a></div></div></td>
-    <td class="m">${qtyf(c.qty)}</td><td class="m">${money(c.avg)}</td><td>${money(c.price)}</td><td class="${cls(c.ch24)}">${pct(c.ch24)}</td><td class="${cls(c.ch7)}">${pct(c.ch7)}</td><td class="${cls(c.ch30)}">${pct(c.ch30)}</td>
-    <td class="m"><b>${money(c.value,2)}</b></td><td class="m">${money(c.cost,2)}</td><td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td><td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td></tr>`).join('')}</tbody></table></div>`;
+    ${cols.map(x=>x.td(c)).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
+// blad "Kolommen aanpassen": ↑ ↓ verplaatsen, vinkje = tonen; elke wijziging is meteen zichtbaar en wordt bewaard
+function openHoldCols(focus){
+  const cols=holdCols(),n=cols.length;
+  openSheet(`<h2 class="h3">Kolommen aanpassen</h2><p class="mt-0 hint">Kies welke kolommen de tabel Bezittingen laat zien, en in welke volgorde. Munt staat altijd vooraan. Je keuze geldt op al je apparaten.</p>
+  <ol class="col-list">${cols.map((x,i)=>`<li><label class="chk"><input type="checkbox" data-hcol="${x.k}"${x.hide?'':' checked'}><span>${esc(x.n)}</span></label>
+    <span class="col-mv"><button type="button" class="icon-btn" data-act="hcolmv" data-k="${x.k}" data-d="-1" aria-label="${esc(x.n)} naar links"${i?'':' disabled'}><span aria-hidden="true">↑</span></button><button type="button" class="icon-btn" data-act="hcolmv" data-k="${x.k}" data-d="1" aria-label="${esc(x.n)} naar rechts"${i<n-1?'':' disabled'}><span aria-hidden="true">↓</span></button></span></li>`).join('')}</ol>
+  <p class="hint">Bovenaan in deze lijst = links in de tabel.</p>
+  <div class="two"><button type="button" class="btn sec" data-act="hcolreset">Standaard herstellen</button><button type="button" class="btn" data-act="closesheet">Klaar</button></div>`);
+  if(focus){const el=$('#sheetCard').querySelector(focus);(el&&!el.disabled?el:$('#sheetCard').querySelector(`[data-k="${focus.match(/data-k="([^"]+)"/)?.[1]}"]:not([disabled])`))?.focus()}
+}
+function moveHoldCol(k,d){const cols=holdCols(),i=cols.findIndex(x=>x.k===k),j=i+d;if(i<0||j<0||j>=cols.length)return;
+  [cols[i],cols[j]]=[cols[j],cols[i]];setHoldCols(cols);render();openHoldCols(`[data-act="hcolmv"][data-k="${k}"][data-d="${d}"]`)}
 function txTable(txs,c){
   const sym=esc((c.meta.symbol||'').toUpperCase());
   return `<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Transacties ${esc(c.meta.name||'')}</caption><thead><tr><th scope="col" class="l">Type</th><th scope="col" class="l">Datum</th><th scope="col">Aantal</th><th scope="col">Koers</th><th scope="col">Totaal</th><th scope="col">Kosten</th><th scope="col" class="l">Broker · notitie</th><th scope="col">Waarde nu</th><th scope="col">Winst/verlies</th><th scope="col">%</th></tr></thead><tbody>${txs.map(t=>{
@@ -632,6 +664,7 @@ function renderHome(){
   <div class="period" id="pperiod"></div></div>
   <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${inEUR(()=>goalsCard(true))}${kv}</div></div>
   <div class="list-head"><h2>Bezittingen</h2>
+    ${sorted.length?'<button type="button" class="link only-d" data-act="hcols">Kolommen aanpassen</button>':''}
     <label class="sr-only" for="sortSel">Sorteer bezittingen op</label><select id="sortSel" data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
   ${sorted.length?`<ul class="list only-m">${sorted.map(c=>{
     const v=mode==='24h'?c.ch24:c.unrealPct;
@@ -2531,6 +2564,9 @@ document.addEventListener('click',e=>{
     case 'zoomclose':closeZoom();break;
     case 'pzoom':renderPfZoom();break;
     case 'closesheet':closeSheet();break;
+    case 'hcols':openHoldCols();break;
+    case 'hcolmv':moveHoldCol(a.dataset.k,+a.dataset.d);break;
+    case 'hcolreset':setHoldCols(HCOLS.map(x=>({k:x.k,hide:false})));render();openHoldCols('[data-act="hcolreset"]');toast('Standaardkolommen hersteld');break;
     case 'unitmenu':if(!hasPopover){const i=UNITS.findIndex(x=>x[0]===(settings.unit||'EUR'));setUnit(UNITS[(i+1)%3][0],a)}break;
     case 'pview':settings.pView=a.dataset.v;saveSettings();document.querySelectorAll('[data-act=pview]').forEach(b=>{const on=b.dataset.v===a.dataset.v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});drawPortfolioChart();if($('#pzchart'))drawPfZoom();break;
     case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
@@ -2546,7 +2582,7 @@ document.addEventListener('click',e=>{
     case 'addcash':openTx({type:'deposit'});break;
     case 'cashtx':txf.type='cash';txf.coin='all';if(location.hash==='#transacties'){lastView=null;render()}else location.hash='#transacties';break;
     case 'syncinfo':syncNow(false);refreshPrices(true);break;
-    case 'savecg':(async()=>{const nk=$('#s_cg').value.trim();if(nk!==(data.cfg?.cgKey||'')){data.cfg={cgKey:nk,mod:Date.now()};saveData()}
+    case 'savecg':(async()=>{const nk=$('#s_cg').value.trim();if(nk!==(data.cfg?.cgKey||'')){data.cfg={...(data.cfg||{}),cgKey:nk,mod:Date.now()};saveData()}
       try{const r=await cg('/ping');toast(r.ok?(nk?'Sleutel werkt':'Sleutel verwijderd'):r.status===401||r.status===400?'Sleutel ongeldig':'CoinGecko gaf fout '+r.status)}catch(e){toast(e.message)}
       refreshPrices()})();break;
     case 'add':$('#btnAdd').click();break;
@@ -2585,7 +2621,7 @@ document.addEventListener('click',e=>{
   }
 });
 $('#bvFile').onchange=e=>{const f=e.target.files[0];if(f){closeSheet();startImport(f)}};
-document.addEventListener('change',e=>{if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
+document.addEventListener('change',e=>{if(e.target.dataset.hcol){const cols=holdCols(),x=cols.find(c=>c.k===e.target.dataset.hcol);if(x){x.hide=!e.target.checked;setHoldCols(cols);render()}return}if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
 $('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
 window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);render()});
 // Plusknop opzij bij omlaag scrollen (dekt dan geen knoppen of totalen af), terug bij omhoog scrollen of bovenaan

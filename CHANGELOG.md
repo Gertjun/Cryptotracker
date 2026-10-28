@@ -7,12 +7,25 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.7`) en de naam van het zip-bestand (`crypto-tracker-3.10.7.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.11.0`) en de naam van het zip-bestand (`crypto-tracker-3.11.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.11.0 – 28 oktober 2026
+Je kiest zelf welke kolommen de tabel Bezittingen toont, en in welke volgorde.
+
+### Toegevoegd
+- **Kolommen aanpassen:** boven de tabel Bezittingen (laptop) staat de knop **Kolommen aanpassen**. Zet een kolom aan of uit met het vinkje en verplaats hem met ↑ en ↓ (bovenaan in de lijst = links in de tabel). Munt staat altijd vooraan. Met **Standaard herstellen** krijg je de oude indeling terug.
+- **Op al je apparaten:** je keuze wordt bewaard bij je gegevens en synchroniseert mee.
+
+### Opgelost
+- **CoinGecko-sleutel opslaan** wiste geen andere gedeelde instellingen meer.
+
+### Technisch
+- Nieuwe test `tests/specs/columns.spec.mjs`.
 
 ## 3.10.7 – 28 oktober 2026
 Alle lijngrafieken hebben nu een x-as.
