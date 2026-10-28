@@ -10,7 +10,7 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 | `specs/a11y.spec.mjs` | Toegankelijkheid (WCAG 2.2 AA) met axe-core, in het donkere en lichte thema, en de portfoliografiek met het toetsenbord. |
 | `specs/calc.spec.mjs` | Berekeningen: cash, inleg en gerealiseerde winst uit de test-export; grafiek en tabel tonen hetzelfde percentage; bitcoinweergave; afronding in formulieren; de verkoopsimulator. |
 | `specs/sync.spec.mjs` | Versleutelde GitHub-synchronisatie tussen twee apparaten, inclusief portefeuilles en verwijderen, en een nieuw apparaat koppelen met koppelcode en pincode (met een nep-GitHub). |
-| `specs/columns.spec.mjs` | Kolommen van de tabel Bezittingen verplaatsen, verbergen, bewaren en standaard herstellen; de keuze komt mee bij het samenvoegen van twee apparaten; de Volglijst heeft dezelfde kolommen; op een brede laptop is er geen schuifbalk. |
+| `specs/columns.spec.mjs` | Kolommen van de tabel Bezittingen verplaatsen, verbergen, bewaren en standaard herstellen; de keuze komt mee bij het samenvoegen van twee apparaten; de Volglijst heeft dezelfde kolommen; op een brede laptop is er geen schuifbalk; de kolommen 1 uur, 4 uur en 1 jaar. |
 | `specs/coingecko.spec.mjs` | Verzoeken aan CoinGecko blijven binnen de limiet (6 direct, daarna 15 per minuut; met sleutel 10 en 30). |
 | `specs/update.spec.mjs` | Een nieuwe versie komt direct binnen, ook als de server de browser laat cachen (zoals GitHub Pages). |
 | `npm run test:html` | De HTML voldoet aan de standaard (html-validate). |
