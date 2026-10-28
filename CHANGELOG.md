@@ -7,12 +7,25 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.12.1`) en de naam van het zip-bestand (`crypto-tracker-3.12.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.13.0`) en de naam van het zip-bestand (`crypto-tracker-3.13.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.13.0 – 28 oktober 2026
+Nieuwe kolommen voor de koersverandering over 1 uur, 4 uur en 1 jaar.
+
+### Toegevoegd
+- **Kolom 1 uur** bij Bezittingen en Volglijst, standaard zichtbaar, naast 24 uur.
+- **Kolommen 4 uur en 1 jaar:** standaard verborgen. Zet ze aan via **Kolommen aanpassen**. Je keuze geldt op al je apparaten.
+
+### Verbeterd
+- **Iets minder ruimte tussen de kolommen,** zodat ook met de extra kolommen alles zonder schuifbalk past.
+
+### Let op
+- **4 uur** geeft CoinGecko niet rechtstreeks; de app rekent hem uit de koersgrafiek van 24 uur. Staat de kolom aan, dan haalt de app die grafieken op de achtergrond op. Zonder Demo-sleutel kan het bij veel munten even duren voordat alle waarden er staan.
 
 ## 3.12.1 – 28 oktober 2026
 Geen onnodige schuifbalk meer onder de tabel Bezittingen.

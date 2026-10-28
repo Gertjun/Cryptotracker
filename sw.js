@@ -1,5 +1,5 @@
 // Service worker: app werkt offline; koersen en GitHub-sync gaan altijd via het netwerk.
-const CACHE = 'crypto-portfolio-3.12.1';
+const CACHE = 'crypto-portfolio-3.13.0';
 const SHELL = ['./', 'index.html', 'app.js', 'manifest.json', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

@@ -108,3 +108,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** op de laptop toont de Volglijst dezelfde tabel als Bezittingen, met dezelfde kolomkeuze (D20). Aantal, Waarde, Geïnvesteerd, Winst/verlies en % staan op 0; Gem. prijs is "–" (er is geen aankoop). Openstaande prijsalerts staan klein onder de munt. De kolommen staan precies onder die van Bezittingen. Op de telefoon blijft de lijst.
 - **Waarom:** Geert wilde dezelfde kolommen, zodat de twee tabellen als één overzicht lezen.
 - **Niet gekozen:** sorteren via de kolomkoppen van de Volglijst (die sorteren Bezittingen, dat zou verwarren).
+
+### D22 – Kolommen 1 uur, 4 uur en 1 jaar (28 okt 2026, 3.13.0)
+- **Besluit:** 1 uur staat standaard aan; 4 uur en 1 jaar staan standaard uit en zet je aan via Kolommen aanpassen. 1 uur en 1 jaar komen gratis mee in de bestaande koersaanvraag. 4 uur wordt berekend uit de 24-uursgrafiek per munt (koers nu t.o.v. het punt het dichtst bij 4 uur geleden).
+- **Waarom:** Geert wilde de korte en lange termijn zien, zonder dat de tabel standaard te vol wordt.
+- **Afweging:** 4 uur kost één extra verzoek per munt per 5 minuten (lage prioriteit, CoinGecko-emmer uit D12), daarom alleen als de kolom aan staat. Lukt het ophalen niet, dan staat er "–" en wordt het pas na 5 minuten opnieuw geprobeerd.
+- **Ook:** de ruimte tussen de kolommen van Bezittingen is iets kleiner (7 px), zodat alles op een laptop van 1440 px past.

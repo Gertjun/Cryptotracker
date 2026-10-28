@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.12.1 (28 okt 2026)';
+const APP_VERSION='3.13.0 (28 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -224,7 +224,7 @@ function computeCoin(coinId){
   const P=prices[coinId];const price=P?.price;
   const value=price!=null?qty*price:null;
   const unreal=value!=null?value-cost:null;
-  return{coinId,meta,txs,lotMap,sellInfo,qty,cost,avg:qty>1e-12?cost/qty:null,price,ch24:chU(P?.ch24),ch7:chP(P?.m?.ch7,7),ch30:chP(P?.m?.ch30,30),value,unreal,unrealPct:cost>0&&unreal!=null?unreal/cost*100:null,realized,totalBought};
+  return{coinId,meta,txs,lotMap,sellInfo,qty,cost,avg:qty>1e-12?cost/qty:null,price,ch1h:chP(P?.m?.ch1h,1/24),ch24:chU(P?.ch24),ch7:chP(P?.m?.ch7,7),ch30:chP(P?.m?.ch30,30),ch1y:chP(P?.m?.ch1y,365),value,unreal,unrealPct:cost>0&&unreal!=null?unreal/cost*100:null,realized,totalBought};
 }
 /* ---------- brokers en wallets ---------- */
 const accounts=()=>[...new Set(TX().flatMap(t=>[t.acct,t.to]).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
@@ -335,12 +335,12 @@ async function refreshPrices(force){
   const ids=priceIds();if(locked||!ids.length||priceBusy)return;
   priceBusy=true;cgState={s:'busy',msg:''};updBadges();
   try{
-    const r=await cg(`/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=24h,7d,30d`);
+    const r=await cg(`/coins/markets?vs_currency=${CUR}&ids=${encodeURIComponent(ids.join(','))}&per_page=250&price_change_percentage=1h,24h,7d,30d,1y`);
     if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Koersen ophalen mislukt ('+r.status+')');
     const arr=await r.json();if(locked)return;
     // koers + marktinformatie (zelfde aanvraag, dus geen extra verzoeken)
     for(const c of arr)prices[c.id]={price:c.current_price,ch24:c.price_change_percentage_24h,image:c.image,ts:Date.now(),
-      m:{ch7:c.price_change_percentage_7d_in_currency,ch30:c.price_change_percentage_30d_in_currency,cap:c.market_cap,rank:c.market_cap_rank,vol:c.total_volume,
+      m:{ch1h:c.price_change_percentage_1h_in_currency,ch7:c.price_change_percentage_7d_in_currency,ch30:c.price_change_percentage_30d_in_currency,ch1y:c.price_change_percentage_1y_in_currency,cap:c.market_cap,rank:c.market_cap_rank,vol:c.total_volume,
          hi:c.high_24h,lo:c.low_24h,ath:c.ath,athPct:c.ath_change_percentage,athDate:c.ath_date,atl:c.atl,atlDate:c.atl_date,circ:c.circulating_supply,max:c.max_supply}};
     cgState={s:'ok',msg:''};savePrices();checkAlerts();await refreshFx();render();saveVisit();
   }catch(e){cgState={s:'err',msg:e.message||'Geen verbinding'};updBadges();if(force)toast(e.message||'Geen verbinding')}
@@ -557,20 +557,38 @@ const HCOLS=[
   {k:'qty',n:'Aantal',td:c=>`<td class="m">${qtyf(c.qty)}</td>`},
   {k:'avg',n:'Gemiddelde aankoopprijs',h:'<abbr title="Gemiddelde aankoopprijs">Gem. prijs</abbr>',td:c=>`<td class="m">${money(c.avg)}</td>`},
   {k:'price',n:'Koers',td:c=>`<td>${money(c.price)}</td>`},
+  {k:'ch1h',n:'1 uur',td:c=>`<td class="${cls(c.ch1h)}">${pct(c.ch1h)}</td>`},
+  {k:'ch4h',n:'4 uur',off:true,td:c=>{const v=ch4h(c.coinId);return `<td class="${cls(v)}">${pct(v)}</td>`}},
   {k:'ch24',n:'24 uur',td:c=>`<td class="${cls(c.ch24)}">${pct(c.ch24)}</td>`},
   {k:'ch7',n:'7 dagen',td:c=>`<td class="${cls(c.ch7)}">${pct(c.ch7)}</td>`},
   {k:'ch30',n:'30 dagen',td:c=>`<td class="${cls(c.ch30)}">${pct(c.ch30)}</td>`},
+  {k:'ch1y',n:'1 jaar',off:true,td:c=>`<td class="${cls(c.ch1y)}">${pct(c.ch1y)}</td>`},
   {k:'value',n:'Waarde',s:'value',td:c=>`<td class="m"><b>${money(c.value,2)}</b></td>`},
   {k:'cost',n:'Geïnvesteerd',td:c=>`<td class="m">${money(c.cost,2)}</td>`},
   {k:'plabs',n:'Winst/verlies',s:'plabs',td:c=>`<td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td>`},
   {k:'pl',n:'Winst/verlies %',h:'%',s:'pl',td:c=>`<td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td>`}];
 // alle kolommen in de gekozen volgorde (nieuwe kolommen uit een latere versie komen achteraan), met hide=true/false
-function holdCols(){const h=data.cfg?.hcols||{},by=Object.fromEntries(HCOLS.map(x=>[x.k,x])),hide=new Set(h.hide||[]);
-  const keys=[...(h.order||[]).filter(k=>by[k]),...HCOLS.map(x=>x.k).filter(k=>!(h.order||[]).includes(k))];
-  return keys.map(k=>({...by[k],hide:hide.has(k)}))}
-function setHoldCols(cols){const order=cols.map(x=>x.k),hide=cols.filter(x=>x.hide).map(x=>x.k);
-  const def=!hide.length&&order.join()===HCOLS.map(x=>x.k).join();
-  const cfg={...(data.cfg||{}),mod:Date.now()};if(def)delete cfg.hcols;else cfg.hcols={order,hide};data.cfg=cfg;saveData()}
+// Kolommen met off:true staan standaard uit; 'show' onthoudt welke daarvan je aanzette. Een nieuwe kolom komt op zijn standaardplek (na zijn voorganger).
+function holdCols(){const h=data.cfg?.hcols||{},by=Object.fromEntries(HCOLS.map(x=>[x.k,x])),hide=new Set(h.hide||[]),show=new Set(h.show||[]);
+  const keys=(h.order||[]).filter(k=>by[k]);
+  HCOLS.forEach((x,i)=>{if(keys.includes(x.k))return;let j=-1;for(let p=i-1;p>=0&&j<0;p--)j=keys.indexOf(HCOLS[p].k);keys.splice(j+1,0,x.k)});
+  return keys.map(k=>({...by[k],hide:by[k].off?!show.has(k):hide.has(k)}))}
+function setHoldCols(cols){const order=cols.map(x=>x.k),hide=cols.filter(x=>x.hide&&!x.off).map(x=>x.k),show=cols.filter(x=>!x.hide&&x.off).map(x=>x.k);
+  const def=!hide.length&&!show.length&&order.join()===HCOLS.map(x=>x.k).join();
+  const cfg={...(data.cfg||{}),mod:Date.now()};if(def)delete cfg.hcols;else cfg.hcols={order,hide,...(show.length?{show}:{})};data.cfg=cfg;saveData()}
+// 4 uur: CoinGecko geeft die niet; we rekenen hem uit de koersgrafiek van 24 uur (die de portfoliografiek ook gebruikt)
+function ch4h(id){const pts=chartCache[id+'|1']?.pts,P=prices[id];if(!pts?.length||!(P?.price>0))return null;
+  const t=Date.now()-4*3600e3;let best=null;for(const p of pts)if(!best||Math.abs(p[0]-t)<Math.abs(best[0]-t))best=p;
+  if(!best||Math.abs(best[0]-t)>45*6e4||!(best[1]>0))return null;
+  const ch=(P.price/best[1]-1)*100;return unitNow()==='BTC'?chP(ch,4/24):ch}
+// haal de 24-uursgrafieken op die nodig zijn voor de kolom 4 uur (alleen als die kolom aan staat; op de achtergrond)
+let need4hBusy=false;const tried4h={};   // tried4h: niet steeds opnieuw proberen als het ophalen mislukt
+function need4h(){if(need4hBusy||locked||holdCols().find(x=>x.k==='ch4h')?.hide)return;
+  const now=performance.now(),ids=[...new Set([...openCoins().map(c=>c.coinId),...watchOnly().map(w=>w.id)])].filter(id=>{const c=chartCache[id+'|1'];
+    return (!c||Date.now()-c.ts>=chartTtl('1'))&&!(now-(tried4h[id]??-1e9)<chartTtl('1'))});
+  if(!ids.length)return;need4hBusy=true;ids.forEach(id=>tried4h[id]=now);
+  Promise.allSettled(ids.map(id=>fetchChart(id,'1',true))).then(()=>{need4hBusy=false;
+    if(!/^#(coin\/|transacties|rapporten)/.test(location.hash))render()})}
 function holdingsTable(list,watch){
   const th=(l,k,cl='')=>`<th scope="col" class="${cl} ${settings.sort===k?'on':''}"${settings.sort===k?' aria-sort="descending"':''}><button type="button" class="rowlink" data-sort="${k}">${l}${settings.sort===k?' <span aria-hidden="true">↓</span>':''}</button></th>`;
   const cols=holdCols().filter(x=>!x.hide),head=x=>x.s&&!watch?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`;
@@ -683,7 +701,7 @@ function renderHome(){
       <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}
   ${watchSection()}`;
-  drawPortfolioChart();placeUnitMenu();alignHoldTables();
+  drawPortfolioChart();placeUnitMenu();alignHoldTables();need4h();
 }
 /* ---------- import uit Bitvavo (CSV) ---------- */
 // Kolommen: Timezone, Date, Time, Type, Currency, Amount, Quote Currency, Quote Price, Received / Paid Currency,
@@ -1476,7 +1494,7 @@ function watchSection(){
 }
 // een munt van de volglijst als rij in dezelfde tabel als Bezittingen: je hebt er niets van, dus aantal, waarde, geïnvesteerd en resultaat zijn 0
 function watchRow(x){const P=prices[x.id]||{};
-  return{coinId:x.id,meta:{coinId:x.id,symbol:x.symbol,name:x.name,image:x.image},qty:0,avg:null,price:P.price,ch24:chU(P.ch24),ch7:chP(P.m?.ch7,7),ch30:chP(P.m?.ch30,30),
+  return{coinId:x.id,meta:{coinId:x.id,symbol:x.symbol,name:x.name,image:x.image},qty:0,avg:null,price:P.price,ch1h:chP(P.m?.ch1h,1/24),ch24:chU(P.ch24),ch7:chP(P.m?.ch7,7),ch30:chP(P.m?.ch30,30),ch1y:chP(P.m?.ch1y,365),
     value:0,cost:0,unreal:0,unrealPct:0,alerts:live(data.alerts).filter(a=>a.coinId===x.id&&!a.hit).length}}
 function openWatchAdd(){
   openSheet(`<h2 class="h3">Munt volgen</h2><div class="field"><label for="w_search">Munt zoeken</label><input type="text" id="w_search" enterkeyhint="search" placeholder="bijv. Solana, XRP" autocomplete="off"></div><ul class="results" id="f_results"></ul>`);
@@ -2579,7 +2597,7 @@ document.addEventListener('click',e=>{
     case 'closesheet':closeSheet();break;
     case 'hcols':openHoldCols();break;
     case 'hcolmv':moveHoldCol(a.dataset.k,+a.dataset.d);break;
-    case 'hcolreset':setHoldCols(HCOLS.map(x=>({k:x.k,hide:false})));render();openHoldCols('[data-act="hcolreset"]');toast('Standaardkolommen hersteld');break;
+    case 'hcolreset':setHoldCols(HCOLS.map(x=>({k:x.k,off:x.off,hide:!!x.off})));render();openHoldCols('[data-act="hcolreset"]');toast('Standaardkolommen hersteld');break;
     case 'unitmenu':if(!hasPopover){const i=UNITS.findIndex(x=>x[0]===(settings.unit||'EUR'));setUnit(UNITS[(i+1)%3][0],a)}break;
     case 'pview':settings.pView=a.dataset.v;saveSettings();document.querySelectorAll('[data-act=pview]').forEach(b=>{const on=b.dataset.v===a.dataset.v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});drawPortfolioChart();if($('#pzchart'))drawPfZoom();break;
     case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
@@ -2634,7 +2652,7 @@ document.addEventListener('click',e=>{
   }
 });
 $('#bvFile').onchange=e=>{const f=e.target.files[0];if(f){closeSheet();startImport(f)}};
-document.addEventListener('change',e=>{if(e.target.dataset.hcol){const cols=holdCols(),x=cols.find(c=>c.k===e.target.dataset.hcol);if(x){x.hide=!e.target.checked;setHoldCols(cols);render()}return}if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
+document.addEventListener('change',e=>{if(e.target.dataset.hcol){const cols=holdCols(),x=cols.find(c=>c.k===e.target.dataset.hcol);if(x){x.hide=!e.target.checked;setHoldCols(cols);render();if(x.k==='ch4h'&&!x.hide)need4h()}return}if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
 $('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
 window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);render()});
 // Plusknop opzij bij omlaag scrollen (dekt dan geen knoppen of totalen af), terug bij omhoog scrollen of bovenaan
