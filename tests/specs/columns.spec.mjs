@@ -67,3 +67,18 @@ test('volglijst heeft dezelfde kolommen als Bezittingen, met 0 voor wat je niet 
   expect(await wheads()).not.toContain('Geïnvesteerd');
   expect(errors).toEqual([]);
 });
+
+test('Bezittingen en Volglijst passen op een brede laptop zonder schuifbalk, met kolommen onder elkaar',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
+  await openApp(page);await importCsv(page);
+  await page.evaluate(async()=>{setWatch({id:'solana',name:'Solana',symbol:'sol'},true);await fetchPrice('solana');render()});
+  for(const w of [1440,1600]){
+    await page.setViewportSize({width:w,height:900});
+    await page.evaluate(()=>render());
+    const r=await page.evaluate(()=>{const t=[...document.querySelectorAll('.hold-tbl')];
+      return{over:t.map(x=>x.parentElement.scrollWidth-x.parentElement.clientWidth),
+        x:t.map(x=>[...x.querySelectorAll('thead th')].map(th=>Math.round(th.getBoundingClientRect().left)))}});
+    expect(r.over,`breedte ${w}`).toEqual([0,0]);
+    expect(r.x[1],`breedte ${w}`).toEqual(r.x[0]);
+  }
+});

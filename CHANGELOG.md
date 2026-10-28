@@ -7,12 +7,18 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.12.0`) en de naam van het zip-bestand (`crypto-tracker-3.12.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.12.1`) en de naam van het zip-bestand (`crypto-tracker-3.12.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.12.1 – 28 oktober 2026
+Geen onnodige schuifbalk meer onder de tabel Bezittingen.
+
+### Opgelost
+- **Schuifbalk onder Bezittingen en Volglijst:** sinds 3.12.0 werd de tabel soms breder dan het scherm, terwijl er ruimte genoeg was. De kolommen passen nu weer in de beschikbare breedte en staan nog steeds precies onder elkaar. Alleen als het echt niet past (smal venster) kun je opzij schuiven.
 
 ## 3.12.0 – 28 oktober 2026
 De Volglijst heeft op de laptop dezelfde kolommen als Bezittingen.
