@@ -60,6 +60,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Tekenen: `paintPf()` voor € Totaal en `paintAssets()` voor € per munt, % per munt en % Totaal.
   - Overige onderdelen: `txDots()` (aan-/verkoopstippen met venstertje), `pfHover()` (muis, vinger en toetsenbord), `renderPfZoom()`/`drawPfZoom()` (vergroot venster).
   - De periodes staan in `PRANGES`: 1U, 4U, 24U, 1W, 1M, 3M, 1J en Max.
+- **Koersgrafiek op de munt-pagina:** `drawChart(c)`. Gebruikt dezelfde opbouw als de portfoliografiek (`.pc`, `.pc-plot`, `.pc-axis`) en dezelfde y-as-hulpjes `axisTicks()` en `tickLbl()`.
 - **CoinGecko:**
   - `cg(path,low)`: wachtrij met een emmer van 6 verzoeken, daarna 15 per minuut (met sleutel 10 en 30 per minuut), globale pauze bij 429, en `low` voor achtergrondwerk.
   - `fetchChart()` gebruikt een cache (`chartTtl`) en voegt gelijktijdige gelijke verzoeken samen.
