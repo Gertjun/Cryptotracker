@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.11.0 (28 okt 2026)';
+const APP_VERSION='3.12.0 (28 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -571,17 +571,24 @@ function holdCols(){const h=data.cfg?.hcols||{},by=Object.fromEntries(HCOLS.map(
 function setHoldCols(cols){const order=cols.map(x=>x.k),hide=cols.filter(x=>x.hide).map(x=>x.k);
   const def=!hide.length&&order.join()===HCOLS.map(x=>x.k).join();
   const cfg={...(data.cfg||{}),mod:Date.now()};if(def)delete cfg.hcols;else cfg.hcols={order,hide};data.cfg=cfg;saveData()}
-function holdingsTable(list){
+function holdingsTable(list,watch){
   const th=(l,k,cl='')=>`<th scope="col" class="${cl} ${settings.sort===k?'on':''}"${settings.sort===k?' aria-sort="descending"':''}><button type="button" class="rowlink" data-sort="${k}">${l}${settings.sort===k?' <span aria-hidden="true">↓</span>':''}</button></th>`;
-  const cols=holdCols().filter(x=>!x.hide),head=x=>x.s?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`;
-  return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">Bezittingen</caption><thead><tr>${th('Munt','name','l')}${cols.map(head).join('')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
-    <td class="l"><div class="coin-cell" title="${esc(c.meta.name)}">${coinIcon(c.meta)}<div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc((c.meta.symbol||'').toUpperCase()||c.meta.name)}<span class="sr-only"> ${esc(c.meta.name)}</span></a></div></div></td>
+  const cols=holdCols().filter(x=>!x.hide),head=x=>x.s&&!watch?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`;
+  return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">${watch?'Volglijst':'Bezittingen'}</caption><thead><tr>${watch?'<th scope="col" class="l">Munt</th>':th('Munt','name','l')}${cols.map(head).join('')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
+    <td class="l"><div class="coin-cell" title="${esc(c.meta.name)}">${coinIcon(c.meta)}<div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc((c.meta.symbol||'').toUpperCase()||c.meta.name)}<span class="sr-only"> ${esc(c.meta.name)}</span></a>${c.alerts?`<div class="note-xs label">${c.alerts} alert${c.alerts>1?'s':''}</div>`:''}</div></div></td>
     ${cols.map(x=>x.td(c)).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
+// Bezittingen en Volglijst: kolommen precies onder elkaar (dezelfde breedtes, op basis van de breedste inhoud van beide)
+function alignHoldTables(){const t=[...document.querySelectorAll('.hold-tbl')].filter(x=>x.getClientRects().length);
+  t.forEach(x=>{x.style.tableLayout='';x.style.width='';x.querySelectorAll('thead th').forEach(th=>th.style.width='')});if(t.length<2)return;
+  const ws=t.map(x=>[...x.querySelectorAll('thead th')].map(th=>th.getBoundingClientRect().width));if(ws[0].length!==ws[1].length)return;
+  const w=ws[0].map((v,i)=>Math.max(v,ws[1][i])),sum=w.reduce((a,b)=>a+b,0);
+  const room=Math.min(...t.map(x=>x.parentElement.clientWidth)),fit=sum<=room;   // past het niet, dan vaste breedtes en schuift de tabel zoals voorheen
+  t.forEach(x=>{x.querySelectorAll('thead th').forEach((th,i)=>th.style.width=fit?(w[i]/sum*100).toFixed(3)+'%':Math.ceil(w[i])+'px');if(!fit)x.style.width=Math.ceil(sum)+'px';x.style.tableLayout='fixed'})}
 // blad "Kolommen aanpassen": ↑ ↓ verplaatsen, vinkje = tonen; elke wijziging is meteen zichtbaar en wordt bewaard
 function openHoldCols(focus){
   const cols=holdCols(),n=cols.length;
-  openSheet(`<h2 class="h3">Kolommen aanpassen</h2><p class="mt-0 hint">Kies welke kolommen de tabel Bezittingen laat zien, en in welke volgorde. Munt staat altijd vooraan. Je keuze geldt op al je apparaten.</p>
+  openSheet(`<h2 class="h3">Kolommen aanpassen</h2><p class="mt-0 hint">Kies welke kolommen de tabellen Bezittingen en Volglijst laten zien, en in welke volgorde. Munt staat altijd vooraan. Je keuze geldt op al je apparaten.</p>
   <ol class="col-list">${cols.map((x,i)=>`<li><label class="chk"><input type="checkbox" data-hcol="${x.k}"${x.hide?'':' checked'}><span>${esc(x.n)}</span></label>
     <span class="col-mv"><button type="button" class="icon-btn" data-act="hcolmv" data-k="${x.k}" data-d="-1" aria-label="${esc(x.n)} naar links"${i?'':' disabled'}><span aria-hidden="true">↑</span></button><button type="button" class="icon-btn" data-act="hcolmv" data-k="${x.k}" data-d="1" aria-label="${esc(x.n)} naar rechts"${i<n-1?'':' disabled'}><span aria-hidden="true">↓</span></button></span></li>`).join('')}</ol>
   <p class="hint">Bovenaan in deze lijst = links in de tabel.</p>
@@ -674,7 +681,7 @@ function renderHome(){
       <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}
   ${watchSection()}`;
-  drawPortfolioChart();placeUnitMenu();
+  drawPortfolioChart();placeUnitMenu();alignHoldTables();
 }
 /* ---------- import uit Bitvavo (CSV) ---------- */
 // Kolommen: Timezone, Date, Time, Type, Currency, Amount, Quote Currency, Quote Price, Received / Paid Currency,
@@ -835,7 +842,7 @@ function markScrollers(){document.querySelectorAll('.cc-scroll,.tbl-wrap,.tbl-sc
   else if(el.getAttribute('role')==='region'){el.removeAttribute('tabindex');el.removeAttribute('role');el.removeAttribute('aria-label')}})}
 function fitBars(){setTimeout(markScrollers,0);document.querySelectorAll('.bars,.cc').forEach(b=>{b.classList.remove('vt');const bar=b.querySelector('.bar,.cb');if(!bar)return;const w=bar.clientWidth;
   if([...b.querySelectorAll('em')].some(e=>e.scrollWidth>w+3))b.classList.add('vt')})}
-window.addEventListener('resize',()=>{clearTimeout(window._fb);window._fb=setTimeout(fitBars,150)});
+window.addEventListener('resize',()=>{clearTimeout(window._fb);window._fb=setTimeout(()=>{fitBars();alignHoldTables()},150)});
 function bars(items,neutral){
   const mx=Math.max(1e-9,...items.map(i=>Math.abs(i.v||0))),neg=items.some(i=>i.v<0),vt=items.length>6;   // veel staven: ruimte houden voor verticale bedragen
   const lab=(v,c)=>Math.abs(v)<0.005?'':`<em class="m ${c}">${cmp(v,!neutral)}</em>`,H=v=>Math.max(1,Math.abs(v)/mx*(vt?50:78));
@@ -1460,11 +1467,15 @@ function benchCard(){
 function watchSection(){
   const w=watchOnly();
   return `<div class="list-head"><h2>Volglijst</h2><button type="button" class="link" data-act="addwatch">+ Toevoegen</button></div>
-  ${w.length?`<ul class="list">${w.map(x=>{const P=prices[x.id]||{},n=live(data.alerts).filter(a=>a.coinId===x.id&&!a.hit).length;
+  ${w.length?`<ul class="list only-m">${w.map(x=>{const P=prices[x.id]||{},n=live(data.alerts).filter(a=>a.coinId===x.id&&!a.hit).length;
     return `<li class="row" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(x.id)}">${esc(x.name)}</a></div><div class="meta">${esc((x.symbol||'').toUpperCase())}${n?` · ${n} alert${n>1?'s':''}`:''}</div></div>
-    <div class="right"><div class="v">${money(P.price)}</div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></div></li>`}).join('')}</ul>`
+    <div class="right"><div class="v">${money(P.price)}</div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></div></li>`}).join('')}</ul>${holdingsTable(w.map(watchRow),true)}`
   :'<div class="empty-card empty-sm card">Volg munten die je (nog) niet hebt: koers, grafiek en prijsalerts.</div>'}`;
 }
+// een munt van de volglijst als rij in dezelfde tabel als Bezittingen: je hebt er niets van, dus aantal, waarde, geïnvesteerd en resultaat zijn 0
+function watchRow(x){const P=prices[x.id]||{};
+  return{coinId:x.id,meta:{coinId:x.id,symbol:x.symbol,name:x.name,image:x.image},qty:0,avg:null,price:P.price,ch24:chU(P.ch24),ch7:chP(P.m?.ch7,7),ch30:chP(P.m?.ch30,30),
+    value:0,cost:0,unreal:0,unrealPct:0,alerts:live(data.alerts).filter(a=>a.coinId===x.id&&!a.hit).length}}
 function openWatchAdd(){
   openSheet(`<h2 class="h3">Munt volgen</h2><div class="field"><label for="w_search">Munt zoeken</label><input type="text" id="w_search" enterkeyhint="search" placeholder="bijv. Solana, XRP" autocomplete="off"></div><ul class="results" id="f_results"></ul>`);
   const s=$('#w_search');s.focus();s.oninput=()=>{clearTimeout(s._t);s._t=setTimeout(()=>searchCoins(s.value,'wpick'),300)};

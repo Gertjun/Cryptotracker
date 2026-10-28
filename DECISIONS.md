@@ -103,3 +103,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert wilde de volgorde zelf kunnen kiezen, en op alle apparaten hetzelfde.
 - **Niet gekozen:** kolomkoppen versleepbaar maken. Slepen werkt slecht op een touchscreen en is niet met het toetsenbord te bedienen (WCAG 2.5.7). Ook niet in `settings`, want dat is per apparaat.
 - **Let op:** `data.cfg` voegt als geheel samen; overschrijf het nooit zonder de bestaande velden mee te nemen (bij het opslaan van de CoinGecko-sleutel ging dat mis, opgelost in 3.11.0).
+
+### D21 – Volglijst als tabel met dezelfde kolommen als Bezittingen (28 okt 2026, 3.12.0)
+- **Besluit:** op de laptop toont de Volglijst dezelfde tabel als Bezittingen, met dezelfde kolomkeuze (D20). Aantal, Waarde, Geïnvesteerd, Winst/verlies en % staan op 0; Gem. prijs is "–" (er is geen aankoop). Openstaande prijsalerts staan klein onder de munt. De kolommen staan precies onder die van Bezittingen. Op de telefoon blijft de lijst.
+- **Waarom:** Geert wilde dezelfde kolommen, zodat de twee tabellen als één overzicht lezen.
+- **Niet gekozen:** sorteren via de kolomkoppen van de Volglijst (die sorteren Bezittingen, dat zou verwarren).

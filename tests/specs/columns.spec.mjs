@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';import fs from 'node:fs';
 const axeSrc=fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'),'utf8');
 import {openApp,importCsv,isPhone} from './helpers.mjs';
 
-const heads=page=>page.locator('.hold-tbl thead th').allTextContents().then(a=>a.map(s=>s.replace('↓','').trim()));
+const heads=page=>page.locator('.hold-tbl:has(caption:text("Bezittingen")) thead th').allTextContents().then(a=>a.map(s=>s.replace('↓','').trim()));
 
 test('kolommen verplaatsen, verbergen en herstellen',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
@@ -47,4 +47,23 @@ test('kolomkeuze komt mee bij het samenvoegen van twee apparaten',async({page},t
     const m=merge(a,b);data.cfg=m.cfg;
     return holdCols().map(x=>x.k+(x.hide?'-':'')).join()});
   expect(r).toBe('pl,qty,avg,price,ch24,ch7-,ch30,value,cost,plabs');
+});
+
+test('volglijst heeft dezelfde kolommen als Bezittingen, met 0 voor wat je niet hebt',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
+  const errors=await openApp(page);await importCsv(page);
+  await page.evaluate(async()=>{setWatch({id:'solana',name:'Solana',symbol:'sol'},true);await fetchPrice('solana');render()});
+  const wt=page.locator('.tbl-wrap:has(caption:text("Volglijst"))');
+  await expect(wt.locator('tbody tr')).toHaveCount(1);
+  const wheads=()=>wt.locator('thead th').allTextContents().then(a=>a.map(s=>s.trim()));
+  expect(await wheads()).toEqual(await heads(page));
+  const cells=await wt.locator('tbody td').allTextContents();
+  expect(cells[1]).toBe('0');expect(cells[2]).toBe('–');expect(cells[7]).toMatch(/0,00/);expect(cells[8]).toMatch(/0,00/);expect(cells[10]).toBe('+0,00%');
+  // kolomkeuze geldt ook voor de volglijst
+  await page.locator('[data-act=hcols]').click();
+  await page.getByRole('button',{name:'Koers naar links'}).click();
+  await page.locator('[data-hcol=cost]').uncheck();
+  expect(await wheads()).toEqual(await heads(page));
+  expect(await wheads()).not.toContain('Geïnvesteerd');
+  expect(errors).toEqual([]);
 });
