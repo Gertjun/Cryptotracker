@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.10.6 (28 okt 2026)';
+const APP_VERSION='3.10.7 (28 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -1417,7 +1417,7 @@ function benchCard(){
       <div><span class="label"><span class="warn-mark">●</span> Alles in ${esc(nm)}</span><b class="m">${money(B.bench,2)}</b></div>
       <div><span class="label">Verschil</span><b class="${cls(d)}"><span class="m">${signed(d)}</span> <small>${pct(dp)}</small></b></div></div>
       <div class="bchart"><svg aria-hidden="true" focusable="false" viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="${L(2)}" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/><path d="${L(1)}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg></div>
-      <div class="spread zlegend"><span>${new Date(t0).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</span><span>vandaag</span></div>
+      ${xAxisRow(t0,t1)}
       <p class="note-after hint">${d>=0?`Je doet het <b class="up">beter</b> dan alles in ${esc(nm)}.`:`Met alles in ${esc(nm)} had je <b class="down">meer</b> gehad.`} De vergelijking rekent zonder transactiekosten voor ${esc(nm)}.${B.early?` Voor stortingen vóór ${new Date(B.firstKnown).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})} is de oudst bekende koers gebruikt.`:''}</p>`;
   }
   return `<div class="card"><h2 class="h3">Vergelijking</h2><p class="hint">Wat als je elke ${hasCashTx()?'storting':'aankoop'} direct in één munt had gestoken?</p>
@@ -1697,6 +1697,13 @@ function tickLbl(v,step){const u=unitNow(),e=Math.max(0,Math.ceil(-Math.log10(st
 function xLbl(t,range){const d=new Date(t);
   return ['1h','4h','1'].includes(range)?d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})
     :['7','30','90'].includes(range)?d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}):d.toLocaleDateString('nl-NL',{month:'short',year:'2-digit'})}
+// x-as onder een grafiek: 5 tijdstippen, het formaat hangt af van de lengte van de periode.
+// aw = breedte van de y-as (em), zodat de x-as precies onder het grafiekvlak staat.
+function xFmt(t,span){const d=new Date(t);
+  return span<=2*864e5?d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})
+    :span<=120*864e5?d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}).replace('.',''):d.toLocaleDateString('nl-NL',{month:'short',year:'2-digit'}).replace('.','')}
+function xAxisRow(t0,t1,aw){const k=[0,.25,.5,.75,1];
+  return `<div class="pc-xr" aria-hidden="true"${aw?` style="margin-right:${aw}em"`:''}>${k.map(f=>`<span style="left:${f*100}%">${xFmt(t0+f*(t1-t0),t1-t0)}</span>`).join('')}</div>`}
 // Tekent de grafiek in wrap; geeft terug wat nodig is voor de muis/vinger
 function paintPf(wrap,res,o){
   const pts=res.pts,big=!!o.big,my=o.my;
@@ -1730,7 +1737,7 @@ function paintPf(wrap,res,o){
     <path class="line-down" d="${dv}" fill="none" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" clip-path="url(#cb${my})"/>
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>${big?`<div class="pc-x" aria-hidden="true">${xs.map((t,i)=>`<span style="left:${(i*25)}%">${xLbl(t,settings.pRange)}</span>`).join('')}</div>`:''}</div>
-  <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
+  <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>${big?'':xAxisRow(t0,t1,(aw*0.6+0.7).toFixed(1))}`;
   return{pts,X,Y,W,H,t0,t1,dPL,plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
 }
 // Muis/vinger over de grafiek, en met het toetsenbord: de grafiek is een schuifregelaar door de tijd
@@ -1799,7 +1806,7 @@ function paintAssets(wrap,res,o){
   const xs=big?[0,.25,.5,.75,1].map(k=>t0+k*(t1-t0)):[];
   wrap.innerHTML=`<div class="pc"><div class="pc-plot"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${grid}${lines2}
     <line class="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/></svg>${big?`<div class="pc-x" aria-hidden="true">${xs.map((t,i)=>`<span style="left:${(i*25)}%">${xLbl(t,settings.pRange)}</span>`).join('')}</div>`:''}</div>
-  <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
+  <div class="pc-axis m" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>${big?'':xAxisRow(t0,t1,(aw*0.6+0.7).toFixed(1))}`;
   const tr=p=>p[1]-p[2]+p[3];
   return{pts,X,Y,W,H,t0,t1,S,pct:pc,tot:!!o.tot,dPL:tr(pts[pts.length-1])-tr(pts[0]),plot:wrap.querySelector('.pc-plot'),line:wrap.querySelector('.cur')}
 }
@@ -1979,7 +1986,7 @@ async function drawChart(c){
   </svg>
   ${buys.map(b=>`<span title="Aankoop ${fmtDate(new Date(b.t).toISOString().slice(0,10))}: ${money(b.p)} incl. kosten (koers ${priceF(b.k)})" class="buy-dot" style="left:calc(${X(b.t)/W*100}% - 5px);top:calc(${(Y(b.p)/H*100).toFixed(2)}% - 5px)"></span>`).join('')}
   ${showAvg?`<span class="avg-lbl m" style="top:calc(${(Y(avg)/H*100).toFixed(2)}% - 18px)">gem. ${money(avg)}</span>`:''}</div>
-  <div class="pc-axis" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
+  <div class="pc-axis" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>${xAxisRow(t0,t1,(aw*0.6+0.7).toFixed(1))}`;
   // scrubben (alleen over het grafiekvlak, niet over de y-as)
   const wrap=$('#chart').querySelector('.pc-plot'),line=wrap.querySelector('#cur');
   const reset=()=>{line.style.display='none';$('#pxMain').textContent=money(c.price);$('#pxSub').className=cls(c.ch24);$('#pxSub').innerHTML=`${pct(c.ch24)} <span class="sym">24 uur</span>`};

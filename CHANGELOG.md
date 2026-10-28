@@ -7,12 +7,18 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.6`) en de naam van het zip-bestand (`crypto-tracker-3.10.6.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.7`) en de naam van het zip-bestand (`crypto-tracker-3.10.7.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.10.7 – 28 oktober 2026
+Alle lijngrafieken hebben nu een x-as.
+
+### Verbeterd
+- **x-as onder de grafieken:** de portfoliografiek (alle weergaven), de koersgrafiek van een munt en de grafiek bij Vergelijking (Rapporten › Analyse) tonen onderaan vijf tijdstippen. Bij 24 uur zijn dat tijden (13:00, 19:00, …), bij een week tot een paar maanden dagen (26 sep, 4 okt, …) en bij langere periodes maanden (dec 25, mrt 26, …).
 
 ## 3.10.6 – 28 oktober 2026
 Er is een README voor de GitHub-pagina van de repository. De app zelf verandert niet.
