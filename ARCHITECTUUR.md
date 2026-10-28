@@ -21,6 +21,7 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 | `app.js` | **Alle JavaScript** (~2.600 regels, één bestand, geen build-stap of framework). |
 | `sw.js` | Service worker: offline-cache, netwerk eerst met `cache: 'no-cache'`. Cache-naam = versienummer. |
 | `manifest.json`, `icon*.png`, `icon.svg` | PWA-manifest en iconen. |
+| `README.md` | Voorpagina van de repository op GitHub: wat de app doet, installeren, gegevens en privacy. Werk bij als er een grote functie bijkomt. |
 | `CHANGELOG.md` | Alle versies, nieuwste bovenaan, in het Nederlands. |
 | `WISHLIST.md` | Nog niet ingebouwde wensen (W1, W2, …; nummers liggen vast). |
 | `ARCHITECTUUR.md` / `NOTES.md` / `DECISIONS.md` / `CLAUDE.md` | Vaste kennis (dit bestand), actuele stand, besluitenlogboek, werkafspraken voor Claude. |
