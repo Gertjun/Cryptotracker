@@ -7,12 +7,18 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.5`) en de naam van het zip-bestand (`crypto-tracker-3.10.5.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.6`) en de naam van het zip-bestand (`crypto-tracker-3.10.6.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.10.6 – 28 oktober 2026
+Er is een README voor de GitHub-pagina van de repository. De app zelf verandert niet.
+
+### Toegevoegd
+- **README.md:** voorpagina van de repository op GitHub, met wat de app doet, de link naar de app, installeren op het beginscherm, hoe je gegevens bewaard en versleuteld worden, koersen van CoinGecko en wat er in de repository staat.
 
 ## 3.10.5 – 28 oktober 2026
 De koersgrafiek van een munt heeft nu een y-as.
