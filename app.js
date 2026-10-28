@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.10.4 (28 okt 2026)';
+const APP_VERSION='3.10.5 (28 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -1692,7 +1692,7 @@ const PLBL={'1h':'afgelopen uur','4h':'afgelopen 4 uur','1':'24 uur','7':'deze w
 const shortRange=r=>['1h','4h','1','7'].includes(r);
 function unitF(){const u=unitNow();return u==='BTC'?1/fx.btcEur:u==='USD'?fx.btcUsd/fx.btcEur:1}
 function axisTicks(lo,hi,n){const step=niceStep((hi-lo)/n),t=[];for(let v=Math.ceil(lo/step)*step;v<=hi+step*1e-9;v+=step)t.push(Math.abs(v)<step/1e6?0:v);return{step,t}}
-function tickLbl(v,step){const u=unitNow(),d=u==='BTC'?Math.max(0,Math.ceil(-Math.log10(step)-1e-9)):step>=1?0:2;
+function tickLbl(v,step){const u=unitNow(),e=Math.max(0,Math.ceil(-Math.log10(step)-1e-9)),d=u==='BTC'?e:step>=1?0:Math.max(2,e);   // kleine koersen (bijv. € 0,0001) krijgen genoeg decimalen
   return (v<0?'−':'')+(u==='BTC'?'₿':u==='USD'?'$':'€')+' '+new Intl.NumberFormat('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Math.abs(v))}
 function xLbl(t,range){const d=new Date(t);
   return ['1h','4h','1'].includes(range)?d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})
@@ -1963,9 +1963,14 @@ async function drawChart(c){
   const up=pts[pts.length-1][1]>=pts[0][1],col=up?'var(--green)':'var(--red)';
   const d=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join('');
   const gid='g'+my;
+  // y-as: ronde koersen in de gekozen eenheid, met hulplijnen (zoals de portfoliografiek)
+  const f=unitF(),A=axisTicks(lo*f,hi*f,4),ticks=A.t.map(v=>v/f).filter(v=>Y(v)>=2&&Y(v)<=H-2);
+  const labs=ticks.map(v=>tickLbl(v*f,A.step)),aw=Math.max(...labs.map(l=>l.length),4);
+  const grid=ticks.map(v=>`<line class="pc-grid" x1="0" x2="${W}" y1="${Y(v).toFixed(2)}" y2="${Y(v).toFixed(2)}" vector-effect="non-scaling-stroke"/>`).join('');
   {const a=pts[0][1],z=pts[pts.length-1][1],mx=Math.max(...pts.map(p=>p[1])),mn=Math.min(...pts.map(p=>p[1]));
    chartAlt($('#chart'),`Koersgrafiek ${c.meta.name||''}, ${RANGE_L[settings.range]||''}: van ${money(a)} naar ${money(z)} (${pct((z/a-1)*100)}). Hoogste ${money(mx)}, laagste ${money(mn)}.${c.avg?' Je gemiddelde aankoopprijs: '+money(c.avg)+'.':''}`)}
-  $('#chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+  $('#chart').innerHTML=`<div class="pc"><div class="pc-plot"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    ${grid}
     <defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${up?'#1fd17a':'#ff5a5f'}" stop-opacity=".25"/><stop offset="1" stop-color="${up?'#1fd17a':'#ff5a5f'}" stop-opacity="0"/></linearGradient></defs>
     <path d="${d}L${W} ${H}L0 ${H}Z" fill="url(#${gid})"/>
     <path d="${d}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
@@ -1973,9 +1978,10 @@ async function drawChart(c){
     <line id="cur" x1="0" x2="0" y1="0" y2="${H}" stroke="#8b93a5" vector-effect="non-scaling-stroke" style="display:none"/>
   </svg>
   ${buys.map(b=>`<span title="Aankoop ${fmtDate(new Date(b.t).toISOString().slice(0,10))}: ${money(b.p)} incl. kosten (koers ${priceF(b.k)})" class="buy-dot" style="left:calc(${X(b.t)/W*100}% - 5px);top:calc(${(Y(b.p)/H*100).toFixed(2)}% - 5px)"></span>`).join('')}
-  ${showAvg?`<span class="avg-lbl m" style="top:calc(${(Y(avg)/H*100).toFixed(2)}% - 18px)">gem. ${money(avg)}</span>`:''}`;
-  // scrubben
-  const wrap=$('#chart'),line=wrap.querySelector('#cur');
+  ${showAvg?`<span class="avg-lbl m" style="top:calc(${(Y(avg)/H*100).toFixed(2)}% - 18px)">gem. ${money(avg)}</span>`:''}</div>
+  <div class="pc-axis" aria-hidden="true" style="width:${(aw*0.6+0.7).toFixed(1)}em"><div class="pc-axis-in">${ticks.map((v,i)=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${labs[i]}</span>`).join('')}</div></div></div>`;
+  // scrubben (alleen over het grafiekvlak, niet over de y-as)
+  const wrap=$('#chart').querySelector('.pc-plot'),line=wrap.querySelector('#cur');
   const reset=()=>{line.style.display='none';$('#pxMain').textContent=money(c.price);$('#pxSub').className=cls(c.ch24);$('#pxSub').innerHTML=`${pct(c.ch24)} <span class="sym">24 uur</span>`};
   const move=e=>{const r=wrap.getBoundingClientRect(),x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
     const tt=t0+Math.max(0,Math.min(1,x))*(t1-t0);let i=0,lo2=0,hi2=pts.length-1;while(lo2<hi2){const m=(lo2+hi2)>>1;if(pts[m][0]<tt)lo2=m+1;else hi2=m}i=lo2;

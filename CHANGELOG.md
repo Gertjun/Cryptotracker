@@ -7,12 +7,19 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.4`) en de naam van het zip-bestand (`crypto-tracker-3.10.4.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.5`) en de naam van het zip-bestand (`crypto-tracker-3.10.5.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.10.5 – 28 oktober 2026
+De koersgrafiek van een munt heeft nu een y-as.
+
+### Verbeterd
+- **Koersgrafiek op de munt-pagina:** rechts staan nu ronde koersen (bijvoorbeeld € 2.400, € 2.600, …) met dunne hulplijnen door de grafiek, net als bij de portfoliografiek. Werkt in €, $ en ₿.
+- **Kleine koersen:** bij munten van minder dan een cent krijgen de getallen op de as genoeg decimalen (bijvoorbeeld € 0,0001 in plaats van € 0,00).
 
 ## 3.10.4 – 28 oktober 2026
 20 nieuwe ideeën op de wishlist. De app zelf verandert niet.
