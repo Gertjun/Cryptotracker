@@ -17,7 +17,7 @@ Laatst bijgewerkt: 27 oktober 2026 · versie **3.10.3**
   4. zip sturen;
   5. kort samenvatten.
   Geert uploadt de inhoud van de zip naar GitHub; de verborgen map `.github` moet daarbij mee.
-- **Code lezen:** de repository is openbaar: `https://github.com/Gertjun/Cryptotracker`. Koppel die aan het begin van een sessie in plaats van om een zip te vragen.
+- **Code lezen en schrijven:** koppel aan het begin van een sessie de repository `Gertjun/Cryptotracker` met schrijfrechten (de Claude GitHub-app is geïnstalleerd). Claude kan een branch pushen en een voorstel (pull request) maken via `gh api` (REST; GraphQL en `gh pr create` werken niet). Geert keurt goed met "Merge".
 - **Bij een nieuw bestand of een nieuwe map:** zeg het expliciet, zodat hij het meeneemt bij het uploaden.
 - **Screenshots:** hij stuurt er vaak een. Controleer het versienummer in Instellingen, want een oude versie uit de cache was eerder de oorzaak van een "bug".
 - **Vóór elke release:**
@@ -35,7 +35,6 @@ Laatst bijgewerkt: 27 oktober 2026 · versie **3.10.3**
 - **iOS 26/27-vervaging bovenin** bij de app op het beginscherm. Sinds 3.8.2 begint de app 40 punten lager (`--top-extra`, klasse `ios-standalone`). **Nog niet bevestigd door Geert of dit genoeg is.** De effen statusbalk (`apple-mobile-web-app-status-bar-style: default`) sinds 3.0.0 hielp niet tegen de vervaging, maar bleef.
 - **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel.
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
-- **Map `.github` ontbreekt in de repository** (27 okt 2026). De tests draaien daardoor niet automatisch bij een push. Geert moet de map uit de zip opnieuw meeuploaden.
 - **Wishlist open (11):** W4, W5, W6, W7, W8, W10, W11, W15, W16, W17, W18. W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Native iPhone-app in SwiftUI:** genoemd door Geert (in een andere sessie); geen code in deze repository. Hij heeft geen Mac.
 
@@ -47,5 +46,6 @@ Laatst bijgewerkt: 27 oktober 2026 · versie **3.10.3**
   - 3.10.1: NOTES/DECISIONS/CLAUDE.md en `tools/` toegevoegd.
   - 3.10.2: kennis gesplitst in ARCHITECTUUR.md (vast) en NOTES.md (actueel); tekst voor de projectinstructies gemaakt.
   - 3.10.3: blokken op de munt-pagina even hoog; de code komt voortaan rechtstreeks uit de GitHub-repository.
+  - 28 okt: schrijfrechten op GitHub werken; `.github/workflows/tests.yml` teruggezet via voorstel #21 (tests groen).
 - **26 okt 2026:** grafiekweergaven (€/% totaal en per munt), valutaknop, aankoopstippen, versienummering naar SemVer (v89 → 3.5.1), "update beschikbaar" naast de appnaam, sluitknop in bladen, vergroot venster over het hele scherm.
 - **21–25 okt 2026:** basis gebouwd (v1–v33), testronde en HTML/a11y-controle (v34–v65 = 1.0.x), daarna functies tot en met v80 (zie de changelog).

@@ -92,3 +92,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert hoeft niet elke sessie een zip te sturen, en de code is altijd de versie die hij heeft geüpload.
 - **Niet gekozen:** de code in de projectkennis zetten; die loopt achter en kost bij elke chat ruimte.
 - **Let op:** Claude kan alleen lezen, niet pushen. Geert uploadt de zip nog steeds zelf.
+
+### D18 – Claude zet wijzigingen als voorstel op GitHub (28 okt 2026, vult D17 aan)
+- **Besluit:** Claude heeft schrijfrechten op `Gertjun/Cryptotracker`. Wijzigingen gaan op een eigen branch (`claude/...`) met een pull request. Geert kijkt en drukt op "Merge"; pas dan staat het live.
+- **Waarom:** geen zip downloaden en uploaden meer, en geen bestanden (zoals `.github`) die onderweg wegvallen. De tests draaien vanzelf bij elk voorstel.
+- **Niet gekozen:** rechtstreeks op `main` pushen; dan staat een fout meteen in de app.
