@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.12.0 (28 okt 2026)';
+const APP_VERSION='3.12.1 (28 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -581,8 +581,10 @@ function holdingsTable(list,watch){
 // Bezittingen en Volglijst: kolommen precies onder elkaar (dezelfde breedtes, op basis van de breedste inhoud van beide)
 function alignHoldTables(){const t=[...document.querySelectorAll('.hold-tbl')].filter(x=>x.getClientRects().length);
   t.forEach(x=>{x.style.tableLayout='';x.style.width='';x.querySelectorAll('thead th').forEach(th=>th.style.width='')});if(t.length<2)return;
+  t.forEach(x=>x.style.width='max-content');   // meet de breedte die de inhoud echt nodig heeft, niet de uitgerekte breedte
   const ws=t.map(x=>[...x.querySelectorAll('thead th')].map(th=>th.getBoundingClientRect().width));if(ws[0].length!==ws[1].length)return;
   const w=ws[0].map((v,i)=>Math.max(v,ws[1][i])),sum=w.reduce((a,b)=>a+b,0);
+  t.forEach(x=>x.style.width='');
   const room=Math.min(...t.map(x=>x.parentElement.clientWidth)),fit=sum<=room;   // past het niet, dan vaste breedtes en schuift de tabel zoals voorheen
   t.forEach(x=>{x.querySelectorAll('thead th').forEach((th,i)=>th.style.width=fit?(w[i]/sum*100).toFixed(3)+'%':Math.ceil(w[i])+'px');if(!fit)x.style.width=Math.ceil(sum)+'px';x.style.tableLayout='fixed'})}
 // blad "Kolommen aanpassen": ↑ ↓ verplaatsen, vinkje = tonen; elke wijziging is meteen zichtbaar en wordt bewaard
