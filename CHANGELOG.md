@@ -7,12 +7,19 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.3`) en de naam van het zip-bestand (`crypto-tracker-3.10.3.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.10.4`) en de naam van het zip-bestand (`crypto-tracker-3.10.4.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.10.4 – 28 oktober 2026
+20 nieuwe ideeën op de wishlist. De app zelf verandert niet.
+
+### Toegevoegd
+- **Wishlist W19–W38:** box 3-schatting, vergelijken met sparen en inflatie, daling vanaf de top, houdtijd, portefeuilles naast elkaar, marktsentiment, totale cryptomarkt, volglijst met resultaat sinds toevoegen, munten vergelijken, bewegingsalert, koop- en verkoopladder, slimme vaste inleg, aankopen in dollar of stablecoin, transactie herhalen, overzicht zelf indelen, importherinnering, notities per munt, uitlegknopjes en een deelbare afbeelding.
+- **Nieuwe groepen in de wishlist:** Markt en Gemak.
 
 ## 3.10.3 – 27 oktober 2026
 Blokken op de munt-pagina eindigen onderaan op dezelfde hoogte.
