@@ -7,12 +7,20 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.11.0`) en de naam van het zip-bestand (`crypto-tracker-3.11.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.12.0`) en de naam van het zip-bestand (`crypto-tracker-3.12.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.12.0 – 28 oktober 2026
+De Volglijst heeft op de laptop dezelfde kolommen als Bezittingen.
+
+### Gewijzigd
+- **Volglijst als tabel:** op de laptop staat de Volglijst nu in dezelfde tabel als Bezittingen, met dezelfde kolommen in dezelfde volgorde. Aantal, Waarde, Geïnvesteerd, Winst/verlies en % staan op 0, want je hebt de munt (nog) niet. Gem. prijs is leeg (–). Openstaande prijsalerts staan klein onder de munt.
+- **Kolommen aanpassen** geldt voor beide tabellen, en de kolommen staan precies onder elkaar.
+- Op de telefoon blijft de Volglijst een lijst.
 
 ## 3.11.0 – 28 oktober 2026
 Je kiest zelf welke kolommen de tabel Bezittingen toont, en in welke volgorde.
