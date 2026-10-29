@@ -7,12 +7,29 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.14.0`) en de naam van het zip-bestand (`crypto-tracker-3.14.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.15.0`) en de naam van het zip-bestand (`crypto-tracker-3.15.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.15.0 – 29 oktober 2026
+Kies je eigen thema in Instellingen: naast Donker en Licht nu ook Zwart, Nachtblauw, Zacht en Hoog contrast.
+
+### Toegevoegd
+- **Vier nieuwe thema's** onder Instellingen › Weergave, elk met een klein kleurvoorbeeld op de knop:
+  - **Zwart:** echt zwarte achtergrond; rustig 's avonds en zuinig voor de batterij van een iPhone.
+  - **Nachtblauw:** donker, met een diepblauwe ondertoon.
+  - **Zacht:** licht, met een warme crèmekleurige achtergrond, minder fel dan Licht.
+  - **Hoog contrast:** zwarte tekst op wit, met duidelijke randen; handig buiten in de zon.
+- **Automatisch met eigen keuze:** kies je Automatisch, dan kies je eronder welk thema hij gebruikt als je apparaat donker staat (Donker, Zwart of Nachtblauw) en als het licht staat (Licht, Zacht of Hoog contrast).
+
+### Let op
+- **Het thema geldt per apparaat**, net als voorheen. Zo kun je op de iPhone Zwart gebruiken en op de laptop Licht.
+
+### Technisch
+- **Tests:** de toegankelijkheidstest (contrast en meer) draait nu voor alle zes thema's, plus een test voor het kiezen van een thema.
 
 ## 3.14.0 – 29 oktober 2026
 Rustigere indeling op telefoon, iPad en laptop, en Rapporten heet nu Analyse.

@@ -155,6 +155,19 @@ html{scroll-padding-bottom:96px}
 a{color:var(--accent)}
 /* lichte weergave */
 :root.light{--sheet:#ffffff;--side:#fbfbfc;--tab:rgba(255,255,255,.94);--toast:#1f2430;--bg:#f3f4f7;--card:#ffffff;--card2:#eceef2;--line:#e2e5ea;--text:#151821;--muted:#5b6372;--green:#047857;--red:#c8333a;--accent:#2563eb;--yellow:#8a5a0f}   /* licht thema: alle tekstkleuren ≥ 4,5:1 contrast */
+/* Extra thema's (Instellingen › Weergave). Zwart en Nachtblauw zijn donker; Zacht en Hoog contrast zijn licht en krijgen ook de klasse .light. Alle tekstkleuren ≥ 4,5:1 contrast */
+:root.th-black{--sheet:#0a0b0e;--side:#050608;--tab:rgba(0,0,0,.94);--toast:#22262f;--bg:#000000;--card:#0e1014;--card2:#181b22;--line:#1f232c;--text:#eef1f6;--muted:#8f97a9;--green:#1fd17a;--red:#ff5a5f;--accent:#4f8cff;--yellow:#f5b942}
+:root.th-navy{--sheet:#0f182b;--side:#0c1325;--tab:rgba(10,16,32,.94);--toast:#263453;--bg:#0a1020;--card:#111a2e;--card2:#1a2540;--line:#24314f;--text:#e9eefb;--muted:#97a4c2;--green:#22d483;--red:#ff6a70;--accent:#62a0ff;--yellow:#f5bd4a}
+:root.th-soft{--sheet:#fffaf2;--side:#faf4ea;--tab:rgba(255,250,242,.94);--toast:#2b2620;--bg:#f3ede3;--card:#fffaf2;--card2:#ece3d4;--line:#e2d7c5;--text:#2a2420;--muted:#5c5248;--green:#046b4b;--red:#b02e2b;--accent:#1d58c4;--yellow:#7a4f0a}
+:root.th-contrast{--sheet:#ffffff;--side:#ffffff;--tab:rgba(255,255,255,.97);--toast:#000000;--bg:#ffffff;--card:#ffffff;--card2:#e6e6e6;--line:#6b6b6b;--text:#000000;--muted:#2e2e2e;--green:#00592c;--red:#9e0f17;--accent:#0035a0;--yellow:#5c3a00}
+.th-contrast .card,.th-contrast .stat,.th-contrast .list,.th-contrast .tbl-wrap,.th-contrast .panel,.th-contrast .icon-btn,.th-contrast .seg{box-shadow:0 0 0 1px var(--line)}
+.th-contrast .seg button.on.all{box-shadow:inset 0 0 0 2px var(--text)}
+/* Themakeuze in Instellingen: knoppen met een kleurvoorbeeld */
+.seg.theme-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.theme-seg button[data-theme=auto]{grid-column:1/-1}
+.theme-seg button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;line-height:1.2;text-align:left}
+#themeAuto[hidden]{display:none}
+.theme-sw{width:16px;height:16px;border-radius:50%;flex:none;box-shadow:0 0 0 1px var(--line)}
 .light .card,.light .stat,.light .list,.light .tbl-wrap,.light .icon-btn,.light .pl-toggle{box-shadow:0 1px 2px rgba(16,24,40,.06),0 0 0 1px rgba(16,24,40,.04)}
 .light .tx-type.transfer{color:#4b5563;background:#e5e7eb}
 .light .tx-type.buy{color:#065f46}.light .tx-type.receive{color:#6d28d9}.light .tx-type.deposit{color:#1d4ed8}
