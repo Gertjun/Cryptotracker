@@ -142,3 +142,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Per apparaat** (in `settings`, niet in `data.cfg`): Geert gaf geen voorkeur; zo kun je op de telefoon een ander thema hebben dan op de laptop, zoals voorheen.
 - **Contrast:** elk thema haalt minstens 4,5:1 voor tekst; de axe-test draait voor alle thema's.
 - **Niet gekozen:** een vrij kiesbare accentkleur (dan is het contrast niet te garanderen). De grafiekkleuren (`PAL`) zijn in alle thema's gelijk.
+
+### D27 – Rendementskalender per dag, week, maand of jaar (29 okt 2026, 3.16.0)
+- **Besluit:** dezelfde knoppen Dag/Week/Maand/Jaar als bij Rendement (`settings.calU`, per apparaat). Dag: een maand per keer (`settings.calMonth`). Week en Maand: een jaar per keer (`settings.calYear`); weken volgens de agenda (ISO, week 1 kan eind december beginnen), 7 per rij. Maand en Jaar: 4 per rij (`.cal-4`). Jaar: alle jaren, zonder bladeren. Per week/maand/jaar hele euro's vanaf € 10, zodat het in een vakje past.
+- **Waarom:** Geert wilde dezelfde keuze als bij het blok Rendement.
+- **Niet gekozen:** weken per maand tonen (dan maar 4–5 vakjes per keer).
+

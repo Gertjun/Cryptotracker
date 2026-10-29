@@ -7,12 +7,30 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.15.0`) en de naam van het zip-bestand (`crypto-tracker-3.15.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.16.0`) en de naam van het zip-bestand (`crypto-tracker-3.16.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.16.0 – 29 oktober 2026
+De rendementskalender kan nu ook per week, maand en jaar, net als het blok Rendement.
+
+### Toegevoegd
+- **Dag, Week, Maand en Jaar** boven de rendementskalender (Analyse › Rendement):
+  - **Dag:** zoals voorheen, een maand per keer.
+  - **Week:** alle weken van een jaar (wk 1 t/m 52 of 53); blader met ‹ › per jaar.
+  - **Maand:** de twaalf maanden van een jaar; blader per jaar.
+  - **Jaar:** alle jaren sinds je eerste transactie.
+- Onder de kalender staan het totaal en het aantal weken, maanden of jaren in de plus en min.
+
+### Let op
+- **Week 1 kan eind december beginnen** (zoals in de agenda). Het totaal van de weken van een jaar kan daardoor een paar euro afwijken van het totaal per maand.
+- Je keuze wordt per apparaat onthouden.
+
+### Technisch
+- **Nieuwe test** `tests/specs/kalender.spec.mjs`.
 
 ## 3.15.0 – 29 oktober 2026
 Kies je eigen thema in Instellingen: naast Donker en Licht nu ook Zwart, Nachtblauw, Zacht en Hoog contrast.

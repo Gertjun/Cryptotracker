@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.15.0 (29 okt 2026)';
+const APP_VERSION='3.16.0 (29 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -988,7 +988,7 @@ function cumLine(res){
 }
 let zoomReturn=null;
 function closeZoom(){const z=$('#zoom');if(z){if(z.open)z.close();z.remove();document.body.style.overflow='';const r=zoomReturn;zoomReturn=null;restoreFocus(r)}}
-const pSeg=(key,u)=>`<fieldset class="seg mini"><legend class="sr-only">Periode ${/Ret/.test(key)?'rendement':'inleg'}</legend>${Object.entries(PU).map(([k,v])=>`<button type="button" data-rp="${key}:${k}" class="${u===k?'on':''}">${v[0]}</button>`).join('')}</fieldset>`;
+const pSeg=(key,u)=>`<fieldset class="seg mini"><legend class="sr-only">Periode ${/Ret/.test(key)?'rendement':key==='calU'?'rendementskalender':'inleg'}</legend>${Object.entries(PU).map(([k,v])=>`<button type="button" data-rp="${key}:${k}" class="${u===k?'on':''}">${v[0]}</button>`).join('')}</fieldset>`;
 const monthLbl=(ts,o={month:'short'})=>new Date(ts).toLocaleDateString('nl-NL',o).replace('.','');
 function repJanCard(){
   const S={};coinIds().forEach(id=>S[id]=coinStates(id));
@@ -1260,22 +1260,36 @@ function retRange(u,from,to){   // resultaat per periode voor periodes die begin
   return st.map(a=>{const o=snapshot(Math.min(pNext(u,a),now),S),r={ts:a,v:metric(o)-metric(prev),miss:o.missing.length>0};prev=o;return r});
 }
 function calCard(){
-  const now=Date.now(),cur=pStart('month',now),minM=pStart('month',Math.min(...TX().map(txTime)));
-  let m=+settings.calMonth||cur;if(m>cur)m=cur;if(m<minM)m=minM;
-  const first=Math.min(...TX().map(txTime)),res=retRange('day',m,pNext('month',m)-1),by={};res.forEach(r=>by[r.ts]=r);
+  // Rendementskalender per dag (maand bladeren), week of maand (jaar bladeren) of jaar (alles)
+  const u=PU[settings.calU]?settings.calU:'day',now=Date.now(),first=Math.min(...TX().map(txTime));
+  const yearNav=u==='week'||u==='month',navU=u==='day'?'month':'year';
+  const cur=pStart(navU,now),minN=pStart(navU,first);
+  let m=u==='year'?0:+(u==='day'?settings.calMonth:settings.calYear)||cur;if(u!=='year'){if(m>cur)m=cur;if(m<minN)m=minN}
+  // periodes in beeld: dagen van de maand, weken van het jaar (ISO: de donderdag valt in dat jaar), maanden van het jaar, of alle jaren
+  let from,to;
+  if(u==='day'){from=m;to=pNext('month',m)-1}
+  else if(u==='month'){from=m;to=pNext('year',m)-1}
+  else if(u==='week'){const y=new Date(m).getFullYear(),w1=pStart('week',new Date(y,0,4).getTime());from=w1;to=pStart('week',new Date(y,11,28).getTime())}
+  else{from=pStart('year',first);to=now}
+  const slots=pList(u,from,to),res=retRange(u,from,to),by={};res.forEach(r=>by[r.ts]=r);
   const mx=Math.max(1e-9,...res.map(r=>Math.abs(r.v))),tot=res.reduce((s,r)=>s+r.v,0),pos=res.filter(r=>r.v>0.005).length,neg=res.filter(r=>r.v<-0.005).length;
-  const lead=(new Date(m).getDay()+6)%7,days=pList('day',m,pNext('month',m)-1),today=pStart('day',now);
-  const cell=ts=>{const r=by[ts],dn=new Date(ts).getDate();
-    if(ts>now||ts<pStart('day',first))return `<div class="cd f"><span class="n">${dn}</span></div>`;
+  const curP=pStart(u,now),firstP=pStart(u,first),base=hexRgb(getComputedStyle(document.body).getPropertyValue('--card').trim()||'#151922');
+  const nf=v=>{const a=Math.abs(v);return a>=1e4?new Intl.NumberFormat('nl-NL',{maximumFractionDigits:1}).format(a/1e3)+'k':new Intl.NumberFormat('nl-NL',{minimumFractionDigits:a>=(u==='day'?100:10)?0:2,maximumFractionDigits:a>=(u==='day'?100:10)?0:2}).format(a)};   // per week/maand/jaar hele euro's vanaf 10, zodat het in een vakje past
+  const num=ts=>{const d=new Date(ts);return u==='day'?d.getDate():u==='week'?'wk '+isoWeek(d):u==='month'?monthLbl(ts):d.getFullYear()};
+  const cell=ts=>{const r=by[ts];
+    if(ts>now||ts<firstP)return `<div class="cd f"><span class="n">${num(ts)}</span></div>`;
     const v=r?r.v:0,a=0.12+0.68*Math.min(1,Math.abs(v)/mx),rgb=v>0?[31,209,122]:[255,90,95];
-    let bg='';if(Math.abs(v)>=0.005){const base=hexRgb(getComputedStyle(document.body).getPropertyValue('--card').trim()||'#151922'),mix=rgb.map((c,i)=>Math.round(a*c+(1-a)*base[i]));
-      bg=`background:rgb(${mix});color:${bestText(mix)}`}
-    return `<div class="cd${ts===today?' today':''}${bg?' c':''}" style="${bg}" title="${pLabel('day',ts,true)}: ${signed(v)}"><span class="n">${dn}</span><span class="v m">${Math.abs(v)<0.005?'':(v>0?'+':'−')+new Intl.NumberFormat('nl-NL',{minimumFractionDigits:Math.abs(v)>=100?0:2,maximumFractionDigits:Math.abs(v)>=100?0:2}).format(Math.abs(v))}</span></div>`};
-  return `<div class="card"><h2 class="h3">Rendementskalender</h2><p class="hint">Resultaat per dag in euro's: groen is winst, rood is verlies. Hoe feller, hoe groter.</p>
-  <div class="cal-nav"><button type="button" data-cal="-1" ${m<=minM?'disabled':''} aria-label="Vorige maand">‹</button><b>${monthLbl(m,{month:'long',year:'numeric'})}</b><button type="button" data-cal="1" ${m>=cur?'disabled':''} aria-label="Volgende maand">›</button></div>
-  <div class="cal">${['ma','di','wo','do','vr','za','zo'].map(d=>`<div class="h">${d}</div>`).join('')}${'<div class="cd e"></div>'.repeat(lead)}${days.map(cell).join('')}</div>
-  <div class="mt-10 kv"><div><span class="label">Totaal ${monthLbl(m,{month:'long'})}</span><b class="m ${cls(tot)}">${signed(tot)}</b></div>
-  <div><span class="label">Dagen in de plus / min</span><b><span class="up">${pos}</span> / <span class="down">${neg}</span></b></div></div></div>`;
+    let bg='';if(Math.abs(v)>=0.005){const mix=rgb.map((c,i)=>Math.round(a*c+(1-a)*base[i]));bg=`background:rgb(${mix});color:${bestText(mix)}`}
+    return `<div class="cd${ts===curP?' today':''}${bg?' c':''}" style="${bg}" title="${pLabel(u,ts,true)}: ${signed(v)}"><span class="n">${num(ts)}</span><span class="v m">${Math.abs(v)<0.005?'':(v>0?'+':'−')+nf(v)}</span></div>`};
+  const [,il]=PU[u],plural={day:'Dagen',week:'Weken',month:'Maanden',year:'Jaren'}[u];
+  const title=u==='day'?monthLbl(m,{month:'long',year:'numeric'}):new Date(m).getFullYear();
+  const nav=u==='year'?'':`<div class="cal-nav"><button type="button" data-cal="-1" ${m<=minN?'disabled':''} aria-label="${yearNav?'Vorig jaar':'Vorige maand'}">‹</button><b>${title}</b><button type="button" data-cal="1" ${m>=cur?'disabled':''} aria-label="${yearNav?'Volgend jaar':'Volgende maand'}">›</button></div>`;
+  const lead=u==='day'?(new Date(m).getDay()+6)%7:0;
+  const totL=u==='day'?monthLbl(m,{month:'long'}):u==='year'?'alle jaren':u==='week'?'weken van '+title:title;   // week 1 kan in december beginnen
+  return `<div class="card"><h2 class="h3">Rendementskalender</h2>${pSeg('calU',u)}<p class="hint">Resultaat per ${il} in euro's: groen is winst, rood is verlies. Hoe feller, hoe groter.</p>
+  ${nav}<div class="cal${u==='month'||u==='year'?' cal-4':''}${u==='year'?' mt-10':''}">${u==='day'?['ma','di','wo','do','vr','za','zo'].map(d=>`<div class="h">${d}</div>`).join(''):''}${'<div class="cd e"></div>'.repeat(lead)}${slots.map(cell).join('')}</div>
+  <div class="mt-10 kv"><div><span class="label">Totaal ${totL}</span><b class="m ${cls(tot)}">${signed(tot)}</b></div>
+  <div><span class="label">${plural} in de plus / min</span><b><span class="up">${pos}</span> / <span class="down">${neg}</span></b></div></div></div>`;
 }
 
 /* ---------- exporteren ---------- */
@@ -2601,7 +2615,7 @@ document.querySelector('.skip-link')?.addEventListener('click',e=>{e.preventDefa
 document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal],[data-unit]');if(!a)return;
   if(a.dataset.unit){setUnit(a.dataset.unit,a);return}
-  if(a.dataset.cal){const now=Date.now();let m=+settings.calMonth||pStart('month',now);const d=new Date(m);d.setMonth(d.getMonth()+(+a.dataset.cal));settings.calMonth=d.getTime();saveSettings();keepFocus(renderReports);return}
+  if(a.dataset.cal){const now=Date.now(),yr=settings.calU==='week'||settings.calU==='month',k=yr?'calYear':'calMonth';let m=+settings[k]||pStart(yr?'year':'month',now);const d=new Date(m);if(yr)d.setFullYear(d.getFullYear()+(+a.dataset.cal));else d.setMonth(d.getMonth()+(+a.dataset.cal));settings[k]=d.getTime();saveSettings();keepFocus(renderReports);return}
   if(a.dataset.goal){openGoal(a.dataset.goal);return}
   if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));const ta=$('#themeAuto');if(ta)ta.hidden=a.dataset.theme!=='auto';return}
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
