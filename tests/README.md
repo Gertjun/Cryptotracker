@@ -11,8 +11,8 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 | `specs/calc.spec.mjs` | Berekeningen: cash, inleg en gerealiseerde winst uit de test-export; grafiek en tabel tonen hetzelfde percentage; bitcoinweergave; afronding in formulieren; de verkoopsimulator. |
 | `specs/sync.spec.mjs` | Versleutelde GitHub-synchronisatie tussen twee apparaten, inclusief portefeuilles en verwijderen, en een nieuw apparaat koppelen met koppelcode en pincode (met een nep-GitHub). |
 | `specs/columns.spec.mjs` | Kolommen van de tabel Bezittingen verplaatsen, verbergen, bewaren en standaard herstellen; de keuze komt mee bij het samenvoegen van twee apparaten; de Volglijst heeft dezelfde kolommen; op een brede laptop is er geen schuifbalk; de kolommen 1 uur, 4 uur en 1 jaar. |
-| `specs/fit.spec.mjs` | Tabellen en grafieken passen op het scherm (geen schuifbalk opzij) op telefoon, 768, 1024, 1280 en 1440 px; te brede tabellen verbergen eerst de minst belangrijke kolommen, met een melding.|
 | `specs/fit.spec.mjs` | Tabellen en grafieken passen op het scherm (geen schuifbalk opzij) op telefoon, 768, 1024, 1280 en 1440 px; te brede tabellen verbergen eerst de minst belangrijke kolommen, met een melding. |
+| `specs/indeling.spec.mjs` | Oude adressen van Rapporten openen Analyse; op de telefoon staan filters en totalen achter de knop Filter en staan de transacties van een munt vóór de rekenhulpen; op de laptop geen dubbele muntenlijst in de zijbalk op het Overzicht en kolomkoppen die blijven staan bij scrollen. |
 | `specs/coingecko.spec.mjs` | Verzoeken aan CoinGecko blijven binnen de limiet (6 direct, daarna 15 per minuut; met sleutel 10 en 30). |
 | `specs/update.spec.mjs` | Een nieuwe versie komt direct binnen, ook als de server de browser laat cachen (zoals GitHub Pages). |
 | `npm run test:html` | De HTML voldoet aan de standaard (html-validate). |

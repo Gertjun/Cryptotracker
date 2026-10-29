@@ -15,7 +15,7 @@ De app werkt in de browser en is te installeren op het beginscherm van je iPhone
 - **Transacties:** aankopen, verkopen, stortingen, opnames, ontvangsten en overboekingen. Importeren uit een Bitvavo-export (CSV) en exporteren naar CSV.
 - **Weergave in €, $ of ₿:** in bitcoin zie je of je beter had gedaan door alleen bitcoin te houden. De administratie blijft altijd in euro.
 - **Meerdere portefeuilles**, los te bekijken of samen.
-- **Rapporten** in vier tabbladen: Rendement, Analyse, Plannen en Administratie.
+- **Analyse** in vier tabbladen: Rendement, Vergelijken, Plannen en Administratie.
 - **Hulpmiddelen:** doelen, vaste inleg, doelverdeling, wat-als, risico, gemiddelde-prijs-calculator en verkoopsimulator.
 - **Licht en donker thema**, of automatisch volgens je apparaat.
 

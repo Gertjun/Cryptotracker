@@ -13,7 +13,7 @@ for(const theme of ['dark','light'])test(`geen toegankelijkheidsfouten (${theme=
   await check('Overzicht');
   await page.evaluate(()=>{location.hash='#coin/ethereum'});await check('Munt');
   await page.evaluate(()=>{location.hash='#transacties'});await check('Transacties');
-  for(const t of ['rendement','analyse','plannen','administratie']){await page.evaluate(t=>{location.hash='#rapporten/'+t},t);await check('Rapporten '+t)}
+  for(const t of ['rendement','vergelijken','plannen','administratie']){await page.evaluate(t=>{location.hash='#analyse/'+t},t);await check('Analyse '+t)}
   await page.evaluate(()=>{location.hash='';openSettings()});await check('Instellingen');
   await page.evaluate(()=>{closeSheet();openTx()});await check('Formulier');
   expect(found,found.join('\n')).toEqual([]);
