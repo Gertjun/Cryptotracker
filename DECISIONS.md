@@ -124,3 +124,14 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** geen schuifbalk opzij. In tabellen staat de munt als ticker (BTC) met de naam als tooltip; de kolommen zijn iets compacter. Past een tabel daarna nog niet, dan verbergt `fitTables()` eerst de minst belangrijke kolommen (`data-p`, hoogste eerst) en zegt onder de tabel welke. Transacties: Broker · notitie, Kosten, Koers, Waarde nu, Aantal, %. Bezittingen: 1 jaar, 4 uur, 30 dagen, 1 uur, Gem. prijs, 7 dagen, Geïnvesteerd, Aantal, Koers, 24 uur, %. Datum, munt, type, totaal, waarde en winst/verlies blijven altijd. Op 1440 px past alles.
 - **Waarom:** Geert wilde alles op het scherm zien zonder opzij te schuiven.
 - **Niet gekozen:** een kleiner lettertype overal (minder leesbaar), of de zijbalk smaller maken op een kleine laptop (verandert de indeling uit D15). Het vergrote venster Rendement per dag of week schuift op een telefoon nog wel opzij: 90 dagen naast elkaar zijn daar niet leesbaar.
+
+### D25 – Indeling: Analyse in plaats van Rapporten, en rustiger per schermformaat (29 okt 2026, 3.14.0, vult D7 en D15 aan)
+- **Besluit:**
+  - Het hoofdtabblad Rapporten heet **Analyse** (`#analyse/<tab>`). Het tabblad dat Analyse heette heet **Vergelijken**, zodat er geen "Analyse › Analyse" staat. Oude adressen (`#rapporten/…`) worden omgezet.
+  - Drie hoofdtabbladen blijven: Overzicht, Transacties, Analyse. Plannen (als je doelen en vaste inleg vaak gebruikt) of Markt (volglijst, alerts) worden pas een eigen tabblad als ze groter worden.
+  - Telefoon: filters en totalen bij Transacties achter de knop Filter; op de munt-pagina (ook tablet) de transacties vóór de rekenhulpen; tabbladen van Analyse onder 400 px in twee rijen.
+  - Tablet: het blok met cijfers naast Cash staat ook daar (niet alleen op de laptop).
+  - Vanaf 700 px: de regel onder de totale waarde is onzichtbaar en verschijnt bij het aanwijzen van de grafiek (de ruimte blijft gereserveerd, zodat de grafiek niet verspringt). Het blok naast de grafiek kreeg "Waarde crypto".
+  - Laptop: op het Overzicht geen muntenlijst in de zijbalk; kolomkoppen van tabellen blijven bovenin staan.
+- **Waarom:** Geert vroeg om de indeling na te lopen op laptop, iPad en iPhone; dubbele informatie weg en sneller bij de transacties.
+- **Niet gekozen:** de regel onder de totale waarde helemaal weghalen (dan verdwijnt de uitsplitsing per moment bij het aanwijzen van de grafiek); de tabbladnamen inkorten ("Admin.").

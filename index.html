@@ -181,7 +181,10 @@ a{color:var(--accent)}
 .kv>div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .kv>div:last-child{border-bottom:0}
 .kv small{font-weight:600;font-size:12px}
-.tbl-wrap{background:var(--card);border-radius:16px;overflow:auto}
+.tbl-wrap{background:var(--card);border-radius:16px;overflow-x:clip}
+.tbl-wrap.scroll{overflow:auto}
+/* kolomkoppen blijven bovenin staan als je door een lange tabel scrolt */
+.tbl thead th{position:sticky;top:0;z-index:1;background:var(--card);border-bottom:0;box-shadow:inset 0 -1px 0 var(--line)}
 .tbl{width:100%;border-collapse:collapse}
 .tbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:13px 7px;border-bottom:1px solid var(--line);white-space:nowrap;user-select:none}
 .tbl td{padding:12px 7px;font-size:14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -210,6 +213,18 @@ a{color:var(--accent)}
 .month-h{font-size:13px;color:var(--muted);margin:18px 4px 8px;text-transform:capitalize}
 .month-h:first-child{margin-top:4px}
 .tx-sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+/* Transacties: op de telefoon staan filters en totalen achter de knop Filter */
+.filt-btn{display:none}
+.tx-more{display:contents}
+.tx-brief{display:none}
+@media (max-width:699px){
+  .filters input{flex:1 1 0}
+  .filt-btn{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-weight:650}
+  .filt-btn[aria-expanded=true]{background:var(--card2)}
+  .txp:not(.open) .tx-more,.txp:not(.open) .tx-sum{display:none}
+  .tx-brief{display:block;margin:-4px 0 10px;color:var(--muted);font-size:14px}
+  .txp.open .tx-brief{display:none}
+}
 .tx-sum.odd .stat:first-child{grid-column:1/-1}
 .tx-type.deposit{background:rgba(79,140,255,.15);color:#79a6ff}
 .tx-type.withdraw{background:rgba(245,185,66,.15);color:var(--yellow)}
@@ -365,6 +380,11 @@ a{color:var(--accent)}
 .chk input{width:18px;height:18px;margin-top:2px;flex:none}
 .btn-add{background:var(--green);color:#03150b;border:0;border-radius:12px;padding:0 16px;height:40px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;flex:none}
 .btn-add svg{width:18px;height:18px}
+/* Munt-pagina op telefoon en tablet: eerst de transacties, daarna de rekenhulpen */
+@media (max-width:999px){.coin-page{display:flex;flex-direction:column}.coin-page>.coin-grid{display:contents}.coin-page>.coin-grid>.coin-tools{order:1;margin-top:18px}}
+/* Vanaf de tablet staan deze cijfers in het blok naast de grafiek; de regel onder de totale waarde verschijnt dan alleen tijdens het aanwijzen van de grafiek */
+@media (max-width:699px){.not-phone{display:none!important}}
+@media (min-width:700px){#heroSub.rest{visibility:hidden}}
 @media (max-width:999px){.only-d{display:none!important}.fab{bottom:calc(84px + env(safe-area-inset-bottom))}#app{padding-bottom:170px}}
 @media (min-width:1000px){
   .only-m{display:none!important}
@@ -537,7 +557,8 @@ fieldset.ranges{padding:0}
 .rep-tabs a.on{background:var(--card2);color:var(--text)}
 @media (min-width:900px){.rep-tabs{max-width:520px}}
 @media (max-width:430px){.rep-tabs{gap:2px}.rep-tabs a{font-size:14px;padding-inline:4px}}
-@media (max-width:360px){.rep-tabs a{font-size:12.5px;padding-inline:2px}}
+/* smalle telefoon: de vier tabbladen in twee rijen, zodat ze altijd passen */
+@media (max-width:400px){.rep-tabs{display:grid;grid-template-columns:1fr 1fr}.rep-tabs a{font-size:15px}}
 .tbl-scroll{overflow-x:auto}
 .h-cap{caption-side:top;text-align:left;font-weight:650;font-size:14px;padding:6px 0}
 .risk-lead{margin:4px 0 6px}
@@ -704,7 +725,7 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
   <nav class="tabbar only-m" aria-label="Tabbalk">
     <a href="#" data-tab="home"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Overzicht</a>
     <a href="#transacties" data-tab="txs"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Transacties</a>
-    <a href="#rapporten" data-tab="reps"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Rapporten</a>
+    <a href="#analyse" data-tab="reps"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analyse</a>
   </nav>
   <dialog id="sheet" class="sheet hidden" aria-labelledby="sheetTitle">
     <div class="sheet-bg" id="sheetBg"></div>

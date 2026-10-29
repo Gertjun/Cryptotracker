@@ -7,12 +7,31 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.13.2`) en de naam van het zip-bestand (`crypto-tracker-3.13.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.14.0`) en de naam van het zip-bestand (`crypto-tracker-3.14.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.14.0 – 29 oktober 2026
+Rustigere indeling op telefoon, iPad en laptop, en Rapporten heet nu Analyse.
+
+### Gewijzigd
+- **Rapporten heet nu Analyse.** Het tabblad dat eerst Analyse heette (Wat als, Vergelijking, Risico, Vaste inleg vergeleken) heet nu **Vergelijken**. Oude links en bladwijzers naar Rapporten werken gewoon.
+
+### Verbeterd
+- **Transacties op de telefoon:** de filters (soort, munt, jaar, broker) en de zes totalen staan achter de knop **Filter**, naast het zoekveld. Zo zie je meteen je transacties. Eén regel toont het aantal en de gerealiseerde winst; op de knop staat hoeveel filters aan staan.
+- **Munt-pagina op telefoon en tablet:** de transacties van de munt staan nu vóór de rekenhulpen (gemiddelde prijs, verkoop simuleren).
+- **Tabbladen van Analyse op een smalle telefoon:** in twee rijen, zodat "Administratie" niet meer van het scherm valt.
+- **Overzicht op de iPad:** naast Cash staat nu ook het blok met Waarde crypto, Geïnvesteerd, Ongerealiseerd, Laatste 24 uur, Gerealiseerd en Open posities, in plaats van een leeg vlak.
+- **Overzicht op iPad en laptop:** de grijze regel onder de totale waarde (Crypto, Cash, Geïnvesteerd, Gerealiseerd) herhaalde de blokken ernaast. Hij verschijnt nu alleen als je de grafiek aanwijst, en toont dan de stand op dat moment. Het blok naast de grafiek heeft er de regel **Waarde crypto** bij.
+- **Zijbalk op de laptop:** op het Overzicht staat de lijst met munten niet meer in de zijbalk, want de tabel Bezittingen staat ernaast. Op de andere schermen blijft de lijst staan.
+- **Lange tabellen op de laptop:** de kolomkoppen blijven bovenin staan als je naar beneden scrolt (Transacties, Bezittingen, transacties op de munt-pagina).
+
+### Technisch
+- Hash-routes `#analyse/<tab>` met de tabbladen rendement, vergelijken, plannen en administratie; `fixOldHash()` zet `#rapporten/…` (en `analyse` → `vergelijken`) om.
+- Nieuwe test `tests/specs/indeling.spec.mjs`.
 
 ## 3.13.2 – 29 oktober 2026
 Tabellen en grafieken passen op het scherm, zonder schuifbalk opzij.

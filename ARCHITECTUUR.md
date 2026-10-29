@@ -52,10 +52,14 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 - **Weergave-eenheid (€/$/₿):**
   - `UNIT_ON`, `inUnit(fn)` en `inEUR(fn)`; `money()` rekent om.
   - `K(t)` is de bitcoinfactor op tijdstip t: aankopen tellen tegen de bitcoinkoers van dat moment.
-  - Rapporten, formulieren en calculators zijn altijd in euro (`inEUR`).
+  - Analyse, formulieren en calculators zijn altijd in euro (`inEUR`).
 - **Schermen:**
-  - `render()` → `renderInner()` → `renderHome()` / `renderCoin()` / `renderTxs()` / `renderReports()`.
-  - Hash-routes: `#coin/<id>`, `#transacties`, `#rapporten/<tab>` met de tabbladen rendement, analyse, plannen en administratie.
+  - `render()` → `renderInner()` → `renderHome()` / `renderCoin()` / `renderTxs()` / `renderReports()` (het scherm Analyse, voorheen Rapporten).
+  - Hash-routes: `#coin/<id>`, `#transacties`, `#analyse/<tab>` met de tabbladen rendement, vergelijken, plannen en administratie. `fixOldHash()` zet oude adressen (`#rapporten/…`, tabblad `analyse`) om naar de nieuwe.
+  - **Zijbalk** (`renderSide(cid)`, laptop): op het Overzicht (`cid` leeg) alleen de navigatie; cash, bezittingen, gesloten posities en volglijst staan daar al in beeld. Op de andere schermen staan ze wel in de zijbalk.
+  - **Overzicht:** het blok naast de grafiek (Waarde crypto, Geïnvesteerd, …) heeft de klasse `.not-phone` (verborgen onder 700 px). De regel `#heroSub` onder de totale waarde heeft vanaf 700 px de klasse `.rest` (onzichtbaar, ruimte blijft) en verschijnt alleen tijdens het aanwijzen van de grafiek; op de telefoon staat hij altijd.
+  - **Transacties op de telefoon:** zoekveld + knop Filter (`data-act="txfilt"`, `txOpen`); filters (`.tx-more`) en totalen (`.tx-sum`) staan in `.txp.open`. Eén regel `.tx-brief` met aantal en gerealiseerd. Vanaf 700 px staat alles open.
+  - **Munt-pagina** (`.coin-page`): onder 1000 px is `.coin-grid` `display:contents`, zodat de transacties (`.coin-txs`) vóór de rekenhulpen (`.coin-tools`) staan.
 - **Portfoliografiek:**
   - `portfolioSeries(range,unit)` geeft punten `[t, waarde, geïnvesteerd|netto gestort, gerealiseerd, {v,cash,inv,real,coins,pxs,costs}]`.
   - Tekenen: `paintPf()` voor € Totaal en `paintAssets()` voor € per munt, % per munt en % Totaal.
@@ -65,7 +69,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Kolommen met `off:true` (4 uur, 1 jaar) staan standaard uit; `hcols.show` onthoudt welke je aanzette. Een nieuwe kolom komt in een bewaarde volgorde op zijn standaardplek (na zijn voorganger in `HCOLS`).
   - **1 uur** en **1 jaar** komen uit dezelfde CoinGecko-aanvraag als 24 uur (`price_change_percentage=1h,24h,7d,30d,1y`, in `prices[id].m.ch1h/ch1y`). **4 uur** geeft CoinGecko niet: `ch4h(id)` rekent hem uit de 24-uursgrafiek (`chartCache[id+'|1']`); `need4h()` haalt die op de achtergrond op, alleen als de kolom aan staat.
   - De **Volglijst** gebruikt op de laptop dezelfde tabel (`holdingsTable(rows,true)`, rijen uit `watchRow()`: aantal, waarde, geïnvesteerd en resultaat 0, gem. prijs –), zonder sorteerknoppen.
-- **Tabellen passend maken: `fitTables()`** (na elke `render()` en bij `resize`). Bezittingen en Volglijst vormen één groep met dezelfde kolombreedtes; elke andere `table.tbl` (Transacties, transacties op de munt-pagina) staat op zichzelf. Het meet de breedte die de inhoud nodig heeft (`width:max-content`). Past dat niet, dan krijgen de cellen van kolommen met `data-p` de klasse `.c-off` (verborgen), hoogste `data-p` eerst, tot het past; daaronder staat een `.fit-note` met de verborgen kolommen. Kolommen zonder `data-p` blijven altijd staan. Prioriteiten: `p` in `HCOLS`, en `TXH` (gedeelde kolomkoppen van beide transactietabellen). Alleen als het daarna nog niet past, schuift de tabel opzij.
+- **Tabellen passend maken: `fitTables()`** (na elke `render()` en bij `resize`). Bezittingen en Volglijst vormen één groep met dezelfde kolombreedtes; elke andere `table.tbl` (Transacties, transacties op de munt-pagina) staat op zichzelf. Het meet de breedte die de inhoud nodig heeft (`width:max-content`). Past dat niet, dan krijgen de cellen van kolommen met `data-p` de klasse `.c-off` (verborgen), hoogste `data-p` eerst, tot het past; daaronder staat een `.fit-note` met de verborgen kolommen. Kolommen zonder `data-p` blijven altijd staan. Prioriteiten: `p` in `HCOLS`, en `TXH` (gedeelde kolomkoppen van beide transactietabellen). Alleen als het daarna nog niet past, krijgt `.tbl-wrap` de klasse `.scroll` en schuift de tabel opzij. Anders is de overloop `clip`, zodat de kolomkoppen (`position:sticky`) bovenin blijven staan bij scrollen.
 - In tabellen staat de munt als **ticker** (BTC) met de volledige naam in `title` en `sr-only`; de kolom Aantal heeft geen muntsymbool. De kolom Broker · notitie (`noteCell()`) kapt af met de volledige tekst in `title`.
 - **`data.cfg`** is één object dat in zijn geheel samenvoegt (nieuwste `mod` wint). Wijzig het altijd met `{...data.cfg, …, mod:Date.now()}`, anders gaan andere instellingen verloren.
 - **Koersgrafiek op de munt-pagina:** `drawChart(c)`. Gebruikt dezelfde opbouw als de portfoliografiek (`.pc`, `.pc-plot`, `.pc-axis`) en dezelfde y-as-hulpjes `axisTicks()` en `tickLbl()`.
@@ -87,6 +91,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Formulieren staan in `form.js-form` met zichtbare labels; fouten toon je met `fieldErr(id, tekst)`.
   - Bladen zijn een `<dialog>` via `openSheet()` en hebben altijd een sluitknop.
 - **Passen op het scherm:** tabellen en grafieken krijgen geen schuifbalk opzij (getest in `tests/specs/fit.spec.mjs`). Gebruik tickers in plaats van lange namen, en geef een nieuwe tabelkolom een prioriteit (`data-p`). Uitzondering: het vergrote venster Rendement per dag/week op een telefoon.
+- **Tabbladen van Analyse** (`.rep-tabs`): onder 400 px in twee rijen.
 - **Breakpoints:**
   - telefoon: < 700 px;
   - tablet: 700–999 px, de telefoonopbouw maar breder;

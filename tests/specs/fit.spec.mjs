@@ -2,7 +2,7 @@
 // Past een tabel niet, dan verdwijnen eerst de minst belangrijke kolommen, met een melding onder de tabel.
 import {test,expect} from '@playwright/test';
 import {openApp,importCsv,isPhone} from './helpers.mjs';
-const ROUTES=['','#transacties','#rapporten/rendement','#rapporten/analyse','#rapporten/plannen','#rapporten/administratie','#coin/bitcoin','#coin/fetch-ai'];
+const ROUTES=['','#transacties','#analyse/rendement','#analyse/vergelijken','#analyse/plannen','#analyse/administratie','#coin/bitcoin','#coin/fetch-ai'];
 // alles wat opzij scrolt (behalve de bewust brede dag/week-grafiek in het vergrote scherm op een telefoon)
 const overflow=page=>page.evaluate(()=>{const out=[],de=document.documentElement;if(de.scrollWidth>de.clientWidth+1)out.push('pagina');
   for(const el of document.querySelectorAll('body *')){const cs=getComputedStyle(el);if(!/auto|scroll/.test(cs.overflowX)||!el.getClientRects().length)continue;
