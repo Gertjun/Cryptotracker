@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.14.0 (29 okt 2026)';
+const APP_VERSION='3.15.0 (29 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -12,12 +12,21 @@ function load(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v?Obje
 let data=load(LS_DATA,{txs:[],deleted:[],updated:0});
 let settings=load(LS_SET,{privacy:false,plMode:'total',sort:'value',range:'30',pRange:'30',gh:{token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''}});
 let prices=load(LS_PRICES,{});
-// weergave: automatisch (volgt het apparaat), donker of licht
+// weergave: thema. 'auto' volgt de lichte of donkere stand van het apparaat, met per stand een eigen thema (themeD/themeL)
+const THEMES=[['dark','Donker','#0b0d12','#4f8cff'],['black','Zwart','#000000','#4f8cff'],['navy','Nachtblauw','#0a1020','#62a0ff'],['light','Licht','#f3f4f7','#2563eb',1],['soft','Zacht','#f3ede3','#1d58c4',1],['contrast','Hoog contrast','#ffffff','#0035a0',1]];
+const themeOf=k=>THEMES.find(x=>x[0]===k);
 const mqLight=window.matchMedia?matchMedia('(prefers-color-scheme: light)'):null;
+function curTheme(){
+  const t=settings.theme||'auto';
+  if(t!=='auto')return themeOf(t)||THEMES[0];
+  const want=mqLight?.matches?(settings.themeL||'light'):(settings.themeD||'dark'),th=themeOf(want);
+  return th&&!!th[4]===!!mqLight?.matches?th:themeOf(mqLight?.matches?'light':'dark');
+}
 function applyTheme(){
-  const t=settings.theme||'auto',light=t==='light'||(t==='auto'&&!!mqLight?.matches);
-  document.documentElement.classList.toggle('light',light);
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content',light?'#f3f4f7':'#0b0d12');
+  const th=curTheme(),r=document.documentElement;
+  r.classList.toggle('light',!!th[4]);
+  for(const [k] of THEMES)if(k!=='dark'&&k!=='light')r.classList.toggle('th-'+k,th[0]===k);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content',th[2]);
 }
 applyTheme();mqLight?.addEventListener?.('change',applyTheme);
 let syncState={s:'off',msg:''},cgState={s:'off',msg:''};
@@ -2252,7 +2261,12 @@ function openSettings(){
   const pks=lockCfg?.pks||[];
   openSheet(`<h2 class="h3">Instellingen</h2>
   <div class="section-t">Weergave</div>
-  <fieldset class="seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch'],['dark','Donker'],['light','Licht']].map(([v,l])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
+  <fieldset class="seg theme-seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch','linear-gradient(135deg,#f3f4f7 50%,#0b0d12 50%)'],...THEMES.map(([v,l,bg,ac])=>[v,l,`linear-gradient(135deg,${bg} 55%,${ac} 55%)`])].map(([v,l,sw])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}"><span class="theme-sw" style="background:${sw}" aria-hidden="true"></span>${l}</button>`).join('')}</fieldset>
+  <div id="themeAuto" class="two"${(settings.theme||'auto')==='auto'?'':' hidden'}>
+    <div class="field"><label for="s_themeD">Als je apparaat donker staat</label><select id="s_themeD">${THEMES.filter(x=>!x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeD||'dark')===v?' selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="s_themeL">Als je apparaat licht staat</label><select id="s_themeL">${THEMES.filter(x=>x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeL||'light')===v?' selected':''}>${l}</option>`).join('')}</select></div>
+  </div>
+  <p class="mt-0 hint">Het thema geldt alleen voor dit apparaat.</p>
   <p class="mt-8 hint">Bedragen tonen in:</p>
   <fieldset class="seg"><legend class="sr-only">Bedragen tonen in</legend>${[['EUR','Euro €'],['USD','Dollar $'],['BTC','Bitcoin ₿']].map(([v,l])=>`<button type="button" data-unit="${v}" class="${(settings.unit||'EUR')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
   <p class="mt-0 hint">Geldt voor Overzicht, munten en Transacties. Dollar: omgerekend tegen de koers van nu. Bitcoin: aankopen, verkopen en stortingen tegen de bitcoinkoers van dat moment, dus je winst in bitcoin laat zien of je beter deed dan bitcoin aanhouden. Formulieren, Analyse en het jaaroverzicht blijven in euro.${settings.unit&&settings.unit!=='EUR'&&fx.ts?` Koers bijgewerkt ${fmtTs(fx.ts)}.`:''}</p>
@@ -2290,6 +2304,7 @@ function openSettings(){
   <button type="button" class="btn danger" data-act="wipe">Alle transacties wissen</button>
   <p class="app-foot hint">Koersdata: CoinGecko · ${data.txs.length} transacties · versie ${APP_VERSION}</p>`);
   $('#s_file').onchange=importFile;
+  for(const k of ['themeD','themeL']){const el=$('#s_'+k);if(el)el.onchange=()=>{settings[k]=el.value;saveSettings();applyTheme()}}
   const sa=$('#s_auto');if(sa)sa.onchange=()=>{lockCfg.autoLock=+sa.value;saveLock()};
 }
 function exportData(){
@@ -2588,7 +2603,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.unit){setUnit(a.dataset.unit,a);return}
   if(a.dataset.cal){const now=Date.now();let m=+settings.calMonth||pStart('month',now);const d=new Date(m);d.setMonth(d.getMonth()+(+a.dataset.cal));settings.calMonth=d.getTime();saveSettings();keepFocus(renderReports);return}
   if(a.dataset.goal){openGoal(a.dataset.goal);return}
-  if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));return}
+  if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));const ta=$('#themeAuto');if(ta)ta.hidden=a.dataset.theme!=='auto';return}
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
   if(a.dataset.adir){setAlertDir(a.dataset.adir);return}
   if(a.dataset.rp){const [k,u]=a.dataset.rp.split(':');settings[k]=u;saveSettings();keepFocus(()=>{renderReports();if($('#zoom'))renderRetZoom()});return}

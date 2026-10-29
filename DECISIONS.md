@@ -135,3 +135,10 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
   - Laptop: op het Overzicht geen muntenlijst in de zijbalk; kolomkoppen van tabellen blijven bovenin staan.
 - **Waarom:** Geert vroeg om de indeling na te lopen op laptop, iPad en iPhone; dubbele informatie weg en sneller bij de transacties.
 - **Niet gekozen:** de regel onder de totale waarde helemaal weghalen (dan verdwijnt de uitsplitsing per moment bij het aanwijzen van de grafiek); de tabbladnamen inkorten ("Admin.").
+
+### D26 – Zes thema's, per apparaat (29 okt 2026, 3.15.0)
+- **Besluit:** Instellingen › Weergave heeft Automatisch plus zes thema's: drie donkere (Donker, Zwart, Nachtblauw) en drie lichte (Licht, Zacht, Hoog contrast). Bij Automatisch kies je per stand van het apparaat welk thema (`settings.themeD`, `settings.themeL`). Een thema is een set kleurvariabelen op `:root.th-<naam>`; lichte thema's krijgen ook `.light`, zodat alle bestaande regels voor licht blijven gelden.
+- **Waarom:** Geert vroeg om meer thema's. Door alleen variabelen te wisselen blijft elke nieuwe kleur in de app vanzelf goed in alle thema's.
+- **Per apparaat** (in `settings`, niet in `data.cfg`): Geert gaf geen voorkeur; zo kun je op de telefoon een ander thema hebben dan op de laptop, zoals voorheen.
+- **Contrast:** elk thema haalt minstens 4,5:1 voor tekst; de axe-test draait voor alle thema's.
+- **Niet gekozen:** een vrij kiesbare accentkleur (dan is het contrast niet te garanderen). De grafiekkleuren (`PAL`) zijn in alle thema's gelijk.

@@ -106,7 +106,8 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 
 ## 5. Stijl en vormgeving
 
-- **Uitstraling:** rustig en donker, zoals de Delta-app. Er is ook een licht thema en "Automatisch" (volgt het systeem).
+- **Uitstraling:** rustig en donker, zoals de Delta-app. Thema's (D26): Donker (standaard), Zwart, Nachtblauw, Licht, Zacht, Hoog contrast en "Automatisch" (volgt het systeem, met per stand een keuze in `settings.themeD`/`themeL`).
+- **Thema-code:** `THEMES` (sleutel, naam, achtergrond, accent, licht?) en `curTheme()`/`applyTheme()` bovenin `app.js`. Een thema = klasse `th-<naam>` op `<html>` met eigen waarden voor alle variabelen hieronder; lichte thema's krijgen ook `.light`. Nieuw thema: voeg het toe aan `THEMES`, geef het een `:root.th-<naam>` met **alle** variabelen in `index.html`, en voeg het toe aan `EXTRA` in `tests/specs/a11y.spec.mjs`.
 - **Kleuren:** CSS-variabelen op `:root`, met het lichte thema in `:root.light`. Gebruik altijd de variabelen, nooit losse kleuren.
 
   | Variabele | Donker | Licht | Gebruik |
@@ -119,7 +120,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   | `--accent` | #4f8cff | #2563eb | links, focus, knoppen |
   | `--yellow` | #f5b942 | #8a5a0f | waarschuwing (`.warn-mark`) |
 
-  In het lichte thema haalt alle tekst minstens 4,5:1 contrast.
+  De tabel toont Donker en Licht; de andere thema's staan als `:root.th-…` in `index.html`. In elk thema haalt alle tekst minstens 4,5:1 contrast.
 - **Kleuren in grafieken:** `PAL = #4f8cff, #1fd17a, #f5b942, #b56cff, #ff7a59, #34c6d3, #8b93a5` voor de munten op volgorde van waarde, overal hetzelfde (verdelingsbalk, lijnen, stippen). Cash is grijs en gestippeld.
 - **Lettertype:** systeemlettertype (`-apple-system, Segoe UI, Roboto…`), 15 px. Cijfers gebruiken `tabular-nums`, zodat bedragen onder elkaar uitlijnen.
 - **Bouwstenen:**
