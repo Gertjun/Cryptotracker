@@ -73,6 +73,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 - In tabellen staat de munt als **ticker** (BTC) met de volledige naam in `title` en `sr-only`; de kolom Aantal heeft geen muntsymbool. De kolom Broker · notitie (`noteCell()`) kapt af met de volledige tekst in `title`.
 - **`data.cfg`** is één object dat in zijn geheel samenvoegt (nieuwste `mod` wint). Wijzig het altijd met `{...data.cfg, …, mod:Date.now()}`, anders gaan andere instellingen verloren.
 - **Koersgrafiek op de munt-pagina:** `drawChart(c)`. Gebruikt dezelfde opbouw als de portfoliografiek (`.pc`, `.pc-plot`, `.pc-axis`) en dezelfde y-as-hulpjes `axisTicks()` en `tickLbl()`.
+- **Rendementskalender:** `calCard()` met `retRange(u,from,to)`; periode in `settings.calU` (dag/week/maand/jaar), bladeren met `data-cal` via `settings.calMonth` (dag) of `settings.calYear` (week, maand).
 - **x-as:** `xAxisRow(t0,t1,aw)` zet 5 tijdstippen onder een grafiek (`.pc-xr`, met `margin-right` = breedte y-as); `xFmt()` kiest tijd, dag of maand op basis van de lengte. Het vergrote venster gebruikt nog `.pc-x` met `xLbl()`.
 - **CoinGecko:**
   - `cg(path,low)`: wachtrij met een emmer van 6 verzoeken, daarna 15 per minuut (met sleutel 10 en 30 per minuut), globale pauze bij 429, en `low` voor achtergrondwerk.

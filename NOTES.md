@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 29 oktober 2026 · versie **3.15.0**
+Laatst bijgewerkt: 29 oktober 2026 · versie **3.16.0**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 29 oktober 2026 · versie **3.15.0**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 44 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, passen op het scherm (`fit.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
+- Zie `tests/README.md`. Er zijn 45 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -41,6 +41,7 @@ Laatst bijgewerkt: 29 oktober 2026 · versie **3.15.0**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **29 okt 2026:**
+  - 3.16.0: rendementskalender per Dag, Week, Maand of Jaar (D27).
   - 3.15.0: thema's kiezen in Instellingen: Donker, Zwart, Nachtblauw, Licht, Zacht en Hoog contrast; bij Automatisch kies je per stand (donker/licht) welk thema (D26). Per apparaat.
   - 3.14.0: indeling nagelopen op iPhone, iPad en laptop (D25). Rapporten heet Analyse, het tabblad Analyse heet Vergelijken. Telefoon: filters en totalen achter knop Filter, munt-pagina transacties vóór rekenhulpen, tabbladen in twee rijen. iPad: blok met cijfers naast Cash. Laptop: geen dubbele muntenlijst in de zijbalk op Overzicht, regel onder totale waarde alleen bij aanwijzen, kolomkoppen blijven staan. Geen nieuwe hoofdtabbladen (Plannen of Markt pas later, als die meer gebruikt worden).
   - 3.13.2: tabellen en grafieken passen op het scherm: tickers, compactere kolommen, en op smallere schermen verdwijnen eerst de minst belangrijke kolommen met een melding (D24). Vergroot venster Rendement past op de laptop.
