@@ -114,3 +114,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert wilde de korte en lange termijn zien, zonder dat de tabel standaard te vol wordt.
 - **Afweging:** 4 uur kost één extra verzoek per munt per 5 minuten (lage prioriteit, CoinGecko-emmer uit D12), daarom alleen als de kolom aan staat. Lukt het ophalen niet, dan staat er "–" en wordt het pas na 5 minuten opnieuw geprobeerd.
 - **Ook:** de ruimte tussen de kolommen van Bezittingen is iets kleiner (7 px), zodat alles op een laptop van 1440 px past.
+
+### D23 – Ingevuld totaalbedrag is leidend bij opslaan (29 okt 2026, 3.13.1)
+- **Besluit:** is het totaalbedrag één van de twee laatst ingevulde velden (van totaal/aantal/koers), dan bewaart `saveTx()` de koers onafgerond als (totaal ∓ kosten) / aantal. Het koersveld toont nog steeds een afgeronde koers.
+- **Waarom:** de afgeronde koers (8 cijfers) gaf een bewaard totaal als 29,98999…, met een melding bij Controle en cash een paar cent negatief. Het bedrag van het afschrift moet op de cent kloppen.
+- **Niet gekozen:** een apart totaalveld in de transactie bewaren; dan zou het gegevensmodel en de synchronisatie veranderen.

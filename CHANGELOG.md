@@ -7,12 +7,21 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.13.0`) en de naam van het zip-bestand (`crypto-tracker-3.13.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.13.1`) en de naam van het zip-bestand (`crypto-tracker-3.13.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.13.1 – 29 oktober 2026
+Het ingevulde totaalbedrag blijft precies zoals je het invult.
+
+### Opgelost
+- **Totaal opnieuw berekend:** vulde je bij een aan- of verkoop het totaalbedrag, het aantal en de kosten in, dan rekende de app de koers uit en rondde die af. Daardoor werd het bewaarde totaal net iets anders (bijv. 29,989999… i.p.v. 29,99), met een melding bij Controle en een cash die een paar cent negatief kon staan. Nu bewaart de app de koers onafgerond, zodat het totaal op de cent gelijk is aan je afschrift.
+
+### Let op
+- **Al ingevoerde transacties** met deze melding herstel je door ze te openen, het totaalbedrag opnieuw in te typen en op te slaan.
 
 ## 3.13.0 – 28 oktober 2026
 Nieuwe kolommen voor de koersverandering over 1 uur, 4 uur en 1 jaar.

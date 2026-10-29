@@ -52,3 +52,14 @@ test('verkoopsimulator: 50% verkopen, FIFO en ingevuld verkoopformulier',async({
   await expect(page.locator('#f_total')).toHaveValue(/,\d\d$/);
   expect(await page.evaluate(()=>form.type)).toBe('sell');
 });
+
+test('totaal, aantal en kosten ingevuld: bewaard totaal is precies het ingevulde bedrag',async({page})=>{
+  await openApp(page);await importCsv(page);
+  await page.evaluate(()=>openTx({coinId:'ethereum',type:'buy'}));
+  await page.locator('#f_total').fill('29,99');await page.locator('#f_total').dispatchEvent('input');
+  await page.locator('#f_qty').fill('0,00897123');await page.locator('#f_qty').dispatchEvent('input');
+  await page.locator('#f_fee').fill('0,07');await page.locator('#f_fee').dispatchEvent('input');
+  const r=await page.evaluate(()=>{const n=data.txs.length;saveTx();const t=data.txs.find(x=>x.coinId==='ethereum'&&x.qty===0.00897123);
+    return{added:data.txs.length-n,total:t&&txTotal(t),warn:dataIssues().some(c=>/geen heel bedrag/.test(c.t))}});
+  expect(r.added).toBe(1);expect(Math.abs(r.total-29.99)).toBeLessThan(1e-9);expect(r.warn).toBe(false);
+});
