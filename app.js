@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.13.1 (29 okt 2026)';
+const APP_VERSION='3.13.2 (29 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -422,7 +422,7 @@ function focusKey(e){if(!e||e===document.body)return null;if(e.id)return '#'+CSS
   const row=e.closest?.('[data-tx],[data-coin],[data-goal]');if(row){const k=row.dataset.tx!=null?'tx':row.dataset.coin!=null?'coin':'goal';return `[data-${k}="${CSS.escape(row.dataset[k])}"] .rowlink`}
   return null}
 function keepFocus(fn){const k=focusKey(document.activeElement);fn();if(k&&(document.activeElement===document.body||!document.activeElement)){const el=[...document.querySelectorAll(k)].find(x=>x.getClientRects().length);if(el)el.focus({preventScroll:true})}}
-function render(){keepFocus(()=>inUnit(renderInner));setTimeout(markScrollers,0)}
+function render(){keepFocus(()=>inUnit(renderInner));fitTables();setTimeout(markScrollers,0)}
 function renderInner(){
   if(locked)return renderLock();
   document.body.classList.toggle('private',!!settings.privacy);
@@ -494,7 +494,7 @@ function txWhat(t,sym){   // korte omschrijving: aantal @ koers / ontvangen / va
   if(t.type==='transfer')return `${q} <span class="sym">${esc(t.acct||'?')} → ${esc(t.to||'?')}</span>`;
   return `${q} <span class="sym">@ ${priceH(atT(t.price,t))}</span>`;
 }
-const feeTxt=(t,sym)=>t.type==='transfer'?(t.feeQty?`${qtyf(t.feeQty)} ${sym}`:'–'):(t.fee?money(atT(t.fee,t),2):'–');
+const feeTxt=(t,sym)=>t.type==='transfer'?(t.feeQty?`${qtyf(t.feeQty)}${sym?' '+sym:''}`:'–'):(t.fee?money(atT(t.fee,t),2):'–');
 function txOutcome(t,c){
   if(!c)return{};
   if(isIn(t)){const l=c.lotMap[t.id];
@@ -544,29 +544,32 @@ function fillTxsInner(){
       <div class="right"><div class="v m">${totalF(t)}</div>${right}</div></li>`;
   }
   flush();
-  const tbl=`<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Transacties</caption><thead><tr><th scope="col" class="l">Datum</th><th scope="col" class="l">Munt</th><th scope="col" class="l">Type</th><th scope="col">Aantal</th><th scope="col">Koers</th><th scope="col">Totaal</th><th scope="col">Kosten</th><th scope="col" class="l">Broker · notitie</th><th scope="col">Waarde nu</th><th scope="col">Winst/verlies</th><th scope="col">%</th></tr></thead><tbody>${list.map(t=>{
+  const tbl=`<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Transacties</caption><thead><tr><th scope="col" class="l">Datum</th><th scope="col" class="l">Munt</th><th scope="col" class="l">Type</th>${TXH}</tr></thead><tbody>${list.map(t=>{
     if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell"><div class="ph-sm coin-ph cash-ic">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(atT(t.amount,t),2)}</td><td class="m">${t.fee?money(atT(t.fee,t),2):'–'}</td><td class="l note-cell">${esc([t.acct,t.note].filter(Boolean).join(' · '))}</td><td>–</td><td>–</td><td>–</td></tr>`;
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
-    const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.transfer?'<span class="label">overboeking</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="note-xs label">nog ${qtyf(o.rem)} ${sym}</div>`:''):'–';
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${esc(t.name)}</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.transfer?'<span class="label">overboeking</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="note-xs label">nog ${qtyf(o.rem)}</div>`:''):'–';
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell" title="${esc(t.name)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${sym||esc(t.name)}<span class="sr-only"> ${esc(t.name)}</span></span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,'')}</td>${noteCell(t)}<td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
   out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl+(all>list.length?`<button type="button" class="mt-14 btn sec" data-act="txmore">Toon meer (${list.length} van ${all})</button>`:'');
 }
+// Kolomkoppen van de transactietabellen. data-p: past de tabel niet op het scherm, dan verdwijnen eerst de kolommen
+// met het hoogste getal (zie fitTables). Zonder data-p blijft een kolom altijd staan.
+const TXH='<th scope="col" data-p="3">Aantal</th><th scope="col" data-p="5">Koers</th><th scope="col">Totaal</th><th scope="col" data-p="6">Kosten</th><th scope="col" class="l" data-p="7">Broker · notitie</th><th scope="col" data-p="4">Waarde nu</th><th scope="col">Winst/verlies</th><th scope="col" data-p="2">%</th>';
 // Kolommen van de tabel Bezittingen (laptop). Munt staat altijd vooraan; de rest kun je verplaatsen en verbergen.
 // De keuze staat in data.cfg.hcols = {order:[…], hide:[…]} en synchroniseert dus mee naar je andere apparaten.
 const HCOLS=[
-  {k:'qty',n:'Aantal',td:c=>`<td class="m">${qtyf(c.qty)}</td>`},
-  {k:'avg',n:'Gemiddelde aankoopprijs',h:'<abbr title="Gemiddelde aankoopprijs">Gem. prijs</abbr>',td:c=>`<td class="m">${money(c.avg)}</td>`},
-  {k:'price',n:'Koers',td:c=>`<td>${money(c.price)}</td>`},
-  {k:'ch1h',n:'1 uur',td:c=>`<td class="${cls(c.ch1h)}">${pct(c.ch1h)}</td>`},
-  {k:'ch4h',n:'4 uur',off:true,td:c=>{const v=ch4h(c.coinId);return `<td class="${cls(v)}">${pct(v)}</td>`}},
-  {k:'ch24',n:'24 uur',td:c=>`<td class="${cls(c.ch24)}">${pct(c.ch24)}</td>`},
-  {k:'ch7',n:'7 dagen',td:c=>`<td class="${cls(c.ch7)}">${pct(c.ch7)}</td>`},
-  {k:'ch30',n:'30 dagen',td:c=>`<td class="${cls(c.ch30)}">${pct(c.ch30)}</td>`},
-  {k:'ch1y',n:'1 jaar',off:true,td:c=>`<td class="${cls(c.ch1y)}">${pct(c.ch1y)}</td>`},
+  {k:'qty',p:5,n:'Aantal',td:c=>`<td class="m">${qtyf(c.qty)}</td>`},
+  {k:'avg',p:8,n:'Gemiddelde aankoopprijs',h:'<abbr title="Gemiddelde aankoopprijs">Gem. prijs</abbr>',td:c=>`<td class="m">${money(c.avg)}</td>`},
+  {k:'price',p:4,n:'Koers',td:c=>`<td>${money(c.price)}</td>`},
+  {k:'ch1h',p:9,n:'1 uur',td:c=>`<td class="${cls(c.ch1h)}">${pct(c.ch1h)}</td>`},
+  {k:'ch4h',p:11,n:'4 uur',off:true,td:c=>{const v=ch4h(c.coinId);return `<td class="${cls(v)}">${pct(v)}</td>`}},
+  {k:'ch24',p:3,n:'24 uur',td:c=>`<td class="${cls(c.ch24)}">${pct(c.ch24)}</td>`},
+  {k:'ch7',p:7,n:'7 dagen',td:c=>`<td class="${cls(c.ch7)}">${pct(c.ch7)}</td>`},
+  {k:'ch30',p:10,n:'30 dagen',td:c=>`<td class="${cls(c.ch30)}">${pct(c.ch30)}</td>`},
+  {k:'ch1y',p:12,n:'1 jaar',off:true,td:c=>`<td class="${cls(c.ch1y)}">${pct(c.ch1y)}</td>`},
   {k:'value',n:'Waarde',s:'value',td:c=>`<td class="m"><b>${money(c.value,2)}</b></td>`},
-  {k:'cost',n:'Geïnvesteerd',td:c=>`<td class="m">${money(c.cost,2)}</td>`},
+  {k:'cost',p:6,n:'Geïnvesteerd',td:c=>`<td class="m">${money(c.cost,2)}</td>`},
   {k:'plabs',n:'Winst/verlies',s:'plabs',td:c=>`<td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td>`},
-  {k:'pl',n:'Winst/verlies %',h:'%',s:'pl',td:c=>`<td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td>`}];
+  {k:'pl',p:2,n:'Winst/verlies %',h:'%',s:'pl',td:c=>`<td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td>`}];
 // alle kolommen in de gekozen volgorde (nieuwe kolommen uit een latere versie komen achteraan), met hide=true/false
 // Kolommen met off:true staan standaard uit; 'show' onthoudt welke daarvan je aanzette. Een nieuwe kolom komt op zijn standaardplek (na zijn voorganger).
 function holdCols(){const h=data.cfg?.hcols||{},by=Object.fromEntries(HCOLS.map(x=>[x.k,x])),hide=new Set(h.hide||[]),show=new Set(h.show||[]);
@@ -591,20 +594,36 @@ function need4h(){if(need4hBusy||locked||holdCols().find(x=>x.k==='ch4h')?.hide)
     if(!/^#(coin\/|transacties|rapporten)/.test(location.hash))render()})}
 function holdingsTable(list,watch){
   const th=(l,k,cl='')=>`<th scope="col" class="${cl} ${settings.sort===k?'on':''}"${settings.sort===k?' aria-sort="descending"':''}><button type="button" class="rowlink" data-sort="${k}">${l}${settings.sort===k?' <span aria-hidden="true">↓</span>':''}</button></th>`;
-  const cols=holdCols().filter(x=>!x.hide),head=x=>x.s&&!watch?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`;
+  const cols=holdCols().filter(x=>!x.hide),head=x=>(x.s&&!watch?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`).replace('<th ',`<th data-n="${esc(x.n)}"${x.p?` data-p="${x.p}"`:''} `);
   return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">${watch?'Volglijst':'Bezittingen'}</caption><thead><tr>${watch?'<th scope="col" class="l">Munt</th>':th('Munt','name','l')}${cols.map(head).join('')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
     <td class="l"><div class="coin-cell" title="${esc(c.meta.name)}">${coinIcon(c.meta)}<div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc((c.meta.symbol||'').toUpperCase()||c.meta.name)}<span class="sr-only"> ${esc(c.meta.name)}</span></a>${c.alerts?`<div class="note-xs label">${c.alerts} alert${c.alerts>1?'s':''}</div>`:''}</div></div></td>
     ${cols.map(x=>x.td(c)).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
-// Bezittingen en Volglijst: kolommen precies onder elkaar (dezelfde breedtes, op basis van de breedste inhoud van beide)
-function alignHoldTables(){const t=[...document.querySelectorAll('.hold-tbl')].filter(x=>x.getClientRects().length);
-  t.forEach(x=>{x.style.tableLayout='';x.style.width='';x.querySelectorAll('thead th').forEach(th=>th.style.width='')});if(t.length<2)return;
-  t.forEach(x=>x.style.width='max-content');   // meet de breedte die de inhoud echt nodig heeft, niet de uitgerekte breedte
-  const ws=t.map(x=>[...x.querySelectorAll('thead th')].map(th=>th.getBoundingClientRect().width));if(ws[0].length!==ws[1].length)return;
-  const w=ws[0].map((v,i)=>Math.max(v,ws[1][i])),sum=w.reduce((a,b)=>a+b,0);
-  t.forEach(x=>x.style.width='');
-  const room=Math.min(...t.map(x=>x.parentElement.clientWidth)),fit=sum<=room;   // past het niet, dan vaste breedtes en schuift de tabel zoals voorheen
-  t.forEach(x=>{x.querySelectorAll('thead th').forEach((th,i)=>th.style.width=fit?(w[i]/sum*100).toFixed(3)+'%':Math.ceil(w[i])+'px');if(!fit)x.style.width=Math.ceil(sum)+'px';x.style.tableLayout='fixed'})}
+// Tabellen passend maken op de schermbreedte (laptop). Bezittingen en Volglijst vormen één groep: dezelfde kolommen,
+// precies onder elkaar. Past een tabel niet, dan verdwijnen kolommen met data-p (hoogste eerst) tot hij past;
+// onder de tabel staat dan welke kolommen niet passen. Alleen als het daarna nog niet past, schuift de tabel opzij.
+function fitTables(){
+  const all=[...document.querySelectorAll('table.tbl')].filter(x=>x.getClientRects().length);
+  const hold=all.filter(x=>x.classList.contains('hold-tbl')),groups=[...(hold.length?[hold]:[]),...all.filter(x=>!hold.includes(x)).map(x=>[x])];
+  for(const t of groups){
+    t.forEach(x=>{x.style.tableLayout='';x.style.width='max-content';x.querySelectorAll('.c-off').forEach(c=>c.classList.remove('c-off'));x.querySelectorAll('thead th').forEach(th=>th.style.width='')});
+    const ths=t.map(x=>[...x.querySelectorAll('thead th')]);if(ths.some(a=>a.length!==ths[0].length)){t.forEach(x=>x.style.width='');continue}
+    // meet de breedte die de inhoud echt nodig heeft, niet de uitgerekte breedte
+    const w=ths[0].map((_,i)=>Math.max(...ths.map(a=>a[i].getBoundingClientRect().width)));
+    const room=Math.min(...t.map(x=>x.parentElement.clientWidth)),off=new Set();let sum=w.reduce((a,b)=>a+b,0);
+    while(sum>room+0.5){let k=-1;ths[0].forEach((th,i)=>{const p=+th.dataset.p||0;if(p&&!off.has(i)&&(k<0||p>(+ths[0][k].dataset.p)))k=i});if(k<0)break;off.add(k);sum-=w[k]}
+    t.forEach(x=>{[...x.rows].forEach(r=>off.forEach(i=>r.cells[i]?.classList.add('c-off')));x.style.width=''});
+    const fit=sum<=room+0.5;
+    if(t.length>1){const vis=w.filter((_,i)=>!off.has(i)),s2=vis.reduce((a,b)=>a+b,0);
+      t.forEach((x,n)=>{ths[n].forEach((th,i)=>{if(!off.has(i))th.style.width=fit?(w[i]/s2*100).toFixed(3)+'%':Math.ceil(w[i])+'px'});if(!fit)x.style.width=Math.ceil(s2)+'px';x.style.tableLayout='fixed'})}
+    // melding onder de (laatste) tabel van de groep
+    const wrap=t[t.length-1].parentElement;let note=wrap.nextElementSibling?.classList.contains('fit-note')?wrap.nextElementSibling:null;
+    if(off.size){const names=[...off].sort((a,b)=>a-b).map(i=>ths[0][i].dataset.n||ths[0][i].textContent.trim()).join(', ');
+      if(!note){note=document.createElement('p');note.className='hint fit-note only-d';wrap.after(note)}
+      note.textContent=`Niet alles past op dit scherm, daarom zijn verborgen: ${names}. Maak het venster breder${hold.includes(t[0])?' of kies minder kolommen via Kolommen aanpassen':', of open een transactie voor alle gegevens'}.`}
+    else note?.remove();
+  }
+}
 // blad "Kolommen aanpassen": ↑ ↓ verplaatsen, vinkje = tonen; elke wijziging is meteen zichtbaar en wordt bewaard
 function openHoldCols(focus){
   const cols=holdCols(),n=cols.length;
@@ -619,15 +638,17 @@ function moveHoldCol(k,d){const cols=holdCols(),i=cols.findIndex(x=>x.k===k),j=i
   [cols[i],cols[j]]=[cols[j],cols[i]];setHoldCols(cols);render();openHoldCols(`[data-act="hcolmv"][data-k="${k}"][data-d="${d}"]`)}
 function txTable(txs,c){
   const sym=esc((c.meta.symbol||'').toUpperCase());
-  return `<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Transacties ${esc(c.meta.name||'')}</caption><thead><tr><th scope="col" class="l">Type</th><th scope="col" class="l">Datum</th><th scope="col">Aantal</th><th scope="col">Koers</th><th scope="col">Totaal</th><th scope="col">Kosten</th><th scope="col" class="l">Broker · notitie</th><th scope="col">Waarde nu</th><th scope="col">Winst/verlies</th><th scope="col">%</th></tr></thead><tbody>${txs.map(t=>{
+  return `<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Transacties ${esc(c.meta.name||'')}</caption><thead><tr><th scope="col" class="l">Type</th><th scope="col" class="l">Datum</th>${TXH}</tr></thead><tbody>${txs.map(t=>{
     let val='–',pl=null,pp=null;
     if(isIn(t)){const l=c.lotMap[t.id];
       if(l&&l.remaining<=1e-12)val='<span class="label">verkocht</span>';
-      else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="note-xs label">nog ${qtyf(l.remaining)} ${sym}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=l.unit>0?(c.price/l.unit-1)*100:null}}
+      else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="note-xs label">nog ${qtyf(l.remaining)}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=l.unit>0?(c.price/l.unit-1)*100:null}}
     else if(t.type==='transfer'){const s=c.sellInfo[t.id]||{};pl=s.pl??null;val='<span class="label">overboeking</span>'}
     else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="l"><button type="button" class="rowlink">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></td><td class="m">${qtyf(t.qty)} ${sym}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,sym)}</td><td class="l note-cell">${esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '))}</td><td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pp==null?(t.type==='receive'?'<span class="w-normal label">gratis</span>':'–'):pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="l"><button type="button" class="rowlink">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></td><td class="m">${qtyf(t.qty)}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,'')}</td>${noteCell(t)}<td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pp==null?(t.type==='receive'?'<span class="w-normal label">gratis</span>':'–'):pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
+// kolom Broker · notitie: te lange tekst wordt afgekapt (…), de volledige tekst staat in de tooltip
+function noteCell(t){const x=esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '));return `<td class="l note-cell"${x?` title="${x}"`:''}>${x}</td>`}
 // <time datetime="…"> voor datums in de HTML (machineleesbaar; de tekst blijft Nederlands)
 const isoD=v=>{const d=new Date(v);if(isNaN(d))return '';const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`};
 const isoDT=v=>{const d=new Date(v);if(isNaN(d))return '';const z=n=>String(n).padStart(2,'0');return `${isoD(d)}T${z(d.getHours())}:${z(d.getMinutes())}`};
@@ -701,7 +722,7 @@ function renderHome(){
       <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}
   ${watchSection()}`;
-  drawPortfolioChart();placeUnitMenu();alignHoldTables();need4h();
+  drawPortfolioChart();placeUnitMenu();need4h();
 }
 /* ---------- import uit Bitvavo (CSV) ---------- */
 // Kolommen: Timezone, Date, Time, Type, Currency, Amount, Quote Currency, Quote Price, Received / Paid Currency,
@@ -862,7 +883,7 @@ function markScrollers(){document.querySelectorAll('.cc-scroll,.tbl-wrap,.tbl-sc
   else if(el.getAttribute('role')==='region'){el.removeAttribute('tabindex');el.removeAttribute('role');el.removeAttribute('aria-label')}})}
 function fitBars(){setTimeout(markScrollers,0);document.querySelectorAll('.bars,.cc').forEach(b=>{b.classList.remove('vt');const bar=b.querySelector('.bar,.cb');if(!bar)return;const w=bar.clientWidth;
   if([...b.querySelectorAll('em')].some(e=>e.scrollWidth>w+3))b.classList.add('vt')})}
-window.addEventListener('resize',()=>{clearTimeout(window._fb);window._fb=setTimeout(()=>{fitBars();alignHoldTables()},150)});
+window.addEventListener('resize',()=>{clearTimeout(window._fb);window._fb=setTimeout(()=>{fitBars();fitTables()},150)});
 function bars(items,neutral){
   const mx=Math.max(1e-9,...items.map(i=>Math.abs(i.v||0))),neg=items.some(i=>i.v<0),vt=items.length>6;   // veel staven: ruimte houden voor verticale bedragen
   const lab=(v,c)=>Math.abs(v)<0.005?'':`<em class="m ${c}">${cmp(v,!neutral)}</em>`,H=v=>Math.max(1,Math.abs(v)/mx*(vt?50:78));
@@ -906,11 +927,11 @@ function renderRetZoom(){
     <div class="stat"><div class="label">Slechtste ${l}</div><div class="val m ${cls(worst.v)}">${signed(worst.v)}</div><div class="note-sm label">${pLabel(u,worst.ts,true)}</div></div>
     <div class="stat"><div class="label">In de plus</div><div class="val">${pos} van ${res.length}</div><div class="note-sm label">${Math.round(pos/res.length*100)}% van de ${many}</div></div>
   </div>
-  <div class="card">${retChart(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%(u==='day'?7:u==='week'?4:1)?'':pLabel(u,r.ts),title:`${pLabel(u,r.ts,true)}: ${signed(r.v)}`})),{h:360,id:'zchart',minW:res.length*(u==='day'?18:30)})}
+  <div class="card">${retChart(res.map((r,i)=>({v:r.v,label:(res.length-1-i)%(u==='day'?7:u==='week'?4:1)?'':pLabel(u,r.ts),title:`${pLabel(u,r.ts,true)}: ${signed(r.v)}`})),{h:360,id:'zchart',minW:res.length*(u==='day'?9:u==='week'?16:16)})}
   <div class="zlegend"><span><i></i>Resultaat per ${l}</span><span><i class="ln"></i>Cumulatief resultaat</span></div>
-  <p class="mt-8 hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hc?'Stortingen':'Aankopen'} tellen niet als winst. Veeg of scroll de grafiek opzij voor eerdere periodes; op de laptop toont de muis op een staaf de details.</p></div>
+  <p class="mt-8 hint">Koerswinst/-verlies plus gerealiseerde winst, min kosten. ${hc?'Stortingen':'Aankopen'} tellen niet als winst. Past niet alles op het scherm (veel dagen op een telefoon), veeg of scroll de grafiek dan opzij voor eerdere periodes; op de laptop toont de muis op een staaf de details.</p></div>
   <div class="mt-14 card"><table class="rt"><caption class="sr-only">Rendement per ${l}</caption><tr><th scope="col">${L}</th><th scope="col">Resultaat</th><th scope="col">Cumulatief</th><th scope="col">${hc?'Totale waarde':'Waarde crypto'} aan eind</th></tr>
-  ${rows.map((r,i)=>`<tr><th scope="row">${pTime(u,r.ts,true)}${i===0?' (tot nu)':''}</th><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td><td class="m ${cls(r.cum)}">${signed(r.cum)}</td><td class="m">${money(r.end,2)}</td></tr>`).join('')}</table>${rows.some(r=>r.miss)?'<p class="note-after hint">≈ = geen dagkoers bewaard; waarde geschat uit de dichtstbijzijnde bekende koersen (bijv. je eigen aankoopkoers).</p>':''}</div></div>`;
+  ${rows.map((r,i)=>`<tr><th scope="row">${pTime(u,r.ts,innerWidth>=500)}${i===0?' (tot nu)':''}</th><td class="m ${cls(r.v)}">${r.miss?'≈ ':''}${signed(r.v)}</td><td class="m ${cls(r.cum)}">${signed(r.cum)}</td><td class="m">${money(r.end,2)}</td></tr>`).join('')}</table>${rows.some(r=>r.miss)?'<p class="note-after hint">≈ = geen dagkoers bewaard; waarde geschat uit de dichtstbijzijnde bekende koersen (bijv. je eigen aankoopkoers).</p>':''}</div></div>`;
   titleDialog(z,'zoomTitle');if(fresh&&!z.open){try{z.showModal()}catch(e){z.setAttribute('open','')}}
   fitBars();const zc=$('#zchart');zc.scrollLeft=zc.scrollWidth;   // nieuwste periode in beeld
 }
@@ -969,7 +990,7 @@ function repAccCard(){
   const acc=acctSummary(),named=acc.some(a=>a.name);
   const accCard=`<div class="card"><h2 class="h3">Per broker / wallet</h2>
   ${named?`<table class="rt"><caption class="sr-only">Waarde per broker of wallet</caption><tr><th scope="col">Broker / wallet</th><th scope="col">Crypto</th>${hasCash?'<th scope="col">Cash</th>':''}<th scope="col">Totaal</th></tr>${acc.map(a=>`<tr><th scope="row">${esc(a.name||'Niet ingevuld')}</th><td class="m">${a.miss?'≈ ':''}${money(a.crypto,2)}</td>${hasCash?`<td class="m">${money(a.cash,2)}</td>`:''}<td class="m"><b>${money(a.total,2)}</b></td></tr>`).join('')}</table>
-  ${acc.map(a=>a.coins.length?`<details><summary class="yr"><span class="label">${esc(a.name||'Niet ingevuld')}: ${a.coins.length} munt${a.coins.length>1?'en':''}</span><span class="label">▾</span></summary><div class="yr-d">${a.coins.map(c=>`<div><span>${esc(c.name||c.id)} · <span class="m">${qtyf(c.qty)}</span> ${esc((c.symbol||'').toUpperCase())}</span><span class="m">${money(c.value,2)}</span></div>`).join('')}</div></details>`:'').join('')}
+  ${acc.map(a=>a.coins.length?`<details><summary class="yr"><span class="label">${esc(a.name||'Niet ingevuld')}: ${a.coins.length} munt${a.coins.length>1?'en':''}</span><span class="label">▾</span></summary><div class="yr-d">${a.coins.map(c=>`<div><span title="${esc(c.name||c.id)}"><span class="m">${qtyf(c.qty)}</span> ${esc((c.symbol||'').toUpperCase()||c.name||c.id)}</span><span class="m">${money(c.value,2)}</span></div>`).join('')}</div></details>`:'').join('')}
   ${acc.some(a=>a.coins.some(c=>c.qty<0)||a.cash<-0.005)?'<p class="warn">Een broker of wallet staat negatief: controleer of alle overboekingen en stortingen erin staan.</p>':''}`
   :'<p class="hint">Vul bij je transacties in bij welke broker of wallet ze horen; dan zie je hier per plek je bezit en cash.</p>'}</div>`;
 
@@ -1434,7 +1455,7 @@ function dcaCard(){
   return `<div class="card"><h2 class="h3">Vaste inleg vergeleken</h2>
   <p class="mt-0 hint">Stel dat je per munt hetzelfde totaalbedrag had ingelegd, maar gelijk verdeeld over elke maand sinds je eerste aankoop. "Jij" en "Vast" zijn de gemiddelde aankoopprijzen: lager is beter. "Verschil" is wat jouw aankopen nu meer (+) of minder (−) waard zijn. Verkopen tellen niet mee.</p>
   <table class="rt"><caption class="sr-only">Jouw aankopen vergeleken met een vaste maandelijkse inleg</caption><tr><th scope="col">Munt</th><th scope="col">Jij</th><th scope="col">Vast</th><th scope="col">Verschil</th></tr>
-  ${rows.map(r=>{const dv=r.valYou-r.valDca;return `<tr><th scope="row">${esc(r.c.meta.name)}<div class="label note-xs">${r.n}× ${money(r.per,2)}</div></th><td class="m">${money(r.avgYou)}</td><td class="m">${r.est?'≈ ':''}${money(r.avgDca)}</td><td class="m ${cls(dv)}">${r.est?'≈ ':''}${signed(dv)}</td></tr>`}).join('')}
+  ${rows.map(r=>{const dv=r.valYou-r.valDca;return `<tr><th scope="row"><span title="${esc(r.c.meta.name)}">${esc(symOf(r.c))}</span><span class="sr-only"> ${esc(r.c.meta.name)}</span><div class="label note-xs">${r.n}× ${money(r.per,2)}</div></th><td class="m">${money(r.avgYou)}</td><td class="m">${r.est?'≈ ':''}${money(r.avgDca)}</td><td class="m ${cls(dv)}">${r.est?'≈ ':''}${signed(dv)}</td></tr>`}).join('')}
   <tr><th scope="row"><b>Totaal</b></th><td></td><td></td><td class="m ${cls(tY-tD)}"><b>${est?'≈ ':''}${signed(tY-tD)}</b></td></tr></table>
   <p class="note-after hint">${tY>=tD?`Jouw timing leverde <b class="up">${money(tY-tD,2)}</b> meer op dan een vaste maandelijkse inleg.`:`Met een vaste maandelijkse inleg had je <b class="down">${money(tD-tY,2)}</b> meer gehad.`} Waarde gemeten tegen de huidige koersen.${est?' ≈ = voor sommige maanden geschat uit de dichtstbijzijnde bekende koersen.':''}</p></div>`}
 

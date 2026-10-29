@@ -183,17 +183,19 @@ a{color:var(--accent)}
 .kv small{font-weight:600;font-size:12px}
 .tbl-wrap{background:var(--card);border-radius:16px;overflow:auto}
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:13px 12px;border-bottom:1px solid var(--line);white-space:nowrap;user-select:none}
-.tbl td{padding:12px 12px;font-size:14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:13px 7px;border-bottom:1px solid var(--line);white-space:nowrap;user-select:none}
+.tbl td{padding:12px 7px;font-size:14px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl .l{text-align:left}
 .tbl tbody tr:last-child td{border-bottom:0}
 .tbl tbody tr{cursor:pointer}
 .tbl tbody tr:hover{background:var(--card2)}
 .tbl th[data-sort]{cursor:pointer}
 .tbl th[data-sort]:hover,.tbl th.on{color:var(--text)}
-.coin-cell{display:flex;align-items:center;gap:12px}
-.tbl th:first-child,.tbl td:first-child{padding-left:16px}.tbl th:last-child,.tbl td:last-child{padding-right:16px}
-.note-cell{color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.coin-cell{display:flex;align-items:center;gap:10px}
+.tbl th:first-child,.tbl td:first-child{padding-left:14px}.tbl th:last-child,.tbl td:last-child{padding-right:14px}
+.note-cell{color:var(--muted);max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.tbl .c-off{display:none}   /* kolom die niet op het scherm past (fitTables) */
+.fit-note{margin:6px 4px 0}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:center;background:var(--tab);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom))}
 .tabbar a{text-decoration:none;flex:1;max-width:200px;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:6px 0;cursor:pointer}
 .tabbar svg{width:23px;height:23px}
@@ -345,7 +347,9 @@ a{color:var(--accent)}
 .bar i.u{background:var(--green)}.bar i.d{background:var(--red)}.bar i.n{background:var(--accent)}
 .bar span{font-size:10px;color:var(--muted);text-align:center;margin-top:4px;white-space:nowrap;overflow:visible;display:flex;justify-content:center;height:13px}
 .rt{width:100%;border-collapse:collapse;font-size:14px}
-.rt td,.rt th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.rt td,.rt th{padding:8px 3px;border-bottom:1px solid var(--line);text-align:right}
+@media (min-width:700px) and (max-width:1399px){.rep-grid .rt td,.rep-grid .rt th[scope=row]{font-size:13px}}   /* smalle kolommen: tabellen passen zonder schuiven */
+.rt td{white-space:nowrap}   /* koppen (th) mogen over twee regels, zie hierboven */
 .rt th{font-size:12px;color:var(--muted);font-weight:600}
 .rt td:first-child,.rt th:first-child{text-align:left}
 .rt tr:last-child td{border-bottom:0}
@@ -380,7 +384,7 @@ a{color:var(--accent)}
   .side-foot{margin-top:auto;color:var(--muted);font-size:12px;padding:16px 12px 0}
   #app{max-width:none;margin:0;padding:0 36px 48px}
   .top{height:84px}
-  .d-top h1{flex:none;text-align:left;font-size:22px}
+  .d-top h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-size:22px}   /* lange muntnaam: afkappen i.p.v. de knoppen van het scherm duwen */
   .d-top .sync{flex:none;margin-right:8px;font-size:12px}
   .fab{display:none}
   .home-grid,.coin-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}

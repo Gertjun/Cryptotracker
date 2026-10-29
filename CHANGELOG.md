@@ -7,12 +7,28 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.13.1`) en de naam van het zip-bestand (`crypto-tracker-3.13.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.13.2`) en de naam van het zip-bestand (`crypto-tracker-3.13.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.13.2 – 29 oktober 2026
+Tabellen en grafieken passen op het scherm, zonder schuifbalk opzij.
+
+### Verbeterd
+- **Ticker in plaats van naam:** de tabel Transacties toont de munt als ticker (BTC, ETH, …), net als Bezittingen. Ook in "Vaste inleg vergeleken" en bij Per broker / wallet. De volledige naam zie je als je de muis erop houdt.
+- **Compactere tabellen:** iets minder ruimte tussen de kolommen. In de kolom Aantal (en bij de netwerkkosten van een overboeking) staat het muntsymbool niet meer achter het getal, want de munt staat al in de rij of bovenaan de pagina. Een lange notitie wordt afgekapt; de hele tekst zie je met de muis erop.
+- **Past het nog niet, dan verdwijnen kolommen:** op een smaller laptopscherm verbergt de app eerst de minst belangrijke kolommen (bij Transacties: Broker · notitie, Kosten, Koers, …; bij Bezittingen bijv. 1 jaar, 4 uur, 30 dagen). Onder de tabel staat welke kolommen verborgen zijn. Datum, munt, totaal, waarde en winst/verlies blijven altijd staan. Op een laptop van 1440 px past alles.
+- **Rapporten:** de tabellen Risico, Wat als, Vaste inleg en Per broker / wallet passen nu ook in de smalle kolommen op tablet en kleine laptop. Kolomkoppen mogen daarvoor over twee regels.
+- **Vergroot venster Rendement:** de grafiek per dag, week en maand past op een laptop helemaal in beeld. Alleen op een telefoon schuif je bij veel dagen of weken nog opzij. In de tabel eronder staan de maanden op een telefoon verkort (okt 2026).
+
+### Opgelost
+- **Lange muntnaam bovenaan de munt-pagina** (bijv. Artificial Superintelligence Alliance) duwde op een kleine laptop de knoppen van het scherm; die naam wordt nu afgekapt.
+
+### Technisch
+- **`fitTables()`** vervangt `alignHoldTables()`: meet elke tabel en verbergt kolommen met `data-p` (hoogste eerst) tot hij past. Nieuwe test `tests/specs/fit.spec.mjs` controleert alle schermen op 768, 1024, 1280 en 1440 px en op de telefoon.
 
 ## 3.13.1 – 29 oktober 2026
 Het ingevulde totaalbedrag blijft precies zoals je het invult.
