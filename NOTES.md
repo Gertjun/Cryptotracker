@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 29 oktober 2026 · versie **3.13.1**
+Laatst bijgewerkt: 29 oktober 2026 · versie **3.13.2**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 29 oktober 2026 · versie **3.13.1**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 33 tests op twee schermformaten: rooktest, toegankelijkheid (axe, licht en donker, toetsenbord), berekeningen, synchronisatie met koppelcode, CoinGecko-tempo, updates en de kolommen van Bezittingen.
+- Zie `tests/README.md`. Er zijn 35 tests op twee schermformaten: rooktest, toegankelijkheid (axe, licht en donker, toetsenbord), berekeningen, synchronisatie met koppelcode, passen op het scherm (`fit.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -40,7 +40,9 @@ Laatst bijgewerkt: 29 oktober 2026 · versie **3.13.1**
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
-- **29 okt 2026:** 3.13.1: ingevuld totaalbedrag werd na afronding van de koers net anders bewaard (melding "geen heel bedrag in centen"); de koers wordt nu onafgerond bewaard (D23). Oude transacties met de melding: openen, totaal opnieuw typen, opslaan.
+- **29 okt 2026:**
+  - 3.13.2: tabellen en grafieken passen op het scherm: tickers, compactere kolommen, en op smallere schermen verdwijnen eerst de minst belangrijke kolommen met een melding (D24). Vergroot venster Rendement past op de laptop.
+  - 3.13.1: ingevuld totaalbedrag werd na afronding van de koers net anders bewaard (melding "geen heel bedrag in centen"); de koers wordt nu onafgerond bewaard (D23). Oude transacties met de melding: openen, totaal opnieuw typen, opslaan.
 - **28 okt 2026:**
   - Schrijfrechten op GitHub werken; `.github/workflows/tests.yml` teruggezet via voorstel #21 (tests groen).
   - 3.10.4: 20 nieuwe ideeën als W19–W38 op de wishlist (op verzoek van Geert, nog niet bouwen).

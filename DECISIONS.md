@@ -119,3 +119,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** is het totaalbedrag één van de twee laatst ingevulde velden (van totaal/aantal/koers), dan bewaart `saveTx()` de koers onafgerond als (totaal ∓ kosten) / aantal. Het koersveld toont nog steeds een afgeronde koers.
 - **Waarom:** de afgeronde koers (8 cijfers) gaf een bewaard totaal als 29,98999…, met een melding bij Controle en cash een paar cent negatief. Het bedrag van het afschrift moet op de cent kloppen.
 - **Niet gekozen:** een apart totaalveld in de transactie bewaren; dan zou het gegevensmodel en de synchronisatie veranderen.
+
+### D24 – Tabellen en grafieken passen op het scherm (29 okt 2026, 3.13.2, vervangt de schuifbalk uit D20/D21)
+- **Besluit:** geen schuifbalk opzij. In tabellen staat de munt als ticker (BTC) met de naam als tooltip; de kolommen zijn iets compacter. Past een tabel daarna nog niet, dan verbergt `fitTables()` eerst de minst belangrijke kolommen (`data-p`, hoogste eerst) en zegt onder de tabel welke. Transacties: Broker · notitie, Kosten, Koers, Waarde nu, Aantal, %. Bezittingen: 1 jaar, 4 uur, 30 dagen, 1 uur, Gem. prijs, 7 dagen, Geïnvesteerd, Aantal, Koers, 24 uur, %. Datum, munt, type, totaal, waarde en winst/verlies blijven altijd. Op 1440 px past alles.
+- **Waarom:** Geert wilde alles op het scherm zien zonder opzij te schuiven.
+- **Niet gekozen:** een kleiner lettertype overal (minder leesbaar), of de zijbalk smaller maken op een kleine laptop (verandert de indeling uit D15). Het vergrote venster Rendement per dag of week schuift op een telefoon nog wel opzij: 90 dagen naast elkaar zijn daar niet leesbaar.
