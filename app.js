@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.13.0 (28 okt 2026)';
+const APP_VERSION='3.13.1 (29 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -2193,7 +2193,11 @@ function saveTx(){
       if(!acct||!to||acct===to)return fieldErr(!acct?'f_acct':'f_to','Vul twee verschillende brokers/wallets in');
       tx={...base,...coin,qty,feeQty,to,price:0,fee:0};
     }else{
-      const price=num(f.price);if(!(price>0))return fieldErr('f_price','Vul een geldige koers in');
+      let price=num(f.price);if(!(price>0))return fieldErr('f_price','Vul een geldige koers in');
+      // Totaal ingevuld (van het afschrift)? Dan is dat leidend: de koers niet afgerond bewaren, zodat
+      // aantal × koers ± kosten weer precies het ingevulde totaal geeft (en cash op de cent klopt).
+      const T=num(f.total),sg=f.type==='sell'?-1:1;
+      if(f.edits.slice(0,2).includes('total')&&isFinite(T)&&(T-sg*fee)>0)price=(T-sg*fee)/qty;
       tx={...base,...coin,qty,price,fee};
     }
   }
