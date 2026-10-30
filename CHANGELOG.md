@@ -7,12 +7,18 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.19.1`) en de naam van het zip-bestand (`crypto-tracker-3.19.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.19.2`) en de naam van het zip-bestand (`crypto-tracker-3.19.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.19.2 – 30 oktober 2026
+Zeven nieuwe ideeën voor meer inzicht in je rendement op de wishlist.
+
+### Gewijzigd
+- **Wishlist:** W39–W45 toegevoegd onder "Inzicht in je portfolio": jaarrendement in procenten, hoe gingen je verkopen, verkoopspijt, koop je de dip, rendement tegenover risico, meebewegen met bitcoin en afstand tot break-even. Nog niets van gebouwd; de app zelf is niet veranderd.
 
 ## 3.19.1 – 30 oktober 2026
 Back-up via het deelmenu, inhoud verborgen in de app-wisselaar, en Face ID aanbieden na het koppelen.

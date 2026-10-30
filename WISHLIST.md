@@ -32,6 +32,27 @@ Hoe lang je je munten gemiddeld al hebt, per munt en voor alles samen, en welk d
 ### W23 – Portefeuilles naast elkaar
 Een overzicht van al je portefeuilles onder elkaar, met inleg, waarde, resultaat en rendement, zodat je ze makkelijk vergelijkt.
 
+### W39 – Jaarrendement in procenten
+Eén getal voor je gemiddelde rendement per jaar, bijvoorbeeld "+23% per jaar". Het telt mee wanneer je geld erin stopte: € 1.000 van vorige week weegt minder zwaar dan € 1.000 van twee jaar geleden. Zo kun je eerlijk vergelijken met sparen, aandelen of een ander jaar. Past bij W20.
+
+### W40 – Hoe gingen je verkopen?
+Bij hoeveel van je verkopen je winst maakte ("7 van de 10"), de gemiddelde winst tegenover het gemiddelde verlies, en je beste en slechtste verkoop. De app kent het resultaat per verkoop al (FIFO).
+
+### W41 – Verkoopspijt: wat als je niet had verkocht?
+Per verkoop wat die munten nu waard zouden zijn, naast wat je ervoor kreeg. Bijvoorbeeld "0,5 ETH verkocht voor € 900, nu € 1.300 waard". Je ziet dan of je vaak te vroeg verkoopt of dat winst nemen je juist geld opleverde.
+
+### W42 – Koop je de dip?
+Per aankoop je koopprijs vergeleken met de gemiddelde koers in die week of maand, bijvoorbeeld "je kocht gemiddeld 4% onder het weekgemiddelde". Anders dan het blok Vaste inleg kijkt dit naar elke aankoop afzonderlijk.
+
+### W43 – Rendement tegenover risico per munt
+Per munt hoeveel rendement je kreeg per "eenheid schommeling". Een munt met +30% en een rustige koers scoort dan beter dan een munt met +30% die alle kanten op schiet. Gebruikt dezelfde gegevens als het blok Risico, dus geen extra koersaanvragen.
+
+### W44 – Hoe sterk bewegen je munten mee met bitcoin?
+Bijvoorbeeld "als bitcoin 10% daalt, daalt jouw portfolio gemiddeld 14%", ook per munt. Zo zie je of je munten echt spreiding geven of dat alles samen op en neer gaat.
+
+### W45 – Afstand tot break-even
+Bij munten die op verlies staan: hoeveel procent de koers nog moet stijgen tot je quitte speelt. Na −50% is dat namelijk +100%, niet +50%.
+
 ## Kopen en verkopen voorbereiden
 
 ### W8 – Winst- en verliesgrens per positie

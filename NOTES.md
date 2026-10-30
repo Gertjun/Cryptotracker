@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.1**
+Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.2**
 
 ---
 
@@ -35,7 +35,7 @@ Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.1**
 - **iOS 26/27-vervaging bovenin** bij de app op het beginscherm. Sinds 3.8.2 begint de app 40 punten lager (`--top-extra`, klasse `ios-standalone`). **Nog niet bevestigd door Geert of dit genoeg is.** De effen statusbalk (`apple-mobile-web-app-status-bar-style: default`) sinds 3.0.0 hielp niet tegen de vervaging, maar bleef.
 - **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel.
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
-- **Wishlist open (31):** W4–W8, W10, W11, W15–W38. W19–W38 zijn op 28 okt toegevoegd (20 nieuwe ideeën, nog niets van gebouwd). W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
+- **Wishlist open (38):** W4–W8, W10, W11, W15–W45. W19–W38 zijn op 28 okt toegevoegd, W39–W45 (inzicht in rendement) op 30 okt; nog niets van gebouwd. Advies aan Geert: begin met W39 (jaarrendement) en W40 (hoe gingen je verkopen), daarna W17. W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
 - **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
 - **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.1**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **30 okt 2026:**
+  - 3.19.2: zeven ideeën voor meer inzicht in rendement als W39–W45 op de wishlist (nog niet bouwen).
   - Projectinstructies in claude.ai aangepast aan deze app in plaats van de PWA-template (D36); de app zelf is niet veranderd.
   - Werkwijze: Claude pusht voortaan rechtstreeks naar `main`, zonder voorstel (D35, vervangt D18).
   - Review van robuustheid en beveiliging (lijst van Geert) nagelopen; deels al aanwezig (versie terugzetten, wachtrij bij opslaan, komma-invoer), de rest ingebouwd (D29–D34):
