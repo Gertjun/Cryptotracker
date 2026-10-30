@@ -14,11 +14,11 @@ Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.1**
   1. code aanpassen;
   2. tests draaien;
   3. `python3 tools/release.py <major|minor|patch> tekst.md`;
-  4. zip sturen;
+  4. committen en **rechtstreeks naar `main` pushen** (D35); geen zip en geen voorstel meer nodig;
   5. kort samenvatten.
-  Geert uploadt de inhoud van de zip naar GitHub; de verborgen map `.github` moet daarbij mee.
-- **Code lezen en schrijven:** koppel aan het begin van een sessie de repository `Gertjun/Cryptotracker` met schrijfrechten (de Claude GitHub-app is geïnstalleerd). Claude kan een branch pushen en een voorstel (pull request) maken via `gh api` (REST; GraphQL en `gh pr create` werken niet). Geert keurt goed met "Merge".
-- **Bij een nieuw bestand of een nieuwe map:** zeg het expliciet, zodat hij het meeneemt bij het uploaden.
+  Pas als de tests lokaal groen zijn, push je. Na de push draaien de tests nog eens op GitHub; zijn die rood, los het dan direct op met een nieuwe versie.
+- **Code lezen en schrijven:** koppel aan het begin van een sessie de repository `Gertjun/Cryptotracker` met schrijfrechten (`add_repo` met `access: push`; de Claude GitHub-app is geïnstalleerd). Haal vóór het pushen eerst `git fetch origin main` en zet je werk erbovenop.
+- **Bij een nieuw bestand of een nieuwe map:** noem het in de samenvatting.
 - **Screenshots:** hij stuurt er vaak een. Controleer het versienummer in Instellingen, want een oude versie uit de cache was eerder de oorzaak van een "bug".
 - **Vóór elke release:**
   - `cd tests && npm ci && npx playwright test` (lokaal met `CHROMIUM_PATH=/opt/pw-browsers/chromium`);
@@ -44,6 +44,7 @@ Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.1**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **30 okt 2026:**
+  - Werkwijze: Claude pusht voortaan rechtstreeks naar `main`, zonder voorstel (D35, vervangt D18).
   - Review van robuustheid en beveiliging (lijst van Geert) nagelopen; deels al aanwezig (versie terugzetten, wachtrij bij opslaan, komma-invoer), de rest ingebouwd (D29–D34):
   - 3.17.1: nieuw wachtwoord minimaal 12 tekens met indicator en oogje; synchroniseren 20 s na een wijziging en direct bij verlaten; opslag laten beschermen.
   - 3.18.0: tabbladen voegen elkaars wijzigingen samen.

@@ -183,3 +183,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Wachtrij voor opslaan:** al aanwezig (`vaultQ`); zonder vergrendeling is opslaan direct.
 - **Knop "vorige versie herstellen":** al aanwezig sinds de functie Eerdere versie terugzetten (`openVersions`).
 
+### D35 – Claude pusht rechtstreeks naar `main` (30 okt 2026, vervangt D18)
+- **Besluit:** Claude zet een nieuwe versie direct op `main`, zonder branch en pull request. Eerst de tests lokaal (Playwright en html-validate); alleen als die groen zijn, wordt er gepusht. Geen zip meer.
+- **Waarom:** Geert moest elke keer een voorstel mergen; dat is een extra stap zonder dat hij de code zelf beoordeelt.
+- **Afweging:** een fout staat meteen live, omdat er geen controle meer vóór `main` is. Daarom de tests lokaal vóór elke push; de tests op GitHub draaien daarna nog eens. Misgegaan? Zet de vorige versie terug met een nieuwe versie (`git revert`).
+- **Niet gekozen:** automatisch mergen zodra de tests op GitHub groen zijn (meer instellingen voor weinig winst).
