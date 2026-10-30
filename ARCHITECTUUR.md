@@ -99,6 +99,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - **Instellingen** is een eigen scherm (`#instellingen`, D37): `renderSettings()` tekent het (`.set-grid` met twee `.set-col`, elk blok een `section.card` met `h2`); `openSettings()` opent of ververst het. `render()` bouwt het niet opnieuw op als het al in beeld is. `syncInfoHTML()` (`#setSync`) wordt bijgewerkt door `updBadges()`.
 - **Passen op het scherm:** tabellen en grafieken krijgen geen schuifbalk opzij (getest in `tests/specs/fit.spec.mjs`). Gebruik tickers in plaats van lange namen, en geef een nieuwe tabelkolom een prioriteit (`data-p`). Uitzondering: het vergrote venster Rendement per dag/week op een telefoon.
 - **Tabbladen van Analyse** (`.rep-tabs`): onder 400 px in twee rijen.
+- **Vaste bovenbalk:** onder 1000 px is `.top` (`#topbar`) sticky op `--stick` (veilige ruimte bovenin + `--top-extra`); kolomkoppen van tabellen staan daar 60 px onder. Een nieuw sticky element op telefoon of tablet moet rekening houden met die balk.
 - **Breakpoints:**
   - telefoon: < 700 px;
   - tablet: 700–999 px, de telefoonopbouw maar breder;
