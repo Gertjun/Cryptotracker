@@ -188,3 +188,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert moest elke keer een voorstel mergen; dat is een extra stap zonder dat hij de code zelf beoordeelt.
 - **Afweging:** een fout staat meteen live, omdat er geen controle meer vóór `main` is. Daarom de tests lokaal vóór elke push; de tests op GitHub draaien daarna nog eens. Misgegaan? Zet de vorige versie terug met een nieuwe versie (`git revert`).
 - **Niet gekozen:** automatisch mergen zodra de tests op GitHub groen zijn (meer instellingen voor weinig winst).
+
+### D36 – Deze app draait niet op de PWA-template (30 okt 2026, 3.19.1)
+- **Besluit:** Crypto Portfolio blijft gebouwd zoals hij is: `app.js` en `index.html`, gegevens met `id`/`mod`, bedragen als gewone getallen in euro, eigen synchronisatie, tabbladen, gegevensversie en privacyscherm (D29–D33). De projectinstructies in claude.ai zijn hierop aangepast en zeggen dat expliciet; regels die alleen voor de template gelden (`js/core/`, `js/config.js`, `ctx.update`, centen, `createdAt`/`updatedAt`, `saveFile()`) gelden hier niet.
+- **Waarom:** Geert had de projectinstructies vervangen door die van zijn PWA-template (zoals bij Vaste Lasten). Die beschrijven een andere opbouw; letterlijk volgen zou bestanden zoeken die niet bestaan, of de gegevens raken.
+- **Niet gekozen:** de app ombouwen naar de template. Dan moeten alle gegevens worden omgezet (euro's naar centen, `mod` naar `updatedAt`) en alle apparaten tegelijk bijgewerkt (MAJOR, 4.0.0), met risico voor transacties en synchronisatie. Kan later alsnog, alleen in stappen en met een plan dat Geert eerst goedkeurt.
