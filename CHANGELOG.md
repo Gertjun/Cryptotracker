@@ -7,12 +7,23 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.16.1`) en de naam van het zip-bestand (`crypto-tracker-3.16.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.17.0`) en de naam van het zip-bestand (`crypto-tracker-3.17.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.17.0 – 30 oktober 2026
+De Volglijst sorteer je nu door op een kolomkop te klikken.
+
+### Toegevoegd
+- **Volglijst sorteren** (laptop): klik op de kop van Munt, Koers, 1 uur, 4 uur, 24 uur, 7 dagen, 30 dagen of 1 jaar. Eerste klik: van hoog naar laag (↓). Nog een klik: van laag naar hoog (↑). Munt sorteert eerst van A naar Z. Munten zonder waarde staan altijd onderaan.
+- De gekozen volgorde geldt ook voor de lijst op de telefoon, en wordt per apparaat onthouden.
+
+### Let op
+- **Bezittingen** sorteert los daarvan, zoals voorheen.
+- Kolommen die bij de Volglijst altijd 0 of "–" zijn (Aantal, Gem. prijs, Waarde, Geïnvesteerd, Winst/verlies, %) sorteren niet.
 
 ## 3.16.1 – 29 oktober 2026
 Iets meer ruimte tussen de appnaam en het versienummer.

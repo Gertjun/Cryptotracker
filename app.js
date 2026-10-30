@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.16.1 (29 okt 2026)';
+const APP_VERSION='3.17.0 (30 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -426,7 +426,7 @@ async function fetchChart0(id,days,low){
 // Na het opnieuw opbouwen van het scherm de toetsenbordfocus terugzetten op hetzelfde element
 function focusKey(e){if(!e||e===document.body)return null;if(e.id)return '#'+CSS.escape(e.id);
   if(e.dataset?.act==='pview')return `[data-act="pview"][data-v="${CSS.escape(e.dataset.v)}"]`;
-  for(const k of ['act','sort','prange','range','tf','rp','theme','cal','type'])if(e.dataset?.[k]!=null)return `[data-${k}="${CSS.escape(e.dataset[k])}"]`;
+  for(const k of ['act','sort','wsort','prange','range','tf','rp','theme','cal','type'])if(e.dataset?.[k]!=null)return `[data-${k}="${CSS.escape(e.dataset[k])}"]`;
   if(e.getAttribute?.('href'))return `a[href="${CSS.escape(e.getAttribute('href'))}"]`;
   const row=e.closest?.('[data-tx],[data-coin],[data-goal]');if(row){const k=row.dataset.tx!=null?'tx':row.dataset.coin!=null?'coin':'goal';return `[data-${k}="${CSS.escape(row.dataset[k])}"] .rowlink`}
   return null}
@@ -576,13 +576,13 @@ const TXH='<th scope="col" data-p="3">Aantal</th><th scope="col" data-p="5">Koer
 const HCOLS=[
   {k:'qty',p:5,n:'Aantal',td:c=>`<td class="m">${qtyf(c.qty)}</td>`},
   {k:'avg',p:8,n:'Gemiddelde aankoopprijs',h:'<abbr title="Gemiddelde aankoopprijs">Gem. prijs</abbr>',td:c=>`<td class="m">${money(c.avg)}</td>`},
-  {k:'price',p:4,n:'Koers',td:c=>`<td>${money(c.price)}</td>`},
-  {k:'ch1h',p:9,n:'1 uur',td:c=>`<td class="${cls(c.ch1h)}">${pct(c.ch1h)}</td>`},
-  {k:'ch4h',p:11,n:'4 uur',off:true,td:c=>{const v=ch4h(c.coinId);return `<td class="${cls(v)}">${pct(v)}</td>`}},
-  {k:'ch24',p:3,n:'24 uur',td:c=>`<td class="${cls(c.ch24)}">${pct(c.ch24)}</td>`},
-  {k:'ch7',p:7,n:'7 dagen',td:c=>`<td class="${cls(c.ch7)}">${pct(c.ch7)}</td>`},
-  {k:'ch30',p:10,n:'30 dagen',td:c=>`<td class="${cls(c.ch30)}">${pct(c.ch30)}</td>`},
-  {k:'ch1y',p:12,n:'1 jaar',off:true,td:c=>`<td class="${cls(c.ch1y)}">${pct(c.ch1y)}</td>`},
+  {k:'price',ws:1,p:4,n:'Koers',td:c=>`<td>${money(c.price)}</td>`},
+  {k:'ch1h',ws:1,p:9,n:'1 uur',td:c=>`<td class="${cls(c.ch1h)}">${pct(c.ch1h)}</td>`},
+  {k:'ch4h',ws:1,p:11,n:'4 uur',off:true,td:c=>{const v=ch4h(c.coinId);return `<td class="${cls(v)}">${pct(v)}</td>`}},
+  {k:'ch24',ws:1,p:3,n:'24 uur',td:c=>`<td class="${cls(c.ch24)}">${pct(c.ch24)}</td>`},
+  {k:'ch7',ws:1,p:7,n:'7 dagen',td:c=>`<td class="${cls(c.ch7)}">${pct(c.ch7)}</td>`},
+  {k:'ch30',ws:1,p:10,n:'30 dagen',td:c=>`<td class="${cls(c.ch30)}">${pct(c.ch30)}</td>`},
+  {k:'ch1y',ws:1,p:12,n:'1 jaar',off:true,td:c=>`<td class="${cls(c.ch1y)}">${pct(c.ch1y)}</td>`},
   {k:'value',n:'Waarde',s:'value',td:c=>`<td class="m"><b>${money(c.value,2)}</b></td>`},
   {k:'cost',p:6,n:'Geïnvesteerd',td:c=>`<td class="m">${money(c.cost,2)}</td>`},
   {k:'plabs',n:'Winst/verlies',s:'plabs',td:c=>`<td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td>`},
@@ -611,8 +611,11 @@ function need4h(){if(need4hBusy||locked||holdCols().find(x=>x.k==='ch4h')?.hide)
     if(!/^#(coin\/|transacties|analyse|rapporten)/.test(location.hash))render()})}
 function holdingsTable(list,watch){
   const th=(l,k,cl='')=>`<th scope="col" class="${cl} ${settings.sort===k?'on':''}"${settings.sort===k?' aria-sort="descending"':''}><button type="button" class="rowlink" data-sort="${k}">${l}${settings.sort===k?' <span aria-hidden="true">↓</span>':''}</button></th>`;
-  const cols=holdCols().filter(x=>!x.hide),head=x=>(x.s&&!watch?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`).replace('<th ',`<th data-n="${esc(x.n)}"${x.p?` data-p="${x.p}"`:''} `);
-  return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">${watch?'Volglijst':'Bezittingen'}</caption><thead><tr>${watch?'<th scope="col" class="l">Munt</th>':th('Munt','name','l')}${cols.map(head).join('')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
+  // Volglijst: eigen sortering (settings.wsort); eerste klik hoog → laag (naam: A → Z), nog een klik draait om
+  const ws=settings.wsort||{},wth=(l,k,cl='')=>{const on=ws.k===k,up=on&&ws.d==='asc';
+    return `<th scope="col" class="${cl} ${on?'on':''}"${on?` aria-sort="${up?'ascending':'descending'}"`:''}><button type="button" class="rowlink" data-wsort="${k}">${l}${on?` <span aria-hidden="true">${up?'↑':'↓'}</span>`:''}</button></th>`};
+  const cols=holdCols().filter(x=>!x.hide),head=x=>(watch?(x.ws?wth(x.h||x.n,x.k):`<th scope="col">${x.h||x.n}</th>`):x.s?th(x.h||x.n,x.s):`<th scope="col">${x.h||x.n}</th>`).replace('<th ',`<th data-n="${esc(x.n)}"${x.p?` data-p="${x.p}"`:''} `);
+  return `<div class="tbl-wrap only-d"><table class="tbl hold-tbl"><caption class="sr-only">${watch?'Volglijst':'Bezittingen'}</caption><thead><tr>${watch?wth('Munt','name','l'):th('Munt','name','l')}${cols.map(head).join('')}</tr></thead><tbody>${list.map(c=>`<tr data-coin="${esc(c.coinId)}">
     <td class="l"><div class="coin-cell" title="${esc(c.meta.name)}">${coinIcon(c.meta)}<div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc((c.meta.symbol||'').toUpperCase()||c.meta.name)}<span class="sr-only"> ${esc(c.meta.name)}</span></a>${c.alerts?`<div class="note-xs label">${c.alerts} alert${c.alerts>1?'s':''}</div>`:''}</div></div></td>
     ${cols.map(x=>x.td(c)).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
@@ -1541,13 +1544,18 @@ function benchCard(){
 }
 /* ---------- volglijst ---------- */
 function watchSection(){
-  const w=watchOnly();
+  const w=watchSorted();
   return `<div class="list-head"><h2>Volglijst</h2><button type="button" class="link" data-act="addwatch">+ Toevoegen</button></div>
   ${w.length?`<ul class="list only-m">${w.map(x=>{const P=prices[x.id]||{},n=live(data.alerts).filter(a=>a.coinId===x.id&&!a.hit).length;
     return `<li class="row" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(x.id)}">${esc(x.name)}</a></div><div class="meta">${esc((x.symbol||'').toUpperCase())}${n?` · ${n} alert${n>1?'s':''}`:''}</div></div>
     <div class="right"><div class="v">${money(P.price)}</div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></div></li>`}).join('')}</ul>${holdingsTable(w.map(watchRow),true)}`
   :'<div class="empty-card empty-sm card">Volg munten die je (nog) niet hebt: koers, grafiek en prijsalerts.</div>'}`;
 }
+// volglijst in de gekozen volgorde (settings.wsort = {k, d:'desc'|'asc'}); munten zonder waarde staan altijd onderaan
+function watchSorted(){const w=watchOnly(),ws=settings.wsort;if(!ws?.k)return w;const f=ws.d==='asc'?1:-1;
+  if(ws.k==='name')return [...w].sort((a,b)=>f*(a.name||'').localeCompare(b.name||'','nl'));
+  const val=x=>{const v=ws.k==='ch4h'?ch4h(x.id):watchRow(x)[ws.k];return Number.isFinite(v)?v:null};
+  return w.map(x=>[x,val(x)]).sort((a,b)=>a[1]==null?(b[1]==null?0:1):b[1]==null?-1:f*(a[1]-b[1])).map(a=>a[0])}
 // een munt van de volglijst als rij in dezelfde tabel als Bezittingen: je hebt er niets van, dus aantal, waarde, geïnvesteerd en resultaat zijn 0
 function watchRow(x){const P=prices[x.id]||{};
   return{coinId:x.id,meta:{coinId:x.id,symbol:x.symbol,name:x.name,image:x.image},qty:0,avg:null,price:P.price,ch1h:chP(P.m?.ch1h,1/24),ch24:chU(P.ch24),ch7:chP(P.m?.ch7,7),ch30:chP(P.m?.ch30,30),ch1y:chP(P.m?.ch1y,365),
@@ -2613,7 +2621,7 @@ let pressT=0;new MutationObserver(()=>{if(!pressT)pressT=requestAnimationFrame((
 // Skip link: springt naar de hoofdinhoud zonder de #-route (die de app voor schermen gebruikt) te wijzigen
 document.querySelector('.skip-link')?.addEventListener('click',e=>{e.preventDefault();const m=$('#view');m.focus();m.scrollIntoView({block:'start'})});
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal],[data-unit]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-wsort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal],[data-unit]');if(!a)return;
   if(a.dataset.unit){setUnit(a.dataset.unit,a);return}
   if(a.dataset.cal){const now=Date.now(),yr=settings.calU==='week'||settings.calU==='month',k=yr?'calYear':'calMonth';let m=+settings[k]||pStart(yr?'year':'month',now);const d=new Date(m);if(yr)d.setFullYear(d.getFullYear()+(+a.dataset.cal));else d.setMonth(d.getMonth()+(+a.dataset.cal));settings[k]=d.getTime();saveSettings();keepFocus(renderReports);return}
   if(a.dataset.goal){openGoal(a.dataset.goal);return}
@@ -2623,6 +2631,8 @@ document.addEventListener('click',e=>{
   if(a.dataset.rp){const [k,u]=a.dataset.rp.split(':');settings[k]=u;saveSettings();keepFocus(()=>{renderReports();if($('#zoom'))renderRetZoom()});return}
   if(a.dataset.tf){txf.type=a.dataset.tf;txLimit=100;keepFocus(fillTxs);return}
   if(a.dataset.sort){settings.sort=a.dataset.sort;saveSettings();render();return}
+  if(a.dataset.wsort){const k=a.dataset.wsort,ws=settings.wsort||{},first=k==='name'?'asc':'desc';
+    settings.wsort={k,d:ws.k===k?(ws.d==='asc'?'desc':'asc'):first};saveSettings();render();return}
   if(a.dataset.prange){settings.pRange=a.dataset.prange;saveSettings();document.querySelectorAll('[data-prange]').forEach(b=>b.classList.toggle('on',b.dataset.prange===a.dataset.prange));drawPortfolioChart();if($('#pzchart'))drawPfZoom();return}
   if(a.dataset.coin){location.hash='#coin/'+encodeURIComponent(a.dataset.coin);return}
   if(a.dataset.tx){openTx({txId:a.dataset.tx});return}
