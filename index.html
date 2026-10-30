@@ -410,6 +410,14 @@ a{color:var(--accent)}
 /* Vanaf de tablet staan deze cijfers in het blok naast de grafiek; de regel onder de totale waarde verschijnt dan alleen tijdens het aanwijzen van de grafiek */
 @media (max-width:699px){.not-phone{display:none!important}}
 @media (min-width:700px){#heroSub.rest{visibility:hidden}}
+/* telefoon en tablet: de bovenbalk (appnaam, synchroniseren, vergrendelen, instellingen) blijft staan bij scrollen.
+   De schaduw vult de balk tot de randen van het scherm en de strook boven de balk (statusbalk/iOS-vervaging), zodat er niets achter doorschuift. */
+:root{--stick:calc(env(safe-area-inset-top) + var(--top-extra,0px))}
+@media (max-width:999px){
+  .top{position:sticky;top:var(--stick);z-index:30;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(calc(-1 * var(--stick) - 1px) -100vmax 0)}
+  .tbl thead th{top:calc(var(--stick) + 60px)}
+  html{scroll-padding-top:calc(var(--stick) + 68px)}
+}
 @media (max-width:999px){.only-d{display:none!important}.fab{bottom:calc(84px + env(safe-area-inset-bottom))}#app{padding-bottom:170px}}
 @media (min-width:1000px){
   .only-m{display:none!important}

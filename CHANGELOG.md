@@ -7,12 +7,22 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.0`) en de naam van het zip-bestand (`crypto-tracker-3.20.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.1`) en de naam van het zip-bestand (`crypto-tracker-3.20.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.20.1 – 30 oktober 2026
+De bovenbalk blijft op telefoon en tablet staan als je scrollt.
+
+### Verbeterd
+- **Vaste bovenbalk:** het oogje, de regel met koersen en synchronisatie, het slotje en het tandwiel blijven bovenin staan als je naar beneden scrollt, net als in Vaste Lasten. Er schuift niets meer achter de statusbalk door. Op de laptop verandert niets.
+
+### Technisch
+- **`.top` sticky onder 1000 px**, met `--stick` (veilige ruimte bovenin plus `--top-extra`). Kolomkoppen van tabellen en `scroll-padding-top` schuiven mee, zodat ze niet onder de balk verdwijnen.
+- **Test:** `indeling.spec.mjs` controleert dat de balk na scrollen bovenin staat en klikbaar is.
 
 ## 3.20.0 – 30 oktober 2026
 Instellingen is nu een eigen scherm in plaats van een blad dat over het scherm schuift.

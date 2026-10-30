@@ -72,3 +72,18 @@ test('Instellingen is een eigen scherm: tandwiel opent het, terug brengt je teru
   await page.evaluate(()=>openSettings());await expect(page.locator('#st_sync')).toBeVisible();
   await page.goBack();await expect(page.locator('#txOut')).toBeVisible();
 });
+
+test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',async({page},testInfo)=>{
+  test.skip(!isPhone(testInfo),'alleen op de telefoon');
+  await openApp(page);await importCsv(page);
+  await page.evaluate(()=>{location.hash='#transacties'});
+  await page.waitForTimeout(300);
+  await page.evaluate(()=>window.scrollTo(0,1500));
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(()=>scrollY)).toBeGreaterThan(500);
+  const box=await page.locator('#topbar').boundingBox();
+  expect(Math.abs(box.y)).toBeLessThan(2);
+  // knoppen in de balk zijn zichtbaar en klikbaar (niets erboven)
+  const hit=await page.evaluate(()=>{const b=document.querySelector('#topbar button');if(!b)return false;const r=b.getBoundingClientRect();return b.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))});
+  expect(hit).toBe(true);
+});
