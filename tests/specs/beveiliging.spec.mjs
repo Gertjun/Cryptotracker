@@ -84,3 +84,14 @@ test('samenvoegen bewaart onbekende onderdelen en de gegevensversie',async({page
   await openApp(page);
   expect(await page.evaluate(()=>{const m=merge({v:1,txs:[],deleted:[]},{txs:[],deleted:[],nieuweLijst:[1]});return [m.v,m.nieuweLijst]})).toEqual([1,[1]]);
 });
+
+test('back-up downloaden op de laptop, en inhoud verborgen in de app-wisselaar',async({page})=>{
+  await openApp(page);
+  const dl=page.waitForEvent('download');await page.evaluate(()=>exportData());
+  expect((await dl).suggestedFilename()).toMatch(/^crypto-portfolio-.*\.json$/);
+  const vis=h=>page.evaluate(h=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>h});document.dispatchEvent(new Event('visibilitychange'))},h);
+  await vis(true);expect(await page.evaluate(()=>document.body.classList.contains('shield'))).toBe(false);   // zonder vergrendeling: niets verbergen
+  await page.evaluate(()=>{lockCfg={autoLock:-1}});
+  await vis(true);expect(await page.evaluate(()=>document.body.classList.contains('shield'))).toBe(true);
+  await vis(false);expect(await page.evaluate(()=>document.body.classList.contains('shield'))).toBe(false);
+});

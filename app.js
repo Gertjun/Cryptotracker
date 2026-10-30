@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.19.0 (30 okt 2026)';
+const APP_VERSION='3.19.1 (30 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -1301,7 +1301,13 @@ function calCard(){
 }
 
 /* ---------- exporteren ---------- */
-function download(name,text,mime){const b=new Blob([text],{type:mime}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+// Bestand bewaren. Op een telefoon of tablet via het deelmenu (Bewaar in Bestanden, AirDrop), want een app op het
+// beginscherm gaat slecht om met gewone downloads. Kan dat niet, of op de laptop: gewone download.
+async function download(name,text,mime){const b=text instanceof Blob?text:new Blob([text],{type:mime});
+  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare){
+    try{const f=new File([b],name,{type:b.type||mime});if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}
+    catch(e){if(e?.name==='AbortError')return}}   // zelf geannuleerd: niets doen
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 // CSV voor Nederlandse Excel: puntkomma als scheidingsteken, komma als decimaalteken, UTF-8 met BOM
 function exportCSV(list,name){
   const n=v=>v==null||v===''?'':String(+(+v).toPrecision(15)).replace('.',','),q=v=>{v=String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
@@ -2337,7 +2343,7 @@ function openSettings(){
 function exportData(){
   settings.lastExport=Date.now();saveSettings();
   const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  download('crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json',blob,'application/json');
 }
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
@@ -2394,6 +2400,7 @@ async function doPairIn(btn){
     settings.gh={...settings.gh,repo:c.repo,token:c.token,path:c.path||settings.gh.path,branch:c.branch||'main',pass:c.pass};saveSettings();
     if(c.cgKey){data.cfg={...(data.cfg||{}),cgKey:c.cgKey,mod:Date.now()};saveData()}
     closeSheet();render();toast('Gekoppeld, gegevens ophalen…');await syncNow(false);refreshPrices();
+    if(!lockCfg&&pkSupported())openSheet(`<h2 class="h3">Ook Face ID gebruiken?</h2><p class="mt-0 hint">Dit apparaat is gekoppeld. Wil je de app op dit apparaat vergrendelen met Face ID, Touch ID of Windows Hello? Je gegevens op dit apparaat worden dan versleuteld opgeslagen. Je kunt dit ook later doen in Instellingen › Beveiliging.</p><button type="button" class="btn" data-act="lockon">App-vergrendeling instellen</button><button type="button" class="btn sec" data-act="closesheet">Later</button>`);
   }catch(e){btn.disabled=false;fieldErr(/pincode/i.test(e.message)?'pair_pin':'pair_in',e.message)}
 }
 async function deriveKey(pass,salt){const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
@@ -2799,9 +2806,11 @@ async function otherTab(e){
 }
 window.addEventListener('storage',otherTab);
 let hiddenAt=0;
-window.addEventListener('pagehide',flushSync);
+window.addEventListener('pagehide',()=>{flushSync();if(lockCfg)document.body.classList.add('shield')});
+window.addEventListener('pageshow',()=>document.body.classList.remove('shield'));
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){hiddenAt=Date.now();saveVisit();flushSync();return}
+  if(document.hidden){hiddenAt=Date.now();saveVisit();flushSync();if(lockCfg)document.body.classList.add('shield');return}
+  document.body.classList.remove('shield');
   if(hiddenAt&&Date.now()-hiddenAt>3600e3&&getVisit(curPf())){prevVisit={...getVisit(curPf())};sinceDismissed=false}
   const al=lockCfg?.autoLock??5;
   if(lockCfg&&!locked&&hiddenAt&&al>=0&&Date.now()-hiddenAt>=al*60000){lockNow();return}

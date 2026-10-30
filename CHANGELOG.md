@@ -7,12 +7,23 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.19.0`) en de naam van het zip-bestand (`crypto-tracker-3.19.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.19.1`) en de naam van het zip-bestand (`crypto-tracker-3.19.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.19.1 – 30 oktober 2026
+Back-up via het deelmenu, inhoud verborgen in de app-wisselaar, en Face ID aanbieden na het koppelen.
+
+### Verbeterd
+- **Back-up en CSV-export op iPhone en iPad** gaan via het deelmenu: kies Bewaar in Bestanden, AirDrop of een andere app. Voorheen kon je in een voorbeeldscherm vastlopen. Op de laptop blijft het een gewone download.
+- **App-wisselaar:** staat de app-vergrendeling aan, dan verbergt de app je gegevens zodra je hem verlaat. In het overzicht van open apps zie je dan een leeg scherm in plaats van je bedragen. iOS maakt dat plaatje soms al net te vroeg; meestal werkt het.
+- **Na het koppelen** van een nieuw apparaat vraagt de app of je ook de app-vergrendeling met Face ID, Touch ID of Windows Hello wilt instellen. Kies je "Later", dan kan het nog steeds via Instellingen › Beveiliging.
+
+### Opgelost
+- De sterkte-indicator onder een wachtwoordveld stond te dicht op het veld.
 
 ## 3.19.0 – 30 oktober 2026
 Een oudere app-versie op een ander apparaat kan je gegevens niet meer beschadigen.
