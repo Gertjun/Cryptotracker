@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.18.0 (30 okt 2026)';
+const APP_VERSION='3.19.0 (30 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -45,7 +45,12 @@ function persist(){
     localStorage.setItem(LS_SET,JSON.stringify(settings));localStorage.setItem(LS_DATA,JSON.stringify(data));localStorage.setItem(LS_PRICES,JSON.stringify(prices));
   }
 }
-function saveData(sync=true){data.updated=Date.now();persist();if(sync)scheduleSync()}
+// Gegevensversie: verhoog DATA_V als een nieuwe app-versie gegevens bewaart die een oudere versie niet begrijpt
+// (bijvoorbeeld een nieuwe lijst). Een oudere app ziet dan een hogere versie en stopt met synchroniseren.
+const DATA_V=1;
+let tooNew=false;
+const isTooNew=d=>(d?.v||0)>DATA_V;
+function saveData(sync=true){data.updated=Date.now();if(!isTooNew(data))data.v=DATA_V;persist();if(sync)scheduleSync()}
 function saveSettings(){persist()}
 function savePrices(){persist()}
 
@@ -2337,6 +2342,7 @@ function exportData(){
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
+    if(isTooNew(j)){toast('Deze back-up is gemaakt met een nieuwere versie van de app. Vernieuw de app eerst.');return}
     data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans,portfolios:j.portfolios,allocs:j.allocs});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
@@ -2402,7 +2408,7 @@ function merge(a,b){
   const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
   for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios),allocs:mergeList(a.allocs,b.allocs)};
+  return{...a,...b,v:Math.max(a.v||0,b.v||0),txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios),allocs:mergeList(a.allocs,b.allocs)};
 }
 const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[]),...(d.portfolios||[]),...(d.allocs||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
 // 20 s wachten, zodat meerdere wijzigingen samen één versie op GitHub worden; bij het verlaten van de app direct (flushSync).
@@ -2474,7 +2480,7 @@ function restoreSnapshot(snap){
   data={...data,txs,deleted:[...del],...lists,updated:now};
 }
 async function syncNow(silent){
-  const g=settings.gh;if(locked||!g.token||!g.repo||!g.pass)return;
+  const g=settings.gh;if(locked||tooNew||!g.token||!g.repo||!g.pass)return;
   if(syncing){syncAgain=true;return}
   syncing=true;setSync('busy');
   try{
@@ -2488,7 +2494,8 @@ async function syncNow(silent){
       else{   // bestand groter dan 1 MB: GitHub stuurt de inhoud dan niet mee, dus apart ophalen als 'raw' (kan tot 100 MB)
         const rr=await fetchT(url+'?ref='+encodeURIComponent(g.branch)+'&_='+Date.now(),{headers:{...h,Accept:'application/vnd.github.raw'},cache:'no-store'});
         if(!rr.ok)throw new Error('GitHub gaf fout '+rr.status+' bij ophalen');txt=await rr.text()}
-      remote=await decryptObj(JSON.parse(txt),g.pass)}
+      remote=await decryptObj(JSON.parse(txt),g.pass);
+      if(isTooNew(remote)){showTooNew();throw new Error('Je gegevens op GitHub zijn gemaakt met een nieuwere versie van de app. Vernieuw de app eerst.')}}
     else if(r.status===401)throw new Error('Token ongeldig of verlopen');
     else if(r.status!==404)throw new Error('GitHub gaf fout '+r.status);
     const before=sig(data);
@@ -2781,6 +2788,7 @@ async function otherTab(e){
     else if(e.key===LS_SET&&!lockCfg){const st=JSON.parse(e.newValue||'null');if(st?.gh)settings.gh={...settings.gh,...st.gh};return}
     else if(e.key===LS_VAULT&&lockCfg&&DEK&&!locked){const o=JSON.parse(dec.decode(await aesDec(DEK,JSON.parse(e.newValue))));theirs=o.data;gh=o.gh}
     if(!theirs?.txs)return;
+    if(isTooNew(theirs))return showTooNew();
     if(gh)settings.gh={...settings.gh,...gh};
     const before=sig(data),merged=merge(data,theirs);
     if(sig(merged)===before)return;   // niets nieuws
@@ -2818,6 +2826,11 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
   }).catch(()=>{});
 }
+// Gegevens van een nieuwere app-versie gezien: niet meer synchroniseren en vragen om te vernieuwen.
+function showTooNew(){if(tooNew)return;tooNew=true;clearTimeout(syncTimer);syncTimer=null;
+  if($('#toonew'))return;const d=document.createElement('div');d.id='toonew';d.setAttribute('role','alert');
+  d.innerHTML='<b>Vernieuw de app.</b> Je gegevens zijn bijgewerkt door een nieuwere versie van de app op een ander apparaat. Synchroniseren staat uit tot je vernieuwt, zodat er niets beschadigd raakt. <button type="button" data-act="reload">Vernieuwen</button>';
+  document.body.appendChild(d)}
 function showUpdate(){updReady=true;document.querySelectorAll('.app-ver').forEach(e=>e.outerHTML=appVerHTML());
   if([...document.querySelectorAll('.app-ver')].some(e=>e.getClientRects().length))return;   // laptop: de knop naast de naam is genoeg
   if($('#upd'))return;const d=document.createElement('div');d.id='upd';d.innerHTML='Nieuwe versie beschikbaar <button type="button" data-act="reload">Vernieuwen</button>';document.body.appendChild(d)}

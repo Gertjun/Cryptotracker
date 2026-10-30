@@ -65,3 +65,22 @@ test('twee tabbladen overschrijven elkaars wijzigingen niet',async({context})=>{
   expect(await ids(A)).toEqual(['tA','tB']);expect(await ids(B)).toEqual(['tA','tB']);
   expect(await A.evaluate(()=>JSON.parse(localStorage.getItem('cpt.data')).txs.length)).toBe(2);
 });
+
+test('gegevens van een nieuwere app-versie: niet synchroniseren, vragen om te vernieuwen',async({page})=>{
+  const st={file:null,puts:0};await fakeGitHub(st)(page);await openApp(page);
+  // een "nieuwere app" zet gegevens met een hogere gegevensversie op GitHub
+  const file=await page.evaluate(async()=>JSON.stringify(await encryptObj({v:DATA_V+1,txs:[],deleted:[],nieuweLijst:[{id:'x'}]},'paars konijn op de fiets')));
+  st.file=file;
+  await page.evaluate(()=>{Object.assign(settings.gh,{token:'t',repo:'u/r',pass:'paars konijn op de fiets',branch:'main',path:'p.json'});saveSettings()});
+  await page.evaluate(()=>syncNow(true));
+  await expect(page.locator('#toonew')).toBeVisible();
+  await expect(page.locator('#toonew')).toContainText('Vernieuw de app');
+  expect(await page.evaluate(()=>syncState.s)).toBe('err');
+  expect(st.puts).toBe(0);
+  expect(st.file).toBe(file);   // het bestand op GitHub is niet aangeraakt
+});
+
+test('samenvoegen bewaart onbekende onderdelen en de gegevensversie',async({page})=>{
+  await openApp(page);
+  expect(await page.evaluate(()=>{const m=merge({v:1,txs:[],deleted:[]},{txs:[],deleted:[],nieuweLijst:[1]});return [m.v,m.nieuweLijst]})).toEqual([1,[1]]);
+});

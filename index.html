@@ -323,6 +323,8 @@ a{color:var(--accent)}
 .banner span:last-child{margin-left:auto;color:var(--accent);font-weight:600}
 #upd{position:fixed;top:calc(10px + env(safe-area-inset-top) + var(--top-extra,0px));left:50%;transform:translateX(-50%);z-index:70;background:var(--accent);color:#fff;border-radius:14px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px;font-weight:600;max-width:calc(100vw - 32px)}
 #upd button{background:#fff;color:#1a3a8f;border:0;border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer}
+#toonew{position:fixed;top:calc(10px + env(safe-area-inset-top) + var(--top-extra,0px));left:50%;transform:translateX(-50%);z-index:71;background:var(--card);color:var(--text);border:2px solid var(--yellow);border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:14px;line-height:1.4;width:min(520px,calc(100vw - 32px))}
+#toonew button{display:block;margin-top:10px;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 14px;min-height:44px;font-weight:700;cursor:pointer}
 #print{display:none}
 @media print{
   body.printing>*:not(#print){display:none!important}
