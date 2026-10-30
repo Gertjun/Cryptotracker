@@ -7,12 +7,22 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.17.0`) en de naam van het zip-bestand (`crypto-tracker-3.17.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.17.1`) en de naam van het zip-bestand (`crypto-tracker-3.17.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.17.1 – 30 oktober 2026
+Sterkere wachtwoorden, minder versies op GitHub en beter bewaarde gegevens.
+
+### Verbeterd
+- **Nieuw versleutelwachtwoord** voor GitHub: minimaal 12 tekens, met een indicator (Te kort, Zwak, Redelijk, Sterk). Een zin van een paar woorden werkt goed. Staat er op GitHub al een bestand, dan mag je het bestaande wachtwoord blijven gebruiken, ook als het korter is.
+- **Herstelwachtwoord** van de app-vergrendeling: bij instellen of wijzigen ook minimaal 12 tekens, met dezelfde indicator. Je huidige wachtwoord blijft werken.
+- **Oogje** naast elk wachtwoordveld om te zien wat je typt.
+- **Synchroniseren:** de app wacht 20 seconden na een wijziging (was 1,5 seconde), zodat tien wijzigingen achter elkaar één versie op GitHub worden in plaats van tien. Verlaat je de app, dan synchroniseert hij direct.
+- **Opslag beschermen:** de app vraagt de browser om je gegevens niet op te ruimen als er weinig ruimte is.
 
 ## 3.17.0 – 30 oktober 2026
 De Volglijst sorteer je nu door op een kolomkop te klikken.
