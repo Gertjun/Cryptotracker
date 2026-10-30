@@ -43,6 +43,9 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - `encryptObj`/`decryptObj`: PBKDF2 250k + AES-GCM.
   - GitHub Contents-API, met een raw-download boven 1 MB.
   - `sig()` herkent wijzigingen.
+  - `scheduleSync()` wacht 20 s; `flushSync()` synchroniseert direct bij het verlaten van de app (D30).
+  - **Gegevensversie:** `DATA_V` en `data.v`; `isTooNew()`, `tooNew` en `showTooNew()` stoppen het synchroniseren als de gegevens van een nieuwere app-versie zijn (D32). `merge()` neemt onbekende onderdelen mee.
+  - **Tabbladen:** `otherTab()` (storage-event) voegt wat een ander tabblad opslaat samen met de eigen gegevens (D31).
 - **Portefeuilles:** `TX()` geeft de transacties van de gekozen portefeuille (`curPf()`, `'__all'` = alles samen). Gebruik voor weergave en berekening altijd `TX()`, niet `data.txs`.
 - **Berekeningen:**
   - `computeCoin(id)`: FIFO per munt, met `lotMap`, `sellInfo`, `unrealPct` enz.
@@ -82,6 +85,8 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 - **Overige functies:**
   - Doelen, vaste inleg (`planDo`), doelverdeling (`allocCard`), wat-als (`whatIfCard`), risico (`riskCard`), gemiddelde-prijs-calculator (`avgCalcCard`), verkoopsimulator (`sellSimCard`);
   - eerdere versie terugzetten (`openVersions`), koppelcode (`makePairCode`/`readPairCode`), app-vergrendeling met passkey (WebAuthn PRF) en herstelwachtwoord.
+- **Wachtwoordvelden:** altijd via `pwField(id,label,attrs,meter,lblCls)`, met oogje (`pwEye`) en optioneel sterkte-indicator (`pwStrength`); nieuwe wachtwoorden minimaal `PW_MIN` (D29).
+- **Bestanden bewaren:** `download(naam,tekst|Blob,mime)`: deelmenu op aanraakschermen, anders download (D33). Met vergrendeling krijgt `body` de klasse `.shield` als de app verborgen is.
 - **Updates:** `showUpdate()` toont "update beschikbaar" naast de appnaam (laptop) of een melding bovenin (telefoon).
 
 ## 4. Conventies
