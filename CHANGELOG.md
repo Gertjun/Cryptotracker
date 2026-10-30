@@ -7,12 +7,24 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.19.2`) en de naam van het zip-bestand (`crypto-tracker-3.19.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.0`) en de naam van het zip-bestand (`crypto-tracker-3.20.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.20.0 – 30 oktober 2026
+Instellingen is nu een eigen scherm in plaats van een blad dat over het scherm schuift.
+
+### Gewijzigd
+- **Instellingen als eigen scherm:** het tandwiel opent een scherm met blokken: Weergave, Portefeuilles, Beveiliging, Koersdata, Synchronisatie via GitHub, Importeren en back-up, en Gevarenzone. Op de laptop staan de blokken in twee kolommen. Met de terugknop (of die van de browser) ga je terug naar waar je was.
+- **Koersen nu verversen** staat nu bij Koersdata in plaats van bij Back-up.
+- **Vervolgstappen** (koppelcode, wachtwoord, portefeuille wijzigen) blijven een blad; na Klaar of Annuleren ben je terug op Instellingen.
+
+### Technisch
+- **Route `#instellingen`:** `renderSettings()` tekent het scherm; `openSettings()` opent of ververst het. Een koersupdate tekent het scherm niet opnieuw, zodat wat je typt blijft staan. De regel "Laatste synchronisatie" werkt zichzelf bij.
+- **Test:** `indeling.spec.mjs` controleert het nieuwe scherm, de terugknop en dat ingevulde velden blijven staan.
 
 ## 3.19.2 – 30 oktober 2026
 Zeven nieuwe ideeën voor meer inzicht in je rendement op de wishlist.

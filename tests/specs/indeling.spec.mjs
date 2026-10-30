@@ -50,3 +50,25 @@ test('laptop: zijbalk zonder dubbele muntenlijst op het Overzicht; kolomkoppen b
   await page.mouse.wheel(0,2000);
   await expect.poll(()=>page.locator('.tbl-wrap.only-d thead th').first().evaluate(th=>Math.round(th.getBoundingClientRect().top))).toBe(0);
 });
+
+test('Instellingen is een eigen scherm: tandwiel opent het, terug brengt je terug, velden blijven staan',async({page})=>{
+  await openApp(page);await importCsv(page);
+  await page.evaluate(()=>{location.hash='#transacties'});await expect(page.locator('#txOut')).toBeVisible();
+  await page.locator('[data-act=settings]:visible').first().click();
+  await expect(page).toHaveURL(/#instellingen$/);
+  await expect(page.locator('#sheet')).toBeHidden();
+  for(const id of ['st_view','st_pf','st_sec','st_sync','st_cg','st_imp','st_danger'])await expect(page.locator('#'+id)).toBeVisible();
+  await expect(page.locator('#btnAdd')).toBeHidden();
+  // een koersupdate tekent het scherm niet opnieuw: wat je typt blijft staan
+  await page.fill('#s_repo','geert/test');await page.evaluate(()=>render());
+  await expect(page.locator('#s_repo')).toHaveValue('geert/test');
+  // een vervolgblad (portefeuille) sluit terug naar het scherm
+  await page.locator('[data-act=pfedit][data-id=""]').click();await expect(page.locator('#pf_name')).toBeVisible();
+  await page.locator('#sheet [data-act=settings]').click();await expect(page.locator('#sheet')).toBeHidden();
+  await expect(page.locator('#st_pf')).toBeVisible();
+  await page.locator('[data-act=setback]:visible').click();
+  await expect(page).toHaveURL(/#transacties$/);await expect(page.locator('#txOut')).toBeVisible();
+  // terugknop van de browser
+  await page.evaluate(()=>openSettings());await expect(page.locator('#st_sync')).toBeVisible();
+  await page.goBack();await expect(page.locator('#txOut')).toBeVisible();
+});

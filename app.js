@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.19.2 (30 okt 2026)';
+const APP_VERSION='3.20.0 (30 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -150,10 +150,10 @@ function setPf(id){
   if(/^#coin\//.test(location.hash))location.hash='';render();
 }
 function pfSettingsHTML(){
-  return `<div class="section-t">Portefeuilles</div>
+  return `<section class="card" aria-labelledby="st_pf"><h2 class="h3" id="st_pf">Portefeuilles</h2>
   <p class="mt-0 hint">Houd aparte portefeuilles bij, bijvoorbeeld voor je partner of een zakelijke rekening. Elke portefeuille heeft eigen transacties, cash, doelen, plannen en analyse. Volglijst en prijsalerts gelden voor alle portefeuilles.</p>
   <ul class="pf-list">${pfList().map(p=>`<li class="pf-row"><b>${esc(p.name)}</b><button type="button" class="link" data-act="pfedit" data-id="${esc(p.id)}">Wijzig<span class="sr-only"> ${esc(p.name)}</span></button></li>`).join('')}</ul>
-  <button type="button" class="btn sec" data-act="pfedit" data-id="">+ Portefeuille toevoegen</button>`}
+  <button type="button" class="btn sec" data-act="pfedit" data-id="">+ Portefeuille toevoegen</button></section>`}
 function openPfEdit(id){
   const p=id?pfList().find(x=>x.id===id):null;
   openSheet(`<h2 class="h3">${p?'Portefeuille wijzigen':'Nieuwe portefeuille'}</h2><form class="js-form" novalidate>
@@ -443,9 +443,15 @@ function renderInner(){
   const m=location.hash.match(/^#coin\/(.+)$/);
   const cid=m&&(TX().some(t=>t.coinId===decodeURIComponent(m[1]))||isWatched(decodeURIComponent(m[1])))?decodeURIComponent(m[1]):null;
   fixOldHash();
-  const isTx=location.hash==='#transacties',isRep=/^#analyse(\/|$)/.test(location.hash);
+  const isTx=location.hash==='#transacties',isRep=/^#analyse(\/|$)/.test(location.hash),isSet=location.hash==='#instellingen';
   const bar=()=>{if(multiPf())$('#view').insertAdjacentHTML('afterbegin',pfBarHTML())};
-  if(isRep){inEUR(renderReports);bar();lastView='rep';renderSide('__rep')}
+  document.body.classList.toggle('on-set',isSet);
+  if(isSet){
+    // Instellingen alleen opnieuw opbouwen als het moet (openSettings), anders zou een koersupdate half ingevulde velden wissen
+    if(lastView==='set'&&$('#setView'))$('#topbar').innerHTML=setTopbarHTML();else renderSettings();
+    lastView='set';renderSide('__set');
+  }
+  else if(isRep){inEUR(renderReports);bar();lastView='rep';renderSide('__rep')}
   else if(isTx){
     if(lastView==='tx'&&$('#txOut')){$('#topbar').innerHTML=topbarHTML(null,'Transacties');fillTxs()}  // focus in zoekveld behouden
     else{renderTxs();bar()}
@@ -454,7 +460,7 @@ function renderInner(){
     if(cid)renderCoin(cid);else{renderHome();bar()}
     lastView=cid?'coin':'home';renderSide(cid);
   }
-  document.querySelectorAll('.tabbar a').forEach(b=>{const on=b.dataset.tab===(isRep?'reps':isTx?'txs':'home');b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  document.querySelectorAll('.tabbar a').forEach(b=>{const on=b.dataset.tab===(isSet?'':isRep?'reps':isTx?'txs':'home');b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   clearTimeout(window._fabR);window._fabR=setTimeout(()=>{const f=$('#btnAdd');if(f)f.classList.toggle('away',fabCovers()||(f.classList.contains('away')&&scrollY>60))},150);
 }
 let lastView=null;
@@ -613,7 +619,7 @@ function need4h(){if(need4hBusy||locked||holdCols().find(x=>x.k==='ch4h')?.hide)
     return (!c||Date.now()-c.ts>=chartTtl('1'))&&!(now-(tried4h[id]??-1e9)<chartTtl('1'))});
   if(!ids.length)return;need4hBusy=true;ids.forEach(id=>tried4h[id]=now);
   Promise.allSettled(ids.map(id=>fetchChart(id,'1',true))).then(()=>{need4hBusy=false;
-    if(!/^#(coin\/|transacties|analyse|rapporten)/.test(location.hash))render()})}
+    if(!/^#(coin\/|transacties|analyse|rapporten|instellingen)/.test(location.hash))render()})}
 function holdingsTable(list,watch){
   const th=(l,k,cl='')=>`<th scope="col" class="${cl} ${settings.sort===k?'on':''}"${settings.sort===k?' aria-sort="descending"':''}><button type="button" class="rowlink" data-sort="${k}">${l}${settings.sort===k?' <span aria-hidden="true">↓</span>':''}</button></th>`;
   // Volglijst: eigen sortering (settings.wsort); eerste klik hoog → laag (naam: A → Z), nog een klik draait om
@@ -694,7 +700,7 @@ function syncBadge(){
   if(!navigator.onLine)return `<button type="button" class="sync" data-act="syncinfo" title="Geen internet. Je ziet de laatst bekende koersen${cgT?' ('+fmtTs(cgT)+')':''}; wijzigingen worden gesynchroniseerd zodra je weer online bent.">${line('Offline','err',cgT?'koersen '+tm(cgT,fmtTs(cgT),true):'')}</button>`;
   return `<button type="button" class="sync" data-act="syncinfo" title="${esc(tip)}"><span class="sr-only">Nu synchroniseren. </span>${ghOn?line('GitHub',syncState.s,settings.lastGh?tm(settings.lastGh,ghTxt,true):ghTxt):''}${coinIds().length?line('Koersen',cgSt,cgT?tm(cgT,cgTxt,true):cgTxt):''}</button>`;
 }
-function updBadges(){document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
+function updBadges(){const si=$('#setSync');if(si)si.outerHTML=syncInfoHTML();document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
 window.addEventListener('offline',()=>{updBadges();if(!locked)toast('Geen internet: je ziet de laatst bekende koersen')});
 window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer online');refreshPrices();syncNow(true)});
 function renderHome(){
@@ -2289,56 +2295,74 @@ function deleteTx(){
   data.txs=data.txs.filter(t=>t.id!==form.id);data.deleted.push(form.id);saveData();closeSheet();render();toast('Verwijderd');
 }
 
-function openSettings(){
+function renderSettings(){
   const g=settings.gh;
   const pks=lockCfg?.pks||[];
-  openSheet(`<h2 class="h3">Instellingen</h2>
-  <div class="section-t">Weergave</div>
+  $('#topbar').innerHTML=setTopbarHTML();
+  $('#view').innerHTML=`<div class="set-grid" id="setView"><div class="set-col"><section class="card" aria-labelledby="st_view"><h2 class="h3" id="st_view">Weergave</h2>
   <fieldset class="seg theme-seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch','linear-gradient(135deg,#f3f4f7 50%,#0b0d12 50%)'],...THEMES.map(([v,l,bg,ac])=>[v,l,`linear-gradient(135deg,${bg} 55%,${ac} 55%)`])].map(([v,l,sw])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}"><span class="theme-sw" style="background:${sw}" aria-hidden="true"></span>${l}</button>`).join('')}</fieldset>
   <div id="themeAuto" class="two"${(settings.theme||'auto')==='auto'?'':' hidden'}>
     <div class="field"><label for="s_themeD">Als je apparaat donker staat</label><select id="s_themeD">${THEMES.filter(x=>!x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeD||'dark')===v?' selected':''}>${l}</option>`).join('')}</select></div>
     <div class="field"><label for="s_themeL">Als je apparaat licht staat</label><select id="s_themeL">${THEMES.filter(x=>x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeL||'light')===v?' selected':''}>${l}</option>`).join('')}</select></div>
   </div>
   <p class="mt-0 hint">Het thema geldt alleen voor dit apparaat.</p>
-  <p class="mt-8 hint">Bedragen tonen in:</p>
+  <p class="mt-12 hint">Bedragen tonen in:</p>
   <fieldset class="seg"><legend class="sr-only">Bedragen tonen in</legend>${[['EUR','Euro €'],['USD','Dollar $'],['BTC','Bitcoin ₿']].map(([v,l])=>`<button type="button" data-unit="${v}" class="${(settings.unit||'EUR')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
   <p class="mt-0 hint">Geldt voor Overzicht, munten en Transacties. Dollar: omgerekend tegen de koers van nu. Bitcoin: aankopen, verkopen en stortingen tegen de bitcoinkoers van dat moment, dus je winst in bitcoin laat zien of je beter deed dan bitcoin aanhouden. Formulieren, Analyse en het jaaroverzicht blijven in euro.${settings.unit&&settings.unit!=='EUR'&&fx.ts?` Koers bijgewerkt ${fmtTs(fx.ts)}.`:''}</p>
+  </section>
   ${pfSettingsHTML()}
-  <div class="section-t">Beveiliging</div>
+  <section class="card" aria-labelledby="st_sec"><h2 class="h3" id="st_sec">Beveiliging</h2>
   ${lockCfg?`
   ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="note-sm label">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button type="button" data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="mt-0 hint">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
   ${pkSupported()?'<button type="button" class="btn sec" data-act="addpk">Passkey toevoegen</button>':'<p class="hint">Passkeys werken alleen als de app via https draait (GitHub Pages).</p>'}
   <div class="mt-12 field"><label for="s_auto">Automatisch vergrendelen na</label><select id="s_auto">${[[0,'Direct bij verlaten'],[1,'1 minuut'],[5,'5 minuten'],[15,'15 minuten'],[60,'1 uur'],[-1,'Nooit (alleen bij herstarten)']].map(([v,l])=>`<option value="${v}"${(lockCfg.autoLock??5)===v?' selected':''}>${l}</option>`).join('')}</select></div>
   <div class="two"><button type="button" class="btn sec" data-act="chpw">Wachtwoord wijzigen</button><button type="button" class="btn sec" data-act="lockoff">Uitschakelen</button></div>`
   :`<p class="mt-0 hint">Vergrendel de app met een passkey (Face ID, Touch ID of Windows Hello). Je gegevens op dit apparaat worden dan versleuteld opgeslagen.</p><button type="button" class="btn sec" data-act="lockon">App-vergrendeling instellen</button>`}
-  <div class="section-t">Synchronisatie via GitHub</div>
-  <p class="mt-0 hint">Je portfolio wordt versleuteld (AES-256) opgeslagen in een privé-repository, zodat je het op al je apparaten ziet. Zonder wachtwoord kan niemand het lezen, ook GitHub niet.</p>
-  <form class="js-form" novalidate><div class="field"><label for="s_repo">Repository (gebruiker/naam)</label><input type="text" id="s_repo" value="${esc(g.repo)}" placeholder="geert/mijn-data" autocapitalize="off" autocorrect="off"></div>
-  <div class="field"><label for="s_token">Personal access token</label><input id="s_token" name="github-token" type="password" value="${esc(g.token)}" placeholder="github_pat_…" autocomplete="current-password" spellcheck="false"></div>
-  <div class="two"><div class="field"><label for="s_path">Bestand</label><input type="text" id="s_path" value="${esc(g.path)}"></div><div class="field"><label for="s_branch">Branch</label><input type="text" id="s_branch" value="${esc(g.branch)}"></div></div>
-  ${pwField('s_pass','Versleutelwachtwoord',`name="sync-password" value="${esc(g.pass)}" autocomplete="${g.pass?'current-password':'new-password'}" placeholder="Zelfde op elk apparaat"`,g.pass?false:`Nieuw wachtwoord: minimaal ${PW_MIN} tekens. Koppel je een apparaat aan een bestaand bestand, dan geldt het wachtwoord dat je al hebt.`)}
-  <p class="hint">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
-  <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
-  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
-  <div class="section-t">Koersdata</div>
+  </section>
+  <section class="card" aria-labelledby="st_cg"><h2 class="h3" id="st_cg">Koersdata</h2>
   <p class="mt-0 hint">Koersen laatst bijgewerkt: <b>${lastCgTs()?fmtTs(lastCgTs()):'nog niet'}</b>${cgState.s==='err'?` (laatste poging mislukt: ${esc(cgState.msg)})`:''}</p>
   <p class="mt-0 hint">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer">coingecko.com/en/api</a> → Demo (gratis account).</p>
   <p class="hint">Eigen koersarchief: ${(()=>{let n=0,mn=Infinity;for(const id in data.hist||{})for(const d in data.hist[id]){n++;mn=Math.min(mn,data.hist[id][d][0])}return n?`${n} dagkoersen, vanaf ${new Date(mn).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}`:'wordt opgebouwd'})()}. Dagkoersen worden voorgoed bewaard, zodat 'Max' na verloop van tijd verder dan een jaar terug reikt.</p>
   <form class="js-form" novalidate><div class="field"><label for="s_cg">CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" name="coingecko-key" type="password" value="${esc(data.cfg?.cgKey||'')}" placeholder="CG-…" autocomplete="current-password" spellcheck="false"></div>
   <button type="submit" class="btn sec" data-act="savecg">Sleutel opslaan en testen</button></form>
-  <div class="section-t">Importeren</div>
+  <button type="button" class="btn sec" data-act="refresh">Koersen nu verversen</button>
+  </section></div><div class="set-col">
+  <section class="card" aria-labelledby="st_sync"><h2 class="h3" id="st_sync">Synchronisatie via GitHub</h2>
+  <p class="mt-0 hint">Je portfolio wordt versleuteld (AES-256) opgeslagen in een privé-repository, zodat je het op al je apparaten ziet. Zonder wachtwoord kan niemand het lezen, ook GitHub niet.</p>
+  <form class="js-form" novalidate><div class="field"><label for="s_repo">Repository (gebruiker/naam)</label><input type="text" id="s_repo" value="${esc(g.repo)}" placeholder="geert/mijn-data" autocapitalize="off" autocorrect="off"></div>
+  <div class="field"><label for="s_token">Personal access token</label><input id="s_token" name="github-token" type="password" value="${esc(g.token)}" placeholder="github_pat_…" autocomplete="current-password" spellcheck="false"></div>
+  <div class="two"><div class="field"><label for="s_path">Bestand</label><input type="text" id="s_path" value="${esc(g.path)}"></div><div class="field"><label for="s_branch">Branch</label><input type="text" id="s_branch" value="${esc(g.branch)}"></div></div>
+  ${pwField('s_pass','Versleutelwachtwoord',`name="sync-password" value="${esc(g.pass)}" autocomplete="${g.pass?'current-password':'new-password'}" placeholder="Zelfde op elk apparaat"`,g.pass?false:`Nieuw wachtwoord: minimaal ${PW_MIN} tekens. Koppel je een apparaat aan een bestaand bestand, dan geldt het wachtwoord dat je al hebt.`)}
+  ${syncInfoHTML()}
+  <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
+  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
+  </section>
+  <section class="card" aria-labelledby="st_imp"><h2 class="h3" id="st_imp">Importeren en back-up</h2>
   <p class="mt-0 hint">Download in Bitvavo je transactiegeschiedenis als CSV-bestand (menu rechtsboven → Transactiegeschiedenis → downloaden) en lees het hier in. Bestaande transacties worden herkend, dus je kunt hetzelfde bestand later opnieuw importeren.</p>
   <button type="button" class="btn sec" data-act="bvimport">Importeren uit Bitvavo (CSV)</button>
-  <div class="section-t">Back-up</div>
+  <h3 class="set-sub">Back-up</h3>
   <div class="two"><button type="button" class="btn sec" data-act="export">Exporteren</button><button type="button" class="btn sec" data-act="import">Importeren</button></div>
   <input type="file" id="s_file" accept="application/json,.json" hidden>
-  <button type="button" class="mt-10 btn sec" data-act="refresh">Koersen nu verversen</button>
-  <div class="section-t">Gevarenzone</div>
-  <button type="button" class="btn danger" data-act="wipe">Alle transacties wissen</button>
-  <p class="app-foot hint">Koersdata: CoinGecko · ${data.txs.length} transacties · versie ${APP_VERSION}</p>`);
+  </section>
+  <section class="card" aria-labelledby="st_danger"><h2 class="h3" id="st_danger">Gevarenzone</h2>
+  <button type="button" class="btn danger" data-act="wipe">Alle transacties wissen</button></section></div></div>
+  <p class="app-foot hint">Koersdata: CoinGecko · ${data.txs.length} transacties · versie ${APP_VERSION}</p>`;
   $('#s_file').onchange=importFile;
   for(const k of ['themeD','themeL']){const el=$('#s_'+k);if(el)el.onchange=()=>{settings[k]=el.value;saveSettings();applyTheme()}}
   const sa=$('#s_auto');if(sa)sa.onchange=()=>{lockCfg.autoLock=+sa.value;saveLock()};
+}
+function syncInfoHTML(){return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>`}
+// Instellingen is een eigen scherm (#instellingen). openSettings() opent of ververst het; formulieren zijn gewoon in beeld.
+let setFrom='';
+function openSettings(){
+  closeSheet();lastView=null;
+  if(location.hash!=='#instellingen'){setFrom=location.hash;history.pushState(null,'','#instellingen');closeZoom();render();window.scrollTo(0,0)}
+  else render();
+}
+function setTopbarHTML(){
+  const eye=`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
+  const back=`<button type="button" class="icon-btn" data-act="setback" aria-label="Terug">${ICONS.back}</button>`;
+  return `<div class="m-top only-m">${back}<h1>Instellingen</h1>${eye}</div><div class="d-top only-d">${back}<h1>Instellingen</h1><span class="grow"></span>${syncBadge()}${eye}</div>`;
 }
 function exportData(){
   settings.lastExport=Date.now();saveSettings();
@@ -2429,7 +2453,7 @@ async function saveSyncForm(btn){
     btn.disabled=false;
     if(exists===false)return fieldErr('s_pass',`Kies een wachtwoord van minimaal ${PW_MIN} tekens, bijvoorbeeld een zin van een paar woorden. Het bestand op GitHub is alleen zo veilig als dit wachtwoord.`);
     if(exists===null)return fieldErr('s_pass','Kon niet controleren of er al een bestand op GitHub staat. Controleer repository, token en internet, of kies een wachtwoord van minimaal '+PW_MIN+' tekens.')}
-  settings.gh=g;saveSettings();closeSheet();render();
+  settings.gh=g;saveSettings();openSettings();
   if(g.repo&&g.token&&g.pass)syncNow(false);else toast('Sync uitgeschakeld')}
 function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>{syncTimer=null;syncNow(true)},20000)}
 function flushSync(){if(!syncTimer)return;clearTimeout(syncTimer);syncTimer=null;syncNow(true)}
@@ -2735,6 +2759,7 @@ document.addEventListener('click',e=>{
     case 'lockon':case 'lockon2':case 'addpk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
     case 'settings':openSettings();break;
+    case 'setback':location.hash=setFrom&&setFrom!=='#instellingen'?setFrom:'';break;
     case 'pfpick':openPfPick();break;
     case 'pfset':closeSheet();setPf(a.dataset.id);break;
     case 'pfmanage':openSettings();setTimeout(()=>$('[data-act="pfedit"]')?.scrollIntoView({block:'center'}),50);break;

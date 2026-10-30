@@ -530,6 +530,15 @@ a{color:var(--accent)}
 .tx-head{display:flex !important;gap:8px !important;align-items:center !important}
 .tx-what{margin-top:4px !important;font-weight:600 !important}
 .app-foot{text-align:center !important;margin-top:14px !important}
+/* Instellingen als eigen scherm (#instellingen): blokken onder elkaar, vanaf 1000 px in twee kolommen */
+.set-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.set-col{display:grid;gap:14px;align-content:start;min-width:0}
+.set-grid .card{margin:0;min-width:0}
+.set-grid .h3{margin:0 0 10px;font-size:17px}
+.set-sub{font-size:15px;margin:18px 0 6px}
+.set-grid .btn.sec,.set-grid .pk-list{background:var(--card2)}
+.on-set .fab{display:none}
+@media (min-width:1000px){.set-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}.set-col{gap:20px}.set-grid .card{padding:20px 22px}}
 .avg-lbl{position:absolute;left:6px;font-size:11px;color:var(--muted);background:var(--bg);padding:0 4px;border-radius:4px}
 .buy-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--accent);z-index:2}
 .range-fill{background:var(--muted)!important;opacity:.5}

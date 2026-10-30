@@ -8,7 +8,7 @@ const screens=[
   ['Transacties',async p=>{await p.evaluate(()=>{location.hash='#transacties'});await expect(p.locator('#txOut')).toBeVisible()}],
   ...['rendement','vergelijken','plannen','administratie'].map(t=>[`Analyse › ${t}`,async p=>{await p.evaluate(t=>{location.hash='#analyse/'+t},t);await expect(p.locator('.rep-tabs [aria-current=page]')).toHaveAttribute('href','#analyse/'+t)}]),
   ['Transactieformulier',async p=>{await p.evaluate(()=>openTx());await expect(p.locator('#sheet')).toBeVisible()}],
-  ['Instellingen',async p=>{await p.evaluate(()=>{closeSheet();openSettings()});await expect(p.locator('#sheet h2')).toHaveText('Instellingen')}],
+  ['Instellingen',async p=>{await p.evaluate(()=>{closeSheet();openSettings()});await expect(p.locator('#topbar h1:visible')).toHaveText('Instellingen');await expect(p.locator('#st_sync')).toBeVisible()}],
   ['Vergrote grafiek',async p=>{await p.evaluate(()=>{closeSheet();location.hash=''});await chartReady(p);await p.locator('[data-act=pzoom]').click();await expect(p.locator('#pzchart .pc-plot')).toBeVisible()}],
 ];
 
