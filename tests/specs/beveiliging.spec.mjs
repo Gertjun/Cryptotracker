@@ -52,3 +52,16 @@ test('wijzigingen gaan samen naar GitHub, en direct bij het verlaten van de app'
   await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))});
   await expect.poll(()=>st.puts).toBe(before+1);   // één versie voor alle drie
 });
+
+test('twee tabbladen overschrijven elkaars wijzigingen niet',async({context})=>{
+  const A=await context.newPage();await openApp(A);
+  const B=await context.newPage();await openApp(B);
+  const add=(p,id)=>p.evaluate(id=>{data.txs.push({id,type:'deposit',qty:100,price:1,fee:0,date:'2026-10-01',created:Date.now(),mod:Date.now()});saveData(false)},id);
+  await add(A,'tA');
+  await B.waitForFunction(()=>data.txs.some(t=>t.id==='tA'));   // B neemt de wijziging van A over
+  await add(B,'tB');
+  await A.waitForFunction(()=>data.txs.some(t=>t.id==='tB'));
+  const ids=p=>p.evaluate(()=>data.txs.map(t=>t.id).sort());
+  expect(await ids(A)).toEqual(['tA','tB']);expect(await ids(B)).toEqual(['tA','tB']);
+  expect(await A.evaluate(()=>JSON.parse(localStorage.getItem('cpt.data')).txs.length)).toBe(2);
+});

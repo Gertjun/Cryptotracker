@@ -7,12 +7,21 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.17.1`) en de naam van het zip-bestand (`crypto-tracker-3.17.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.18.0`) en de naam van het zip-bestand (`crypto-tracker-3.18.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.18.0 – 30 oktober 2026
+Twee tabbladen of vensters van de app tegelijk open kan geen gegevens meer kosten.
+
+### Opgelost
+- **Meerdere tabbladen:** voorheen hield elk tabblad zijn eigen kopie van je gegevens bij. Wijzigde je iets in het ene tabblad en daarna iets in het andere, dan kon het tweede tabblad de wijziging van het eerste overschrijven (vooral zonder synchronisatie of offline). Nu neemt elk tabblad direct over wat een ander tabblad opslaat, en voegt het de gegevens samen zoals bij synchronisatie.
+
+### Let op
+- Zet je in één tabblad de app-vergrendeling aan of uit, dan laden de andere tabbladen opnieuw.
 
 ## 3.17.1 – 30 oktober 2026
 Sterkere wachtwoorden, minder versies op GitHub en beter bewaarde gegevens.

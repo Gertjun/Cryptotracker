@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.17.1 (30 okt 2026)';
+const APP_VERSION='3.18.0 (30 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -2769,6 +2769,27 @@ let lastY=0,fabT;window.addEventListener('scroll',()=>{const y=window.scrollY,f=
 },{passive:true});
 window.addEventListener('hashchange',()=>{lastY=0;$('#btnAdd')?.classList.remove('away')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented){if($('#sheet').open)return;if($('#zoom'))closeZoom();else closeSheet()}});   // dialogen sluiten zelf via 'cancel'
+/* ---------- meerdere tabbladen ---------- */
+// Slaat een ander tabblad (of venster) van de app iets op, dan voegt dit tabblad die gegevens samen met de eigen gegevens.
+// Zo overschrijft het ene tabblad nooit de wijzigingen van het andere. Had dit tabblad zelf iets wat het andere nog niet had,
+// dan slaat het de samengevoegde stand op; het andere tabblad neemt die dan weer over.
+async function otherTab(e){
+  try{
+    if(e.key===LS_LOCK){if(e.newValue!==e.oldValue)location.reload();return}
+    let theirs,gh=null;
+    if(e.key===LS_DATA&&!lockCfg)theirs=JSON.parse(e.newValue||'null');
+    else if(e.key===LS_SET&&!lockCfg){const st=JSON.parse(e.newValue||'null');if(st?.gh)settings.gh={...settings.gh,...st.gh};return}
+    else if(e.key===LS_VAULT&&lockCfg&&DEK&&!locked){const o=JSON.parse(dec.decode(await aesDec(DEK,JSON.parse(e.newValue))));theirs=o.data;gh=o.gh}
+    if(!theirs?.txs)return;
+    if(gh)settings.gh={...settings.gh,...gh};
+    const before=sig(data),merged=merge(data,theirs);
+    if(sig(merged)===before)return;   // niets nieuws
+    data=merged;
+    if(sig(merged)!==sig(theirs))persist();
+    render();
+  }catch(err){}
+}
+window.addEventListener('storage',otherTab);
 let hiddenAt=0;
 window.addEventListener('pagehide',flushSync);
 document.addEventListener('visibilitychange',()=>{
