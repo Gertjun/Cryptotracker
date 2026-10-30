@@ -57,8 +57,8 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - `K(t)` is de bitcoinfactor op tijdstip t: aankopen tellen tegen de bitcoinkoers van dat moment.
   - Analyse, formulieren en calculators zijn altijd in euro (`inEUR`).
 - **Schermen:**
-  - `render()` → `renderInner()` → `renderHome()` / `renderCoin()` / `renderTxs()` / `renderReports()` (het scherm Analyse, voorheen Rapporten).
-  - Hash-routes: `#coin/<id>`, `#transacties`, `#analyse/<tab>` met de tabbladen rendement, vergelijken, plannen en administratie. `fixOldHash()` zet oude adressen (`#rapporten/…`, tabblad `analyse`) om naar de nieuwe.
+  - `render()` → `renderInner()` → `renderHome()` / `renderCoin()` / `renderTxs()` / `renderReports()` / `renderSettings()` (het scherm Analyse, voorheen Rapporten).
+  - Hash-routes: `#coin/<id>`, `#transacties`, `#analyse/<tab>` met de tabbladen rendement, vergelijken, plannen en administratie, en `#instellingen`. `fixOldHash()` zet oude adressen (`#rapporten/…`, tabblad `analyse`) om naar de nieuwe.
   - **Zijbalk** (`renderSide(cid)`, laptop): op het Overzicht (`cid` leeg) alleen de navigatie; cash, bezittingen, gesloten posities en volglijst staan daar al in beeld. Op de andere schermen staan ze wel in de zijbalk.
   - **Overzicht:** het blok naast de grafiek (Waarde crypto, Geïnvesteerd, …) heeft de klasse `.not-phone` (verborgen onder 700 px). De regel `#heroSub` onder de totale waarde heeft vanaf 700 px de klasse `.rest` (onzichtbaar, ruimte blijft) en verschijnt alleen tijdens het aanwijzen van de grafiek; op de telefoon staat hij altijd.
   - **Transacties op de telefoon:** zoekveld + knop Filter (`data-act="txfilt"`, `txOpen`); filters (`.tx-more`) en totalen (`.tx-sum`) staan in `.txp.open`. Eén regel `.tx-brief` met aantal en gerealiseerd. Vanaf 700 px staat alles open.
@@ -96,6 +96,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Dynamische `style=""` met posities is toegestaan; `style-src` staat `'unsafe-inline'` toe.
   - Formulieren staan in `form.js-form` met zichtbare labels; fouten toon je met `fieldErr(id, tekst)`.
   - Bladen zijn een `<dialog>` via `openSheet()` en hebben altijd een sluitknop.
+  - **Instellingen** is een eigen scherm (`#instellingen`, D37): `renderSettings()` tekent het (`.set-grid` met twee `.set-col`, elk blok een `section.card` met `h2`); `openSettings()` opent of ververst het. `render()` bouwt het niet opnieuw op als het al in beeld is. `syncInfoHTML()` (`#setSync`) wordt bijgewerkt door `updBadges()`.
 - **Passen op het scherm:** tabellen en grafieken krijgen geen schuifbalk opzij (getest in `tests/specs/fit.spec.mjs`). Gebruik tickers in plaats van lange namen, en geef een nieuwe tabelkolom een prioriteit (`data-p`). Uitzondering: het vergrote venster Rendement per dag/week op een telefoon.
 - **Tabbladen van Analyse** (`.rep-tabs`): onder 400 px in twee rijen.
 - **Breakpoints:**

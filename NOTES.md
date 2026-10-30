@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.2**
+Laatst bijgewerkt: 30 oktober 2026 · versie **3.20.0**
 
 ---
 
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.2**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **30 okt 2026:**
+  - 3.20.0: Instellingen is een eigen scherm (`#instellingen`) in blokken, op de laptop in twee kolommen; het tandwiel opent het, geen extra tabblad (D37). Nog niet door Geert op de telefoon bekeken.
   - 3.19.2: zeven ideeën voor meer inzicht in rendement als W39–W45 op de wishlist (nog niet bouwen).
   - Projectinstructies in claude.ai aangepast aan deze app in plaats van de PWA-template (D36); de app zelf is niet veranderd.
   - Werkwijze: Claude pusht voortaan rechtstreeks naar `main`, zonder voorstel (D35, vervangt D18).
