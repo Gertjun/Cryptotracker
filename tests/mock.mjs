@@ -6,6 +6,8 @@ export const COINS={
   'fetch-ai':{sym:'FET',name:'Artificial Superintelligence Alliance',base:0.9,amp:0.45,trend:-0.6,rank:60,max:2.7e9,circ:2.4e9},
   iostoken:{sym:'IOST',name:'IOST',base:0.006,amp:0.4,trend:-0.5,rank:300,max:null,circ:21e9},
   solana:{sym:'SOL',name:'Solana',base:140,amp:0.3,trend:0.2,rank:5,max:null,circ:480e6},
+  polkadot:{sym:'DOT',name:'Polkadot',base:6,amp:0.3,trend:-0.2,rank:15,max:null,circ:1.5e9},
+  dogecoin:{sym:'DOGE',name:'Dogecoin',base:0.15,amp:0.4,trend:0.1,rank:8,max:null,circ:146e9},
 };
 const DAY=864e5;export const T0=Date.UTC(2025,0,1);
 export function price(id,t){const c=COINS[id];const x=(t-T0)/DAY;return c.base*(1+c.trend*x/660)*(1+c.amp*Math.sin(x/38+c.rank)+0.04*Math.sin(x/3.1+c.rank*2)+0.015*Math.sin(x*1.7))}

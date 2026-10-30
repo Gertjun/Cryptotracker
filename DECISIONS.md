@@ -148,3 +148,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert wilde dezelfde keuze als bij het blok Rendement.
 - **Niet gekozen:** weken per maand tonen (dan maar 4–5 vakjes per keer).
 
+### D28 – Volglijst sorteren via de kolomkoppen (30 okt 2026, 3.17.0, vervangt "Niet gekozen" in D21)
+- **Besluit:** de Volglijst heeft een eigen sortering (`settings.wsort = {k, d}`, per apparaat), los van Bezittingen (`settings.sort`). Klik op een kolomkop: eerste klik hoog → laag, nog een klik laag → hoog (pijl ↓/↑, `aria-sort`). Munt sorteert eerst A → Z. Alleen kolommen met `ws:1` in `HCOLS` (Koers en de procentkolommen) zijn klikbaar; munten zonder waarde staan altijd onderaan. De lijst op de telefoon volgt dezelfde volgorde (`watchSorted()`).
+- **Waarom:** Geert vroeg erom. Het bezwaar uit D21 (klikken op de Volglijst zou Bezittingen sorteren) geldt niet meer, omdat de sortering los staat.
+- **Niet gekozen:** sorteren op Aantal, Waarde, Geïnvesteerd en resultaat (altijd 0 bij de Volglijst); het tweerichtingssorteren ook bij Bezittingen (niet gevraagd).
+

@@ -114,3 +114,28 @@ test('een eerder bewaarde kolomvolgorde krijgt de nieuwe kolom 1 uur op zijn sta
     return holdCols().filter(x=>!x.hide).map(x=>x.k).join()});
   expect(r).toBe('price,ch1h,ch24,ch7,ch30,qty,avg,cost,value,plabs,pl');
 });
+
+test('volglijst sorteren via de kolomkoppen: eerst hoog naar laag, dan laag naar hoog',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
+  const errors=await openApp(page);await importCsv(page);
+  await page.evaluate(async()=>{for(const [id,name,symbol] of [['solana','Solana','sol'],['dogecoin','Dogecoin','doge'],['polkadot','Polkadot','dot']]){setWatch({id,name,symbol},true);await fetchPrice(id)}render()});
+  const wt=page.locator('.tbl-wrap:has(caption:text("Volglijst"))');
+  const koers=()=>wt.locator('tbody tr').evaluateAll(rs=>rs.map(r=>r.dataset.coin));
+  const prijs=id=>page.evaluate(id=>prices[id].price,id);
+  const btn=wt.locator('[data-wsort=price]');
+  await btn.click();
+  let ids=await koers(),p=await Promise.all(ids.map(prijs));
+  expect(p).toEqual([...p].sort((a,b)=>b-a));
+  await expect(wt.locator('th[aria-sort=descending]')).toHaveCount(1);
+  await expect(wt.locator('[data-wsort=price]')).toBeFocused();
+  await wt.locator('[data-wsort=price]').click();
+  ids=await koers();p=await Promise.all(ids.map(prijs));
+  expect(p).toEqual([...p].sort((a,b)=>a-b));
+  await expect(wt.locator('th[aria-sort=ascending]')).toHaveCount(1);
+  // naam: eerst A → Z
+  await wt.locator('[data-wsort=name]').click();
+  expect(await koers()).toEqual(['dogecoin','polkadot','solana']);
+  // Bezittingen blijft gewoon gesorteerd zoals het was
+  expect(await page.evaluate(()=>settings.sort??'value')).toBe('value');
+  expect(errors).toEqual([]);
+});
