@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 30 oktober 2026 · versie **3.17.0**
+Laatst bijgewerkt: 30 oktober 2026 · versie **3.19.1**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 30 oktober 2026 · versie **3.17.0**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 46 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
+- Zie `tests/README.md`. Er zijn 46 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -36,11 +36,19 @@ Laatst bijgewerkt: 30 oktober 2026 · versie **3.17.0**
 - **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel.
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
 - **Wishlist open (31):** W4–W8, W10, W11, W15–W38. W19–W38 zijn op 28 okt toegevoegd (20 nieuwe ideeën, nog niets van gebouwd). W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
+- **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
+- **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
+- **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
 - **Native iPhone-app in SwiftUI:** genoemd door Geert (in een andere sessie); geen code in deze repository. Hij heeft geen Mac.
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **30 okt 2026:**
+  - Review van robuustheid en beveiliging (lijst van Geert) nagelopen; deels al aanwezig (versie terugzetten, wachtrij bij opslaan, komma-invoer), de rest ingebouwd (D29–D34):
+  - 3.17.1: nieuw wachtwoord minimaal 12 tekens met indicator en oogje; synchroniseren 20 s na een wijziging en direct bij verlaten; opslag laten beschermen.
+  - 3.18.0: tabbladen voegen elkaars wijzigingen samen.
+  - 3.19.0: gegevensversie (`DATA_V`); een oudere app stopt met synchroniseren en vraagt om te vernieuwen.
+  - 3.19.1: back-up/CSV via het deelmenu op telefoon en tablet; inhoud verborgen in de app-wisselaar (met vergrendeling); Face ID aanbieden na het koppelen.
   - 3.17.0: Volglijst sorteren via de kolomkoppen; eerste klik hoog → laag, tweede klik laag → hoog (D28). Nep-CoinGecko kreeg Polkadot en Dogecoin.
 - **29 okt 2026:**
   - 3.16.1: meer ruimte tussen de appnaam en het versienummer.

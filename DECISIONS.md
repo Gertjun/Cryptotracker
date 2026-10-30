@@ -153,3 +153,33 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert vroeg erom. Het bezwaar uit D21 (klikken op de Volglijst zou Bezittingen sorteren) geldt niet meer, omdat de sortering los staat.
 - **Niet gekozen:** sorteren op Aantal, Waarde, Geïnvesteerd en resultaat (altijd 0 bij de Volglijst); het tweerichtingssorteren ook bij Bezittingen (niet gevraagd).
 
+### D29 – Nieuwe wachtwoorden minimaal 12 tekens (30 okt 2026, 3.17.1)
+- **Besluit:** een nieuw versleutelwachtwoord (GitHub) en een nieuw herstelwachtwoord (vergrendeling) hebben minimaal `PW_MIN` = 12 tekens, met een sterkte-indicator (`pwStrength`) en een oogje (`pwField`, `pwEye`). Een kort versleutelwachtwoord mag alleen als er op GitHub al een bestand staat (`saveSyncForm` controleert dat), want dan is het het bestaande wachtwoord.
+- **Waarom:** het versleutelde bestand staat op GitHub; wie het heeft, kan onbeperkt wachtwoorden proberen. Voorheen was er voor het versleutelwachtwoord geen minimum.
+- **Niet gekozen:** zwakke wachtwoorden weigeren boven de 12 tekens (de indicator is advies); bestaande korte wachtwoorden blokkeren (dan kun je een apparaat niet meer koppelen).
+
+### D30 – Synchroniseren 20 seconden na een wijziging en direct bij verlaten (30 okt 2026, 3.17.1, vult D2 aan)
+- **Besluit:** `scheduleSync()` wacht 20 s (was 1,5 s). `flushSync()` synchroniseert direct bij `visibilitychange` (verborgen) en `pagehide`. Daarnaast `navigator.storage.persist()` bij het starten.
+- **Waarom:** elke synchronisatie is een commit met het hele bestand; tien wijzigingen gaven tien commits. Nu worden ze één.
+- **Afweging:** een ander apparaat ziet een wijziging hooguit 20 s later, tenzij je de app verlaat.
+
+### D31 – Tabbladen voegen elkaars wijzigingen samen (30 okt 2026, 3.18.0)
+- **Besluit:** `otherTab()` luistert naar het `storage`-event. Slaat een ander tabblad gegevens op (`cpt.data`, of met vergrendeling `cpt.vault`, ontsleuteld met de eigen `DEK`), dan voegt dit tabblad ze samen met `merge()` en tekent opnieuw. Had dit tabblad iets extra, dan slaat het de samengevoegde stand op. Verandert `cpt.lock`, dan laadt het tabblad opnieuw.
+- **Waarom:** elk tabblad hield een eigen kopie; het laatst opgeslagen tabblad won.
+- **Niet gekozen:** het andere tabblad vergrendelen of alleen-lezen maken (onhandig op de laptop).
+
+### D32 – Gegevensversie `DATA_V` (30 okt 2026, 3.19.0)
+- **Besluit:** `data.v` = `DATA_V` (nu 1). Ziet de app gegevens met een hogere `v` (GitHub, ander tabblad of back-up), dan synchroniseert hij niet meer en toont hij bovenin "Vernieuw de app" (`showTooNew`, `tooNew`). `merge()` bewaart ook onbekende onderdelen van de gegevens.
+- **Waarom:** een oudere app-versie liet bij het samenvoegen onderdelen weg die hij niet kende, en schreef dat terug naar GitHub.
+- **Regel:** verhoog `DATA_V` als een nieuwe versie gegevens bewaart die een oudere versie niet goed kan samenvoegen (nieuwe lijst, andere betekenis van een veld). Een nieuw veld binnen een transactie of lijst-item hoeft dat niet: hele items blijven bewaard.
+
+### D33 – Back-up via deelmenu, inhoud verbergen, Face ID na koppelen (30 okt 2026, 3.19.1)
+- **Besluit:** `download()` gebruikt op een aanraakscherm het deelmenu (`navigator.share` met een bestand), anders een gewone download. Met vergrendeling aan krijgt `body` de klasse `.shield` zodra de app verborgen wordt (lege achtergrond voor de app-wisselaar). Na het koppelen met een koppelcode biedt de app de vergrendeling aan als passkeys werken.
+- **Waarom:** downloads lopen vast in de app op het beginscherm van iOS; de app-wisselaar toonde bedragen.
+
+### D34 – Bewust niet gedaan uit de review van 30 okt 2026
+- **Verwijderd-markeringen opruimen:** niet doen. Het zijn korte id's (± 15 kB per 1.000), en opruimen kan verwijderde transacties terugbrengen via een apparaat dat lang offline was.
+- **"1.250" lezen als duizend tweehonderdvijftig:** niet doen. `num()` leest "12,50" en "1.250,00" al goed; "1.250" zonder komma blijft 1,25, omdat je bij aantallen munten ook "0.125" typt.
+- **Wachtrij voor opslaan:** al aanwezig (`vaultQ`); zonder vergrendeling is opslaan direct.
+- **Knop "vorige versie herstellen":** al aanwezig sinds de functie Eerdere versie terugzetten (`openVersions`).
+

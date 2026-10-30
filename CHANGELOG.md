@@ -7,12 +7,55 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.17.0`) en de naam van het zip-bestand (`crypto-tracker-3.17.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.19.1`) en de naam van het zip-bestand (`crypto-tracker-3.19.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.19.1 – 30 oktober 2026
+Back-up via het deelmenu, inhoud verborgen in de app-wisselaar, en Face ID aanbieden na het koppelen.
+
+### Verbeterd
+- **Back-up en CSV-export op iPhone en iPad** gaan via het deelmenu: kies Bewaar in Bestanden, AirDrop of een andere app. Voorheen kon je in een voorbeeldscherm vastlopen. Op de laptop blijft het een gewone download.
+- **App-wisselaar:** staat de app-vergrendeling aan, dan verbergt de app je gegevens zodra je hem verlaat. In het overzicht van open apps zie je dan een leeg scherm in plaats van je bedragen. iOS maakt dat plaatje soms al net te vroeg; meestal werkt het.
+- **Na het koppelen** van een nieuw apparaat vraagt de app of je ook de app-vergrendeling met Face ID, Touch ID of Windows Hello wilt instellen. Kies je "Later", dan kan het nog steeds via Instellingen › Beveiliging.
+
+### Opgelost
+- De sterkte-indicator onder een wachtwoordveld stond te dicht op het veld.
+
+## 3.19.0 – 30 oktober 2026
+Een oudere app-versie op een ander apparaat kan je gegevens niet meer beschadigen.
+
+### Toegevoegd
+- **Gegevensversie:** je gegevens krijgen een versienummer. Ziet de app bij het synchroniseren gegevens van een nieuwere app-versie, dan stopt hij met synchroniseren en vraagt hij bovenin om te vernieuwen. Zo kan een oude versie (bijvoorbeeld op je iPhone, als je nog niet op Vernieuwen tikte) geen nieuwe onderdelen weggooien.
+- Hetzelfde geldt voor een back-up van een nieuwere versie en voor een ander tabblad met een nieuwere versie.
+
+### Technisch
+- **Samenvoegen** bewaart nu ook onderdelen van de gegevens die de app nog niet kent.
+
+### Let op
+- De bescherming werkt vanaf deze versie. Werk daarom eenmalig al je apparaten bij naar 3.19.0 of nieuwer.
+
+## 3.18.0 – 30 oktober 2026
+Twee tabbladen of vensters van de app tegelijk open kan geen gegevens meer kosten.
+
+### Opgelost
+- **Meerdere tabbladen:** voorheen hield elk tabblad zijn eigen kopie van je gegevens bij. Wijzigde je iets in het ene tabblad en daarna iets in het andere, dan kon het tweede tabblad de wijziging van het eerste overschrijven (vooral zonder synchronisatie of offline). Nu neemt elk tabblad direct over wat een ander tabblad opslaat, en voegt het de gegevens samen zoals bij synchronisatie.
+
+### Let op
+- Zet je in één tabblad de app-vergrendeling aan of uit, dan laden de andere tabbladen opnieuw.
+
+## 3.17.1 – 30 oktober 2026
+Sterkere wachtwoorden, minder versies op GitHub en beter bewaarde gegevens.
+
+### Verbeterd
+- **Nieuw versleutelwachtwoord** voor GitHub: minimaal 12 tekens, met een indicator (Te kort, Zwak, Redelijk, Sterk). Een zin van een paar woorden werkt goed. Staat er op GitHub al een bestand, dan mag je het bestaande wachtwoord blijven gebruiken, ook als het korter is.
+- **Herstelwachtwoord** van de app-vergrendeling: bij instellen of wijzigen ook minimaal 12 tekens, met dezelfde indicator. Je huidige wachtwoord blijft werken.
+- **Oogje** naast elk wachtwoordveld om te zien wat je typt.
+- **Synchroniseren:** de app wacht 20 seconden na een wijziging (was 1,5 seconde), zodat tien wijzigingen achter elkaar één versie op GitHub worden in plaats van tien. Verlaat je de app, dan synchroniseert hij direct.
+- **Opslag beschermen:** de app vraagt de browser om je gegevens niet op te ruimen als er weinig ruimte is.
 
 ## 3.17.0 – 30 oktober 2026
 De Volglijst sorteer je nu door op een kolomkop te klikken.

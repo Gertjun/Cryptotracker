@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.17.0 (30 okt 2026)';
+const APP_VERSION='3.19.1 (30 okt 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -45,7 +45,12 @@ function persist(){
     localStorage.setItem(LS_SET,JSON.stringify(settings));localStorage.setItem(LS_DATA,JSON.stringify(data));localStorage.setItem(LS_PRICES,JSON.stringify(prices));
   }
 }
-function saveData(sync=true){data.updated=Date.now();persist();if(sync)scheduleSync()}
+// Gegevensversie: verhoog DATA_V als een nieuwe app-versie gegevens bewaart die een oudere versie niet begrijpt
+// (bijvoorbeeld een nieuwe lijst). Een oudere app ziet dan een hogere versie en stopt met synchroniseren.
+const DATA_V=1;
+let tooNew=false;
+const isTooNew=d=>(d?.v||0)>DATA_V;
+function saveData(sync=true){data.updated=Date.now();if(!isTooNew(data))data.v=DATA_V;persist();if(sync)scheduleSync()}
 function saveSettings(){persist()}
 function savePrices(){persist()}
 
@@ -1296,7 +1301,13 @@ function calCard(){
 }
 
 /* ---------- exporteren ---------- */
-function download(name,text,mime){const b=new Blob([text],{type:mime}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+// Bestand bewaren. Op een telefoon of tablet via het deelmenu (Bewaar in Bestanden, AirDrop), want een app op het
+// beginscherm gaat slecht om met gewone downloads. Kan dat niet, of op de laptop: gewone download.
+async function download(name,text,mime){const b=text instanceof Blob?text:new Blob([text],{type:mime});
+  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare){
+    try{const f=new File([b],name,{type:b.type||mime});if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}
+    catch(e){if(e?.name==='AbortError')return}}   // zelf geannuleerd: niets doen
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 // CSV voor Nederlandse Excel: puntkomma als scheidingsteken, komma als decimaalteken, UTF-8 met BOM
 function exportCSV(list,name){
   const n=v=>v==null||v===''?'':String(+(+v).toPrecision(15)).replace('.',','),q=v=>{v=String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
@@ -2305,7 +2316,7 @@ function openSettings(){
   <form class="js-form" novalidate><div class="field"><label for="s_repo">Repository (gebruiker/naam)</label><input type="text" id="s_repo" value="${esc(g.repo)}" placeholder="geert/mijn-data" autocapitalize="off" autocorrect="off"></div>
   <div class="field"><label for="s_token">Personal access token</label><input id="s_token" name="github-token" type="password" value="${esc(g.token)}" placeholder="github_pat_…" autocomplete="current-password" spellcheck="false"></div>
   <div class="two"><div class="field"><label for="s_path">Bestand</label><input type="text" id="s_path" value="${esc(g.path)}"></div><div class="field"><label for="s_branch">Branch</label><input type="text" id="s_branch" value="${esc(g.branch)}"></div></div>
-  <div class="field"><label for="s_pass">Versleutelwachtwoord</label><input id="s_pass" name="sync-password" type="password" value="${esc(g.pass)}" autocomplete="${g.pass?'current-password':'new-password'}" placeholder="Zelfde op elk apparaat"></div>
+  ${pwField('s_pass','Versleutelwachtwoord',`name="sync-password" value="${esc(g.pass)}" autocomplete="${g.pass?'current-password':'new-password'}" placeholder="Zelfde op elk apparaat"`,g.pass?false:`Nieuw wachtwoord: minimaal ${PW_MIN} tekens. Koppel je een apparaat aan een bestaand bestand, dan geldt het wachtwoord dat je al hebt.`)}
   <p class="hint">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>
   <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
   ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
@@ -2332,11 +2343,12 @@ function openSettings(){
 function exportData(){
   settings.lastExport=Date.now();saveSettings();
   const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  download('crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json',blob,'application/json');
 }
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
   try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
+    if(isTooNew(j)){toast('Deze back-up is gemaakt met een nieuwere versie van de app. Vernieuw de app eerst.');return}
     data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans,portfolios:j.portfolios,allocs:j.allocs});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}
 }
@@ -2388,6 +2400,7 @@ async function doPairIn(btn){
     settings.gh={...settings.gh,repo:c.repo,token:c.token,path:c.path||settings.gh.path,branch:c.branch||'main',pass:c.pass};saveSettings();
     if(c.cgKey){data.cfg={...(data.cfg||{}),cgKey:c.cgKey,mod:Date.now()};saveData()}
     closeSheet();render();toast('Gekoppeld, gegevens ophalen…');await syncNow(false);refreshPrices();
+    if(!lockCfg&&pkSupported())openSheet(`<h2 class="h3">Ook Face ID gebruiken?</h2><p class="mt-0 hint">Dit apparaat is gekoppeld. Wil je de app op dit apparaat vergrendelen met Face ID, Touch ID of Windows Hello? Je gegevens op dit apparaat worden dan versleuteld opgeslagen. Je kunt dit ook later doen in Instellingen › Beveiliging.</p><button type="button" class="btn" data-act="lockon">App-vergrendeling instellen</button><button type="button" class="btn sec" data-act="closesheet">Later</button>`);
   }catch(e){btn.disabled=false;fieldErr(/pincode/i.test(e.message)?'pair_pin':'pair_in',e.message)}
 }
 async function deriveKey(pass,salt){const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
@@ -2402,10 +2415,24 @@ function merge(a,b){
   const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
   for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
-  return{txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios),allocs:mergeList(a.allocs,b.allocs)};
+  return{...a,...b,v:Math.max(a.v||0,b.v||0),txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios),allocs:mergeList(a.allocs,b.allocs)};
 }
 const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[]),...(d.portfolios||[]),...(d.allocs||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
-function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(true),1500)}
+// 20 s wachten, zodat meerdere wijzigingen samen één versie op GitHub worden; bij het verlaten van de app direct (flushSync).
+// Een kort versleutelwachtwoord mag alleen als er op GitHub al een bestand is (dan is het het bestaande wachtwoord).
+async function saveSyncForm(btn){
+  const g={...settings.gh,repo:$('#s_repo').value.trim(),token:$('#s_token').value.trim(),path:$('#s_path').value.trim()||'crypto-portfolio.enc.json',branch:$('#s_branch').value.trim()||'main',pass:$('#s_pass').value};
+  if(g.pass&&g.pass!==settings.gh.pass&&g.pass.length<PW_MIN&&g.repo&&g.token){
+    btn.disabled=true;let exists=null;
+    try{const r=await fetchT(`https://api.github.com/repos/${g.repo}/contents/${g.path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(g.branch)}`,{headers:{Authorization:'Bearer '+g.token,Accept:'application/vnd.github.object'},cache:'no-store'});
+      exists=r.ok?true:r.status===404?false:null}catch(e){}
+    btn.disabled=false;
+    if(exists===false)return fieldErr('s_pass',`Kies een wachtwoord van minimaal ${PW_MIN} tekens, bijvoorbeeld een zin van een paar woorden. Het bestand op GitHub is alleen zo veilig als dit wachtwoord.`);
+    if(exists===null)return fieldErr('s_pass','Kon niet controleren of er al een bestand op GitHub staat. Controleer repository, token en internet, of kies een wachtwoord van minimaal '+PW_MIN+' tekens.')}
+  settings.gh=g;saveSettings();closeSheet();render();
+  if(g.repo&&g.token&&g.pass)syncNow(false);else toast('Sync uitgeschakeld')}
+function scheduleSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>{syncTimer=null;syncNow(true)},20000)}
+function flushSync(){if(!syncTimer)return;clearTimeout(syncTimer);syncTimer=null;syncNow(true)}
 function setSync(s,msg=''){syncState={s,msg};updBadges()}
 let syncing=false,syncAgain=false;
 /* ---------- eerdere versie terugzetten (GitHub-geschiedenis) ---------- */
@@ -2460,7 +2487,7 @@ function restoreSnapshot(snap){
   data={...data,txs,deleted:[...del],...lists,updated:now};
 }
 async function syncNow(silent){
-  const g=settings.gh;if(locked||!g.token||!g.repo||!g.pass)return;
+  const g=settings.gh;if(locked||tooNew||!g.token||!g.repo||!g.pass)return;
   if(syncing){syncAgain=true;return}
   syncing=true;setSync('busy');
   try{
@@ -2474,7 +2501,8 @@ async function syncNow(silent){
       else{   // bestand groter dan 1 MB: GitHub stuurt de inhoud dan niet mee, dus apart ophalen als 'raw' (kan tot 100 MB)
         const rr=await fetchT(url+'?ref='+encodeURIComponent(g.branch)+'&_='+Date.now(),{headers:{...h,Accept:'application/vnd.github.raw'},cache:'no-store'});
         if(!rr.ok)throw new Error('GitHub gaf fout '+rr.status+' bij ophalen');txt=await rr.text()}
-      remote=await decryptObj(JSON.parse(txt),g.pass)}
+      remote=await decryptObj(JSON.parse(txt),g.pass);
+      if(isTooNew(remote)){showTooNew();throw new Error('Je gegevens op GitHub zijn gemaakt met een nieuwere versie van de app. Vernieuw de app eerst.')}}
     else if(r.status===401)throw new Error('Token ongeldig of verlopen');
     else if(r.status!==404)throw new Error('GitHub gaf fout '+r.status);
     const before=sig(data);
@@ -2572,7 +2600,7 @@ function renderLock(){
   const hasPk=(lockCfg.pks||[]).length>0&&pkSupported();
   $('#view').innerHTML=`<div class="lock"><div class="lock-ic">${ICONS.lock}</div><h2>Crypto Portfolio</h2><p class="label">Vergrendeld</p>
     ${hasPk?`<button type="button" class="btn" data-act="unlockpk">${ICONS.key} Ontgrendel met passkey</button><div class="or">of</div>`:''}
-    <form id="pwForm"><input type="text" name="username" autocomplete="username" value="Crypto Portfolio" hidden><div class="field"><label class="sr-only" for="l_pw">Herstelwachtwoord</label><input id="l_pw" enterkeyhint="go" name="password" type="password" placeholder="Herstelwachtwoord" autocomplete="current-password"></div><button class="btn${hasPk?' sec':''}" type="submit">Ontgrendel met wachtwoord</button></form>
+    <form id="pwForm"><input type="text" name="username" autocomplete="username" value="Crypto Portfolio" hidden>${pwField('l_pw','Herstelwachtwoord','enterkeyhint="go" name="password" placeholder="Herstelwachtwoord" autocomplete="current-password"',false,'sr-only')}<button class="btn${hasPk?' sec':''}" type="submit">Ontgrendel met wachtwoord</button></form>
     <p class="err" id="l_err"></p></div>`;
   $('#pwForm').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;$('#l_err').textContent='';
     try{await unlockPw($('#l_pw').value)}catch(err){$('#l_err').textContent=err.message;b.disabled=false}};
@@ -2582,12 +2610,22 @@ async function tryPasskey(auto){
 }
 function pwSheet(title,intro,act){
   openSheet(`<h2 class="h3">${title}</h2><p class="mt-0 hint">${intro}</p><form class="js-form" novalidate>
-  <input type="text" name="username" autocomplete="username" value="Crypto Portfolio" hidden><div class="field"><label for="p_1">Wachtwoord (minimaal 8 tekens)</label><input id="p_1" name="new-password" type="password" autocomplete="new-password"></div>
-  <div class="field"><label for="p_2">Herhaal wachtwoord</label><input id="p_2" type="password" autocomplete="new-password"></div>
+  <input type="text" name="username" autocomplete="username" value="Crypto Portfolio" hidden>${pwField('p_1',`Wachtwoord (minimaal ${PW_MIN} tekens)`,'name="new-password" autocomplete="new-password"',true)}
+  ${pwField('p_2','Herhaal wachtwoord','autocomplete="new-password"')}
   <button type="submit" class="btn" data-act="${act}">Opslaan</button><button type="button" class="btn sec" data-act="settings">Annuleren</button></form>`);
   $('#p_1').focus();
 }
-function readPw(){const a=$('#p_1').value,b=$('#p_2').value;if(a.length<8){fieldErr('p_1','Kies minimaal 8 tekens');return null}if(a!==b){fieldErr('p_2','Wachtwoorden zijn niet gelijk');return null}return a}
+// Nieuwe wachtwoorden: minimaal PW_MIN tekens, met een sterkte-indicator en een oogje om het wachtwoord te tonen.
+const PW_MIN=12;
+function pwStrength(s){if(!s)return '';if(s.length<PW_MIN)return `Te kort: nog ${PW_MIN-s.length} ${PW_MIN-s.length===1?'teken':'tekens'}`;
+  const kinds=[/[a-z]/,/[A-Z]/,/\d/,/[^A-Za-z0-9]/].filter(r=>r.test(s)).length,words=s.trim().split(/\s+/).length;
+  return s.length>=20||words>=4||(s.length>=14&&kinds>=3)?'Sterk':kinds>=2||words>=3?'Redelijk':'Zwak: maak hem langer of meng letters, cijfers en tekens'}
+function pwField(id,label,attrs,meter,lblCls){
+  return `<div class="field"><label for="${id}"${lblCls?` class="${lblCls}"`:''}>${label}</label><div class="pw-wrap"><input id="${id}" type="password" ${attrs}${meter?` data-pwmeter="${id}_str" aria-describedby="${id}_str"`:''}><button type="button" class="pw-eye" data-act="pweye" data-for="${id}" aria-label="Wachtwoord tonen" aria-pressed="false">${ICONS.eye}</button></div>${meter?`<p class="pw-str hint" id="${id}_str" aria-live="polite">${esc(meter===true?'':meter)}</p>`:''}</div>`}
+function pwEye(b){const i=$('#'+b.dataset.for);if(!i)return;const show=i.type==='password';i.type=show?'text':'password';
+  b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Wachtwoord verbergen':'Wachtwoord tonen');b.innerHTML=show?ICONS.eyeOff:ICONS.eye}
+document.addEventListener('input',e=>{const m=e.target.dataset?.pwmeter;if(m&&$('#'+m))$('#'+m).textContent=pwStrength(e.target.value)});
+function readPw(){const a=$('#p_1').value,b=$('#p_2').value;if(a.length<PW_MIN){fieldErr('p_1',`Kies minimaal ${PW_MIN} tekens, bijvoorbeeld een zin van een paar woorden`);return null}if(a!==b){fieldErr('p_2','Wachtwoorden zijn niet gelijk');return null}return a}
 async function securityAction(act,el){
   try{
     if(act==='lockon')return pwSheet('App-vergrendeling instellen','Kies eerst een <b>herstelwachtwoord</b>. Daarmee open je de app als de passkey niet beschikbaar is. Raak je dit kwijt én werkt de passkey niet meer, dan is de data op dit apparaat niet meer te openen (wel via GitHub-sync of een back-up).','lockon2');
@@ -2717,12 +2755,10 @@ document.addEventListener('click',e=>{
     case 'refresh':refreshPrices(true).then(()=>toast('Koersen bijgewerkt'));break;
     case 'pairout':openPairOut().catch(e=>toast(e.message));break;
     case 'pairopen':openPairIn();break;
+    case 'pweye':pwEye(a);break;
     case 'pairin':doPairIn(a);break;
     case 'paircopy':{const t=$('#pair_out');t.select();(navigator.clipboard?.writeText(t.value)||Promise.reject()).then(()=>toast('Koppelcode gekopieerd'),()=>{document.execCommand?.('copy');toast('Koppelcode geselecteerd: kopieer hem')});break}
-    case 'savesync':
-      settings.gh={...settings.gh,repo:$('#s_repo').value.trim(),token:$('#s_token').value.trim(),path:$('#s_path').value.trim()||'crypto-portfolio.enc.json',branch:$('#s_branch').value.trim()||'main',pass:$('#s_pass').value};
-      saveSettings();closeSheet();render();
-      if(settings.gh.repo&&settings.gh.token&&settings.gh.pass)syncNow(false);else toast('Sync uitgeschakeld');break;
+    case 'savesync':saveSyncForm(a);break;
     case 'wipe':
       if(!confirm('Alle transacties wissen? Dit wordt ook naar je andere apparaten gesynchroniseerd.'))return;
       data.deleted=[...new Set([...data.deleted,...data.txs.map(t=>t.id)])];data.txs=[];saveData();closeSheet();location.hash='';render();toast('Alles gewist');break;
@@ -2747,9 +2783,34 @@ let lastY=0,fabT;window.addEventListener('scroll',()=>{const y=window.scrollY,f=
 },{passive:true});
 window.addEventListener('hashchange',()=>{lastY=0;$('#btnAdd')?.classList.remove('away')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented){if($('#sheet').open)return;if($('#zoom'))closeZoom();else closeSheet()}});   // dialogen sluiten zelf via 'cancel'
+/* ---------- meerdere tabbladen ---------- */
+// Slaat een ander tabblad (of venster) van de app iets op, dan voegt dit tabblad die gegevens samen met de eigen gegevens.
+// Zo overschrijft het ene tabblad nooit de wijzigingen van het andere. Had dit tabblad zelf iets wat het andere nog niet had,
+// dan slaat het de samengevoegde stand op; het andere tabblad neemt die dan weer over.
+async function otherTab(e){
+  try{
+    if(e.key===LS_LOCK){if(e.newValue!==e.oldValue)location.reload();return}
+    let theirs,gh=null;
+    if(e.key===LS_DATA&&!lockCfg)theirs=JSON.parse(e.newValue||'null');
+    else if(e.key===LS_SET&&!lockCfg){const st=JSON.parse(e.newValue||'null');if(st?.gh)settings.gh={...settings.gh,...st.gh};return}
+    else if(e.key===LS_VAULT&&lockCfg&&DEK&&!locked){const o=JSON.parse(dec.decode(await aesDec(DEK,JSON.parse(e.newValue))));theirs=o.data;gh=o.gh}
+    if(!theirs?.txs)return;
+    if(isTooNew(theirs))return showTooNew();
+    if(gh)settings.gh={...settings.gh,...gh};
+    const before=sig(data),merged=merge(data,theirs);
+    if(sig(merged)===before)return;   // niets nieuws
+    data=merged;
+    if(sig(merged)!==sig(theirs))persist();
+    render();
+  }catch(err){}
+}
+window.addEventListener('storage',otherTab);
 let hiddenAt=0;
+window.addEventListener('pagehide',()=>{flushSync();if(lockCfg)document.body.classList.add('shield')});
+window.addEventListener('pageshow',()=>document.body.classList.remove('shield'));
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){hiddenAt=Date.now();saveVisit();return}
+  if(document.hidden){hiddenAt=Date.now();saveVisit();flushSync();if(lockCfg)document.body.classList.add('shield');return}
+  document.body.classList.remove('shield');
   if(hiddenAt&&Date.now()-hiddenAt>3600e3&&getVisit(curPf())){prevVisit={...getVisit(curPf())};sinceDismissed=false}
   const al=lockCfg?.autoLock??5;
   if(lockCfg&&!locked&&hiddenAt&&al>=0&&Date.now()-hiddenAt>=al*60000){lockNow();return}
@@ -2760,7 +2821,7 @@ setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
 setInterval(()=>{if(!document.hidden)collectHistory()},6*3600e3);
 
 let histTimer=null;
-function start(){document.body.classList.remove('locked');if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
+function start(){document.body.classList.remove('locked');navigator.storage?.persist?.().catch(()=>{});if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();syncNow(true)}
 if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
@@ -2774,6 +2835,11 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
   }).catch(()=>{});
 }
+// Gegevens van een nieuwere app-versie gezien: niet meer synchroniseren en vragen om te vernieuwen.
+function showTooNew(){if(tooNew)return;tooNew=true;clearTimeout(syncTimer);syncTimer=null;
+  if($('#toonew'))return;const d=document.createElement('div');d.id='toonew';d.setAttribute('role','alert');
+  d.innerHTML='<b>Vernieuw de app.</b> Je gegevens zijn bijgewerkt door een nieuwere versie van de app op een ander apparaat. Synchroniseren staat uit tot je vernieuwt, zodat er niets beschadigd raakt. <button type="button" data-act="reload">Vernieuwen</button>';
+  document.body.appendChild(d)}
 function showUpdate(){updReady=true;document.querySelectorAll('.app-ver').forEach(e=>e.outerHTML=appVerHTML());
   if([...document.querySelectorAll('.app-ver')].some(e=>e.getClientRects().length))return;   // laptop: de knop naast de naam is genoeg
   if($('#upd'))return;const d=document.createElement('div');d.id='upd';d.innerHTML='Nieuwe versie beschikbaar <button type="button" data-act="reload">Vernieuwen</button>';document.body.appendChild(d)}
