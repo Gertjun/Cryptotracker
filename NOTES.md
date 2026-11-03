@@ -46,6 +46,7 @@ Laatst bijgewerkt: 3 november 2026 · versie **3.20.2**
 
 - **3 nov 2026:**
   - 3.20.2: op de telefoon onder elke munt bij Bezittingen nu 1u, 24u, 7d en 30d op één regel (D38). 4u bewust niet. Nog niet door Geert op de telefoon bekeken.
+  - Tests op GitHub faalden: `ubuntu-latest` werd 26.04, dat Playwright 1.56 nog niet ondersteunt. `tests.yml` staat nu vast op `ubuntu-24.04`; terugzetten zodra Playwright 26.04 ondersteunt.
 - **30 okt 2026:**
   - 3.20.1: bovenbalk (oogje, synchronisatie, slotje, tandwiel) blijft staan bij scrollen op telefoon en tablet, zoals in Vaste Lasten. Nog niet op een echte iPhone bevestigd.
   - 3.20.0: Instellingen is een eigen scherm (`#instellingen`) in blokken, op de laptop in twee kolommen; het tandwiel opent het, geen extra tabblad (D37). Nog niet door Geert op de telefoon bekeken.
