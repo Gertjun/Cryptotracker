@@ -31,3 +31,15 @@ test('te brede tabel: minst belangrijke kolommen verdwijnen, met melding; op 144
   await page.setViewportSize({width:1440,height:900});
   await expect(note).toHaveCount(0);
 });
+test('telefoon: koersverandering 1u, 24u, 7d en 30d op één regel onder elke munt (heel smal: twee regels)',async({page},testInfo)=>{
+  test.skip(!isPhone(testInfo),'de lijst staat alleen op de telefoon');
+  await openApp(page);await importCsv(page);
+  for(const w of [430,390,375,360,320]){await page.setViewportSize({width:w,height:844});await page.waitForTimeout(300);
+    const res=await page.evaluate(()=>[...document.querySelectorAll('.list .mkt-chg')].map(el=>{
+      const sp=[...el.children].filter(s=>!s.classList.contains('sr-only'));
+      return{labels:sp.map(s=>s.querySelector('abbr').textContent).join(' '),
+        lines:new Set(sp.map(s=>Math.round(s.getBoundingClientRect().top))).size,
+        fits:sp.every(s=>s.scrollWidth<=s.clientWidth+1&&s.getBoundingClientRect().right<=el.getBoundingClientRect().right+1)}}));
+    expect(res.length).toBeGreaterThan(0);
+    for(const r of res)expect(r,`${w}px`).toEqual({labels:'1u 24u 7d 30d',lines:w<360?2:1,fits:true})}
+});

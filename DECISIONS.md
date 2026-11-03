@@ -199,3 +199,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert vond het aparte scherm in Vaste Lasten overzichtelijker; het lange blad was veel scrollen en op de laptop te smal.
 - **Let op:** het scherm wordt alleen opnieuw opgebouwd via `openSettings()` (of `lastView=null`); een gewone `render()` (bijv. na een koersupdate) laat het staan, anders verdwijnt wat je half hebt ingevuld.
 - **Niet gekozen:** een vierde tabblad Instellingen (optie 1); Geert koos het tandwiel.
+
+### D38 – Telefoonlijst Bezittingen: 1u, 24u, 7d en 30d (3 nov 2026, 3.20.2)
+- **Besluit:** onder elke munt in de lijst Bezittingen op de telefoon staan vier percentages op één regel: 1u, 24u, 7d en 30d (`.mkt-chg`, raster van vier kolommen op inhoudsbreedte, zonder inspringing). Onder 360 px twee regels van twee.
+- **Waarom:** Geert wilde de korte termijn ook op de telefoon zien. 1 uur komt gratis mee in de bestaande koersaanvraag.
+- **Niet gekozen:** 4 uur erbij (vijf past niet op één regel, en 4u kost per munt een extra CoinGecko-verzoek, D22); vijf waarden over twee regels (lijst wordt langer); de telefoonregel laten volgen wat bij "Kolommen aanpassen" aanstaat (kan later alsnog).

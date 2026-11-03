@@ -7,12 +7,23 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.1`) en de naam van het zip-bestand (`crypto-tracker-3.20.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.2`) en de naam van het zip-bestand (`crypto-tracker-3.20.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.20.2 – 3 november 2026
+Onder Bezittingen op de telefoon staat nu ook de koersverandering van het afgelopen uur.
+
+### Toegevoegd
+- **1 uur op de telefoon:** onder elke munt staan nu vier percentages op één regel: 1u, 24u, 7d en 30d. De regel begint onder het muntlogo, zodat er genoeg ruimte is.
+
+### Technisch
+- **`.mkt-chg`** is een raster van vier kolommen die zich aan de inhoud aanpassen. Op heel smalle schermen (onder 360 px) worden het twee regels van twee.
+- **4 uur** staat bewust niet op de telefoon: dat getal kost per munt een extra verzoek aan CoinGecko (D22, D38).
+- **Test:** `fit.spec.mjs` controleert op 430, 390, 375, 360 en 320 px dat de vier waarden passen.
 
 ## 3.20.1 – 30 oktober 2026
 De bovenbalk blijft op telefoon en tablet staan als je scrollt.

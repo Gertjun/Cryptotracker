@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.20.1 (30 okt 2026)';
+const APP_VERSION='3.20.2 (3 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -752,7 +752,7 @@ function renderHome(){
     return `<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}
       <div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta"><span class="m">${qtyf(c.qty)}</span> ${esc((c.meta.symbol||'').toUpperCase())} · gem. <span class="m">${money(c.avg)}</span></div></div>
       <div class="right"><div class="v m">${money(c.value,2)}</div><div class="chg ${cls(mode==='24h'?c.ch24:c.unreal)}"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div>
-      <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
+      <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['1u','1 uur',c.ch1h],['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
   ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}
   ${watchSection()}`;
   drawPortfolioChart();placeUnitMenu();need4h();
