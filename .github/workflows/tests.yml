@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    # vast op 24.04: Playwright ondersteunt ubuntu-latest (26.04) nog niet
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
