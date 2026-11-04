@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.20.3 (4 nov 2026)';
+const APP_VERSION='3.21.0 (4 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -468,10 +468,12 @@ function renderSide(cid){
   const el=$('#side');if(!el)return;
   const home=!cid;   // op het Overzicht staan cash, bezittingen en volglijst al in beeld
   const p=portfolio(),list=[...p.open].sort((a,b)=>(b.value??0)-(a.value??0));
-  el.innerHTML=`<div class="brand"><img src="icon.svg" alt="" width="32" height="32">Crypto Portfolio ${appVerHTML()}</div>
-  <nav aria-label="Hoofdnavigatie"><a class="nav ${cid?'':'on'}" href="#"${cid?'':' aria-current="page"'}>${ICONS.home} Overzicht</a>
-  <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}>${ICONS.list} Transacties</a>
-  <a class="nav ${cid==='__rep'?'on':''}" href="#analyse"${cid==='__rep'?' aria-current="page"':''}>${ICONS.reps} Analyse</a></nav>
+  const min=!!settings.sideMin;el.closest('.shell')?.classList.toggle('side-min',min);   // zijbalk ingeklapt (laptop, per apparaat)
+  const tog=`<button type="button" class="side-tog" data-act="sidetog" aria-controls="side" aria-expanded="${!min}" aria-label="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}" title="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}">${ICONS.back}</button>`;
+  el.innerHTML=`<div class="brand"><img src="icon.svg" alt="" width="32" height="32"><span class="brand-n">Crypto Portfolio</span>${tog}${appVerHTML()}</div>
+  <nav aria-label="Hoofdnavigatie"><a class="nav ${cid?'':'on'}" href="#"${cid?'':' aria-current="page"'}${min?' title="Overzicht"':''}>${ICONS.home} <span class="nav-l">Overzicht</span></a>
+  <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}${min?' title="Transacties"':''}>${ICONS.list} <span class="nav-l">Transacties</span></a>
+  <a class="nav ${cid==='__rep'?'on':''}" href="#analyse"${cid==='__rep'?' aria-current="page"':''}${min?' title="Analyse"':''}>${ICONS.reps} <span class="nav-l">Analyse</span></a></nav>
   ${!home&&p.hasCash?`<div class="side-t">Cash</div><a class="side-coin" href="#transacties" data-act="cashtx"><div class="coin-ph cash-ic">€</div><div class="grow"><div class="name-sm name">Beschikbaar</div><div class="meta m">${money(p.cash,2)}</div></div></a>`:''}
   ${!home&&list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="chg ${cls(c.unreal)}">${pct(c.unrealPct)}</div></a>`).join('')}`:''}
   ${!home&&p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div></div><div class="chg ${cls(c.realized)} m">${signed(c.realized)}</div></a>`).join('')}`:''}
@@ -2711,6 +2713,7 @@ document.addEventListener('click',e=>{
     case 'csvfiltered':{const ids=new Set([...document.querySelectorAll('#txOut .only-m [data-tx]')].map(e=>e.dataset.tx));exportCSV(data.txs.filter(t=>ids.has(t.id)));break}
     case 'printyear':printYear(+($('#py')?.value||new Date().getFullYear()));break;
     case 'reload':location.reload();break;
+    case 'sidetog':settings.sideMin=!settings.sideMin;saveSettings();render();fitBars();break;
     case 'addgoal':openGoal();break;
     case 'savegoal':saveGoal(a.dataset.id);break;
     case 'versions':openVersions();break;

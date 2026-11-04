@@ -51,6 +51,26 @@ test('laptop: zijbalk zonder dubbele muntenlijst op het Overzicht; kolomkoppen b
   await expect.poll(()=>page.locator('.tbl-wrap.only-d thead th').first().evaluate(th=>Math.round(th.getBoundingClientRect().top))).toBe(0);
 });
 
+test('laptop: zijbalk in- en uitklappen, onthouden na herladen',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'alleen op de laptop');
+  await openApp(page);await importCsv(page);
+  await page.evaluate(()=>{location.hash='#coin/bitcoin'});
+  const side=page.locator('#side'),tog=page.locator('#side [data-act=sidetog]');
+  await expect(tog).toHaveAttribute('aria-expanded','true');
+  const wide=await side.evaluate(e=>e.getBoundingClientRect().width);
+  await tog.click();
+  await expect(tog).toHaveAttribute('aria-expanded','false');
+  await expect(tog).toBeFocused();
+  expect(await side.evaluate(e=>e.getBoundingClientRect().width)).toBeLessThan(80);
+  expect(wide).toBeGreaterThan(200);
+  await expect(page.locator('#side .side-coin').first()).toBeHidden();
+  await expect(page.getByRole('link',{name:'Transacties'}).first()).toBeVisible();
+  await page.reload();await expect(page.locator('#side [data-act=sidetog]')).toHaveAttribute('aria-expanded','false');
+  await page.locator('#side [data-act=sidetog]').click();
+  await expect(page.locator('#side [data-act=sidetog]')).toHaveAttribute('aria-expanded','true');
+  expect(await side.evaluate(e=>e.getBoundingClientRect().width)).toBeGreaterThan(200);
+});
+
 test('Instellingen is een eigen scherm: tandwiel opent het, terug brengt je terug, velden blijven staan',async({page})=>{
   await openApp(page);await importCsv(page);
   await page.evaluate(()=>{location.hash='#transacties'});await expect(page.locator('#txOut')).toBeVisible();

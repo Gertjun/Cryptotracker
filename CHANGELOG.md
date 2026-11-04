@@ -7,12 +7,22 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.3`) en de naam van het zip-bestand (`crypto-tracker-3.20.3.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.21.0`) en de naam van het zip-bestand (`crypto-tracker-3.21.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.21.0 – 4 november 2026
+Op de laptop kun je de zijbalk inklappen tot een smalle strook met iconen, zodat er meer ruimte is voor grafieken en tabellen.
+
+### Toegevoegd
+- **Zijbalk inklappen:** naast de appnaam staat een knop met een pijltje. Ingeklapt blijven alleen het logo en de iconen van Overzicht, Transacties en Analyse over (met de naam als tooltip); de muntenlijsten verdwijnen. Met hetzelfde pijltje klap je hem weer uit. De keuze wordt per apparaat onthouden (D40).
+
+### Technisch
+- **`settings.sideMin`** (per apparaat). `renderSide()` zet de klasse `.side-min` op `.shell` (kolom 72 px in plaats van 264 px) en tekent de knop `data-act="sidetog"` met `aria-expanded` en `aria-controls="side"`. Navigatieteksten staan in `.nav-l` en blijven voor schermlezers leesbaar. Na in-/uitklappen worden scherm, tabellen en balken opnieuw passend gemaakt.
+- **Test:** `indeling.spec.mjs` klapt de zijbalk in en uit en controleert dat de keuze blijft na herladen.
 
 ## 3.20.3 – 4 november 2026
 De bovenbalk staat op de telefoon hoger, net onder de statusbalk, zoals in Vaste Lasten.

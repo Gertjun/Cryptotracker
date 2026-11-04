@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 4 november 2026 · versie **3.20.3**
+Laatst bijgewerkt: 4 november 2026 · versie **3.21.0**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 4 november 2026 · versie **3.20.3**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 47 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
+- Zie `tests/README.md`. Er zijn 48 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 4 november 2026 · versie **3.20.3**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **4 nov 2026:**
+  - 3.21.0: zijbalk op de laptop inklapbaar tot een strook met iconen, per apparaat onthouden (D40). Nog niet door Geert bekeken.
   - 3.20.3: bovenbalk hoger, 14 px ruimte zoals Vaste Lasten in plaats van 40 punten extra (D39, vervangt D8 op telefoon/tablet).
 - **3 nov 2026:**
   - 3.20.2: op de telefoon onder elke munt bij Bezittingen nu 1u, 24u, 7d en 30d op één regel (D38). 4u bewust niet. Nog niet door Geert op de telefoon bekeken.

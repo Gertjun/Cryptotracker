@@ -437,6 +437,20 @@ a{color:var(--accent)}
   .side-coin.on,.side-coin:hover{background:var(--card)}
   .side-coin .coin-img,.side-coin .coin-ph{width:28px;height:28px;font-size:9px}
   .side-foot{margin-top:auto;color:var(--muted);font-size:12px;padding:16px 12px 0}
+  /* zijbalk inklappen: knop naast de appnaam; ingeklapt alleen een smalle strook met iconen */
+  .side-tog{flex:none;order:1;width:44px;height:44px;margin:-6px -10px -6px auto;display:grid;place-items:center;background:none;border:0;border-radius:10px;color:var(--muted);cursor:pointer}
+  .side-tog:hover{background:var(--card);color:var(--text)}
+  .side-tog svg{width:20px;height:20px}
+  .brand>.app-ver{order:2}
+  .shell.side-min{grid-template-columns:72px minmax(0,1fr)}
+  .side-min #side{padding:20px 12px;overflow-x:hidden}
+  .side-min .brand{flex-direction:column;align-items:center;gap:8px;padding:6px 0 18px}
+  .side-min .side-tog{margin:0;order:0}
+  .side-min .side-tog svg{transform:scaleX(-1)}
+  .side-min .brand-n,.side-min .brand>span.app-ver,.side-min .side-t,.side-min .side-coin,.side-min .side-foot{display:none}
+  .side-min .brand>button.app-ver{margin:0;padding:5px 6px;font-size:10px}
+  .side-min .nav{justify-content:center;padding:12px 0}
+  .side-min .nav-l{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   #app{max-width:none;margin:0;padding:0 36px 48px}
   .top{height:84px}
   .d-top h1{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;font-size:22px}   /* lange muntnaam: afkappen i.p.v. de knoppen van het scherm duwen */

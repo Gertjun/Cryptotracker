@@ -209,3 +209,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** onder 1000 px geen `--top-extra` meer boven de app; de vaste bovenbalk (`.top`, sticky sinds 3.20.1) heeft `padding-top:14px`, zoals Vaste Lasten. De effen statusbalk uit D8 blijft.
 - **Waarom:** Geert vond de balk te laag staan vergeleken met Vaste Lasten. Omdat de balk nu vast staat met een effen achtergrond, valt de iOS-vervaging alleen nog over de lege bovenkant van de balk.
 - **Status:** nog niet door Geert bevestigd op de iPhone. Valt de vervaging toch over de knoppen: maak de `padding-top` van `.top` groter.
+
+### D40 – Zijbalk op de laptop inklapbaar (4 nov 2026, 3.21.0, vult D15 aan)
+- **Besluit:** vanaf 1000 px staat naast de appnaam een knop (pijltje) die de zijbalk inklapt tot een strook van 72 px met het logo en de iconen van Overzicht, Transacties en Analyse (naam als tooltip). Muntenlijsten, kopjes en "Koersdata" verdwijnen ingeklapt. "Update beschikbaar" blijft zichtbaar als kleine knop. De keuze staat in `settings.sideMin` (per apparaat).
+- **Waarom:** Geert wilde meer ruimte voor grafieken en tabellen op de laptop; met de extra breedte verbergt `fitTables()` minder kolommen.
+- **Niet gekozen:** de zijbalk helemaal verbergen (dan moet de navigatie ergens anders komen); munticonen in de smalle strook (te veel iconen zonder naam); de keuze synchroniseren via `data.cfg` (op een kleine laptop wil je misschien iets anders dan op een groot scherm).
