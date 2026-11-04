@@ -411,12 +411,14 @@ a{color:var(--accent)}
 @media (max-width:699px){.not-phone{display:none!important}}
 @media (min-width:700px){#heroSub.rest{visibility:hidden}}
 /* telefoon en tablet: de bovenbalk (appnaam, synchroniseren, vergrendelen, instellingen) blijft staan bij scrollen.
-   De schaduw vult de balk tot de randen van het scherm en de strook boven de balk (statusbalk/iOS-vervaging), zodat er niets achter doorschuift. */
-:root{--stick:calc(env(safe-area-inset-top) + var(--top-extra,0px))}
+   De schaduw vult de balk tot de randen van het scherm en de strook boven de balk (statusbalk/iOS-vervaging), zodat er niets achter doorschuift.
+   Geen extra ruimte bovenin (--top-extra, D8) meer: de balk zelf heeft 14 px lucht boven de knoppen, zoals Vaste Lasten (D39). */
+:root{--stick:env(safe-area-inset-top)}
 @media (max-width:999px){
-  .top{position:sticky;top:var(--stick);z-index:30;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(calc(-1 * var(--stick) - 1px) -100vmax 0)}
-  .tbl thead th{top:calc(var(--stick) + 60px)}
-  html{scroll-padding-top:calc(var(--stick) + 68px)}
+  body{padding-top:env(safe-area-inset-top)}
+  .top{position:sticky;top:var(--stick);z-index:30;height:auto;min-height:64px;padding:14px 0 10px;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(calc(-1 * var(--stick) - 1px) -100vmax 0)}
+  .tbl thead th{top:calc(var(--stick) + 64px)}
+  html{scroll-padding-top:calc(var(--stick) + 72px)}
 }
 @media (max-width:999px){.only-d{display:none!important}.fab{bottom:calc(84px + env(safe-area-inset-bottom))}#app{padding-bottom:170px}}
 @media (min-width:1000px){

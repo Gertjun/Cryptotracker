@@ -7,12 +7,21 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.2`) en de naam van het zip-bestand (`crypto-tracker-3.20.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.20.3`) en de naam van het zip-bestand (`crypto-tracker-3.20.3.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.20.3 – 4 november 2026
+De bovenbalk staat op de telefoon hoger, net onder de statusbalk, zoals in Vaste Lasten.
+
+### Gewijzigd
+- **Minder ruimte bovenin:** de 40 punten extra ruimte tegen de iOS-vervaging (D8) is weg op telefoon en tablet. De balk staat nu vast met een effen achtergrond, dus er schuift niets meer door die wazige strook. In de balk zit 14 px ruimte boven de knoppen, net als in Vaste Lasten (D39).
+
+### Technisch
+- **Onder 1000 px:** `body` heeft alleen de veilige ruimte bovenin; `.top` krijgt `padding:14px 0 10px` (minimaal 64 px hoog). Kolomkoppen staan 64 px onder de balk. `--top-extra` geldt nog voor het grote grafiekscherm en de meldingen bovenin, en op de laptop.
 
 ## 3.20.2 – 3 november 2026
 Onder Bezittingen op de telefoon staat nu ook de koersverandering van het afgelopen uur.

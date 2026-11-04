@@ -204,3 +204,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** onder elke munt in de lijst Bezittingen op de telefoon staan vier percentages op één regel: 1u, 24u, 7d en 30d (`.mkt-chg`, raster van vier kolommen op inhoudsbreedte, zonder inspringing). Onder 360 px twee regels van twee.
 - **Waarom:** Geert wilde de korte termijn ook op de telefoon zien. 1 uur komt gratis mee in de bestaande koersaanvraag.
 - **Niet gekozen:** 4 uur erbij (vijf past niet op één regel, en 4u kost per munt een extra CoinGecko-verzoek, D22); vijf waarden over twee regels (lijst wordt langer); de telefoonregel laten volgen wat bij "Kolommen aanpassen" aanstaat (kan later alsnog).
+
+### D39 – Bovenbalk: 14 px ruimte in plaats van 40 punten extra (4 nov 2026, 3.20.3, vervangt D8 op telefoon en tablet)
+- **Besluit:** onder 1000 px geen `--top-extra` meer boven de app; de vaste bovenbalk (`.top`, sticky sinds 3.20.1) heeft `padding-top:14px`, zoals Vaste Lasten. De effen statusbalk uit D8 blijft.
+- **Waarom:** Geert vond de balk te laag staan vergeleken met Vaste Lasten. Omdat de balk nu vast staat met een effen achtergrond, valt de iOS-vervaging alleen nog over de lege bovenkant van de balk.
+- **Status:** nog niet door Geert bevestigd op de iPhone. Valt de vervaging toch over de knoppen: maak de `padding-top` van `.top` groter.

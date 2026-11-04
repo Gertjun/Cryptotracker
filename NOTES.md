@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 3 november 2026 · versie **3.20.2**
+Laatst bijgewerkt: 4 november 2026 · versie **3.20.3**
 
 ---
 
@@ -32,7 +32,7 @@ Laatst bijgewerkt: 3 november 2026 · versie **3.20.2**
 
 ## 3. Bekende problemen en open punten
 
-- **iOS 26/27-vervaging bovenin** bij de app op het beginscherm. Sinds 3.8.2 begint de app 40 punten lager (`--top-extra`, klasse `ios-standalone`). **Nog niet bevestigd door Geert of dit genoeg is.** De effen statusbalk (`apple-mobile-web-app-status-bar-style: default`) sinds 3.0.0 hielp niet tegen de vervaging, maar bleef.
+- **iOS 26/27-vervaging bovenin** bij de app op het beginscherm. Sinds 3.20.3 op telefoon en tablet geen 40 punten extra meer, maar 14 px ruimte in de vaste bovenbalk (D39). **Nog niet door Geert bevestigd op de iPhone.** De effen statusbalk (`apple-mobile-web-app-status-bar-style: default`) blijft.
 - **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel.
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
 - **Wishlist open (38):** W4–W8, W10, W11, W15–W45. W19–W38 zijn op 28 okt toegevoegd, W39–W45 (inzicht in rendement) op 30 okt; nog niets van gebouwd. Advies aan Geert: begin met W39 (jaarrendement) en W40 (hoe gingen je verkopen), daarna W17. W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
@@ -44,6 +44,8 @@ Laatst bijgewerkt: 3 november 2026 · versie **3.20.2**
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
+- **4 nov 2026:**
+  - 3.20.3: bovenbalk hoger, 14 px ruimte zoals Vaste Lasten in plaats van 40 punten extra (D39, vervangt D8 op telefoon/tablet).
 - **3 nov 2026:**
   - 3.20.2: op de telefoon onder elke munt bij Bezittingen nu 1u, 24u, 7d en 30d op één regel (D38). 4u bewust niet. Nog niet door Geert op de telefoon bekeken.
   - Tests op GitHub faalden: `ubuntu-latest` werd 26.04, dat Playwright 1.56 nog niet ondersteunt. `tests.yml` staat nu vast op `ubuntu-24.04`; terugzetten zodra Playwright 26.04 ondersteunt.
