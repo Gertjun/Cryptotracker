@@ -15,6 +15,7 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 | `specs/indeling.spec.mjs` | Oude adressen van Rapporten openen Analyse; op de telefoon staan filters en totalen achter de knop Filter en staan de transacties van een munt vóór de rekenhulpen; op de laptop geen dubbele muntenlijst in de zijbalk op het Overzicht en kolomkoppen die blijven staan bij scrollen; Instellingen als eigen scherm met terugknop, en ingevulde velden die blijven staan. |
 | `specs/coingecko.spec.mjs` | Verzoeken aan CoinGecko blijven binnen de limiet (6 direct, daarna 15 per minuut; met sleutel 10 en 30). |
 | `specs/beveiliging.spec.mjs` | Nieuwe wachtwoorden minimaal 12 tekens (met indicator en oogje), kort wachtwoord bij een bestaand bestand, synchroniseren na 20 s en bij verlaten, twee tabbladen, gegevens van een nieuwere app-versie, back-up downloaden en de app-wisselaar. |
+| `specs/markt.spec.mjs` | Marktsentiment (angst- en hebzuchtmeter) op het Overzicht met gisteren en vorige week, uitzetten in Instellingen, en geen blok of fouten als alternative.me niet antwoordt (met een nep-alternative.me). |
 | `specs/update.spec.mjs` | Een nieuwe versie komt direct binnen, ook als de server de browser laat cachen (zoals GitHub Pages). |
 | `npm run test:html` | De HTML voldoet aan de standaard (html-validate). |
 

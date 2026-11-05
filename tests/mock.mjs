@@ -24,3 +24,10 @@ export async function routeCG(page,log,NOW){const nowF=()=>NOW??Date.now();
     if(P.includes('/market_chart')){const id=P.split('/coins/')[1].split('/')[0];if(!COINS[id])return r.fulfill({status:404,json:{}});return r.fulfill({json:{prices:chart(id,u.searchParams.get('days'),nowF())}})}
     return r.fulfill({json:{}})});
 }
+// Nep-alternative.me: angst- en hebzuchtmeter van de laatste 8 dagen (nu 62 = Hebzucht, gisteren 55, vorige week 30)
+export const FNG_VALUES=[62,55,48,44,41,38,35,30];
+export async function routeFng(page,NOW,{fail=false}={}){
+  const day0=Math.floor(NOW/864e5)*864e5,cls=v=>v<25?'Extreme Fear':v<47?'Fear':v<55?'Neutral':v<76?'Greed':'Extreme Greed';
+  await page.route('https://api.alternative.me/**',r=>fail?r.fulfill({status:500,headers:{'access-control-allow-origin':'*'},body:'fout'})
+    :r.fulfill({headers:{'access-control-allow-origin':'*'},json:{name:'Fear and Greed Index',data:FNG_VALUES.map((v,i)=>({value:String(v),value_classification:cls(v),timestamp:String((day0-i*864e5)/1000)}))}}));
+}

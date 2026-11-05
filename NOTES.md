@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 5 november 2026 · versie **3.21.1**
+Laatst bijgewerkt: 5 november 2026 · versie **3.22.0**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 5 november 2026 · versie **3.21.1**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 48 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates en de kolommen van Bezittingen.
+- Zie `tests/README.md`. Er zijn 51 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates, de kolommen van Bezittingen en marktsentiment (`markt.spec.mjs`).
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -35,7 +35,7 @@ Laatst bijgewerkt: 5 november 2026 · versie **3.21.1**
 - **iOS 26/27-vervaging bovenin** bij de app op het beginscherm. Sinds 3.20.3 op telefoon en tablet geen 40 punten extra meer, maar 14 px ruimte in de vaste bovenbalk (D39). **Nog niet door Geert bevestigd op de iPhone.** De effen statusbalk (`apple-mobile-web-app-status-bar-style: default`) blijft.
 - **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel.
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
-- **Wishlist open (39):** W4–W8, W10, W11, W15–W46 (W46 op 5 nov: geld verdelen volgens je doelverdeling, bewust zonder voorspellingen). W19–W38 zijn op 28 okt toegevoegd, W39–W45 (inzicht in rendement) op 30 okt; nog niets van gebouwd. Advies aan Geert: begin met W39 (jaarrendement) en W40 (hoe gingen je verkopen), daarna W17. W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
+- **Wishlist open (38):** W4–W8, W10, W11, W15–W23, W25–W46 (W24 ingebouwd in 3.22.0; W46 op 5 nov: geld verdelen volgens je doelverdeling, bewust zonder voorspellingen). W19–W38 zijn op 28 okt toegevoegd, W39–W45 (inzicht in rendement) op 30 okt; nog niets van gebouwd. Advies aan Geert: begin met W39 (jaarrendement) en W40 (hoe gingen je verkopen), daarna W17. W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
 - **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
 - **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 5 november 2026 · versie **3.21.1**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **5 nov 2026:**
+  - 3.22.0: marktsentiment (angst- en hebzuchtmeter van alternative.me) op het Overzicht, uit te zetten in Instellingen (W24, D41). Nog niet door Geert bekeken. De a11y-test (thema Nachtblauw) viel één keer om bij de volledige ronde en slaagde daarna steeds; houd in de gaten.
   - 3.21.1: W46 "Waar zet ik mijn geld in?" op de wishlist. Geert vroeg om koopadvies; afgesproken: geen voorspelling welke munt stijgt, alleen een bedrag verdelen volgens zijn eigen doelverdeling. Nog niet bouwen.
 - **4 nov 2026:**
   - 3.21.0: zijbalk op de laptop inklapbaar tot een strook met iconen, per apparaat onthouden (D40). Nog niet door Geert bekeken.

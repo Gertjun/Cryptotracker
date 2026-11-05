@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.21.1 (5 nov 2026)';
+const APP_VERSION='3.22.0 (5 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -360,6 +360,36 @@ async function refreshPrices(force){
   }catch(e){cgState={s:'err',msg:e.message||'Geen verbinding'};updBadges();if(force)toast(e.message||'Geen verbinding')}
   finally{priceBusy=false}
 }
+/* ---------- marktsentiment: angst- en hebzuchtmeter van alternative.me (W24, D41) ---------- */
+// Publieke gegevens (geen account, geen sleutel). Eén verzoek per uur; mislukt het, dan na 10 minuten opnieuw.
+const FNG_URL='https://api.alternative.me/fng/?limit=8',LS_FNG='cpt.fng';
+const FNG_NL={'Extreme Fear':'Extreme angst','Fear':'Angst','Neutral':'Neutraal','Greed':'Hebzucht','Extreme Greed':'Extreme hebzucht'};
+let fng=load(LS_FNG,{ts:0,pts:[]}),fngBusy=false,fngTried=-1e9;
+const fngOn=()=>settings.fng!==false;
+const fngLabel=p=>FNG_NL[p[2]]||(p[1]<25?'Extreme angst':p[1]<47?'Angst':p[1]<55?'Neutraal':p[1]<76?'Hebzucht':'Extreme hebzucht');
+async function refreshFng(){
+  if(!fngOn()||locked||fngBusy||!navigator.onLine)return;
+  if(Date.now()-fng.ts<3600e3&&fng.pts.length)return;
+  if(mono()-fngTried<10*60e3)return;
+  fngBusy=true;fngTried=mono();
+  try{const r=await fetchT(FNG_URL);if(!r.ok)return;const j=await r.json();
+    const pts=(Array.isArray(j?.data)?j.data:[]).map(d=>[+d.timestamp*1000,Math.round(+d.value),String(d.value_classification||'')])
+      .filter(p=>isFinite(p[0])&&p[0]>0&&isFinite(p[1])&&p[1]>=0&&p[1]<=100).sort((a,b)=>b[0]-a[0]);
+    if(!pts.length)return;
+    fng={ts:Date.now(),pts};try{localStorage.setItem(LS_FNG,JSON.stringify(fng))}catch(e){}
+    const el=$('#fngCard');if(el)el.outerHTML=fngCard();else if($('.home-grid'))render();
+  }catch(e){}finally{fngBusy=false}}
+function fngCard(){
+  if(!fngOn()||!fng.pts.length)return '';
+  const now=fng.pts[0],t0=now[0],near=d=>fng.pts.find(p=>Math.abs(p[0]-(t0-d*DAY))<12*3600e3);
+  const dt=t=>new Date(t).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+  const arrow=p=>{const d=now[1]-p[1];return d?` <span class="label">(nu ${d>0?'+':'−'}${Math.abs(d)})</span>`:''};
+  const hist=[['Gisteren',near(1)],['Vorige week',near(7)]].filter(x=>x[1]);
+  return `<section class="card fng" id="fngCard" aria-labelledby="fngH"><div class="fng-h"><h2 class="h3" id="fngH">Marktsentiment</h2><span class="label">${Date.now()-t0>2*DAY?'stand van ':''}${dt(t0)}</span></div>
+  <p class="fng-now"><b class="fng-v">${now[1]}</b> <span><b>${fngLabel(now)}</b><span class="label">op een schaal van 0 (angst) tot 100 (hebzucht)</span></span></p>
+  <div class="fng-bar" aria-hidden="true"><i style="left:${Math.max(0,Math.min(100,now[1]))}%"></i></div>
+  ${hist.length?`<dl class="fng-hist">${hist.map(([l,p])=>`<div><dt class="label">${l}</dt><dd>${p[1]} · ${fngLabel(p)}${arrow(p)}</dd></div>`).join('')}</dl>`:''}
+  <p class="hint fng-src">Stemming in de cryptomarkt volgens <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer">alternative.me</a>. Geen voorspelling.</p></section>`}
 async function fetchPrice(id){
   try{const r=await cg(`/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=${CUR}&include_24hr_change=true`);const j=await r.json();if(j[id]){prices[id]=Object.assign(prices[id]||{},{price:j[id][CUR],ch24:j[id][CUR+'_24h_change'],ts:Date.now()});savePrices();return j[id][CUR]}}catch(e){}
   return null;
@@ -704,7 +734,7 @@ function syncBadge(){
 }
 function updBadges(){const si=$('#setSync');if(si)si.outerHTML=syncInfoHTML();document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
 window.addEventListener('offline',()=>{updBadges();if(!locked)toast('Geen internet: je ziet de laatst bekende koersen')});
-window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer online');refreshPrices();syncNow(true)});
+window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer online');refreshPrices();refreshFng();syncNow(true)});
 function renderHome(){
   $('#topbar').innerHTML=topbarHTML(null);
   const p=portfolio();
@@ -745,7 +775,7 @@ function renderHome(){
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div><div id="plegend"></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${PRANGES.map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
   <div class="period" id="pperiod"></div></div>
-  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${inEUR(()=>goalsCard(true))}${kv}</div></div>
+  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${inEUR(()=>goalsCard(true))}${fngCard()}${kv}</div></div>
   <div class="list-head"><h2>Bezittingen</h2>
     ${sorted.length?'<button type="button" class="link only-d" data-act="hcols">Kolommen aanpassen</button>':''}
     <label class="sr-only" for="sortSel">Sorteer bezittingen op</label><select id="sortSel" data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
@@ -2311,6 +2341,8 @@ function renderSettings(){
   <p class="mt-12 hint">Bedragen tonen in:</p>
   <fieldset class="seg"><legend class="sr-only">Bedragen tonen in</legend>${[['EUR','Euro €'],['USD','Dollar $'],['BTC','Bitcoin ₿']].map(([v,l])=>`<button type="button" data-unit="${v}" class="${(settings.unit||'EUR')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
   <p class="mt-0 hint">Geldt voor Overzicht, munten en Transacties. Dollar: omgerekend tegen de koers van nu. Bitcoin: aankopen, verkopen en stortingen tegen de bitcoinkoers van dat moment, dus je winst in bitcoin laat zien of je beter deed dan bitcoin aanhouden. Formulieren, Analyse en het jaaroverzicht blijven in euro.${settings.unit&&settings.unit!=='EUR'&&fx.ts?` Koers bijgewerkt ${fmtTs(fx.ts)}.`:''}</p>
+  <label class="chk"><input type="checkbox" id="s_fng"${fngOn()?' checked':''}><span>Marktsentiment tonen op het Overzicht</span></label>
+  <p class="mt-0 hint">De angst- en hebzuchtmeter komt van alternative.me. Staat dit uit, dan maakt de app geen verbinding met die dienst. Geldt alleen voor dit apparaat.</p>
   </section>
   ${pfSettingsHTML()}
   <section class="card" aria-labelledby="st_sec"><h2 class="h3" id="st_sec">Beveiliging</h2>
@@ -2351,6 +2383,7 @@ function renderSettings(){
   <p class="app-foot hint">Koersdata: CoinGecko · ${data.txs.length} transacties · versie ${APP_VERSION}</p>`;
   $('#s_file').onchange=importFile;
   for(const k of ['themeD','themeL']){const el=$('#s_'+k);if(el)el.onchange=()=>{settings[k]=el.value;saveSettings();applyTheme()}}
+  const sf=$('#s_fng');if(sf)sf.onchange=()=>{settings.fng=sf.checked;saveSettings();if(sf.checked)refreshFng()};
   const sa=$('#s_auto');if(sa)sa.onchange=()=>{lockCfg.autoLock=+sa.value;saveLock()};
 }
 function syncInfoHTML(){return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>`}
@@ -2842,16 +2875,16 @@ document.addEventListener('visibilitychange',()=>{
   if(hiddenAt&&Date.now()-hiddenAt>3600e3&&getVisit(curPf())){prevVisit={...getVisit(curPf())};sinceDismissed=false}
   const al=lockCfg?.autoLock??5;
   if(lockCfg&&!locked&&hiddenAt&&al>=0&&Date.now()-hiddenAt>=al*60000){lockNow();return}
-  refreshPrices();syncNow(true);
+  refreshPrices();refreshFng();syncNow(true);
 });
-setInterval(()=>{if(!document.hidden)refreshPrices()},60000);
+setInterval(()=>{if(!document.hidden){refreshPrices();refreshFng()}},60000);
 setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
 setInterval(()=>{if(!document.hidden)collectHistory()},6*3600e3);
 
 let histTimer=null;
 function start(){document.body.classList.remove('locked');navigator.storage?.persist?.().catch(()=>{});if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
-  render();refreshPrices();syncNow(true)}
+  render();refreshPrices();refreshFng();syncNow(true)}
 if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
 else start();
 // Nieuwe versie online gezet? De service worker haalt hem op; dan verschijnt een melding om te vernieuwen.

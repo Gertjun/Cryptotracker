@@ -114,9 +114,6 @@ Twee of drie munten in één grafiek in procenten, ook munten die je niet hebt. 
 
 ## Markt
 
-### W24 – Marktsentiment
-De bekende "angst- en hebzuchtmeter" (0–100) van alternative.me op het overzicht, met de stand van gisteren en vorige week. **Let op:** daarvoor moet er een extra dienst in de beveiligingsregels (CSP).
-
 ### W25 – Totale cryptomarkt en aandeel van bitcoin
 De totale waarde van de cryptomarkt en het aandeel van bitcoin daarin, met de verandering in 24 uur. Komt van CoinGecko, dus er is geen extra dienst nodig.
 

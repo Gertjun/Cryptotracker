@@ -210,6 +210,11 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert vond de balk te laag staan vergeleken met Vaste Lasten. Omdat de balk nu vast staat met een effen achtergrond, valt de iOS-vervaging alleen nog over de lege bovenkant van de balk.
 - **Status:** nog niet door Geert bevestigd op de iPhone. Valt de vervaging toch over de knoppen: maak de `padding-top` van `.top` groter.
 
+### D41 – Marktsentiment van alternative.me op het Overzicht (5 nov 2026, 3.22.0, wens W24)
+- **Besluit:** een blok Marktsentiment in de rechterkolom van het Overzicht (op de telefoon onder de grafiek): de angst- en hebzuchtmeter van alternative.me (0–100) met de stand van gisteren en vorige week. `https://api.alternative.me` staat in `connect-src`. Ophalen hooguit één keer per uur; mislukt het en is er niets bewaard, dan verschijnt het blok niet. Staat standaard aan; uit te zetten per apparaat in Instellingen › Weergave (`settings.fng`), dan maakt de app geen verbinding met alternative.me. Labels in het Nederlands (Extreme angst, Angst, Neutraal, Hebzucht, Extreme hebzucht); de tekst uit de dienst komt nooit rechtstreeks in de HTML.
+- **Waarom:** Geert wilde de stemming in de markt zien. De dienst is gratis, zonder account of sleutel, en de gegevens zijn openbaar.
+- **Niet gekozen:** een grafiek van de meter over langere tijd (kan later); de meter gebruiken als koop- of verkoopadvies (zie W46: geen voorspellingen); de keuze synchroniseren via `data.cfg` (privacy-keuze per apparaat).
+
 ### D40 – Zijbalk op de laptop inklapbaar (4 nov 2026, 3.21.0, vult D15 aan)
 - **Besluit:** vanaf 1000 px staat naast de appnaam een knop (pijltje) die de zijbalk inklapt tot een strook van 72 px met het logo en de iconen van Overzicht, Transacties en Analyse (naam als tooltip). Muntenlijsten, kopjes en "Koersdata" verdwijnen ingeklapt. "Update beschikbaar" blijft zichtbaar als kleine knop. De keuze staat in `settings.sideMin` (per apparaat).
 - **Waarom:** Geert wilde meer ruimte voor grafieken en tabellen op de laptop; met de extra breedte verbergt `fitTables()` minder kolommen.

@@ -33,7 +33,7 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 
 Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 
-- **Opslag (localStorage):** `cpt.data` (gegevens), `cpt.settings` (per apparaat), `cpt.prices`, `cpt.charts`, `cpt.fx`, en versleuteld `cpt.lock`, `cpt.vault`, `cpt.vcharts` als de app-vergrendeling aan staat.
+- **Opslag (localStorage):** `cpt.data` (gegevens), `cpt.settings` (per apparaat), `cpt.prices`, `cpt.charts`, `cpt.fx`, `cpt.fng`, en versleuteld `cpt.lock`, `cpt.vault`, `cpt.vcharts` als de app-vergrendeling aan staat.
 - **Gegevensmodel `data`:**
   - `txs` (transacties), `deleted` (grafstenen van verwijderde id's), `cfg` (o.a. `cgKey` en `hcols`), `hist` (eigen koersarchief: `hist[coinId][dagnummer]=[ts,prijs]`);
   - de lijsten `watch`, `alerts`, `goals`, `plans`, `portfolios`, `allocs`. Elk item heeft `id`, `mod` (tijdstip) en eventueel `del:true`.
@@ -83,6 +83,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - `cg(path,low)`: wachtrij met een emmer van 6 verzoeken, daarna 15 per minuut (met sleutel 10 en 30 per minuut), globale pauze bij 429, en `low` voor achtergrondwerk.
   - `fetchChart()` gebruikt een cache (`chartTtl`) en voegt gelijktijdige gelijke verzoeken samen.
   - Tests zetten `globalThis.__cgFast=true`.
+- **Marktsentiment (W24, D41):** `refreshFng()` haalt de angst- en hebzuchtmeter van `api.alternative.me/fng/?limit=8` (hooguit één keer per uur, na een fout pas na 10 minuten) en bewaart die in `localStorage` `cpt.fng` (`{ts, pts:[[tijd, waarde, klasse]]}`, openbare gegevens, onversleuteld). `fngCard()` tekent het blok `#fngCard` in `.side-col` op het Overzicht: stand nu, balk (rood → geel → groen), gisteren en vorige week. Uit te zetten met `settings.fng=false` (per apparaat, Instellingen › Weergave); dan geen verbinding. Tests: `routeFng()` in `tests/mock.mjs`.
 - **Overige functies:**
   - Doelen, vaste inleg (`planDo`), doelverdeling (`allocCard`), wat-als (`whatIfCard`), risico (`riskCard`), gemiddelde-prijs-calculator (`avgCalcCard`), verkoopsimulator (`sellSimCard`);
   - eerdere versie terugzetten (`openVersions`), koppelcode (`makePairCode`/`readPairCode`), app-vergrendeling met passkey (WebAuthn PRF) en herstelwachtwoord.

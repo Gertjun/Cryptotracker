@@ -33,7 +33,7 @@ Een nieuwe versie komt vanzelf binnen. Naast de appnaam (laptop) of bovenin (tel
 - Alles staat **op je eigen apparaat**, in de browser.
 - **Synchroniseren tussen apparaten** kan via één bestand in een **privé-repository op GitHub**. Dat bestand is versleuteld met een wachtwoord dat alleen jij kent; GitHub ziet alleen onleesbare tekst. Een nieuw apparaat koppel je met een koppelcode en een pincode.
 - Elke synchronisatie wordt op GitHub bewaard, dus je kunt een **eerdere versie terugzetten**.
-- De app praat alleen met deze website, met **CoinGecko** (koersen) en met **GitHub** (synchronisatie). Andere verbindingen worden door de browser geblokkeerd.
+- De app praat alleen met deze website, met **CoinGecko** (koersen), met **alternative.me** (marktsentiment, uit te zetten in Instellingen) en met **GitHub** (synchronisatie). Andere verbindingen worden door de browser geblokkeerd.
 - Optioneel kun je de app **vergrendelen** met Face ID / Touch ID (passkey) en een herstelwachtwoord.
 
 > Ben je het wachtwoord kwijt, dan kan niemand de gesynchroniseerde gegevens nog openen. Bewaar het goed.

@@ -7,12 +7,24 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.21.1`) en de naam van het zip-bestand (`crypto-tracker-3.21.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.22.0`) en de naam van het zip-bestand (`crypto-tracker-3.22.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.22.0 – 5 november 2026
+Op het Overzicht zie je nu hoe angstig of hebberig de cryptomarkt is (wens W24).
+
+### Toegevoegd
+- **Marktsentiment:** een blok met de bekende angst- en hebzuchtmeter van alternative.me, van 0 (extreme angst) tot 100 (extreme hebzucht), met een balk en de stand van gisteren en vorige week. Op de laptop en tablet staat het rechts naast de grafiek, op de telefoon onder de grafiek (wens W24, D41).
+- **Uitzetten:** in Instellingen › Weergave staat een vinkje "Marktsentiment tonen op het Overzicht". Staat het uit, dan maakt de app geen verbinding met alternative.me. De keuze geldt per apparaat.
+
+### Technisch
+- **CSP:** `https://api.alternative.me` toegevoegd aan `connect-src`.
+- **`refreshFng()` en `fngCard()`:** hooguit één verzoek per uur, bewaard in `cpt.fng`; lukt het niet, dan geen blok en geen foutmelding.
+- **Test:** `markt.spec.mjs` met een nep-alternative.me (`routeFng()` in `tests/mock.mjs`).
 
 ## 3.21.1 – 5 november 2026
 Nieuwe wens op de wishlist; de app zelf is niet veranderd.
