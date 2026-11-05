@@ -103,6 +103,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 - **Passen op het scherm:** tabellen en grafieken krijgen geen schuifbalk opzij (getest in `tests/specs/fit.spec.mjs`). Gebruik tickers in plaats van lange namen, en geef een nieuwe tabelkolom een prioriteit (`data-p`). Uitzondering: het vergrote venster Rendement per dag/week op een telefoon.
 - **Tabbladen van Analyse** (`.rep-tabs`): onder 400 px in twee rijen.
 - **Vaste bovenbalk:** zonder zijbalk (onder 1000 px, behalve de iPad rechtop) is `.top` (`#topbar`) sticky op `--stick` (alleen de veilige ruimte bovenin, geen `--top-extra`, D39), met 14 px padding boven de knoppen en minimaal 64 px hoog; kolomkoppen van tabellen staan daar 64 px onder. Een nieuw sticky element op telefoon of tablet moet rekening houden met die balk.
+- **Ruimte bovenin:** nergens extra ruimte (`--top-extra` = 0, D44). Vanaf 1000 px loopt de zijbalk door tot de bovenrand (veilige ruimte in `#side`) en heeft `#app` de veilige ruimte als `padding-top`.
 - **Breakpoints:**
   - telefoon: < 700 px;
   - tablet: 700–999 px; **hoog** (≥ 700 px, iPad rechtop) krijgt de laptopinhoud zonder zijbalk: appnaam en knoppen bovenaan, daaronder de tabbladen in een rij (D43); **laag** (< 700 px, bijv. liggende iPhone) de telefoonopbouw maar breder;

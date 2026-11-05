@@ -7,12 +7,24 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.1`) en de naam van het zip-bestand (`crypto-tracker-3.23.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.2`) en de naam van het zip-bestand (`crypto-tracker-3.23.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.23.2 – 5 november 2026
+Op de iPad sluit de app nu netjes aan op de statusbalk: geen lege band meer bovenin.
+
+### Verbeterd
+- **iPad liggend:** de zijbalk loopt door tot de bovenrand, ook achter de tijd en de batterij. De inhoud rechts begint direct onder de statusbalk in plaats van 40 punten lager (D44).
+- **iPad rechtop:** ook hier geen 40 punten extra meer; de app begint 14 px onder de statusbalk, zoals op de iPhone.
+- **Ongewijzigd:** laptop en iPhone.
+
+### Technisch
+- **`--top-extra`:** de 40 punten voor de app op het beginscherm (D8) zijn weg; de variabele staat overal op 0.
+- **Vanaf 1000 px:** `body` zonder ruimte bovenin; `#side` krijgt de veilige ruimte als extra padding, `#app` als ruimte boven de bovenbalk.
 
 ## 3.23.1 – 5 november 2026
 Op de iPad rechtop staan de tabbladen nu bovenaan in een rij, zoals in Vaste Lasten, in plaats van een zijbalk.

@@ -232,3 +232,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Hoe:** `#side`, `#app`, `.top` en `.d-top` krijgen `display:contents`, zodat `.brand`, `#side>nav`, `.tb-act`, `.tb-title` en `#view` in één raster (`.shell`) staan. De mediaregels uit D42 blijven: "laptop" = `(min-width:1000px), (min-width:700px) and (min-height:700px)`.
 - **Niet gekozen:** Instellingen als vierde tabblad zoals in Vaste Lasten (D37: het tandwiel opent Instellingen); dezelfde opbouw voor de iPad liggend (die is niet te onderscheiden van een kleine laptop en houdt de zijbalk).
 
+### D44 – Geen 40 punten extra bovenin; zijbalk tot de bovenrand (5 nov 2026, 3.23.2, vervangt D8 helemaal)
+- **Besluit:** `:root.ios-standalone{--top-extra:40px}` is weg; `--top-extra` is overal 0. Vanaf 1000 px (laptop, iPad liggend) heeft `body` geen ruimte bovenin: de zijbalk loopt door tot de bovenrand (veilige ruimte als extra padding in `#side`) en de inhoud begint onder de statusbalk (`#app{padding-top:env(safe-area-inset-top)}`). De iPad rechtop begint 14 px onder de statusbalk (D43), zoals de iPhone (D39).
+- **Waarom:** op de iPad liggend stond een lege band van zo'n 50 punten boven de app, met de zijbalk pas daaronder; Geert vond dat niet mooi samen met de statusbalk.
+- **Let op:** valt de iOS-vervaging op de iPad toch over de knoppen, maak dan `#app{padding-top}` vanaf 1000 px groter (bijv. `calc(env(safe-area-inset-top) + 10px)`), niet `--top-extra`.
+

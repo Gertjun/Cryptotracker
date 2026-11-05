@@ -796,10 +796,13 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
   .coin-side{display:flex;flex-direction:column}
   .coin-side>:last-child{flex:1 0 auto;margin-bottom:0}
 }
-/* iPhone/iPad-app op het beginscherm: iOS 26/27 vervaagt een strook van zo'n 35–40 punten onder de statusbalk,
-   wat de pagina ook doet. Daarom begint de app daar 40 punten lager. Niet in liggende stand op de iPhone (geen statusbalk). */
-:root.ios-standalone{--top-extra:40px}
-@media (orientation:landscape) and (max-height:500px){:root.ios-standalone{--top-extra:0px}}
+/* Laptopopbouw met zijbalk (laptop, iPad liggend): geen extra ruimte bovenin (D44, vervangt D8). De zijbalk loopt door tot de bovenrand,
+   achter de iOS-statusbalk; de inhoud rechts begint onder de statusbalk. Op de laptop is de veilige ruimte 0, dus daar verandert niets. */
+@media (min-width:1000px){
+  body{padding-top:0}
+  #side,.side-min #side{padding-top:calc(20px + env(safe-area-inset-top))}
+  #app{padding-top:env(safe-area-inset-top)}
+}
 .pc-plot:focus{outline:none}
 .pc-plot:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:6px}
 .sell-sim .seg{background:var(--card2)}
