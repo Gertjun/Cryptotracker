@@ -7,12 +7,18 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.21.0`) en de naam van het zip-bestand (`crypto-tracker-3.21.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.21.1`) en de naam van het zip-bestand (`crypto-tracker-3.21.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.21.1 – 5 november 2026
+Nieuwe wens op de wishlist; de app zelf is niet veranderd.
+
+### Gewijzigd
+- **Wishlist:** W46 – Waar zet ik mijn geld in? Een bedrag verdelen volgens je eigen doelverdeling, zonder voorspellingen. Nog niet gebouwd.
 
 ## 3.21.0 – 4 november 2026
 Op de laptop kun je de zijbalk inklappen tot een smalle strook met iconen, zodat er meer ruimte is voor grafieken en tabellen.

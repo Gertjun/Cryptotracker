@@ -73,6 +73,9 @@ Hetzelfde voor winst nemen, bijvoorbeeld "verkoop 10% bij elke verdubbeling" of 
 ### W31 – Slimme vaste inleg
 Een variant op vaste inleg: meer inleggen als de koers laag staat en minder als hij hoog staat (bijvoorbeeld ten opzichte van het gemiddelde van de afgelopen 200 dagen). De app rekent ook terug wat dat in het verleden had opgeleverd.
 
+### W46 – Waar zet ik mijn geld in?
+Vul een bedrag in (bijvoorbeeld € 100) en de app rekent uit hoe je dat verdeelt om dichter bij je eigen doelverdeling te komen, bijvoorbeeld "€ 70 BTC, € 30 ETH", met hoe je verdeling er daarna uitziet. Het volgt alleen jouw eigen plan en voorspelt niets: de app zegt nooit welke munt gaat stijgen. Eventueel ook een seintje als een munt flink onder je gemiddelde aankoopprijs staat, en een koppeling met de vaste inleg. Past in Analyse › Plannen, bij de doelverdeling.
+
 ## Administratie
 
 ### W4 – Staking-overzicht

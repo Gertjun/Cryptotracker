@@ -111,7 +111,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Kop `## X.Y.Z – datum`, één zin samenvatting.
   - Secties `### Toegevoegd / Gewijzigd / Verbeterd / Opgelost / Technisch / Let op`, met vetgedrukte labels.
   - Bij een wens schrijf je "(wens Wn)".
-- **Wishlist:** een ingebouwde wens verdwijnt met `tools/wish.py Wn`. Een nieuwe wens krijgt het eerstvolgende vrije nummer; de hoogste is nu W45.
+- **Wishlist:** een ingebouwde wens verdwijnt met `tools/wish.py Wn`. Een nieuwe wens krijgt het eerstvolgende vrije nummer; de hoogste is nu W46.
 
 ## 5. Stijl en vormgeving
 
