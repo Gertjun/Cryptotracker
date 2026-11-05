@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 5 november 2026 · versie **3.23.0**
+Laatst bijgewerkt: 5 november 2026 · versie **3.23.1**
 
 ---
 
@@ -45,7 +45,8 @@ Laatst bijgewerkt: 5 november 2026 · versie **3.23.0**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **5 nov 2026:**
-  - 3.23.0: iPad rechtop (700–999 px breed, ≥ 700 px hoog) krijgt de zijbalk zoals de laptop (D42); laptop en iPhone ongewijzigd. Nog niet door Geert op de iPad bekeken. Op de iPad mini past de schermtitel naast de knoppen maar net ("Ov…"); inklappen van de zijbalk helpt.
+  - 3.23.1: iPad rechtop toch zonder zijbalk; tabbladen bovenaan in een rij zoals Vaste Lasten (D43, vervangt D42). Nog niet door Geert op de iPad bekeken; open vraag: ook zo bij de iPad liggend?
+  - 3.23.0: iPad rechtop (700–999 px breed, ≥ 700 px hoog) krijgt de zijbalk zoals de laptop (D42); laptop en iPhone ongewijzigd. Nog niet door Geert op de iPad bekeken.
   - 3.22.0: marktsentiment (angst- en hebzuchtmeter van alternative.me) op het Overzicht, uit te zetten in Instellingen (W24, D41). Nog niet door Geert bekeken. De a11y-test (thema Nachtblauw) viel één keer om bij de volledige ronde en slaagde daarna steeds; houd in de gaten.
   - 3.21.1: W46 "Waar zet ik mijn geld in?" op de wishlist. Geert vroeg om koopadvies; afgesproken: geen voorspelling welke munt stijgt, alleen een bedrag verdelen volgens zijn eigen doelverdeling. Nog niet bouwen.
 - **4 nov 2026:**

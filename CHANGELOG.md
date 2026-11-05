@@ -7,12 +7,24 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.0`) en de naam van het zip-bestand (`crypto-tracker-3.23.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.1`) en de naam van het zip-bestand (`crypto-tracker-3.23.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.23.1 – 5 november 2026
+Op de iPad rechtop staan de tabbladen nu bovenaan in een rij, zoals in Vaste Lasten, in plaats van een zijbalk.
+
+### Gewijzigd
+- **iPad rechtop:** geen zijbalk meer (vervangt 3.23.0). Bovenaan staan de appnaam en de knoppen (synchroniseren, oogje, tandwiel, + Transactie), daaronder Overzicht, Transacties en Analyse als tabbladen met een lijn onder het actieve tabblad. De inhoud gebruikt de volle breedte, met de laptoptabel Bezittingen en blokken in twee kolommen (D43).
+- **Munt-pagina en Instellingen op de iPad:** de terugknop en de titel staan onder de tabbladen.
+- **Ongewijzigd:** laptop, iPhone (ook liggend) en iPad liggend.
+
+### Technisch
+- **Bovenbalk:** `.d-top` is opgesplitst in `.tb-title` (terugknop en titel) en `.tb-act` (knoppen). Op de laptop ziet het er hetzelfde uit.
+- **iPad rechtop:** `#side`, `#app`, `.top` en `.d-top` krijgen `display:contents`; appnaam, knoppen, tabbladen, titel en inhoud staan in het raster van `.shell`.
 
 ## 3.23.0 – 5 november 2026
 Op de iPad (ook rechtop) heeft de app nu de zijbalk, net als op de laptop.

@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.23.0 (5 nov 2026)';
+const APP_VERSION='3.23.1 (5 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -517,7 +517,7 @@ function topbarHTML(c,pageTitle){
   const back=`<button type="button" class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button>`;
   const title=c?`${esc(c.meta.name)} <span class="sym">${esc((c.meta.symbol||'').toUpperCase())}</span>`:(pageTitle||'Overzicht');
   const mob=c?`${back}<h1>${title}</h1>${eye}`:`<div class="tb-group">${eye}${lockB}</div>${pageTitle?`<h1>${pageTitle}</h1>`:`<h1 class="sr-only">Overzicht</h1>${syncBadge()}`}<div class="tb-group">${lockCfg?'<span class="tb-spacer"></span>':''}${gear}</div>`;
-  return `<div class="m-top only-m">${mob}</div><div class="d-top only-d">${c?back:''}<h1>${title}</h1><span class="grow"></span>${syncBadge()}${eye}${lockB}${gear}<button type="button" class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div>`;
+  return `<div class="m-top only-m">${mob}</div><div class="d-top only-d"><div class="tb-title">${c?back:''}<h1>${title}</h1></div><span class="grow"></span><div class="tb-act">${syncBadge()}${eye}${lockB}${gear}<button type="button" class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div></div>`;
 }
 /* ---------- transactie-overzicht ---------- */
 let txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};
@@ -2397,7 +2397,7 @@ function openSettings(){
 function setTopbarHTML(){
   const eye=`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
   const back=`<button type="button" class="icon-btn" data-act="setback" aria-label="Terug">${ICONS.back}</button>`;
-  return `<div class="m-top only-m">${back}<h1>Instellingen</h1>${eye}</div><div class="d-top only-d">${back}<h1>Instellingen</h1><span class="grow"></span>${syncBadge()}${eye}</div>`;
+  return `<div class="m-top only-m">${back}<h1>Instellingen</h1>${eye}</div><div class="d-top only-d"><div class="tb-title">${back}<h1>Instellingen</h1></div><span class="grow"></span><div class="tb-act">${syncBadge()}${eye}</div></div>`;
 }
 function exportData(){
   settings.lastExport=Date.now();saveSettings();

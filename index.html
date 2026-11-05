@@ -197,6 +197,8 @@ a{color:var(--accent)}
 #pchart svg{height:170px}#pchart .chart-msg{height:170px}
 .tb-group{display:flex;gap:8px;flex:none}
 .m-top,.d-top{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
+.tb-title{display:flex;align-items:center;gap:10px;min-width:0;flex:0 1 auto}
+.tb-act{display:flex;align-items:center;gap:10px;flex:none}
 #side{display:none}
 .side-col .card{margin-bottom:14px}
 .kv>div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -759,14 +761,32 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
 .pair-steps{padding-left:20px;margin:0 0 12px}.pair-steps li{margin:4px 0}
 .pair-pin-l{margin:14px 0 2px}
 .pair-pin{font:700 28px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:3px;margin:0 0 10px}
-/* iPad in portret (700–999 px breed, minstens 700 px hoog): laptopopbouw met zijbalk, maar smaller zodat er ruimte overblijft voor grafiek en tabellen */
+/* iPad rechtop (700–999 px breed, minstens 700 px hoog): de laptopinhoud, maar zonder zijbalk.
+   Bovenaan de appnaam met de knoppen ernaast, daaronder de tabbladen als rij met een lijn onder het actieve tabblad, zoals Vaste Lasten (D43).
+   #side en #app doen niet mee als blok (display:contents); hun onderdelen staan direct in het raster van .shell. */
 @media (min-width:700px) and (max-width:999px) and (min-height:700px){
-  .shell{grid-template-columns:232px minmax(0,1fr)}
-  .brand{gap:6px;padding:6px 2px 24px;font-size:15px}
-  .side-tog{margin-right:-6px}
-  #app{padding:0 20px 40px}
-  .rep-grid{grid-template-columns:minmax(0,1fr)}   /* Analyse: blokken onder elkaar, twee kolommen naast de zijbalk is te smal */
-  .top{height:76px}
+  body{padding-top:env(safe-area-inset-top)}
+  .shell,.shell.side-min{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"brand act" "nav nav" "title title" "view view";column-gap:16px;padding:14px 20px 48px;min-height:0}
+  #side,#app,.top,.d-top{display:contents}
+  .d-top>.grow{display:none}
+  .shell #side>:not(.brand):not(nav),.shell .side-tog{display:none}
+  .shell .brand{grid-area:brand;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;padding:0;font-size:20px;white-space:nowrap}
+  .shell .brand img{width:34px;height:34px}
+  .shell .brand-n{display:inline}
+  .shell .brand>.app-ver{display:inline;width:auto;order:2;margin:2px 0 0;font-size:12px}
+  .shell .brand>button.app-ver{display:inline-block;margin:0;padding:5px 9px;font-size:11px}
+  .tb-act{grid-area:act;justify-self:end;min-height:64px}
+  .tb-title{grid-area:title;margin:0 0 16px}
+  .tb-title>h1:first-child{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}   /* de tabbladen tonen al waar je bent; op munt-pagina en Instellingen staat de titel met terugknop onder de tabbladen */
+  .tb-title:not(:has(button)){margin:0}
+  #view{grid-area:view;min-width:0}
+  #side>nav{grid-area:nav;display:flex;gap:4px;border-bottom:1px solid var(--line);margin:8px 0 20px}
+  .shell .nav{gap:8px;padding:12px 16px;min-height:48px;border-radius:0;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:16px;background:none}
+  .shell .nav:hover{background:none;color:var(--text)}
+  .shell .nav.on{background:none;color:var(--text);border-bottom-color:var(--accent)}
+  .shell .nav svg{width:20px;height:20px}
+  .shell .nav-l{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto}
+}
 }
 /* Laptop (≥ 1400 px), munt-pagina: beide kolommen eindigen onderaan gelijk. De hulpmiddelen links rekken mee
    met de rechterkolom, en rechts rekt het onderste blok (prijsalerts) mee als links hoger is. */

@@ -59,7 +59,8 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 - **Schermen:**
   - `render()` → `renderInner()` → `renderHome()` / `renderCoin()` / `renderTxs()` / `renderReports()` / `renderSettings()` (het scherm Analyse, voorheen Rapporten).
   - Hash-routes: `#coin/<id>`, `#transacties`, `#analyse/<tab>` met de tabbladen rendement, vergelijken, plannen en administratie, en `#instellingen`. `fixOldHash()` zet oude adressen (`#rapporten/…`, tabblad `analyse`) om naar de nieuwe.
-  - **Zijbalk** (`renderSide(cid)`, laptop): op het Overzicht (`cid` leeg) alleen de navigatie; cash, bezittingen, gesloten posities en volglijst staan daar al in beeld. Op de andere schermen staan ze wel in de zijbalk. Inklappen (D40): knop `data-act="sidetog"` zet `settings.sideMin`; `renderSide()` geeft `.shell` dan de klasse `.side-min` (72 px, alleen logo en nav-iconen; labels in `.nav-l` blijven voor schermlezers).
+  - **Bovenbalk** (`topbarHTML()`): `.d-top` bestaat uit `.tb-title` (terugknop en `h1`) en `.tb-act` (knoppen); op de iPad rechtop staan die los in het raster van `.shell` (D43).
+  - **Zijbalk** (`renderSide(cid)`, laptop; op de iPad rechtop alleen appnaam en tabbladen): op het Overzicht (`cid` leeg) alleen de navigatie; cash, bezittingen, gesloten posities en volglijst staan daar al in beeld. Op de andere schermen staan ze wel in de zijbalk. Inklappen (D40): knop `data-act="sidetog"` zet `settings.sideMin`; `renderSide()` geeft `.shell` dan de klasse `.side-min` (72 px, alleen logo en nav-iconen; labels in `.nav-l` blijven voor schermlezers).
   - **Overzicht:** het blok naast de grafiek (Waarde crypto, Geïnvesteerd, …) heeft de klasse `.not-phone` (verborgen onder 700 px). De regel `#heroSub` onder de totale waarde heeft vanaf 700 px de klasse `.rest` (onzichtbaar, ruimte blijft) en verschijnt alleen tijdens het aanwijzen van de grafiek; op de telefoon staat hij altijd.
   - **Transacties op de telefoon:** zoekveld + knop Filter (`data-act="txfilt"`, `txOpen`); filters (`.tx-more`) en totalen (`.tx-sum`) staan in `.txp.open`. Eén regel `.tx-brief` met aantal en gerealiseerd. Vanaf 700 px staat alles open.
   - **Munt-pagina** (`.coin-page`): onder 1000 px is `.coin-grid` `display:contents`, zodat de transacties (`.coin-txs`) vóór de rekenhulpen (`.coin-tools`) staan.
@@ -104,7 +105,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 - **Vaste bovenbalk:** zonder zijbalk (onder 1000 px, behalve de iPad rechtop) is `.top` (`#topbar`) sticky op `--stick` (alleen de veilige ruimte bovenin, geen `--top-extra`, D39), met 14 px padding boven de knoppen en minimaal 64 px hoog; kolomkoppen van tabellen staan daar 64 px onder. Een nieuw sticky element op telefoon of tablet moet rekening houden met die balk.
 - **Breakpoints:**
   - telefoon: < 700 px;
-  - tablet: 700–999 px; **hoog** (≥ 700 px, iPad rechtop) krijgt de laptopopbouw met een smallere zijbalk (232 px, D42); **laag** (< 700 px, bijv. liggende iPhone) de telefoonopbouw maar breder;
+  - tablet: 700–999 px; **hoog** (≥ 700 px, iPad rechtop) krijgt de laptopinhoud zonder zijbalk: appnaam en knoppen bovenaan, daaronder de tabbladen in een rij (D43); **laag** (< 700 px, bijv. liggende iPhone) de telefoonopbouw maar breder;
   - in de CSS: "laptop" = `(min-width:1000px), (min-width:700px) and (min-height:700px)`; "telefoon en tablet" = `(max-width:699px), (max-width:999px) and (max-height:699px)`;
   - kleine laptop: 1000–1399 px, de grafiek over de volle breedte en de kaarten eronder;
   - laptop: ≥ 1400 px, met zijbalk en twee kolommen.

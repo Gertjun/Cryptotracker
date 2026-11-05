@@ -108,13 +108,21 @@ test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',a
   expect(hit).toBe(true);
 });
 
-test('iPad in portret krijgt de zijbalk; de iPhone in liggende stand niet (3.23.0)',async({page},testInfo)=>{
+test('iPad rechtop: tabbladen bovenaan zonder zijbalk; laptop zijbalk; liggende telefoon tabbalk (3.23.1)',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen met een instelbaar venster');
   const errors=await openApp(page);await importCsv(page);
-  for(const [w,h,side] of [[820,1180,true],[744,1133,true],[932,430,false],[1440,900,true]]){
-    await page.setViewportSize({width:w,height:h});await page.waitForTimeout(300);
-    if(side){await expect(page.locator('#side')).toBeVisible();await expect(page.locator('.tabbar')).toBeHidden()}
-    else{await expect(page.locator('#side')).toBeHidden();await expect(page.locator('.tabbar')).toBeVisible()}
+  const nav=page.locator('#side nav'),tab=page.locator('.tabbar');
+  for(const [w,h,mode] of [[820,1180,'tabs'],[744,1133,'tabs'],[932,430,'phone'],[1440,900,'side']]){
+    await page.setViewportSize({width:w,height:h});
+    await page.evaluate(()=>{location.hash='#coin/bitcoin'});await page.waitForTimeout(400);
+    if(mode==='phone'){await expect(nav).toBeHidden();await expect(tab).toBeVisible();continue}
+    await expect(nav).toBeVisible();await expect(tab).toBeHidden();
+    await expect(page.locator('.d-top h1')).toBeVisible();
+    const n=await nav.boundingBox(),hd=await page.locator('.d-top h1').boundingBox();
+    if(mode==='tabs'){expect(n.width).toBeGreaterThan(w-60);expect(hd.y).toBeGreaterThan(n.y);   // tabbladen over de volle breedte, munttitel eronder
+      await expect(page.locator('#side .side-coin').first()).toBeHidden();
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)}
+    else expect(n.width).toBeLessThan(300);
   }
   expect(errors).toEqual([]);
 });

@@ -226,3 +226,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Hoe:** in `index.html` zijn de mediaregels `(min-width:1000px)` uitgebreid met `(min-width:700px) and (min-height:700px)`, en `(max-width:999px)` beperkt tot `(max-width:699px), (max-width:999px) and (max-height:699px)`. Een nieuwe regel voor "laptop" of "telefoon en tablet" moet dezelfde vorm krijgen.
 - **Niet gekozen:** herkennen of het een iPad is via JavaScript (werkt niet in CSS en is onbetrouwbaar sinds iPadOS zich als Mac voordoet); de zijbalk standaard ingeklapt op de iPad (Geert vroeg om een zijbalk zoals op de laptop).
 
+### D43 – iPad rechtop: tabbladen bovenaan in plaats van een zijbalk (5 nov 2026, 3.23.1, vervangt D42)
+- **Besluit:** op een scherm van 700–999 px breed en minstens 700 px hoog staat bovenaan de appnaam met versienummer en rechts de knoppen (synchroniseren, oogje, slotje, tandwiel, + Transactie). Daaronder staan Overzicht, Transacties en Analyse als tabbladen in een rij, met een lijn onder het actieve tabblad. De inhoud is die van de kleine laptop (D15), over de volle breedte. Op de munt-pagina en Instellingen staan de terugknop en de titel onder de tabbladen; op de andere schermen is de titel alleen voor schermlezers (de tabbladen tonen al waar je bent). Geen tabbalk onderin, geen muntenlijst.
+- **Waarom:** Geert vond de zijbalk uit 3.23.0 toch niet goed en wees Vaste Lasten op de iPad aan als voorbeeld.
+- **Hoe:** `#side`, `#app`, `.top` en `.d-top` krijgen `display:contents`, zodat `.brand`, `#side>nav`, `.tb-act`, `.tb-title` en `#view` in één raster (`.shell`) staan. De mediaregels uit D42 blijven: "laptop" = `(min-width:1000px), (min-width:700px) and (min-height:700px)`.
+- **Niet gekozen:** Instellingen als vierde tabblad zoals in Vaste Lasten (D37: het tandwiel opent Instellingen); dezelfde opbouw voor de iPad liggend (die is niet te onderscheiden van een kleine laptop en houdt de zijbalk).
+
