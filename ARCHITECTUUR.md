@@ -101,10 +101,11 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - **Instellingen** is een eigen scherm (`#instellingen`, D37): `renderSettings()` tekent het (`.set-grid` met twee `.set-col`, elk blok een `section.card` met `h2`); `openSettings()` opent of ververst het. `render()` bouwt het niet opnieuw op als het al in beeld is. `syncInfoHTML()` (`#setSync`) wordt bijgewerkt door `updBadges()`.
 - **Passen op het scherm:** tabellen en grafieken krijgen geen schuifbalk opzij (getest in `tests/specs/fit.spec.mjs`). Gebruik tickers in plaats van lange namen, en geef een nieuwe tabelkolom een prioriteit (`data-p`). Uitzondering: het vergrote venster Rendement per dag/week op een telefoon.
 - **Tabbladen van Analyse** (`.rep-tabs`): onder 400 px in twee rijen.
-- **Vaste bovenbalk:** onder 1000 px is `.top` (`#topbar`) sticky op `--stick` (alleen de veilige ruimte bovenin, geen `--top-extra`, D39), met 14 px padding boven de knoppen en minimaal 64 px hoog; kolomkoppen van tabellen staan daar 64 px onder. Een nieuw sticky element op telefoon of tablet moet rekening houden met die balk.
+- **Vaste bovenbalk:** zonder zijbalk (onder 1000 px, behalve de iPad rechtop) is `.top` (`#topbar`) sticky op `--stick` (alleen de veilige ruimte bovenin, geen `--top-extra`, D39), met 14 px padding boven de knoppen en minimaal 64 px hoog; kolomkoppen van tabellen staan daar 64 px onder. Een nieuw sticky element op telefoon of tablet moet rekening houden met die balk.
 - **Breakpoints:**
   - telefoon: < 700 px;
-  - tablet: 700–999 px, de telefoonopbouw maar breder;
+  - tablet: 700–999 px; **hoog** (≥ 700 px, iPad rechtop) krijgt de laptopopbouw met een smallere zijbalk (232 px, D42); **laag** (< 700 px, bijv. liggende iPhone) de telefoonopbouw maar breder;
+  - in de CSS: "laptop" = `(min-width:1000px), (min-width:700px) and (min-height:700px)`; "telefoon en tablet" = `(max-width:699px), (max-width:999px) and (max-height:699px)`;
   - kleine laptop: 1000–1399 px, de grafiek over de volle breedte en de kaarten eronder;
   - laptop: ≥ 1400 px, met zijbalk en twee kolommen.
 - **Versienummers:** `MAJOR.MINOR.PATCH`. MAJOR als de gebruiker iets moet doen, MINOR bij een nieuwe functie, PATCH bij een verbetering of fix.

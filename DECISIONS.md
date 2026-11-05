@@ -219,3 +219,10 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** vanaf 1000 px staat naast de appnaam een knop (pijltje) die de zijbalk inklapt tot een strook van 72 px met het logo en de iconen van Overzicht, Transacties en Analyse (naam als tooltip). Muntenlijsten, kopjes en "Koersdata" verdwijnen ingeklapt. "Update beschikbaar" blijft zichtbaar als kleine knop. De keuze staat in `settings.sideMin` (per apparaat).
 - **Waarom:** Geert wilde meer ruimte voor grafieken en tabellen op de laptop; met de extra breedte verbergt `fitTables()` minder kolommen.
 - **Niet gekozen:** de zijbalk helemaal verbergen (dan moet de navigatie ergens anders komen); munticonen in de smalle strook (te veel iconen zonder naam); de keuze synchroniseren via `data.cfg` (op een kleine laptop wil je misschien iets anders dan op een groot scherm).
+
+### D42 – iPad rechtop krijgt de laptopopbouw met zijbalk (5 nov 2026, 3.23.0, vervangt de tabletregel uit D15 voor hoge schermen)
+- **Besluit:** een scherm van 700–999 px breed en minstens 700 px hoog (iPad rechtop) krijgt dezelfde opbouw als een kleine laptop (1000–1399 px): zijbalk, geen tabbalk, tabel Bezittingen. Daar is de zijbalk 232 px (laptop 264 px), de zijmarge 20 px, en staan de blokken van Analyse onder elkaar. De zijbalk is in te klappen (D40). De tabletopbouw uit D15 (telefoonopbouw, maar breder) geldt alleen nog voor lage schermen van 700–999 px, zoals een liggende iPhone.
+- **Waarom:** Geert wilde op de iPad een opbouw die meer op de laptop lijkt. Laptop en iPhone blijven zoals ze waren.
+- **Hoe:** in `index.html` zijn de mediaregels `(min-width:1000px)` uitgebreid met `(min-width:700px) and (min-height:700px)`, en `(max-width:999px)` beperkt tot `(max-width:699px), (max-width:999px) and (max-height:699px)`. Een nieuwe regel voor "laptop" of "telefoon en tablet" moet dezelfde vorm krijgen.
+- **Niet gekozen:** herkennen of het een iPad is via JavaScript (werkt niet in CSS en is onbetrouwbaar sinds iPadOS zich als Mac voordoet); de zijbalk standaard ingeklapt op de iPad (Geert vroeg om een zijbalk zoals op de laptop).
+

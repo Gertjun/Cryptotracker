@@ -7,12 +7,24 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.22.0`) en de naam van het zip-bestand (`crypto-tracker-3.22.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.0`) en de naam van het zip-bestand (`crypto-tracker-3.23.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.23.0 – 5 november 2026
+Op de iPad (ook rechtop) heeft de app nu de zijbalk, net als op de laptop.
+
+### Gewijzigd
+- **iPad met zijbalk:** een scherm van 700–999 px breed én minstens 700 px hoog (iPad rechtop) krijgt de laptopopbouw: zijbalk links, geen tabbalk onderin, de tabel Bezittingen en de knop + Transactie bovenin. De zijbalk is daar iets smaller (232 px) en kun je inklappen met het pijltje naast de appnaam (D42).
+- **Analyse op de iPad rechtop:** de blokken staan onder elkaar, want twee kolommen naast de zijbalk is te smal.
+- **Ongewijzigd:** de laptop, de iPhone (ook liggend, want die is lager dan 700 px) en de iPad liggend (had de zijbalk al).
+
+### Technisch
+- **Breekpunten:** `(min-width:1000px)` is nu `(min-width:1000px), (min-width:700px) and (min-height:700px)`; `(max-width:999px)` is `(max-width:699px), (max-width:999px) and (max-height:699px)`. De tabletopbouw (700–999 px) geldt alleen nog voor lage schermen, zoals een liggende telefoon.
+- **Test:** `indeling.spec.mjs` controleert de zijbalk op 820×1180 en 744×1133, en de tabbalk op 932×430.
 
 ## 3.22.0 – 5 november 2026
 Op het Overzicht zie je nu hoe angstig of hebberig de cryptomarkt is (wens W24).

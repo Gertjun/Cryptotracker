@@ -107,3 +107,14 @@ test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',a
   const hit=await page.evaluate(()=>{const b=document.querySelector('#topbar button');if(!b)return false;const r=b.getBoundingClientRect();return b.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))});
   expect(hit).toBe(true);
 });
+
+test('iPad in portret krijgt de zijbalk; de iPhone in liggende stand niet (3.23.0)',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'alleen met een instelbaar venster');
+  const errors=await openApp(page);await importCsv(page);
+  for(const [w,h,side] of [[820,1180,true],[744,1133,true],[932,430,false],[1440,900,true]]){
+    await page.setViewportSize({width:w,height:h});await page.waitForTimeout(300);
+    if(side){await expect(page.locator('#side')).toBeVisible();await expect(page.locator('.tabbar')).toBeHidden()}
+    else{await expect(page.locator('#side')).toBeHidden();await expect(page.locator('.tabbar')).toBeVisible()}
+  }
+  expect(errors).toEqual([]);
+});
