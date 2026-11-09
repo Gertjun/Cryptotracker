@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 9 november 2026 · versie **3.23.3**
+Laatst bijgewerkt: 9 november 2026 · versie **3.24.0**
 
 ---
 
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 9 november 2026 · versie **3.23.3**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **9 nov 2026:**
+  - 3.24.0: laptop zoals Vaste Lasten: synchronisatie, + Transactie, oogje en slotje in de zijbalk; Instellingen als vierde knop (ook vierde tabblad op de iPad rechtop) met links een lijst van onderdelen en rechts de blokken (D46, vervangt D37 voor laptop/iPad). Telefoon ongewijzigd. Nog niet door Geert bekeken.
   - 3.23.3: koersen sneller binnen. Achtergrondwerk schuift niet meer vóór de koersupdate; geen grafieken meer voor munten die je in de periode niet had; koersarchief alleen aanvullen als er een dag ontbreekt (D45). Nog niet door Geert bekeken.
   - Geert vroeg om koersen elk uur op de achtergrond op te halen, ook als de app dicht is. Kan niet in de app (iOS staat dat niet toe voor web-apps); alleen via een GitHub-taak in de data-repository, met de muntenlijst onversleuteld. Afgesproken: eerst 3.23.3 afwachten.
 - **5 nov 2026:**

@@ -243,3 +243,13 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Let op:** CoinGecko telt verzoeken, niet de hoeveelheid gegevens. "Alleen ophalen sinds de laatste keer" scheelt dus geen verzoeken; minder munten opvragen wel.
 - **Niet gekozen:** koersen elk uur ophalen terwijl de app dicht is. In de app kan dat niet (iOS laat web-apps niets op de achtergrond doen). Wel mogelijk via een GitHub-taak in de data-repository, maar dan staat de muntenlijst onversleuteld, is een Demo-sleutel als geheim nodig en loopt GitHub vaak achter op het schema. Eerst kijken of 3.23.3 genoeg is.
 
+### D46 – Laptop: knoppen in de zijbalk, Instellingen als vierde knop en in onderdelen (9 nov 2026, 3.24.0, vervangt D37 voor laptop en iPad)
+- **Besluit:**
+  - **Zijbalk (vanaf 1000 px):** onder de appnaam en het versienummer de synchronisatiestatus, daaronder + Transactie, het oogje en het slotje (`.side-act`). Rechtsboven (`.d-top .tb-act`) staan op de laptop geen knoppen meer. Ingeklapt (D40) staan ze als iconen onder elkaar.
+  - **Instellingen** is een vierde knop in de zijbalk (laptop, iPad liggend) en een vierde tabblad op de iPad rechtop (D43). Daar geen tandwiel meer en geen terugknop. Op de iPad rechtop blijven synchronisatie, oogje, slotje en + Transactie rechtsboven. De telefoon blijft zoals hij was: tandwiel, terugknop, drie tabbladen onderin.
+  - **Instellingen in onderdelen** (vanaf 700 px breed en hoog): links een lijst met Synchronisatie, Weergave, Portefeuilles, Beveiliging, Koersdata en markt, Gegevens en Over de app, met de stand in het kort; rechts alleen de blokken van het gekozen onderdeel, naast elkaar als er ruimte is. Gekozen onderdeel in `settings.setSec` (per apparaat). Op de telefoon staan alle blokken onder elkaar.
+  - Op het scherm Instellingen toont de zijbalk geen muntenlijst.
+- **Waarom:** Geert wilde de laptop zoals Vaste Lasten (screenshot): knoppen links, Instellingen als eigen knop, en een scherm met een lijst en de blokken ernaast.
+- **Hoe:** alle onderdelen staan altijd in de HTML; wisselen gebeurt met de klasse `.set-pane.on`, zonder opnieuw opbouwen, zodat ingevulde velden blijven staan.
+- **Niet gekozen:** een eigen adres per onderdeel (`#instellingen/sync`); het tandwiel naast de knop Instellingen laten staan (dubbel); Instellingen als vierde tabblad op de telefoon (D25: drie tabbladen onderin).
+
