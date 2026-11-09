@@ -258,3 +258,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert vond de zijbalk met alle knoppen onrustig.
 - **Niet gekozen:** + Transactie ook terug naar rechtsboven (Geert noemde alleen synchronisatie, oogje en slotje; kan eenvoudig alsnog).
 
+### D48 – In de zijbalk schuift alleen de muntenlijst (9 nov 2026, 3.24.2)
+- **Besluit:** in `renderSide()` staan cash, bezittingen, gesloten posities, volglijst en de voetregel in `.side-scroll` (eigen schuifbalk, minimaal 120 px hoog). Appnaam, versienummer, + Transactie en de navigatie staan daarboven en schuiven niet mee.
+- **Waarom:** op Windows neemt de schuifbalk ruimte in. Op schermen met een lange muntenlijst (Transacties, Analyse, munt-pagina) werd de zijbalk daardoor smaller, waardoor de inklapknop op een eigen regel kwam en het versienummer versprong.
+- **Niet gekozen:** de schuifbalk onzichtbaar maken (dan zie je niet dat de lijst langer is); altijd ruimte reserveren voor een schuifbalk (dan past de bovenste regel ook op het Overzicht niet meer).
+- **Test:** `tests/specs/zijbalk.spec.mjs` draait Chromium zonder `--hide-scrollbars`, zodat de schuifbalk ruimte inneemt zoals op Windows.
+

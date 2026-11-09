@@ -450,6 +450,8 @@ a{color:var(--accent)}
   .side-coin.on,.side-coin:hover{background:var(--card)}
   .side-coin .coin-img,.side-coin .coin-ph{width:28px;height:28px;font-size:9px}
   .side-foot{margin-top:auto;color:var(--muted);font-size:12px;padding:16px 12px 0}
+  /* alleen de muntenlijsten schuiven: een schuifbalk (Windows) maakt de appnaam en de knoppen erboven niet smaller */
+  .side-scroll{flex:1 1 0;min-height:120px;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;margin:0 -14px;padding:0 14px}
   /* + Transactie in de zijbalk (D47); synchronisatie, oogje en slotje staan rechtsboven */
   .side-act{display:grid;padding:0 10px 20px;margin-top:-10px}
   .side-act .btn-add{justify-content:center;height:44px}
@@ -460,6 +462,7 @@ a{color:var(--accent)}
   .brand>.app-ver{order:2}
   .shell.side-min{grid-template-columns:72px minmax(0,1fr)}
   .side-min #side{padding:20px 12px;overflow-x:hidden}
+  .side-min .side-scroll{margin:0 -12px;padding:0 12px}
   .side-min .brand{flex-direction:column;align-items:center;gap:8px;padding:6px 0 18px}
   .side-min .side-tog{margin:0;order:0}
   .side-min .side-tog svg{transform:scaleX(-1)}

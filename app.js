@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.24.1 (9 nov 2026)';
+const APP_VERSION='3.24.2 (9 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -517,11 +517,11 @@ function renderSide(cid){
   <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}${min?' title="Transacties"':''}>${ICONS.list} <span class="nav-l">Transacties</span></a>
   <a class="nav ${cid==='__rep'?'on':''}" href="#analyse"${cid==='__rep'?' aria-current="page"':''}${min?' title="Analyse"':''}>${ICONS.reps} <span class="nav-l">Analyse</span></a>
   <a class="nav ${cid==='__set'?'on':''}" href="#instellingen"${cid==='__set'?' aria-current="page"':''}${min?' title="Instellingen"':''}>${ICONS.gear} <span class="nav-l">Instellingen</span></a></nav>
-  ${!home&&p.hasCash?`<div class="side-t">Cash</div><a class="side-coin" href="#transacties" data-act="cashtx"><div class="coin-ph cash-ic">€</div><div class="grow"><div class="name-sm name">Beschikbaar</div><div class="meta m">${money(p.cash,2)}</div></div></a>`:''}
+  <div class="side-scroll">${!home&&p.hasCash?`<div class="side-t">Cash</div><a class="side-coin" href="#transacties" data-act="cashtx"><div class="coin-ph cash-ic">€</div><div class="grow"><div class="name-sm name">Beschikbaar</div><div class="meta m">${money(p.cash,2)}</div></div></a>`:''}
   ${!home&&list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="chg ${cls(c.unreal)}">${pct(c.unrealPct)}</div></a>`).join('')}`:''}
   ${!home&&p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div></div><div class="chg ${cls(c.realized)} m">${signed(c.realized)}</div></a>`).join('')}`:''}
   ${!home&&watchOnly().length?`<div class="side-t">Volglijst</div>${watchOnly().map(x=>{const P=prices[x.id]||{};return `<a class="side-coin ${x.id===cid?'on':''}" href="#coin/${encodeURIComponent(x.id)}" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name-sm name">${esc(x.name)}</div><div class="meta">${money(P.price)}</div></div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></a>`}).join('')}`:''}
-  <div class="side-foot">Koersdata: CoinGecko</div>`;
+  <div class="side-foot">Koersdata: CoinGecko</div></div>`;   // alleen de muntenlijsten schuiven; appnaam, knoppen en navigatie blijven staan (en verspringen niet door een schuifbalk)
 }
 const eyeBtn=()=>`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen" aria-pressed="${!!settings.privacy}">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
 const lockBtn=()=>lockCfg?`<button type="button" class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';

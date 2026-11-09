@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 9 november 2026 · versie **3.24.1**
+Laatst bijgewerkt: 9 november 2026 · versie **3.24.2**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 9 november 2026 · versie **3.24.1**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 52 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates, de kolommen van Bezittingen en marktsentiment (`markt.spec.mjs`).
+- Zie `tests/README.md`. Er zijn 53 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), zijbalk met gewone schuifbalken (`zijbalk.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates, de kolommen van Bezittingen en marktsentiment (`markt.spec.mjs`).
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 9 november 2026 · versie **3.24.1**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **9 nov 2026:**
+  - 3.24.2: versienummer in de zijbalk verspringt niet meer op Transacties/Analyse; alleen de muntenlijst schuift (D48). Nieuwe test `zijbalk.spec.mjs`.
   - 3.24.1: synchronisatie, oogje en slotje terug rechtsboven; zijbalk alleen + Transactie en vier knoppen (D47). a11y-test wacht nu tot een melding weg is (de eerdere toevallige fout bij Nachtblauw/Hoog contrast kwam door een uitfadende melding). Nog niet door Geert bekeken.
   - 3.24.0: laptop zoals Vaste Lasten: synchronisatie, + Transactie, oogje en slotje in de zijbalk; Instellingen als vierde knop (ook vierde tabblad op de iPad rechtop) met links een lijst van onderdelen en rechts de blokken (D46, vervangt D37 voor laptop/iPad). Telefoon ongewijzigd. Nog niet door Geert bekeken.
   - 3.23.3: koersen sneller binnen. Achtergrondwerk schuift niet meer vóór de koersupdate; geen grafieken meer voor munten die je in de periode niet had; koersarchief alleen aanvullen als er een dag ontbreekt (D45). Nog niet door Geert bekeken.

@@ -7,12 +7,21 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.1`) en de naam van het zip-bestand (`crypto-tracker-3.24.1.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.2`) en de naam van het zip-bestand (`crypto-tracker-3.24.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.24.2 – 9 november 2026
+Het versienummer in de zijbalk verspringt niet meer tussen de schermen.
+
+### Opgelost
+- **Zijbalk (laptop):** op Transacties en Analyse schoof het versienummer naar beneden en de inklapknop naar een eigen regel. Dat kwam door de schuifbalk van de muntenlijst, die de hele zijbalk smaller maakte (vooral op Windows). Nu schuift alleen de muntenlijst; de appnaam, + Transactie en de vier knoppen blijven op hun plek staan, ook als je door een lange lijst scrollt.
+
+### Technisch
+- `renderSide()`: cash, bezittingen, gesloten posities, volglijst en de voetregel staan in `.side-scroll`, met een eigen schuifbalk. Nieuwe test `zijbalk.spec.mjs` draait met gewone (niet-zwevende) schuifbalken.
 
 ## 3.24.1 – 9 november 2026
 Rustiger zijbalk op de laptop: synchronisatie, oogje en slotje staan weer rechtsboven.
