@@ -39,6 +39,7 @@ test('thema kiezen in Instellingen, en Automatisch volgt het apparaat',async({pa
   await openApp(page,{theme:'dark'});
   const html=page.locator('html');
   await page.evaluate(()=>openSettings());
+  const sec=page.locator('[data-setsec=view]');if(await sec.isVisible())await sec.click();   // laptop: onderdeel Weergave
   await expect(page.locator('#themeAuto')).toBeVisible();
   await page.locator('#s_themeD').selectOption('navy');
   await expect(html).toHaveClass(/th-navy/);

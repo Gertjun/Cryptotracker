@@ -20,6 +20,7 @@ test('marktsentiment uitzetten in Instellingen haalt het blok weg en blijft bewa
   await openApp(page);await importCsv(page);
   await expect(page.locator('#fngCard')).toBeVisible();
   await page.evaluate(()=>{location.hash='#instellingen'});
+  const sec=page.locator('[data-setsec=cg]');if(await sec.isVisible())await sec.click();   // laptop: onderdeel Koersdata en markt
   const box=page.getByLabel('Marktsentiment tonen op het Overzicht');
   await expect(box).toBeChecked();
   await box.uncheck();

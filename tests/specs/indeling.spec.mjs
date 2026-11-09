@@ -71,13 +71,15 @@ test('laptop: zijbalk in- en uitklappen, onthouden na herladen',async({page},tes
   expect(await side.evaluate(e=>e.getBoundingClientRect().width)).toBeGreaterThan(200);
 });
 
-test('Instellingen is een eigen scherm: tandwiel opent het, terug brengt je terug, velden blijven staan',async({page})=>{
+test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug brengt je terug, velden blijven staan',async({page},testInfo)=>{
+  test.skip(!isPhone(testInfo),'alleen op de telefoon');
   await openApp(page);await importCsv(page);
   await page.evaluate(()=>{location.hash='#transacties'});await expect(page.locator('#txOut')).toBeVisible();
   await page.locator('[data-act=settings]:visible').first().click();
   await expect(page).toHaveURL(/#instellingen$/);
   await expect(page.locator('#sheet')).toBeHidden();
-  for(const id of ['st_view','st_pf','st_sec','st_sync','st_cg','st_imp','st_danger'])await expect(page.locator('#'+id)).toBeVisible();
+  await expect(page.locator('.set-nav')).toBeHidden();   // op de telefoon alle blokken onder elkaar
+  for(const id of ['st_view','st_unit','st_pf','st_sec','st_sync','st_dev','st_cg','st_fng','st_imp','st_bak','st_danger','st_about'])await expect(page.locator('#'+id)).toBeVisible();
   await expect(page.locator('#btnAdd')).toBeHidden();
   // een koersupdate tekent het scherm niet opnieuw: wat je typt blijft staan
   await page.fill('#s_repo','geert/test');await page.evaluate(()=>render());
@@ -91,6 +93,41 @@ test('Instellingen is een eigen scherm: tandwiel opent het, terug brengt je teru
   // terugknop van de browser
   await page.evaluate(()=>openSettings());await expect(page.locator('#st_sync')).toBeVisible();
   await page.goBack();await expect(page.locator('#txOut')).toBeVisible();
+});
+
+test('laptop: knoppen in de zijbalk, Instellingen als vierde knop met onderdelen (3.24.0)',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'alleen op de laptop');
+  const errors=await openApp(page);await importCsv(page);
+  const side=page.locator('#side');
+  // synchronisatie, + Transactie en het oogje staan in de zijbalk; rechtsboven staan geen knoppen meer
+  for(const s of ['.sync','[data-act=add]','[data-act=privacy]'])await expect(side.locator(s)).toBeVisible();
+  await expect(page.locator('.d-top .tb-act')).toBeHidden();
+  await expect(page.locator('.d-top [data-act=settings]')).toHaveCount(0);
+  await side.locator('[data-act=add]').click();await expect(page.locator('#sheet')).toBeVisible();await page.evaluate(()=>closeSheet());
+  // Instellingen via de zijbalk
+  await side.getByRole('link',{name:'Instellingen'}).click();
+  await expect(page).toHaveURL(/#instellingen$/);
+  await expect(side.getByRole('link',{name:'Instellingen'})).toHaveAttribute('aria-current','page');
+  await expect(page.locator('.set-nav')).toBeVisible();
+  await expect(page.locator('[data-setsec=sync]')).toHaveAttribute('aria-current','true');
+  await expect(page.locator('#st_sync')).toBeVisible();await expect(page.locator('#st_view')).toBeHidden();
+  // wat je typt blijft staan, ook als je naar een ander onderdeel gaat en terug
+  await page.fill('#s_repo','geert/test');await page.evaluate(()=>render());
+  await page.locator('[data-setsec=view]').click();
+  await expect(page.locator('#st_view')).toBeVisible();await expect(page.locator('#st_unit')).toBeVisible();await expect(page.locator('#st_sync')).toBeHidden();
+  await expect(page.locator('[data-setsec=view]')).toHaveAttribute('aria-current','true');
+  await page.locator('[data-theme=light]').click();await expect(page.locator('[data-setsec=view]')).toContainText('Licht');
+  await page.locator('[data-setsec=sync]').click();await expect(page.locator('#s_repo')).toHaveValue('geert/test');
+  // het gekozen onderdeel blijft na een vervolgblad en na herladen
+  await page.locator('[data-setsec=pf]').click();
+  await page.locator('[data-act=pfedit][data-id=""]').click();await expect(page.locator('#pf_name')).toBeVisible();
+  await page.locator('#sheet [data-act=settings]').click();await expect(page.locator('#st_pf')).toBeVisible();
+  await page.reload();await expect(page.locator('#st_pf')).toBeVisible();
+  // ingeklapte zijbalk: de knoppen blijven bereikbaar
+  await side.locator('[data-act=sidetog]').click();
+  for(const s of ['.sync','[data-act=privacy]'])await expect(side.locator(s)).toBeVisible();
+  await expect(side.getByRole('button',{name:'Transactie toevoegen'})).toBeVisible();
+  expect(errors).toEqual([]);
 });
 
 test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',async({page},testInfo)=>{

@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.23.3 (9 nov 2026)';
+const APP_VERSION='3.24.0 (9 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -346,7 +346,7 @@ function placeUnitMenu(){const m=$('#unitMenu');if(!m)return;
   m.addEventListener('toggle',e=>{const b=$('#heroVal .unit-btn');if(e.newState!=='open'||!b)return;const r=b.getBoundingClientRect(),w=m.offsetWidth;
     m.style.top=Math.round(r.bottom+6)+'px';m.style.left=Math.round(Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2)))+'px';
     (m.querySelector('[aria-checked=true]')||m.querySelector('button'))?.focus()})}
-async function setUnit(u,btn){settings.unit=u;saveSettings();document.querySelectorAll('[data-unit]').forEach(b=>b.classList.toggle('on',b.dataset.unit===u));
+async function setUnit(u,btn){settings.unit=u;saveSettings();updSetNav();document.querySelectorAll('[data-unit]').forEach(b=>b.classList.toggle('on',b.dataset.unit===u));
   if(u!=='EUR'){toast('Koers ophalen…');await refreshFx();if(u==='BTC')await ensureBtcHist();if(!(fx.btcEur>0)){toast('Koers niet beschikbaar; bedragen blijven in euro tot de koers binnen is')}}
   const fromMenu=!!btn?.closest?.('#unitMenu');try{$('#unitMenu')?.hidePopover?.()}catch(e){}
   render();if(fromMenu)$('.unit-btn')?.focus();toast(u==='EUR'?'Bedragen in euro':u==='USD'?'Bedragen in dollar':'Bedragen in bitcoin')}
@@ -472,7 +472,7 @@ async function fetchChart0(id,days,low){
 // Na het opnieuw opbouwen van het scherm de toetsenbordfocus terugzetten op hetzelfde element
 function focusKey(e){if(!e||e===document.body)return null;if(e.id)return '#'+CSS.escape(e.id);
   if(e.dataset?.act==='pview')return `[data-act="pview"][data-v="${CSS.escape(e.dataset.v)}"]`;
-  for(const k of ['act','sort','wsort','prange','range','tf','rp','theme','cal','type'])if(e.dataset?.[k]!=null)return `[data-${k}="${CSS.escape(e.dataset[k])}"]`;
+  for(const k of ['setsec','act','sort','wsort','prange','range','tf','rp','theme','cal','type'])if(e.dataset?.[k]!=null)return `[data-${k}="${CSS.escape(e.dataset[k])}"]`;
   if(e.getAttribute?.('href'))return `a[href="${CSS.escape(e.getAttribute('href'))}"]`;
   const row=e.closest?.('[data-tx],[data-coin],[data-goal]');if(row){const k=row.dataset.tx!=null?'tx':row.dataset.coin!=null?'coin':'goal';return `[data-${k}="${CSS.escape(row.dataset[k])}"] .rowlink`}
   return null}
@@ -507,28 +507,33 @@ function renderInner(){
 let lastView=null;
 function renderSide(cid){
   const el=$('#side');if(!el)return;
-  const home=!cid;   // op het Overzicht staan cash, bezittingen en volglijst al in beeld
+  const home=!cid||cid==='__set';   // Instellingen: geen muntenlijst, het scherm is breed genoeg nodig   // op het Overzicht staan cash, bezittingen en volglijst al in beeld
   const p=portfolio(),list=[...p.open].sort((a,b)=>(b.value??0)-(a.value??0));
   const min=!!settings.sideMin;el.closest('.shell')?.classList.toggle('side-min',min);   // zijbalk ingeklapt (laptop, per apparaat)
   const tog=`<button type="button" class="side-tog" data-act="sidetog" aria-controls="side" aria-expanded="${!min}" aria-label="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}" title="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}">${ICONS.back}</button>`;
   el.innerHTML=`<div class="brand"><img src="icon.svg" alt="" width="32" height="32"><span class="brand-n">Crypto Portfolio</span>${tog}${appVerHTML()}</div>
+  <div class="side-act">${syncBadge()}<div class="side-btns"><button type="button" class="btn-add" data-act="add"${min?' title="Transactie toevoegen"':''}>${ICONS.plus}<span class="add-l"> Transactie</span><span class="sr-only add-sr"> toevoegen</span></button>${eyeBtn()}${lockBtn()}</div></div>
   <nav aria-label="Hoofdnavigatie"><a class="nav ${cid?'':'on'}" href="#"${cid?'':' aria-current="page"'}${min?' title="Overzicht"':''}>${ICONS.home} <span class="nav-l">Overzicht</span></a>
   <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}${min?' title="Transacties"':''}>${ICONS.list} <span class="nav-l">Transacties</span></a>
-  <a class="nav ${cid==='__rep'?'on':''}" href="#analyse"${cid==='__rep'?' aria-current="page"':''}${min?' title="Analyse"':''}>${ICONS.reps} <span class="nav-l">Analyse</span></a></nav>
+  <a class="nav ${cid==='__rep'?'on':''}" href="#analyse"${cid==='__rep'?' aria-current="page"':''}${min?' title="Analyse"':''}>${ICONS.reps} <span class="nav-l">Analyse</span></a>
+  <a class="nav ${cid==='__set'?'on':''}" href="#instellingen"${cid==='__set'?' aria-current="page"':''}${min?' title="Instellingen"':''}>${ICONS.gear} <span class="nav-l">Instellingen</span></a></nav>
   ${!home&&p.hasCash?`<div class="side-t">Cash</div><a class="side-coin" href="#transacties" data-act="cashtx"><div class="coin-ph cash-ic">€</div><div class="grow"><div class="name-sm name">Beschikbaar</div><div class="meta m">${money(p.cash,2)}</div></div></a>`:''}
   ${!home&&list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="chg ${cls(c.unreal)}">${pct(c.unrealPct)}</div></a>`).join('')}`:''}
   ${!home&&p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div></div><div class="chg ${cls(c.realized)} m">${signed(c.realized)}</div></a>`).join('')}`:''}
   ${!home&&watchOnly().length?`<div class="side-t">Volglijst</div>${watchOnly().map(x=>{const P=prices[x.id]||{};return `<a class="side-coin ${x.id===cid?'on':''}" href="#coin/${encodeURIComponent(x.id)}" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name-sm name">${esc(x.name)}</div><div class="meta">${money(P.price)}</div></div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></a>`}).join('')}`:''}
   <div class="side-foot">Koersdata: CoinGecko</div>`;
 }
+const eyeBtn=()=>`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen" aria-pressed="${!!settings.privacy}">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
+const lockBtn=()=>lockCfg?`<button type="button" class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';
+// Knoppen rechtsboven: alleen op de iPad rechtop. Op de laptop staan ze in de zijbalk (D46), op de telefoon in .m-top.
+const deskActHTML=()=>`<div class="tb-act">${syncBadge()}${eyeBtn()}${lockBtn()}<button type="button" class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div>`;
 function topbarHTML(c,pageTitle){
-  const eye=`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
-  const lockB=lockCfg?`<button type="button" class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';
+  const eye=eyeBtn(),lockB=lockBtn();
   const gear=`<button type="button" class="icon-btn" data-act="settings" aria-label="Instellingen">${ICONS.gear}</button>`;
   const back=`<button type="button" class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button>`;
   const title=c?`${esc(c.meta.name)} <span class="sym">${esc((c.meta.symbol||'').toUpperCase())}</span>`:(pageTitle||'Overzicht');
   const mob=c?`${back}<h1>${title}</h1>${eye}`:`<div class="tb-group">${eye}${lockB}</div>${pageTitle?`<h1>${pageTitle}</h1>`:`<h1 class="sr-only">Overzicht</h1>${syncBadge()}`}<div class="tb-group">${lockCfg?'<span class="tb-spacer"></span>':''}${gear}</div>`;
-  return `<div class="m-top only-m">${mob}</div><div class="d-top only-d"><div class="tb-title">${c?back:''}<h1>${title}</h1></div><span class="grow"></span><div class="tb-act">${syncBadge()}${eye}${lockB}${gear}<button type="button" class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div></div>`;
+  return `<div class="m-top only-m">${mob}</div><div class="d-top only-d"><div class="tb-title">${c?back:''}<h1>${title}</h1></div><span class="grow"></span>${deskActHTML()}</div>`;
 }
 /* ---------- transactie-overzicht ---------- */
 let txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};
@@ -743,7 +748,7 @@ function syncBadge(){
   if(!navigator.onLine)return `<button type="button" class="sync" data-act="syncinfo" title="Geen internet. Je ziet de laatst bekende koersen${cgT?' ('+fmtTs(cgT)+')':''}; wijzigingen worden gesynchroniseerd zodra je weer online bent.">${line('Offline','err',cgT?'koersen '+tm(cgT,fmtTs(cgT),true):'')}</button>`;
   return `<button type="button" class="sync" data-act="syncinfo" title="${esc(tip)}"><span class="sr-only">Nu synchroniseren. </span>${ghOn?line('GitHub',syncState.s,settings.lastGh?tm(settings.lastGh,ghTxt,true):ghTxt):''}${coinIds().length?line('Koersen',cgSt,cgT?tm(cgT,cgTxt,true):cgTxt):''}</button>`;
 }
-function updBadges(){const si=$('#setSync');if(si)si.outerHTML=syncInfoHTML();document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
+function updBadges(){const si=$('#setSync');if(si){si.outerHTML=syncInfoHTML();updSetNav()}document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
 window.addEventListener('offline',()=>{updBadges();if(!locked)toast('Geen internet: je ziet de laatst bekende koersen')});
 window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer online');refreshPrices();refreshFng();syncNow(true)});
 function renderHome(){
@@ -2341,41 +2346,34 @@ function deleteTx(){
   data.txs=data.txs.filter(t=>t.id!==form.id);data.deleted.push(form.id);saveData();closeSheet();render();toast('Verwijderd');
 }
 
+// Instellingen in onderdelen (D46): op de laptop en iPad links de lijst, rechts de blokken van het gekozen onderdeel.
+// Op de telefoon staat alles onder elkaar (de lijst is daar verborgen). Het gekozen onderdeel staat in settings.setSec (per apparaat).
+const SETSECS=[['sync','Synchronisatie','Koppeling met GitHub, andere apparaten en eerdere versies'],['view','Weergave','Thema en valuta'],['pf','Portefeuilles','Aparte portefeuilles toevoegen en wijzigen'],['sec','Beveiliging','App-vergrendeling met Face ID of passkey'],['cg','Koersdata en markt','CoinGecko-sleutel, koersarchief en marktsentiment'],['data','Gegevens','Importeren uit Bitvavo, back-up en wissen'],['about','Over de app','Versie, wijzigingen en installeren']];
+const curSetSec=()=>SETSECS.some(x=>x[0]===settings.setSec)?settings.setSec:'sync';
+function setSecStatus(k){
+  const g=settings.gh,ghOn=g.token&&g.repo&&g.pass;
+  const dot=(st,t)=>`<span class="si-st"><span class="dot ${st}" aria-hidden="true"></span>${t}</span>`;
+  if(k==='sync')return ghOn?dot(syncState.s==='err'?'err':'ok',syncState.s==='err'?'Laatste poging mislukt':'Gekoppeld'):dot('off','Niet gekoppeld');
+  if(k==='view'){const t=settings.theme||'auto';return dot('off',`${t==='auto'?'Automatisch':(THEMES.find(x=>x[0]===t)||[,'Donker'])[1]} · ${({EUR:'Euro',USD:'Dollar',BTC:'Bitcoin'})[settings.unit||'EUR']}`)}
+  if(k==='pf'){const n=pfList().length;return dot('off',n===1?'1 portefeuille':n+' portefeuilles')}
+  if(k==='sec')return lockCfg?dot('ok','Vergrendeling aan'):dot('off','Vergrendeling uit');
+  if(k==='cg')return dot(cgState.s==='err'?'err':'off',data.cfg?.cgKey?'Eigen sleutel':'Zonder sleutel');
+  if(k==='data')return dot('off',data.txs.length===1?'1 transactie':data.txs.length+' transacties');
+  return dot('off','v'+APP_VERSION.split(' ')[0]);
+}
+function setNavHTML(){const cur=curSetSec();
+  return SETSECS.map(([k,t,d])=>`<li><button type="button" class="set-item" data-setsec="${k}"${k===cur?' aria-current="true"':''}><span class="si-t">${t}</span>${setSecStatus(k)}<span class="si-d">${d}</span>${ICONS.back}</button></li>`).join('')}
+function updSetNav(){const n=$('#setNav');if(n)keepFocus(()=>{n.innerHTML=setNavHTML()})}
+function showSetSec(k){settings.setSec=k;saveSettings();
+  document.querySelectorAll('.set-pane').forEach(el=>el.classList.toggle('on',el.dataset.pane===k));
+  document.querySelectorAll('[data-setsec]').forEach(b=>{if(b.dataset.setsec===k)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current')})}
 function renderSettings(){
   const g=settings.gh;
   const pks=lockCfg?.pks||[];
+  const cur=curSetSec(),pane=(k,html)=>`<div class="set-pane${k===cur?' on':''}" data-pane="${k}">${html}</div>`;
   $('#topbar').innerHTML=setTopbarHTML();
-  $('#view').innerHTML=`<div class="set-grid" id="setView"><div class="set-col"><section class="card" aria-labelledby="st_view"><h2 class="h3" id="st_view">Weergave</h2>
-  <fieldset class="seg theme-seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch','linear-gradient(135deg,#f3f4f7 50%,#0b0d12 50%)'],...THEMES.map(([v,l,bg,ac])=>[v,l,`linear-gradient(135deg,${bg} 55%,${ac} 55%)`])].map(([v,l,sw])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}"><span class="theme-sw" style="background:${sw}" aria-hidden="true"></span>${l}</button>`).join('')}</fieldset>
-  <div id="themeAuto" class="two"${(settings.theme||'auto')==='auto'?'':' hidden'}>
-    <div class="field"><label for="s_themeD">Als je apparaat donker staat</label><select id="s_themeD">${THEMES.filter(x=>!x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeD||'dark')===v?' selected':''}>${l}</option>`).join('')}</select></div>
-    <div class="field"><label for="s_themeL">Als je apparaat licht staat</label><select id="s_themeL">${THEMES.filter(x=>x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeL||'light')===v?' selected':''}>${l}</option>`).join('')}</select></div>
-  </div>
-  <p class="mt-0 hint">Het thema geldt alleen voor dit apparaat.</p>
-  <p class="mt-12 hint">Bedragen tonen in:</p>
-  <fieldset class="seg"><legend class="sr-only">Bedragen tonen in</legend>${[['EUR','Euro €'],['USD','Dollar $'],['BTC','Bitcoin ₿']].map(([v,l])=>`<button type="button" data-unit="${v}" class="${(settings.unit||'EUR')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
-  <p class="mt-0 hint">Geldt voor Overzicht, munten en Transacties. Dollar: omgerekend tegen de koers van nu. Bitcoin: aankopen, verkopen en stortingen tegen de bitcoinkoers van dat moment, dus je winst in bitcoin laat zien of je beter deed dan bitcoin aanhouden. Formulieren, Analyse en het jaaroverzicht blijven in euro.${settings.unit&&settings.unit!=='EUR'&&fx.ts?` Koers bijgewerkt ${fmtTs(fx.ts)}.`:''}</p>
-  <label class="chk"><input type="checkbox" id="s_fng"${fngOn()?' checked':''}><span>Marktsentiment tonen op het Overzicht</span></label>
-  <p class="mt-0 hint">De angst- en hebzuchtmeter komt van alternative.me. Staat dit uit, dan maakt de app geen verbinding met die dienst. Geldt alleen voor dit apparaat.</p>
-  </section>
-  ${pfSettingsHTML()}
-  <section class="card" aria-labelledby="st_sec"><h2 class="h3" id="st_sec">Beveiliging</h2>
-  ${lockCfg?`
-  ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="note-sm label">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button type="button" data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="mt-0 hint">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
-  ${pkSupported()?'<button type="button" class="btn sec" data-act="addpk">Passkey toevoegen</button>':'<p class="hint">Passkeys werken alleen als de app via https draait (GitHub Pages).</p>'}
-  <div class="mt-12 field"><label for="s_auto">Automatisch vergrendelen na</label><select id="s_auto">${[[0,'Direct bij verlaten'],[1,'1 minuut'],[5,'5 minuten'],[15,'15 minuten'],[60,'1 uur'],[-1,'Nooit (alleen bij herstarten)']].map(([v,l])=>`<option value="${v}"${(lockCfg.autoLock??5)===v?' selected':''}>${l}</option>`).join('')}</select></div>
-  <div class="two"><button type="button" class="btn sec" data-act="chpw">Wachtwoord wijzigen</button><button type="button" class="btn sec" data-act="lockoff">Uitschakelen</button></div>`
-  :`<p class="mt-0 hint">Vergrendel de app met een passkey (Face ID, Touch ID of Windows Hello). Je gegevens op dit apparaat worden dan versleuteld opgeslagen.</p><button type="button" class="btn sec" data-act="lockon">App-vergrendeling instellen</button>`}
-  </section>
-  <section class="card" aria-labelledby="st_cg"><h2 class="h3" id="st_cg">Koersdata</h2>
-  <p class="mt-0 hint">Koersen laatst bijgewerkt: <b>${lastCgTs()?fmtTs(lastCgTs()):'nog niet'}</b>${cgState.s==='err'?` (laatste poging mislukt: ${esc(cgState.msg)})`:''}</p>
-  <p class="mt-0 hint">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer">coingecko.com/en/api</a> → Demo (gratis account).</p>
-  <p class="hint">Eigen koersarchief: ${(()=>{let n=0,mn=Infinity;for(const id in data.hist||{})for(const d in data.hist[id]){n++;mn=Math.min(mn,data.hist[id][d][0])}return n?`${n} dagkoersen, vanaf ${new Date(mn).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}`:'wordt opgebouwd'})()}. Dagkoersen worden voorgoed bewaard, zodat 'Max' na verloop van tijd verder dan een jaar terug reikt.</p>
-  <form class="js-form" novalidate><div class="field"><label for="s_cg">CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" name="coingecko-key" type="password" value="${esc(data.cfg?.cgKey||'')}" placeholder="CG-…" autocomplete="current-password" spellcheck="false"></div>
-  <button type="submit" class="btn sec" data-act="savecg">Sleutel opslaan en testen</button></form>
-  <button type="button" class="btn sec" data-act="refresh">Koersen nu verversen</button>
-  </section></div><div class="set-col">
-  <section class="card" aria-labelledby="st_sync"><h2 class="h3" id="st_sync">Synchronisatie via GitHub</h2>
+  $('#view').innerHTML=`<div class="set-wrap" id="setView"><nav class="set-nav" aria-label="Onderdelen van Instellingen"><ul id="setNav">${setNavHTML()}</ul></nav><div class="set-panes">
+  ${pane('sync',`<section class="card" aria-labelledby="st_sync"><h2 class="h3" id="st_sync">Synchronisatie via GitHub</h2>
   <p class="mt-0 hint">Je portfolio wordt versleuteld (AES-256) opgeslagen in een privé-repository, zodat je het op al je apparaten ziet. Zonder wachtwoord kan niemand het lezen, ook GitHub niet.</p>
   <form class="js-form" novalidate><div class="field"><label for="s_repo">Repository (gebruiker/naam)</label><input type="text" id="s_repo" value="${esc(g.repo)}" placeholder="geert/mijn-data" autocapitalize="off" autocorrect="off"></div>
   <div class="field"><label for="s_token">Personal access token</label><input id="s_token" name="github-token" type="password" value="${esc(g.token)}" placeholder="github_pat_…" autocomplete="current-password" spellcheck="false"></div>
@@ -2383,18 +2381,64 @@ function renderSettings(){
   ${pwField('s_pass','Versleutelwachtwoord',`name="sync-password" value="${esc(g.pass)}" autocomplete="${g.pass?'current-password':'new-password'}" placeholder="Zelfde op elk apparaat"`,g.pass?false:`Nieuw wachtwoord: minimaal ${PW_MIN} tekens. Koppel je een apparaat aan een bestaand bestand, dan geldt het wachtwoord dat je al hebt.`)}
   ${syncInfoHTML()}
   <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
-  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
   </section>
-  <section class="card" aria-labelledby="st_imp"><h2 class="h3" id="st_imp">Importeren en back-up</h2>
+  <section class="card" aria-labelledby="st_dev"><h2 class="h3" id="st_dev">Apparaten en versies</h2>
+  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<p class="mt-0 hint">Koppel een ander apparaat met een koppelcode, of zet je gegevens terug naar een eerdere versie.</p><button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<p class="mt-0 hint">Heb je de synchronisatie al op een ander apparaat ingesteld? Maak daar een koppelcode en vul die hier in.</p><button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
+  </section>`)}
+  ${pane('view',`<section class="card" aria-labelledby="st_view"><h2 class="h3" id="st_view">Thema</h2>
+  <fieldset class="seg theme-seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch','linear-gradient(135deg,#f3f4f7 50%,#0b0d12 50%)'],...THEMES.map(([v,l,bg,ac])=>[v,l,`linear-gradient(135deg,${bg} 55%,${ac} 55%)`])].map(([v,l,sw])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}"><span class="theme-sw" style="background:${sw}" aria-hidden="true"></span>${l}</button>`).join('')}</fieldset>
+  <div id="themeAuto" class="two"${(settings.theme||'auto')==='auto'?'':' hidden'}>
+    <div class="field"><label for="s_themeD">Als je apparaat donker staat</label><select id="s_themeD">${THEMES.filter(x=>!x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeD||'dark')===v?' selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="s_themeL">Als je apparaat licht staat</label><select id="s_themeL">${THEMES.filter(x=>x[4]).map(([v,l])=>`<option value="${v}"${(settings.themeL||'light')===v?' selected':''}>${l}</option>`).join('')}</select></div>
+  </div>
+  <p class="mt-0 hint">Het thema geldt alleen voor dit apparaat.</p>
+  </section>
+  <section class="card" aria-labelledby="st_unit"><h2 class="h3" id="st_unit">Bedragen tonen in</h2>
+  <fieldset class="seg"><legend class="sr-only">Bedragen tonen in</legend>${[['EUR','Euro €'],['USD','Dollar $'],['BTC','Bitcoin ₿']].map(([v,l])=>`<button type="button" data-unit="${v}" class="${(settings.unit||'EUR')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
+  <p class="mt-0 hint">Geldt voor Overzicht, munten en Transacties. Dollar: omgerekend tegen de koers van nu. Bitcoin: aankopen, verkopen en stortingen tegen de bitcoinkoers van dat moment, dus je winst in bitcoin laat zien of je beter deed dan bitcoin aanhouden. Formulieren, Analyse en het jaaroverzicht blijven in euro.${settings.unit&&settings.unit!=='EUR'&&fx.ts?` Koers bijgewerkt ${fmtTs(fx.ts)}.`:''}</p>
+  </section>`)}
+  ${pane('pf',pfSettingsHTML())}
+  ${pane('sec',`<section class="card" aria-labelledby="st_sec"><h2 class="h3" id="st_sec">Beveiliging</h2>
+  ${lockCfg?`
+  ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="note-sm label">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button type="button" data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="mt-0 hint">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
+  ${pkSupported()?'<button type="button" class="btn sec" data-act="addpk">Passkey toevoegen</button>':'<p class="hint">Passkeys werken alleen als de app via https draait (GitHub Pages).</p>'}
+  <div class="mt-12 field"><label for="s_auto">Automatisch vergrendelen na</label><select id="s_auto">${[[0,'Direct bij verlaten'],[1,'1 minuut'],[5,'5 minuten'],[15,'15 minuten'],[60,'1 uur'],[-1,'Nooit (alleen bij herstarten)']].map(([v,l])=>`<option value="${v}"${(lockCfg.autoLock??5)===v?' selected':''}>${l}</option>`).join('')}</select></div>
+  <div class="two"><button type="button" class="btn sec" data-act="chpw">Wachtwoord wijzigen</button><button type="button" class="btn sec" data-act="lockoff">Uitschakelen</button></div>`
+  :`<p class="mt-0 hint">Vergrendel de app met een passkey (Face ID, Touch ID of Windows Hello). Je gegevens op dit apparaat worden dan versleuteld opgeslagen.</p><button type="button" class="btn sec" data-act="lockon">App-vergrendeling instellen</button>`}
+  </section>`)}
+  ${pane('cg',`<section class="card" aria-labelledby="st_cg"><h2 class="h3" id="st_cg">Koersdata</h2>
+  <p class="mt-0 hint">Koersen laatst bijgewerkt: <b>${lastCgTs()?fmtTs(lastCgTs()):'nog niet'}</b>${cgState.s==='err'?` (laatste poging mislukt: ${esc(cgState.msg)})`:''}</p>
+  <p class="mt-0 hint">Zonder sleutel deel je de limiet van CoinGecko met iedereen die geen sleutel heeft. Met een gratis <i>Demo</i>-sleutel krijg je een eigen, hogere limiet. Wordt via GitHub-sync naar je andere apparaten gekopieerd. Aanvragen via <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer">coingecko.com/en/api</a> → Demo (gratis account).</p>
+  <p class="hint">Eigen koersarchief: ${(()=>{let n=0,mn=Infinity;for(const id in data.hist||{})for(const d in data.hist[id]){n++;mn=Math.min(mn,data.hist[id][d][0])}return n?`${n} dagkoersen, vanaf ${new Date(mn).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}`:'wordt opgebouwd'})()}. Dagkoersen worden voorgoed bewaard, zodat 'Max' na verloop van tijd verder dan een jaar terug reikt.</p>
+  <form class="js-form" novalidate><div class="field"><label for="s_cg">CoinGecko Demo API-sleutel (optioneel)</label><input id="s_cg" name="coingecko-key" type="password" value="${esc(data.cfg?.cgKey||'')}" placeholder="CG-…" autocomplete="current-password" spellcheck="false"></div>
+  <button type="submit" class="btn sec" data-act="savecg">Sleutel opslaan en testen</button></form>
+  <button type="button" class="btn sec" data-act="refresh">Koersen nu verversen</button>
+  </section>
+  <section class="card" aria-labelledby="st_fng"><h2 class="h3" id="st_fng">Marktsentiment</h2>
+  <label class="chk"><input type="checkbox" id="s_fng"${fngOn()?' checked':''}><span>Marktsentiment tonen op het Overzicht</span></label>
+  <p class="mt-0 hint">De angst- en hebzuchtmeter komt van alternative.me. Staat dit uit, dan maakt de app geen verbinding met die dienst. Geldt alleen voor dit apparaat.</p>
+  </section>`)}
+  ${pane('data',`<section class="card" aria-labelledby="st_imp"><h2 class="h3" id="st_imp">Importeren uit Bitvavo</h2>
   <p class="mt-0 hint">Download in Bitvavo je transactiegeschiedenis als CSV-bestand (menu rechtsboven → Transactiegeschiedenis → downloaden) en lees het hier in. Bestaande transacties worden herkend, dus je kunt hetzelfde bestand later opnieuw importeren.</p>
   <button type="button" class="btn sec" data-act="bvimport">Importeren uit Bitvavo (CSV)</button>
-  <h3 class="set-sub">Back-up</h3>
+  </section>
+  <section class="card" aria-labelledby="st_bak"><h2 class="h3" id="st_bak">Back-up</h2>
+  <p class="mt-0 hint">Een back-up is een bestand met al je gegevens (niet versleuteld). Bewaar het op een veilige plek.${settings.lastExport?` Laatste back-up: <b>${fmtTs(settings.lastExport)}</b>.`:''}</p>
   <div class="two"><button type="button" class="btn sec" data-act="export">Exporteren</button><button type="button" class="btn sec" data-act="import">Importeren</button></div>
   <input type="file" id="s_file" accept="application/json,.json" hidden>
   </section>
   <section class="card" aria-labelledby="st_danger"><h2 class="h3" id="st_danger">Gevarenzone</h2>
-  <button type="button" class="btn danger" data-act="wipe">Alle transacties wissen</button></section></div></div>
-  <p class="app-foot hint">Koersdata: CoinGecko · ${data.txs.length} transacties · versie ${APP_VERSION}</p>`;
+  <button type="button" class="btn danger" data-act="wipe">Alle transacties wissen</button></section>`)}
+  ${pane('about',`<section class="card" aria-labelledby="st_about"><h2 class="h3" id="st_about">Over de app</h2>
+  <dl class="kv about-kv"><div><dt>Versie</dt><dd>${esc(APP_VERSION)}</dd></div><div><dt>Transacties</dt><dd>${data.txs.length}</dd></div><div><dt>Koersdata</dt><dd>CoinGecko</dd></div><div><dt>Marktsentiment</dt><dd>alternative.me</dd></div></dl>
+  <p class="hint">Wat er per versie veranderd is, staat in de <a href="https://github.com/Gertjun/Cryptotracker/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">lijst met wijzigingen</a>.</p>
+  </section>
+  <section class="card" aria-labelledby="st_inst"><h2 class="h3" id="st_inst">Installeren</h2>
+  <p class="mt-0 hint"><b>iPhone en iPad:</b> open de app in Safari, tik op het deelmenu en kies <i>Zet op beginscherm</i>.</p>
+  <p class="hint"><b>Laptop:</b> klik in Chrome of Edge op het installeericoon rechts in de adresbalk.</p>
+  <p class="hint">Elk apparaat heeft zijn eigen opslag. Gebruik Synchronisatie of een koppelcode om je gegevens op een nieuw apparaat te krijgen.</p>
+  </section>`)}
+  </div></div>`;
   $('#s_file').onchange=importFile;
   for(const k of ['themeD','themeL']){const el=$('#s_'+k);if(el)el.onchange=()=>{settings[k]=el.value;saveSettings();applyTheme()}}
   const sf=$('#s_fng');if(sf)sf.onchange=()=>{settings.fng=sf.checked;saveSettings();if(sf.checked)refreshFng()};
@@ -2409,9 +2453,9 @@ function openSettings(){
   else render();
 }
 function setTopbarHTML(){
-  const eye=`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
+  const eye=eyeBtn();
   const back=`<button type="button" class="icon-btn" data-act="setback" aria-label="Terug">${ICONS.back}</button>`;
-  return `<div class="m-top only-m">${back}<h1>Instellingen</h1>${eye}</div><div class="d-top only-d"><div class="tb-title">${back}<h1>Instellingen</h1></div><span class="grow"></span><div class="tb-act">${syncBadge()}${eye}</div></div>`;
+  return `<div class="m-top only-m">${back}<h1>Instellingen</h1>${eye}</div><div class="d-top only-d"><div class="tb-title"><h1>Instellingen</h1></div><span class="grow"></span>${deskActHTML()}</div>`;
 }
 function exportData(){
   settings.lastExport=Date.now();saveSettings();
@@ -2732,11 +2776,12 @@ let pressT=0;new MutationObserver(()=>{if(!pressT)pressT=requestAnimationFrame((
 // Skip link: springt naar de hoofdinhoud zonder de #-route (die de app voor schermen gebruikt) te wijzigen
 document.querySelector('.skip-link')?.addEventListener('click',e=>{e.preventDefault();const m=$('#view');m.focus();m.scrollIntoView({block:'start'})});
 document.addEventListener('click',e=>{
-  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-wsort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal],[data-unit]');if(!a)return;
+  const a=e.target.closest('[data-act],[data-coin],[data-tx],[data-range],[data-prange],[data-sort],[data-wsort],[data-tf],[data-type],[data-pick],[data-wpick],[data-adir],[data-rp],[data-goal],[data-theme],[data-cal],[data-unit],[data-setsec]');if(!a)return;
+  if(a.dataset.setsec){showSetSec(a.dataset.setsec);return}
   if(a.dataset.unit){setUnit(a.dataset.unit,a);return}
   if(a.dataset.cal){const now=Date.now(),yr=settings.calU==='week'||settings.calU==='month',k=yr?'calYear':'calMonth';let m=+settings[k]||pStart(yr?'year':'month',now);const d=new Date(m);if(yr)d.setFullYear(d.getFullYear()+(+a.dataset.cal));else d.setMonth(d.getMonth()+(+a.dataset.cal));settings[k]=d.getTime();saveSettings();keepFocus(renderReports);return}
   if(a.dataset.goal){openGoal(a.dataset.goal);return}
-  if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));const ta=$('#themeAuto');if(ta)ta.hidden=a.dataset.theme!=='auto';return}
+  if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));const ta=$('#themeAuto');if(ta)ta.hidden=a.dataset.theme!=='auto';updSetNav();return}
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
   if(a.dataset.adir){setAlertDir(a.dataset.adir);return}
   if(a.dataset.rp){const [k,u]=a.dataset.rp.split(':');settings[k]=u;saveSettings();keepFocus(()=>{renderReports();if($('#zoom'))renderRetZoom()});return}

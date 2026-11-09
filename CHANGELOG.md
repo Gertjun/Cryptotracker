@@ -7,12 +7,27 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.3`) en de naam van het zip-bestand (`crypto-tracker-3.23.3.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.0`) en de naam van het zip-bestand (`crypto-tracker-3.24.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.24.0 – 9 november 2026
+Op de laptop staan alle knoppen nu in de zijbalk, en Instellingen heeft een eigen knop met een overzichtelijk scherm in onderdelen.
+
+### Gewijzigd
+- **Zijbalk (laptop en iPad liggend):** de synchronisatiestatus staat onder de appnaam en het versienummer, daaronder + Transactie, het oogje en het slotje. Rechtsboven staan geen knoppen meer. Ingeklapt blijven ze als iconen bereikbaar.
+- **Instellingen als vierde knop** naast Overzicht, Transacties en Analyse (laptop en iPad). Het tandwiel is daar weg; op de telefoon blijft het tandwiel.
+- **Instellingen in onderdelen:** links een lijst (Synchronisatie, Weergave, Portefeuilles, Beveiliging, Koersdata en markt, Gegevens, Over de app) met de stand in het kort, rechts de blokken van het gekozen onderdeel. Het gekozen onderdeel wordt per apparaat onthouden. Op de telefoon staat alles onder elkaar, zoals voorheen.
+
+### Toegevoegd
+- **Over de app:** versie, aantal transacties, een link naar de lijst met wijzigingen en uitleg over installeren.
+- **Back-up:** de datum van je laatste back-up staat erbij.
+
+### Technisch
+- `renderSettings()` met `SETSECS`, `setNavHTML()`, `showSetSec()` en `settings.setSec`; knoppen via `eyeBtn()`, `lockBtn()` en `deskActHTML()`. Tests aangepast in `indeling.spec.mjs`, `markt.spec.mjs` en `a11y.spec.mjs`.
 
 ## 3.23.3 – 9 november 2026
 Nieuwe koersen komen sneller binnen, ook als je veel munten hebt.
