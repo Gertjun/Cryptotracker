@@ -14,3 +14,12 @@ test('met Demo-sleutel: 10 direct, daarna om de 2 seconden',async({page})=>{
   const waits=await page.evaluate(()=>{globalThis.__cgFast=false;data.cfg={...(data.cfg||{}),cgKey:'CG-test'};cgTok=10;cgTokAt=mono();return Array.from({length:11},()=>Math.round(cgTake()/100)*100)});
   expect(waits.slice(0,10).every(w=>w===0)).toBe(true);expect(waits[10]).toBeGreaterThanOrEqual(1900);
 });
+test('koersupdate gaat vóór wachtend achtergrondwerk (3.23.3)',async({page})=>{
+  await openApp(page);
+  const order=await page.evaluate(async()=>{
+    globalThis.__cgFast=false;cgTok=0;cgTokAt=mono();const done=[],p='/simple/price?ids=bitcoin&vs_currencies=eur';
+    const low=[1,2,3].map(n=>cg(p,true).then(()=>done.push('achter'+n)));
+    await sleep(100);const high=cg(p).then(()=>done.push('koers'));
+    await Promise.all([...low,high]);return done});
+  expect(order[0]).toBe('koers');
+});

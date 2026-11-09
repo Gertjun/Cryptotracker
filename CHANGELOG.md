@@ -7,12 +7,23 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.2`) en de naam van het zip-bestand (`crypto-tracker-3.23.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.23.3`) en de naam van het zip-bestand (`crypto-tracker-3.23.3.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.23.3 – 9 november 2026
+Nieuwe koersen komen sneller binnen, ook als je veel munten hebt.
+
+### Verbeterd
+- **Koersen gaan voor:** de koersupdate wacht niet meer achter grafieken die op de achtergrond worden opgehaald (voor de kolom 4 uur, het koersarchief en Vergelijken), maar schuift er altijd vóór.
+- **Verkochte munten:** de grafiek op het Overzicht haalt geen koersen meer op voor munten die je in de gekozen periode niet had. Bij 1U, 4U en 24U scheelt dat elke 5 minuten een verzoek per verkochte munt.
+- **Koersarchief:** wordt alleen nog aangevuld als er een dag ontbreekt, en dan alleen met de dagen sinds de laatste keer. Voor een verkochte munt stopt het aanvullen na de dag van de laatste transactie.
+
+### Technisch
+- **Wachtrij:** `cg()` met `cgGo()`: achtergrondwerk neemt alleen een verzoek uit de emmer als er een klaarligt en er geen gewoon verzoek wacht. Nieuwe test in `coingecko.spec.mjs`.
 
 ## 3.23.2 – 5 november 2026
 Op de iPad sluit de app nu netjes aan op de statusbalk: geen lege band meer bovenin.

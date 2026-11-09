@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.23.2 (5 nov 2026)';
+const APP_VERSION='3.23.3 (9 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -279,7 +279,7 @@ function portfolio(){
 /* ---------- koersen ---------- */
 // Alle CoinGecko-verzoeken gaan via één wachtrij (max. 2 tegelijk). Bij een weigering (429, of een
 // geblokkeerd antwoord zonder CORS-header) wacht de app en probeert het automatisch opnieuw.
-let cgActive=0;const cgWait=[];
+let cgActive=0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 // fetch met tijdslimiet: bij slecht of geen netwerk krijg je binnen enkele seconden een melding in plaats van na een minuut
 function fetchT(url,opt={},ms=12000){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
@@ -295,28 +295,33 @@ const cgKeyed=()=>!!(data.cfg?.cgKey||'').trim(),cgFast=()=>globalThis.__cgFast=
   cgRate=()=>cgFast()?50:cgKeyed()?0.5:0.25,cgCap=()=>cgFast()?50:cgKeyed()?10:6;   // verzoeken per seconde, emmergrootte
 function cgTake(){const now=mono();cgTok=Math.min(cgCap(),cgTok+(now-cgTokAt)/1000*cgRate());cgTokAt=now;
   if(cgTok>=1){cgTok--;return 0}const w=(1-cgTok)/cgRate()*1000;cgTok--;return w}
-// low=true: achtergrondwerk (koersarchief aanvullen) wacht tot er geen gewone verzoeken meer openstaan
+// low=true: achtergrondwerk (grafieken voor de kolom 4 uur, koersarchief, risico). Dat wacht zolang er gewone
+// verzoeken zijn en neemt alleen een verzoek uit de emmer als er een klaarligt. Zo schuift een koersupdate er altijd
+// vóór, ook als er al een lange rij achtergrondwerk wacht (3.23.3).
 let cgHigh=0;
 async function cg(path,low){
-  if(low){while(cgHigh>0)await sleep(400)}else cgHigh++;
-  try{return await cg0(path)}finally{if(!low)cgHigh--}}
-async function cg0(path){
-  while(cgActive>=2)await new Promise(r=>cgWait.push(r));
-  cgActive++;
-  try{
-    const key=(data.cfg?.cgKey||'').trim();
-    const url=API+path+(key?(path.includes('?')?'&':'?')+'x_cg_demo_api_key='+encodeURIComponent(key):'');
-    for(let i=0;;i++){
-      let r=null;
-      if(!navigator.onLine)throw new Error('Geen internetverbinding');
-      const pz=cgPauseUntil-mono();if(pz>0)await sleep(pz);
-      const w=cgTake();if(w>0)await sleep(w);
-      try{r=await fetchT(url)}catch(e){if(!navigator.onLine||i>=2)throw new Error(navigator.onLine?'Geen antwoord van CoinGecko (verbinding of te veel verzoeken)':'Geen internetverbinding')}
-      if(r&&r.status===429){const ra=+r.headers.get('retry-after');cgPauseUntil=Math.max(cgPauseUntil,mono()+(ra>0?Math.min(ra,120)*1000:(i?30000:15000)))}
-      if(r&&(r.status!==429||i>=2))return r;
-      if(!r)await sleep([4000,10000][i]);
-    }
-  }finally{cgActive--;const n=cgWait.shift();if(n)n()}
+  if(!low)cgHigh++;
+  try{return await cg0(path,low)}finally{if(!low)cgHigh--}}
+async function cgGo(low){   // wacht op een vrije plek (hooguit 2 tegelijk) en op een verzoek uit de emmer
+  for(;;){
+    const pz=cgPauseUntil-mono();if(pz>0){await sleep(pz);continue}
+    if(cgActive>=2||(low&&cgHigh>0)){await sleep(low?400:50);continue}
+    if(low){const now=mono();cgTok=Math.min(cgCap(),cgTok+(now-cgTokAt)/1000*cgRate());cgTokAt=now;
+      if(cgTok<1){await sleep(Math.min(2000,(1-cgTok)/cgRate()*1000));continue}
+      cgTok--;cgActive++;return}
+    cgActive++;const w=cgTake();if(w>0)await sleep(w);return}}
+async function cg0(path,low){
+  const key=(data.cfg?.cgKey||'').trim();
+  const url=API+path+(key?(path.includes('?')?'&':'?')+'x_cg_demo_api_key='+encodeURIComponent(key):'');
+  for(let i=0;;i++){
+    if(!navigator.onLine)throw new Error('Geen internetverbinding');
+    await cgGo(low);let r=null;
+    try{r=await fetchT(url)}catch(e){if(!navigator.onLine||i>=2)throw new Error(navigator.onLine?'Geen antwoord van CoinGecko (verbinding of te veel verzoeken)':'Geen internetverbinding')}
+    finally{cgActive--}
+    if(r&&r.status===429){const ra=+r.headers.get('retry-after');cgPauseUntil=Math.max(cgPauseUntil,mono()+(ra>0?Math.min(ra,120)*1000:(i?30000:15000)))}
+    if(r&&(r.status!==429||i>=2))return r;
+    if(!r)await sleep([4000,10000][i]);
+  }
 }
 const BUSY='CoinGecko is even druk; de app probeert het zo opnieuw';
 
@@ -438,9 +443,15 @@ function withHist(id,pts){   // archiefpunten toevoegen vóór het begin van de 
 }
 async function collectHistory(){
   if(locked)return;
+  const today=Math.floor(Date.now()/DAY);
   for(const id of coinIds()){
-    const n=Object.keys(data.hist?.[id]||{}).length;
-    try{await fetchChart(id,n<300?'365':'30',true)}catch(e){}   // eerste keer een heel jaar, daarna de laatste maand (op de achtergrond)
+    const h=data.hist?.[id]||{},days=Object.keys(h).map(Number),n=days.length,last=n?Math.max(...days):-1;
+    // Verkochte munt: alleen aanvullen tot de dag van de laatste transactie, daarna is de koers niet meer nodig
+    const st=coinStates(id),end=st.length&&st[st.length-1][1]<=1e-12?Math.floor(st[st.length-1][0]/DAY):today-1;
+    if(n>=300&&last>=end)continue;   // archief is al bij: geen verzoek
+    // eerste keer een heel jaar, daarna alleen de dagen sinds de laatste keer (hooguit een maand); op de achtergrond
+    const gap=today-last;
+    try{await fetchChart(id,n<300?'365':gap<=2?'2':gap<=7?'7':'30',true)}catch(e){}
   }
 }
 const chartInflight={};   // dezelfde grafiek die tegelijk op twee plekken nodig is, maar één keer ophalen
@@ -1817,7 +1828,10 @@ async function portfolioSeries(range,unit){
   const first=Math.min(...TX().map(txTime).filter(isFinite));
   const hrs=range==='1h'?1:range==='4h'?4:0;
   const days=hrs?'1':range==='max'?String(Math.min(365,Math.max(1,Math.ceil((now-first)/864e5)+1))):range;
-  const charts={},queue=[...ids];let err=null;
+  // Munten die je in de hele periode niet had (al eerder verkocht), hebben geen koers nodig: niet ophalen (3.23.3)
+  const from=range==='max'?-Infinity:now-(hrs?1:+range)*DAY,need=ids.filter(id=>{const st=coinStates(id),i=lastAtOrBefore(st,from);
+    return i<0||st[i][1]>1e-12||st.slice(i+1).some(x=>x[0]<=now)});
+  const charts={},queue=[...need];let err=null;
   await Promise.all([0,1].map(async()=>{while(queue.length){const id=queue.shift();try{charts[id]=await fetchChart(id,days)}catch(e){err=e}}}));
   if(err&&!Object.keys(charts).length)throw err;
   const U0=UNIT_ON;UNIT_ON=!!unit;try{   // na het wachten: rekenen in de gekozen eenheid
@@ -1830,7 +1844,7 @@ async function portfolioSeries(range,unit){
     grid=[t0,...[...times].sort((a,b)=>a-b),now];
   }else{
     let base=[];for(const id in charts)if(charts[id].length>base.length)base=charts[id];
-    t0=hrs?Math.max(first,now-hrs*3600e3):base.length?Math.max(first,base[0][0]):first;
+    t0=hrs?Math.max(first,now-hrs*3600e3):base.length?Math.max(first,base[0][0]):Math.max(first,from);
     grid=[t0,...base.map(p=>p[0]).filter(t=>t>t0&&t<now-60000),now];
   }
   {const tt=TX().map(txTime).filter(t=>t>t0&&t<now-60000);if(tt.length)grid=[...new Set([...grid,...tt])].sort((a,b)=>a-b)}
