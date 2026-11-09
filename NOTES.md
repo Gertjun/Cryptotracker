@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 9 november 2026 · versie **3.24.0**
+Laatst bijgewerkt: 9 november 2026 · versie **3.24.1**
 
 ---
 
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 9 november 2026 · versie **3.24.0**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **9 nov 2026:**
+  - 3.24.1: synchronisatie, oogje en slotje terug rechtsboven; zijbalk alleen + Transactie en vier knoppen (D47). a11y-test wacht nu tot een melding weg is (de eerdere toevallige fout bij Nachtblauw/Hoog contrast kwam door een uitfadende melding). Nog niet door Geert bekeken.
   - 3.24.0: laptop zoals Vaste Lasten: synchronisatie, + Transactie, oogje en slotje in de zijbalk; Instellingen als vierde knop (ook vierde tabblad op de iPad rechtop) met links een lijst van onderdelen en rechts de blokken (D46, vervangt D37 voor laptop/iPad). Telefoon ongewijzigd. Nog niet door Geert bekeken.
   - 3.23.3: koersen sneller binnen. Achtergrondwerk schuift niet meer vóór de koersupdate; geen grafieken meer voor munten die je in de periode niet had; koersarchief alleen aanvullen als er een dag ontbreekt (D45). Nog niet door Geert bekeken.
   - Geert vroeg om koersen elk uur op de achtergrond op te halen, ook als de app dicht is. Kan niet in de app (iOS staat dat niet toe voor web-apps); alleen via een GitHub-taak in de data-repository, met de muntenlijst onversleuteld. Afgesproken: eerst 3.23.3 afwachten.
@@ -52,7 +53,7 @@ Laatst bijgewerkt: 9 november 2026 · versie **3.24.0**
   - 3.23.2: iPad zonder lege band bovenin; zijbalk liggend tot de bovenrand, 40 punten extra weg (D44, vervangt D8). Nog niet door Geert bevestigd.
   - 3.23.1: iPad rechtop toch zonder zijbalk; tabbladen bovenaan in een rij zoals Vaste Lasten (D43, vervangt D42). Nog niet door Geert op de iPad bekeken. iPad liggend houdt de zijbalk; Instellingen blijft via het tandwiel (Geert: "hou het zo voor nu").
   - 3.23.0: iPad rechtop (700–999 px breed, ≥ 700 px hoog) krijgt de zijbalk zoals de laptop (D42); laptop en iPhone ongewijzigd. Nog niet door Geert op de iPad bekeken.
-  - 3.22.0: marktsentiment (angst- en hebzuchtmeter van alternative.me) op het Overzicht, uit te zetten in Instellingen (W24, D41). Nog niet door Geert bekeken. De a11y-test (thema Nachtblauw) viel één keer om bij de volledige ronde en slaagde daarna steeds; houd in de gaten.
+  - 3.22.0: marktsentiment (angst- en hebzuchtmeter van alternative.me) op het Overzicht, uit te zetten in Instellingen (W24, D41). Nog niet door Geert bekeken.
   - 3.21.1: W46 "Waar zet ik mijn geld in?" op de wishlist. Geert vroeg om koopadvies; afgesproken: geen voorspelling welke munt stijgt, alleen een bedrag verdelen volgens zijn eigen doelverdeling. Nog niet bouwen.
 - **4 nov 2026:**
   - 3.21.0: zijbalk op de laptop inklapbaar tot een strook met iconen, per apparaat onthouden (D40). Nog niet door Geert bekeken.

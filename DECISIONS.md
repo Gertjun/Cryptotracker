@@ -253,3 +253,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Hoe:** alle onderdelen staan altijd in de HTML; wisselen gebeurt met de klasse `.set-pane.on`, zonder opnieuw opbouwen, zodat ingevulde velden blijven staan.
 - **Niet gekozen:** een eigen adres per onderdeel (`#instellingen/sync`); het tandwiel naast de knop Instellingen laten staan (dubbel); Instellingen als vierde tabblad op de telefoon (D25: drie tabbladen onderin).
 
+### D47 – Synchronisatie, oogje en slotje terug rechtsboven (9 nov 2026, 3.24.1, vervangt deels D46)
+- **Besluit:** op de laptop staan de synchronisatiestatus, het oogje en het slotje weer rechtsboven in `.d-top .tb-act`. In de zijbalk staan alleen + Transactie (`.side-act`) en de navigatie met Instellingen als vierde knop. Het scherm Instellingen in onderdelen uit D46 blijft. `.d-top .tb-act .btn-add` is vanaf 1000 px verborgen, omdat + Transactie in de zijbalk staat. iPad rechtop en telefoon ongewijzigd.
+- **Waarom:** Geert vond de zijbalk met alle knoppen onrustig.
+- **Niet gekozen:** + Transactie ook terug naar rechtsboven (Geert noemde alleen synchronisatie, oogje en slotje; kan eenvoudig alsnog).
+

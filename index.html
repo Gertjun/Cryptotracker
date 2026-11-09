@@ -450,12 +450,9 @@ a{color:var(--accent)}
   .side-coin.on,.side-coin:hover{background:var(--card)}
   .side-coin .coin-img,.side-coin .coin-ph{width:28px;height:28px;font-size:9px}
   .side-foot{margin-top:auto;color:var(--muted);font-size:12px;padding:16px 12px 0}
-  /* knoppen in de zijbalk (D46): synchronisatie onder de appnaam, daaronder + Transactie, oogje en slotje */
-  .side-act{display:grid;gap:14px;padding:0 10px 20px;margin-top:-10px}
-  .side-act .sync{font-size:12px;min-height:32px}
-  .side-btns{display:flex;gap:8px}
-  .side-btns .btn-add{flex:1;justify-content:center;height:44px}
-  .side-btns .icon-btn{width:44px;height:44px}
+  /* + Transactie in de zijbalk (D47); synchronisatie, oogje en slotje staan rechtsboven */
+  .side-act{display:grid;padding:0 10px 20px;margin-top:-10px}
+  .side-act .btn-add{justify-content:center;height:44px}
   /* zijbalk inklappen: knop naast de appnaam; ingeklapt alleen een smalle strook met iconen */
   .side-tog{flex:none;order:1;width:44px;height:44px;margin:-6px -10px -6px auto;display:grid;place-items:center;background:none;border:0;border-radius:10px;color:var(--muted);cursor:pointer}
   .side-tog:hover{background:var(--card);color:var(--text)}
@@ -470,10 +467,7 @@ a{color:var(--accent)}
   .side-min .brand>button.app-ver{margin:0;padding:5px 6px;font-size:10px}
   .side-min .nav{justify-content:center;padding:12px 0}
   .side-min .side-act{padding:0 0 16px;margin:0;justify-items:center}
-  .side-min .side-btns{flex-direction:column;align-items:center}
-  .side-min .side-btns .btn-add{flex:none;width:44px;padding:0}
-  .side-min .side-act .sync{width:44px;min-height:44px;align-items:center;font-size:0;gap:6px}
-  .side-min .side-act .sl{gap:0}
+  .side-min .side-act .btn-add{width:44px;padding:0}
   .side-min .add-l,.side-min .nav-l{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   #app{max-width:none;margin:0;padding:0 36px 48px}
   .top{height:84px}
@@ -828,7 +822,7 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
    achter de iOS-statusbalk; de inhoud rechts begint onder de statusbalk. Op de laptop is de veilige ruimte 0, dus daar verandert niets. */
 @media (min-width:1000px){
   body{padding-top:0}
-  .d-top .tb-act{display:none}   /* knoppen staan in de zijbalk (D46) */
+  .d-top .tb-act .btn-add{display:none}   /* + Transactie staat in de zijbalk (D47) */
   #side,.side-min #side{padding-top:calc(20px + env(safe-area-inset-top))}
   #app{padding-top:env(safe-area-inset-top)}
 }

@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.24.0 (9 nov 2026)';
+const APP_VERSION='3.24.1 (9 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -512,7 +512,7 @@ function renderSide(cid){
   const min=!!settings.sideMin;el.closest('.shell')?.classList.toggle('side-min',min);   // zijbalk ingeklapt (laptop, per apparaat)
   const tog=`<button type="button" class="side-tog" data-act="sidetog" aria-controls="side" aria-expanded="${!min}" aria-label="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}" title="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}">${ICONS.back}</button>`;
   el.innerHTML=`<div class="brand"><img src="icon.svg" alt="" width="32" height="32"><span class="brand-n">Crypto Portfolio</span>${tog}${appVerHTML()}</div>
-  <div class="side-act">${syncBadge()}<div class="side-btns"><button type="button" class="btn-add" data-act="add"${min?' title="Transactie toevoegen"':''}>${ICONS.plus}<span class="add-l"> Transactie</span><span class="sr-only add-sr"> toevoegen</span></button>${eyeBtn()}${lockBtn()}</div></div>
+  <div class="side-act"><button type="button" class="btn-add" data-act="add"${min?' title="Transactie toevoegen"':''}>${ICONS.plus}<span class="add-l"> Transactie</span><span class="sr-only add-sr"> toevoegen</span></button></div>
   <nav aria-label="Hoofdnavigatie"><a class="nav ${cid?'':'on'}" href="#"${cid?'':' aria-current="page"'}${min?' title="Overzicht"':''}>${ICONS.home} <span class="nav-l">Overzicht</span></a>
   <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}${min?' title="Transacties"':''}>${ICONS.list} <span class="nav-l">Transacties</span></a>
   <a class="nav ${cid==='__rep'?'on':''}" href="#analyse"${cid==='__rep'?' aria-current="page"':''}${min?' title="Analyse"':''}>${ICONS.reps} <span class="nav-l">Analyse</span></a>
@@ -525,7 +525,7 @@ function renderSide(cid){
 }
 const eyeBtn=()=>`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen" aria-pressed="${!!settings.privacy}">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
 const lockBtn=()=>lockCfg?`<button type="button" class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';
-// Knoppen rechtsboven: alleen op de iPad rechtop. Op de laptop staan ze in de zijbalk (D46), op de telefoon in .m-top.
+// Knoppen rechtsboven (laptop en iPad). Op de laptop staat + Transactie in de zijbalk (D47); op de telefoon staan ze in .m-top.
 const deskActHTML=()=>`<div class="tb-act">${syncBadge()}${eyeBtn()}${lockBtn()}<button type="button" class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div>`;
 function topbarHTML(c,pageTitle){
   const eye=eyeBtn(),lockB=lockBtn();

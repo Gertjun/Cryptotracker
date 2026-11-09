@@ -7,12 +7,22 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.0`) en de naam van het zip-bestand (`crypto-tracker-3.24.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.1`) en de naam van het zip-bestand (`crypto-tracker-3.24.1.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.24.1 – 9 november 2026
+Rustiger zijbalk op de laptop: synchronisatie, oogje en slotje staan weer rechtsboven.
+
+### Gewijzigd
+- **Knoppen rechtsboven:** de synchronisatiestatus, het oogje en het slotje staan op de laptop weer rechtsboven in het scherm. In de zijbalk staan alleen nog + Transactie en de vier knoppen Overzicht, Transacties, Analyse en Instellingen.
+- **Instellingen** blijft een eigen knop in de zijbalk, met het scherm in onderdelen uit 3.24.0.
+
+### Technisch
+- De a11y-test wacht tot een melding helemaal verdwenen is; midden in het uitfaden mat axe soms een te laag contrast.
 
 ## 3.24.0 – 9 november 2026
 Op de laptop staan alle knoppen nu in de zijbalk, en Instellingen heeft een eigen knop met een overzichtelijk scherm in onderdelen.

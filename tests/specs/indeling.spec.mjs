@@ -95,13 +95,14 @@ test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug bren
   await page.goBack();await expect(page.locator('#txOut')).toBeVisible();
 });
 
-test('laptop: knoppen in de zijbalk, Instellingen als vierde knop met onderdelen (3.24.0)',async({page},testInfo)=>{
+test('laptop: + Transactie in de zijbalk, overige knoppen rechtsboven, Instellingen als vierde knop met onderdelen (3.24.1)',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen op de laptop');
   const errors=await openApp(page);await importCsv(page);
   const side=page.locator('#side');
-  // synchronisatie, + Transactie en het oogje staan in de zijbalk; rechtsboven staan geen knoppen meer
-  for(const s of ['.sync','[data-act=add]','[data-act=privacy]'])await expect(side.locator(s)).toBeVisible();
-  await expect(page.locator('.d-top .tb-act')).toBeHidden();
+  // + Transactie staat in de zijbalk; synchronisatie en het oogje staan rechtsboven
+  await expect(side.locator('[data-act=add]')).toBeVisible();await expect(page.locator('.d-top [data-act=add]')).toBeHidden();
+  for(const s of ['.sync','[data-act=privacy]'])await expect(page.locator('.d-top '+s)).toBeVisible();
+  await expect(side.locator('.sync')).toHaveCount(0);
   await expect(page.locator('.d-top [data-act=settings]')).toHaveCount(0);
   await side.locator('[data-act=add]').click();await expect(page.locator('#sheet')).toBeVisible();await page.evaluate(()=>closeSheet());
   // Instellingen via de zijbalk
@@ -125,7 +126,7 @@ test('laptop: knoppen in de zijbalk, Instellingen als vierde knop met onderdelen
   await page.reload();await expect(page.locator('#st_pf')).toBeVisible();
   // ingeklapte zijbalk: de knoppen blijven bereikbaar
   await side.locator('[data-act=sidetog]').click();
-  for(const s of ['.sync','[data-act=privacy]'])await expect(side.locator(s)).toBeVisible();
+  await expect(page.locator('.d-top .sync')).toBeVisible();
   await expect(side.getByRole('button',{name:'Transactie toevoegen'})).toBeVisible();
   expect(errors).toEqual([]);
 });

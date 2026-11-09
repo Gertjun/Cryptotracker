@@ -3,7 +3,8 @@ import {test,expect} from '@playwright/test';
 import {openApp,importCsv,chartReady} from './helpers.mjs';
 import {createRequire} from 'node:module';import fs from 'node:fs';
 const axeSrc=fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'),'utf8');
-async function axe(page){await page.evaluate(axeSrc);
+// wacht tot een melding (toast) helemaal weg is: midden in het uitfaden meet axe een te laag contrast
+async function axe(page){await page.waitForFunction(()=>!document.querySelector('#toast.show'),null,{timeout:10000});await page.waitForTimeout(250);await page.evaluate(axeSrc);
   return page.evaluate(async()=>(await window.axe.run(document,{resultTypes:['violations']})).violations.map(v=>`${v.id} (${v.impact}): ${v.nodes.slice(0,3).map(n=>n.target.join(' ')).join(' | ')}`))}
 
 for(const theme of ['dark','light'])test(`geen toegankelijkheidsfouten (${theme==='dark'?'donker':'licht'})`,async({page})=>{
