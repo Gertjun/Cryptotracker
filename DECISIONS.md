@@ -237,3 +237,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** op de iPad liggend stond een lege band van zo'n 50 punten boven de app, met de zijbalk pas daaronder; Geert vond dat niet mooi samen met de statusbalk.
 - **Let op:** valt de iOS-vervaging op de iPad toch over de knoppen, maak dan `#app{padding-top}` vanaf 1000 px groter (bijv. `calc(env(safe-area-inset-top) + 10px)`), niet `--top-extra`.
 
+### D45 – Koersupdate gaat voor; geen verzoeken die niets toevoegen (9 nov 2026, 3.23.3, vult D12 aan)
+- **Besluit:** achtergrondverzoeken (`cg(path,true)`: kolom 4 uur, koersarchief, risico) wachten in `cgGo()` zolang er een gewoon verzoek loopt of wacht, en nemen alleen een verzoek uit de emmer als er een klaarligt (geen schuld). De portfoliografiek (`portfolioSeries`) haalt geen grafiek op voor munten die je in de hele periode niet had. `collectHistory()` slaat een munt over als het archief al tot gisteren loopt (of, bij een verkochte munt, tot de dag van de laatste transactie), en haalt anders alleen 2, 7 of 30 dagen op.
+- **Waarom:** Geert merkte dat koersen steeds langer duurden. Achtergrondwerk dat al in de rij stond, ging vóór de koersupdate, en het aantal verzoeken groeide met elke munt, ook verkochte.
+- **Let op:** CoinGecko telt verzoeken, niet de hoeveelheid gegevens. "Alleen ophalen sinds de laatste keer" scheelt dus geen verzoeken; minder munten opvragen wel.
+- **Niet gekozen:** koersen elk uur ophalen terwijl de app dicht is. In de app kan dat niet (iOS laat web-apps niets op de achtergrond doen). Wel mogelijk via een GitHub-taak in de data-repository, maar dan staat de muntenlijst onversleuteld, is een Demo-sleutel als geheim nodig en loopt GitHub vaak achter op het schema. Eerst kijken of 3.23.3 genoeg is.
+

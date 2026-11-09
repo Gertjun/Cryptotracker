@@ -81,7 +81,8 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
 - **Rendementskalender:** `calCard()` met `retRange(u,from,to)`; periode in `settings.calU` (dag/week/maand/jaar), bladeren met `data-cal` via `settings.calMonth` (dag) of `settings.calYear` (week, maand).
 - **x-as:** `xAxisRow(t0,t1,aw)` zet 5 tijdstippen onder een grafiek (`.pc-xr`, met `margin-right` = breedte y-as); `xFmt()` kiest tijd, dag of maand op basis van de lengte. Het vergrote venster gebruikt nog `.pc-x` met `xLbl()`.
 - **CoinGecko:**
-  - `cg(path,low)`: wachtrij met een emmer van 6 verzoeken, daarna 15 per minuut (met sleutel 10 en 30 per minuut), globale pauze bij 429, en `low` voor achtergrondwerk.
+  - `cg(path,low)`: wachtrij (via `cgGo()`, hooguit 2 tegelijk) met een emmer van 6 verzoeken, daarna 15 per minuut (met sleutel 10 en 30 per minuut), globale pauze bij 429. `low` = achtergrondwerk: wacht zolang er een gewoon verzoek is en neemt alleen een klaarliggend verzoek uit de emmer, zodat de koersupdate altijd voorgaat (D45).
+  - `portfolioSeries()` vraagt alleen grafieken op voor munten die je in de periode had; `collectHistory()` alleen als het archief achterloopt.
   - `fetchChart()` gebruikt een cache (`chartTtl`) en voegt gelijktijdige gelijke verzoeken samen.
   - Tests zetten `globalThis.__cgFast=true`.
 - **Marktsentiment (W24, D41):** `refreshFng()` haalt de angst- en hebzuchtmeter van `api.alternative.me/fng/?limit=8` (hooguit één keer per uur, na een fout pas na 10 minuten) en bewaart die in `localStorage` `cpt.fng` (`{ts, pts:[[tijd, waarde, klasse]]}`, openbare gegevens, onversleuteld). `fngCard()` tekent het blok `#fngCard` in `.side-col` op het Overzicht: stand nu, balk (rood → geel → groen), gisteren en vorige week. Uit te zetten met `settings.fng=false` (per apparaat, Instellingen › Weergave); dan geen verbinding. Tests: `routeFng()` in `tests/mock.mjs`.

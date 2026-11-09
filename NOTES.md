@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 5 november 2026 · versie **3.23.2**
+Laatst bijgewerkt: 9 november 2026 · versie **3.23.3**
 
 ---
 
@@ -33,7 +33,7 @@ Laatst bijgewerkt: 5 november 2026 · versie **3.23.2**
 ## 3. Bekende problemen en open punten
 
 - **iOS 26/27-vervaging bovenin** bij de app op het beginscherm. Sinds 3.20.3 op telefoon en tablet geen 40 punten extra meer, maar 14 px ruimte in de vaste bovenbalk (D39). **Nog niet door Geert bevestigd op de iPhone.** De effen statusbalk (`apple-mobile-web-app-status-bar-style: default`) blijft.
-- **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel.
+- **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel. Sinds 3.23.3 gaat de koersupdate wel altijd voor (D45). Nog te traag? Optie: een GitHub-taak die elk uur koersen ophaalt (zie D45, nog niet gekozen).
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
 - **Wishlist open (38):** W4–W8, W10, W11, W15–W23, W25–W46 (W24 ingebouwd in 3.22.0; W46 op 5 nov: geld verdelen volgens je doelverdeling, bewust zonder voorspellingen). W19–W38 zijn op 28 okt toegevoegd, W39–W45 (inzicht in rendement) op 30 okt; nog niets van gebouwd. Advies aan Geert: begin met W39 (jaarrendement) en W40 (hoe gingen je verkopen), daarna W17. W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
@@ -44,6 +44,9 @@ Laatst bijgewerkt: 5 november 2026 · versie **3.23.2**
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
+- **9 nov 2026:**
+  - 3.23.3: koersen sneller binnen. Achtergrondwerk schuift niet meer vóór de koersupdate; geen grafieken meer voor munten die je in de periode niet had; koersarchief alleen aanvullen als er een dag ontbreekt (D45). Nog niet door Geert bekeken.
+  - Geert vroeg om koersen elk uur op de achtergrond op te halen, ook als de app dicht is. Kan niet in de app (iOS staat dat niet toe voor web-apps); alleen via een GitHub-taak in de data-repository, met de muntenlijst onversleuteld. Afgesproken: eerst 3.23.3 afwachten.
 - **5 nov 2026:**
   - 3.23.2: iPad zonder lege band bovenin; zijbalk liggend tot de bovenrand, 40 punten extra weg (D44, vervangt D8). Nog niet door Geert bevestigd.
   - 3.23.1: iPad rechtop toch zonder zijbalk; tabbladen bovenaan in een rij zoals Vaste Lasten (D43, vervangt D42). Nog niet door Geert op de iPad bekeken. iPad liggend houdt de zijbalk; Instellingen blijft via het tandwiel (Geert: "hou het zo voor nu").
