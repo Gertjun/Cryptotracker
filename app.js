@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.26.0 (10 nov 2026)';
+const APP_VERSION='4.0.0 (10 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -2648,9 +2648,12 @@ async function doPairIn(btn){
     if(!lockCfg&&pkSupported())openSheet(`<h2 class="h3">Ook Face ID gebruiken?</h2><p class="mt-0 hint">Dit apparaat is gekoppeld. Wil je de app op dit apparaat vergrendelen met Face ID, Touch ID of Windows Hello? Je gegevens op dit apparaat worden dan versleuteld opgeslagen. Je kunt dit ook later doen in Instellingen › Beveiliging.</p><button type="button" class="btn" data-act="lockon">App-vergrendeling instellen</button><button type="button" class="btn sec" data-act="closesheet">Later</button>`);
   }catch(e){btn.disabled=false;fieldErr(/pincode/i.test(e.message)?'pair_pin':'pair_in',e.message)}
 }
-async function deriveKey(pass,salt){const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
-async function encryptObj(obj,pass){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const key=await deriveKey(pass,salt);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));return{v:1,alg:'AES-GCM/PBKDF2-SHA256',salt:bufToB64(salt),iv:bufToB64(iv),ct:bufToB64(ct)}}
-async function decryptObj(o,pass){const key=await deriveKey(pass,b64ToBuf(o.salt));try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBuf(o.iv)},key,b64ToBuf(o.ct));return JSON.parse(dec.decode(pt))}catch(e){throw new Error('Versleutelwachtwoord klopt niet')}}
+// PBKDF2-rondes (D56): nieuw versleuteld 600.000, zoals in de andere apps. Het aantal staat als 'it' in het versleutelde object;
+// zonder 'it' is het van vóór 4.0.0 en dus 250.000. Zo blijven oude bestanden, back-ups, koppelcodes en de vergrendeling werken.
+const KDF_IT=600000,KDF_IT_OLD=250000;
+async function deriveKey(pass,salt,it=KDF_IT_OLD){const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:it,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function encryptObj(obj,pass){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const key=await deriveKey(pass,salt,KDF_IT);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));return{v:1,alg:'AES-GCM/PBKDF2-SHA256',it:KDF_IT,salt:bufToB64(salt),iv:bufToB64(iv),ct:bufToB64(ct)}}
+async function decryptObj(o,pass){const key=await deriveKey(pass,b64ToBuf(o.salt),o.it||KDF_IT_OLD);try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBuf(o.iv)},key,b64ToBuf(o.ct));return JSON.parse(dec.decode(pt))}catch(e){throw new Error('Versleutelwachtwoord klopt niet')}}
 const utf8ToB64=s=>bufToB64(enc.encode(s));
 const b64ToUtf8=s=>dec.decode(b64ToBuf(s.replace(/\s/g,'')));
 function merge(a,b){
@@ -2798,7 +2801,7 @@ async function openVault(raw){
 }
 async function unlockPw(pw){
   const c=lockCfg.pw;let raw;
-  try{raw=await aesDec(await deriveKey(pw,b64ToBuf(c.salt)),c)}catch(e){throw new Error('Wachtwoord klopt niet')}
+  try{raw=await aesDec(await deriveKey(pw,b64ToBuf(c.salt),c.it||KDF_IT_OLD),c)}catch(e){throw new Error('Wachtwoord klopt niet')}
   await openVault(raw);
 }
 async function unlockPasskey(){
@@ -2838,7 +2841,7 @@ function pkSheet(){
   openSheet(`<h2 class="h3">Passkey koppelen</h2><p class="mt-0 hint">Heb je al een passkey "Crypto Portfolio" in je wachtwoordbeheer (bijvoorbeeld van een eerdere installatie of een ander apparaat)? Gebruik die dan. Anders maak je een nieuwe.</p>
   <button type="button" class="btn" data-act="usepk">Bestaande passkey gebruiken</button><button type="button" class="btn sec" data-act="addpk">Nieuwe passkey maken</button><button type="button" class="btn sec" data-act="settings">Later</button>`);
 }
-async function wrapPw(pw){const salt=rnd(16);return{salt:bufToB64(salt),...await aesEnc(await deriveKey(pw,salt),dekRaw)}}
+async function wrapPw(pw){const salt=rnd(16);return{salt:bufToB64(salt),it:KDF_IT,...await aesEnc(await deriveKey(pw,salt,KDF_IT),dekRaw)}}
 async function enableLock(pw){
   dekRaw=rnd(32);DEK=await importAes(dekRaw);
   lockCfg={pw:null,pks:[],autoLock:5};lockCfg.pw=await wrapPw(pw);saveLock();

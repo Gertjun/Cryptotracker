@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 10 november 2026 · versie **3.26.0**
+Laatst bijgewerkt: 10 november 2026 · versie **4.0.0**
 
 ---
 
@@ -46,6 +46,7 @@ Laatst bijgewerkt: 10 november 2026 · versie **3.26.0**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **10 nov 2026:**
+  - 4.0.0: apps uniform gemaakt. PBKDF2 naar 600.000 rondes zoals de andere apps, met `it` in het versleutelde object (D56). De passkey-aanpak met vaste PRF (D55) is nu de standaard voor al Geerts apps.
   - 3.26.0: na opnieuw installeren een bestaande passkey uit het wachtwoordbeheer hergebruiken, in plaats van steeds een nieuwe (D55). Nieuwe test `passkey.spec.mjs`. Nog niet op een echte iPhone bevestigd.
   - 3.25.0: vijf wensen in één versie (Geert vroeg ze samen): break-even (W45), bijdrage per munt (W17), meebewegen met bitcoin (W44), munten vergelijken (W27), Overzicht indelen (W34); D50–D54. Nieuwe test `inzicht.spec.mjs`. Nog niet door Geert bekeken.
   - 3.24.3: lijn Geïnvesteerd valt bij 1U/4U/24U niet meer buiten de grafiek (D49). Nieuwe test in `calc.spec.mjs`.

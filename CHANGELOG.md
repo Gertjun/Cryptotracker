@@ -7,12 +7,22 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.26.0`) en de naam van het zip-bestand (`crypto-tracker-3.26.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.0`) en de naam van het zip-bestand (`crypto-tracker-4.0.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 4.0.0 – 10 november 2026
+Je versleutelde gegevens zijn beter beschermd tegen het raden van je wachtwoord, net als in je andere apps.
+
+### Gewijzigd
+- **Sterkere versleuteling**: het versleutelwachtwoord wordt nu met 600.000 rondes omgezet in een sleutel (was 250.000), zoals in Vaste Lasten, Energieverbruik, Games Backlog en MW4 Camo Tracker. Dat maakt het raden van je wachtwoord ruim twee keer zo traag. Het geldt voor het bestand op GitHub, koppelcodes en het wachtwoord van de app-vergrendeling.
+- Oude bestanden, back-ups uit de geschiedenis, koppelcodes en je huidige vergrendeling blijven gewoon werken.
+
+### Let op
+- **Werk al je apparaten bij.** Zodra een bijgewerkt apparaat synchroniseert, kan een apparaat met een oudere versie het bestand op GitHub niet meer openen. Het geeft dan de melding dat het versleutelwachtwoord niet klopt, maar er gaat niets verloren: open de app en tik op het versienummer om bij te werken.
 
 ## 3.26.0 – 10 november 2026
 Na het opnieuw installeren van de app kun je je bestaande passkey weer gebruiken, in plaats van steeds een nieuwe te maken.

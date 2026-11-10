@@ -40,7 +40,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Een transactie heeft o.a. `type` (`buy`, `sell`, `deposit`, `withdraw`, `receive`, `transfer`, `other`), `coinId`, `qty`, `price`, `fee`, `date`, `acct` en `pf` (portefeuille; leeg = hoofdportefeuille).
 - **Synchronisatie:**
   - `syncNow()`, `merge()`, `mergeList()`: nieuwste `mod` wint, bij gelijke tijd wint verwijderen.
-  - `encryptObj`/`decryptObj`: PBKDF2 250k + AES-GCM.
+  - `encryptObj`/`decryptObj`: PBKDF2 600k (`KDF_IT`; aantal staat als `it` in het object, zonder `it` 250k) + AES-GCM (D56).
   - GitHub Contents-API, met een raw-download boven 1 MB.
   - `sig()` herkent wijzigingen.
   - `scheduleSync()` wacht 20 s; `flushSync()` synchroniseert direct bij het verlaten van de app (D30).

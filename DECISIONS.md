@@ -301,3 +301,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Veiligheid:** het PRF-geheim blijft per passkey uniek en alleen te krijgen met Face ID/Touch ID; het invoergeheim hoeft niet geheim te zijn. Oudere koppelingen met een eigen geheim blijven werken (het geheim staat per passkey in `lockCfg.pks[].salt`).
 - **Niet gekozen:** een vaste `user.id`, zodat een nieuwe passkey de oude in het wachtwoordbeheer vervangt. Dan verdwijnt de oude passkey ook op andere apparaten (iCloud) en werkt ontgrendelen daar niet meer tot je hem opnieuw koppelt. Overbodige passkeys verwijdert Geert zelf.
 
+### D56 – PBKDF2 600.000 rondes, gelijk aan de andere apps (10 nov 2026, 4.0.0, vervangt het aantal rondes in D2)
+- **Besluit:** nieuw versleutelde objecten (GitHub-bestand, koppelcode, wachtwoord van de app-vergrendeling) gebruiken 600.000 PBKDF2-rondes (`KDF_IT`) en bewaren dat aantal als `it` in het object. Zonder `it` is een object van vóór 4.0.0 en geldt 250.000 (`KDF_IT_OLD`).
+- **Waarom:** Geert wil al zijn apps uniform en op hetzelfde beveiligingsniveau. De template-apps (Energieverbruik, Games Backlog, MW4 Camo Tracker) gebruiken 600.000 (OWASP 2023+), Vaste Lasten ook voor nieuwe wachtwoorden.
+- **Gevolg:** MAJOR-versie. Een apparaat met een oudere versie kan een bestand met 600.000 rondes niet openen en meldt dat het wachtwoord niet klopt; de sync stopt dan vóór het samenvoegen, dus er gaat niets verloren. Bijwerken lost het op.
+- **Niet gekozen:** 250.000 houden (ongelijk aan de andere apps), of pas omzetten na een wachtwoordwijziging zoals in Vaste Lasten. Cryptotracker versleutelt bij elke sync opnieuw met een nieuwe salt, dus een apart moment om om te zetten is er niet.
+
