@@ -7,12 +7,18 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.2`) en de naam van het zip-bestand (`crypto-tracker-3.24.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.3`) en de naam van het zip-bestand (`crypto-tracker-3.24.3.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.24.3 – 10 november 2026
+De lijn Geïnvesteerd valt bij 1U, 4U en 24U niet meer buiten de grafiek.
+
+### Opgelost
+- **Schaal portfoliografiek:** bij 1U, 4U en 24U schaalde de y-as alleen op de waarde, waardoor de lijn Geïnvesteerd na een aankoop buiten beeld kon vallen. Geïnvesteerd telt nu mee in de schaal, tenzij de as daardoor meer dan drie keer zo hoog wordt; dan blijft de schaal op de lijn zelf, zodat kleine bewegingen zichtbaar blijven.
 
 ## 3.24.2 – 9 november 2026
 Het versienummer in de zijbalk verspringt niet meer tussen de schermen.

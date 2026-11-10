@@ -63,3 +63,18 @@ test('totaal, aantal en kosten ingevuld: bewaard totaal is precies het ingevulde
     return{added:data.txs.length-n,total:t&&txTotal(t),warn:dataIssues().some(c=>/geen heel bedrag/.test(c.t))}});
   expect(r.added).toBe(1);expect(Math.abs(r.total-29.99)).toBeLessThan(1e-9);expect(r.warn).toBe(false);
 });
+
+test('24U: geïnvesteerd valt binnen de grafiek na een aankoop (D49)',async({page})=>{
+  await openApp(page);
+  const r=await page.evaluate(()=>{
+    const old=settings.pRange,el=document.createElement('div');document.body.append(el);
+    const run=(range,pts)=>{settings.pRange=range;const g=paintPf(el,{pts},{my:'t'});return pts.map(p=>[g.Y(p[1]),g.Y(p[2])]).flat().every(y=>y>=0&&y<=g.H)};
+    const t=Date.now(),mk=(n,f)=>Array.from({length:n},(_,i)=>f(i,t-(n-1-i)*3600e3));
+    // Waarde rond € 293, geïnvesteerd € 350; op het eind € 100 bijgekocht: waarde € 391, geïnvesteerd € 450
+    const buy=mk(25,(i,ts)=>i<24?[ts,293+(i%3),350,0]:[ts,391,450,0]);
+    // Kleine beweging ver onder geïnvesteerd: daar blijft de schaal op de lijn zelf
+    const far=mk(25,(i,ts)=>[ts,293+(i%3)*0.5,450,0]);
+    settings.pRange='1';const g=paintPf(el,{pts:far},{my:'u'}),farIn=g.Y(450)>=0&&g.Y(450)<=g.H;
+    const out={buy:run('1',buy),farIn};settings.pRange=old;el.remove();return out});
+  expect(r).toEqual({buy:true,farIn:false});
+});

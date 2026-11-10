@@ -58,7 +58,7 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
   - Een munt telt pas vanaf het eerste bezit.
 - **Waarom:** Geert wilde dat het laatste punt van de lijn klopt met het getal in de tabel.
 - **Niet gekozen:** koersverandering sinds het begin van de periode (3.3.0) en tijdgewogen rendement (3.5.0). Beide verwarden.
-- **Schaal:** 1U, 4U en 24U schalen op de lijn zelf, niet vanaf 0.
+- **Schaal:** 1U, 4U en 24U schalen op de lijn zelf, niet vanaf 0 (aangevuld in D49: geïnvesteerd telt mee als de as daardoor hooguit 3× zo hoog wordt).
 
 ### D12 – CoinGecko-tempo met emmer en globale pauze (27 okt 2026, 3.8.1)
 - **Besluit:** zonder sleutel 6 direct en daarna 15 per minuut, met Demo-sleutel 10 en daarna 30. Bij 429 pauzeert de hele wachtrij (standaard 15 s, want CoinGecko stelt `Retry-After` niet beschikbaar voor de browser). Achtergrondwerk heeft lage prioriteit. Grafieken worden langer gecachet.
@@ -264,3 +264,7 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Niet gekozen:** de schuifbalk onzichtbaar maken (dan zie je niet dat de lijst langer is); altijd ruimte reserveren voor een schuifbalk (dan past de bovenste regel ook op het Overzicht niet meer).
 - **Test:** `tests/specs/zijbalk.spec.mjs` draait Chromium zonder `--hide-scrollbars`, zodat de schuifbalk ruimte inneemt zoals op Windows.
 
+### D49 – 1U/4U/24U: geïnvesteerd telt mee in de schaal als dat kan (10 nov 2026, 3.24.3, vult D11 aan)
+- **Besluit:** `paintPf()` neemt de lijn Geïnvesteerd mee in de y-as, ook bij 1U, 4U en 24U, zolang de as daardoor hooguit 3× zo hoog wordt als de waarde alleen nodig heeft. Anders blijft de schaal op de waardelijn (D11).
+- **Waarom:** na een aankoop van € 100 sprong geïnvesteerd naar € 450, terwijl de as tot ± € 396 liep; de lijn viel buiten de grafiek (screenshot van Geert).
+- **Niet gekozen:** geïnvesteerd altijd meenemen (dan is een uurbeweging van een paar euro weer een platte lijn); alleen het laatste punt meenemen (geeft een willekeurige schaal).

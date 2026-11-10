@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.24.2 (9 nov 2026)';
+const APP_VERSION='3.24.3 (10 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -1907,7 +1907,9 @@ function paintPf(wrap,res,o){
   const W=360,H=170,pt=10,pb=10,t0=pts[0][0],t1=pts[pts.length-1][0];
   // 1U, 4U en 24U: schaal op de waarde zelf, anders is de beweging naast de geïnvesteerd-lijn niet te zien
   const tight=['1h','4h','1'].includes(settings.pRange);
-  let lo=Infinity,hi=-Infinity;pts.forEach(p=>{lo=Math.min(lo,p[1],tight?p[1]:p[2]);hi=Math.max(hi,p[1],tight?p[1]:p[2])});
+  let lo=Infinity,hi=-Infinity,li=Infinity,hj=-Infinity;pts.forEach(p=>{lo=Math.min(lo,p[1]);hi=Math.max(hi,p[1]);li=Math.min(li,p[2]);hj=Math.max(hj,p[2])});
+  // Geïnvesteerd telt mee in de schaal, behalve bij 1U/4U/24U als de as daardoor meer dan 3× zo hoog zou worden (D49)
+  {const fl=Math.min(lo,li),fh=Math.max(hi,hj);if(!tight||fh-fl<=3*(hi-lo)){lo=fl;hi=fh}}
   if(tight&&hi-lo<Math.abs(hi)*2e-4){const m=(hi+lo)/2,h=Math.max(Math.abs(hi)*1e-4,0.5);lo=m-h;hi=m+h}
   if(hi-lo<1e-9*Math.max(1,Math.abs(hi))){hi+=Math.max(1,Math.abs(hi)*0.01);lo-=Math.max(1,Math.abs(lo)*0.01)}
   const pad=(hi-lo)*.06;lo-=pad;hi+=pad;

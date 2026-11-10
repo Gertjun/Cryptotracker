@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 9 november 2026 · versie **3.24.2**
+Laatst bijgewerkt: 10 november 2026 · versie **3.24.3**
 
 ---
 
@@ -44,6 +44,8 @@ Laatst bijgewerkt: 9 november 2026 · versie **3.24.2**
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
+- **10 nov 2026:**
+  - 3.24.3: lijn Geïnvesteerd valt bij 1U/4U/24U niet meer buiten de grafiek (D49). Nieuwe test in `calc.spec.mjs`.
 - **9 nov 2026:**
   - 3.24.2: versienummer in de zijbalk verspringt niet meer op Transacties/Analyse; alleen de muntenlijst schuift (D48). Nieuwe test `zijbalk.spec.mjs`.
   - 3.24.1: synchronisatie, oogje en slotje terug rechtsboven; zijbalk alleen + Transactie en vier knoppen (D47). a11y-test wacht nu tot een melding weg is (de eerdere toevallige fout bij Nachtblauw/Hoog contrast kwam door een uitfadende melding). Nog niet door Geert bekeken.
