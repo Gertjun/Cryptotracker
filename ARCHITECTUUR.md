@@ -94,7 +94,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Overzicht indelen: `HOME_BLOCKS`, `homeBlocks()`, `setHomeBlocks()`, `homeBlocksHTML(H)` in `renderHome()`; blad `openHomeBlocks()`, verplaatsen `moveHomeBlock()`; `settings.home = {order, hide}` (per apparaat). Een nieuw blok op het Overzicht: toevoegen aan `HOME_BLOCKS` en aan het object `H` in `renderHome()`.
 - **Overige functies:**
   - Doelen, vaste inleg (`planDo`), doelverdeling (`allocCard`), wat-als (`whatIfCard`), risico (`riskCard`), gemiddelde-prijs-calculator (`avgCalcCard`), verkoopsimulator (`sellSimCard`);
-  - eerdere versie terugzetten (`openVersions`), koppelcode (`makePairCode`/`readPairCode`), app-vergrendeling met passkey (WebAuthn PRF) en herstelwachtwoord.
+  - eerdere versie terugzetten (`openVersions`), koppelcode (`makePairCode`/`readPairCode`), app-vergrendeling met passkey (WebAuthn PRF) en herstelwachtwoord. Passkeys: `addPasskey()` (nieuw), `reusePasskey()` (bestaande uit het wachtwoordbeheer, zonder `allowCredentials`), keuzeblad `pkSheet()`; nieuwe koppelingen gebruiken het vaste invoergeheim `PK_SALT` (D55).
 - **Wachtwoordvelden:** altijd via `pwField(id,label,attrs,meter,lblCls)`, met oogje (`pwEye`) en optioneel sterkte-indicator (`pwStrength`); nieuwe wachtwoorden minimaal `PW_MIN` (D29).
 - **Bestanden bewaren:** `download(naam,tekst|Blob,mime)`: deelmenu op aanraakschermen, anders download (D33). Met vergrendeling krijgt `body` de klasse `.shield` als de app verborgen is.
 - **Updates:** `showUpdate()` toont "update beschikbaar" naast de appnaam (laptop) of een melding bovenin (telefoon).
