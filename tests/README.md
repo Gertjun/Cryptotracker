@@ -18,6 +18,7 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 | `specs/beveiliging.spec.mjs` | Nieuwe wachtwoorden minimaal 12 tekens (met indicator en oogje), kort wachtwoord bij een bestaand bestand, synchroniseren na 20 s en bij verlaten, twee tabbladen, gegevens van een nieuwere app-versie, back-up downloaden en de app-wisselaar. |
 | `specs/markt.spec.mjs` | Marktsentiment (angst- en hebzuchtmeter) op het Overzicht met gisteren en vorige week, uitzetten in Instellingen, en geen blok of fouten als alternative.me niet antwoordt (met een nep-alternative.me). |
 | `specs/inzicht.spec.mjs` | Afstand tot break-even op de munt-pagina en als kolom, bijdrage per munt per maand/kwartaal/jaar, meebewegen met bitcoin, munten vergelijken in één grafiek, en het Overzicht zelf indelen (blokken verbergen en verplaatsen). |
+| `specs/passkey.spec.mjs` | Na opnieuw installeren een bestaande passkey uit het wachtwoordbeheer opnieuw gebruiken, dezelfde passkey niet dubbel toevoegen, en ontgrendelen (met een virtuele passkey van Chromium). |
 | `specs/update.spec.mjs` | Een nieuwe versie komt direct binnen, ook als de server de browser laat cachen (zoals GitHub Pages). |
 | `npm run test:html` | De HTML voldoet aan de standaard (html-validate). |
 

@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.25.0 (10 nov 2026)';
+const APP_VERSION='3.26.0 (10 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -2529,7 +2529,7 @@ function renderSettings(){
   ${pane('sec',`<section class="card" aria-labelledby="st_sec"><h2 class="h3" id="st_sec">Beveiliging</h2>
   ${lockCfg?`
   ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="note-sm label">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button type="button" data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="mt-0 hint">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
-  ${pkSupported()?'<button type="button" class="btn sec" data-act="addpk">Passkey toevoegen</button>':'<p class="hint">Passkeys werken alleen als de app via https draait (GitHub Pages).</p>'}
+  ${pkSupported()?'<button type="button" class="btn sec" data-act="usepk">Bestaande passkey gebruiken</button><button type="button" class="btn sec" data-act="addpk">Nieuwe passkey maken</button><p class="hint">Heb je de app opnieuw geïnstalleerd? Kies dan Bestaande passkey: je passkey staat nog in je wachtwoordbeheer.</p>':'<p class="hint">Passkeys werken alleen als de app via https draait (GitHub Pages).</p>'}
   <div class="mt-12 field"><label for="s_auto">Automatisch vergrendelen na</label><select id="s_auto">${[[0,'Direct bij verlaten'],[1,'1 minuut'],[5,'5 minuten'],[15,'15 minuten'],[60,'1 uur'],[-1,'Nooit (alleen bij herstarten)']].map(([v,l])=>`<option value="${v}"${(lockCfg.autoLock??5)===v?' selected':''}>${l}</option>`).join('')}</select></div>
   <div class="two"><button type="button" class="btn sec" data-act="chpw">Wachtwoord wijzigen</button><button type="button" class="btn sec" data-act="lockoff">Uitschakelen</button></div>`
   :`<p class="mt-0 hint">Vergrendel de app met een passkey (Face ID, Touch ID of Windows Hello). Je gegevens op dit apparaat worden dan versleuteld opgeslagen.</p><button type="button" class="btn sec" data-act="lockon">App-vergrendeling instellen</button>`}
@@ -2810,8 +2810,19 @@ async function unlockPasskey(){
   let raw;try{raw=await aesDec(await prfKey(out),pk)}catch(e){throw new Error('Ontgrendelen met deze passkey mislukt')}
   await openVault(raw);
 }
+// Vast PRF-invoergeheim: zo kan elke "Crypto Portfolio"-passkey uit je wachtwoordbeheer opnieuw gebruikt worden,
+// ook na het opnieuw installeren van de app (dan is cpt.lock gewist). Het geheim dat de passkey teruggeeft, blijft
+// uniek per passkey en alleen te krijgen met Face ID/Touch ID; oudere passkeys met een eigen salt blijven werken.
+const PK_SALT=enc.encode('cpt-passkey-prf-v2');
+function storePasskey(rawId,salt,w){lockCfg.pks=(lockCfg.pks||[]).concat({id:b64url(rawId),name:deviceName(),salt:bufToB64(salt),...w,created:Date.now()});saveLock()}
+async function reusePasskey(){
+  const cred=await navigator.credentials.get({publicKey:{challenge:rnd(32),userVerification:'required',timeout:120000,extensions:{prf:{eval:{first:PK_SALT}}}}});
+  if((lockCfg.pks||[]).some(p=>p.id===b64url(cred.rawId)))throw new Error('Deze passkey is al toegevoegd');
+  const out=cred.getClientExtensionResults().prf?.results?.first;if(!out)throw new Error(NO_PRF);
+  storePasskey(cred.rawId,PK_SALT,await aesEnc(await prfKey(out),dekRaw));
+}
 async function addPasskey(){
-  const salt=rnd(32);
+  const salt=PK_SALT;
   const cred=await navigator.credentials.create({publicKey:{rp:{name:'Crypto Portfolio'},user:{id:rnd(16),name:'Crypto Portfolio',displayName:'Crypto Portfolio'},challenge:rnd(32),
     pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{residentKey:'required',requireResidentKey:true,userVerification:'required'},timeout:120000,extensions:{prf:{eval:{first:salt}}}}});
   const ext=cred.getClientExtensionResults().prf||{};let out=ext.results?.first;
@@ -2821,8 +2832,11 @@ async function addPasskey(){
     const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:cred.rawId}],userVerification:'required',timeout:120000,extensions:{prf:{eval:{first:salt}}}}});
     out=a.getClientExtensionResults().prf?.results?.first;if(!out)throw new Error(NO_PRF);
   }
-  const w=await aesEnc(await prfKey(out),dekRaw);
-  lockCfg.pks=(lockCfg.pks||[]).concat({id:b64url(cred.rawId),name:deviceName(),salt:bufToB64(salt),...w,created:Date.now()});saveLock();
+  storePasskey(cred.rawId,salt,await aesEnc(await prfKey(out),dekRaw));
+}
+function pkSheet(){
+  openSheet(`<h2 class="h3">Passkey koppelen</h2><p class="mt-0 hint">Heb je al een passkey "Crypto Portfolio" in je wachtwoordbeheer (bijvoorbeeld van een eerdere installatie of een ander apparaat)? Gebruik die dan. Anders maak je een nieuwe.</p>
+  <button type="button" class="btn" data-act="usepk">Bestaande passkey gebruiken</button><button type="button" class="btn sec" data-act="addpk">Nieuwe passkey maken</button><button type="button" class="btn sec" data-act="settings">Later</button>`);
 }
 async function wrapPw(pw){const salt=rnd(16);return{salt:bufToB64(salt),...await aesEnc(await deriveKey(pw,salt),dekRaw)}}
 async function enableLock(pw){
@@ -2875,9 +2889,9 @@ async function securityAction(act,el){
   try{
     if(act==='lockon')return pwSheet('App-vergrendeling instellen','Kies eerst een <b>herstelwachtwoord</b>. Daarmee open je de app als de passkey niet beschikbaar is. Raak je dit kwijt én werkt de passkey niet meer, dan is de data op dit apparaat niet meer te openen (wel via GitHub-sync of een back-up).','lockon2');
     if(act==='lockon2'){const pw=readPw();if(!pw)return;el.disabled=true;await enableLock(pw);render();
-      if(pkSupported()){try{await addPasskey();toast('Vergrendeling aan, passkey toegevoegd')}catch(e){toast('Vergrendeling aan. Passkey: '+pkErr(e))}}else toast('Vergrendeling aan');
-      return openSettings()}
-    if(act==='addpk'){el.disabled=true;try{await addPasskey();toast('Passkey toegevoegd')}catch(e){toast(pkErr(e))}return openSettings()}
+      toast('Vergrendeling aan');openSettings();if(pkSupported())pkSheet();return}
+    if(act==='addpk'){el.disabled=true;try{await addPasskey();toast('Passkey toegevoegd')}catch(e){toast(pkErr(e))}closeSheet();return openSettings()}
+    if(act==='usepk'){el.disabled=true;try{await reusePasskey();toast('Passkey toegevoegd')}catch(e){toast(pkErr(e))}closeSheet();return openSettings()}
     if(act==='rmpk'){if(!confirm('Deze passkey niet meer gebruiken voor deze app? Verwijder hem daarna ook uit je wachtwoordbeheer.'))return;lockCfg.pks=lockCfg.pks.filter(p=>p.id!==el.dataset.id);saveLock();return openSettings()}
     if(act==='chpw')return pwSheet('Herstelwachtwoord wijzigen','Je passkeys blijven gewoon werken.','chpw2');
     if(act==='chpw2'){const pw=readPw();if(!pw)return;lockCfg.pw=await wrapPw(pw);saveLock();toast('Wachtwoord gewijzigd');return openSettings()}
@@ -2983,7 +2997,7 @@ document.addEventListener('click',e=>{
       refreshPrices()})();break;
     case 'add':$('#btnAdd').click();break;
     case 'unlockpk':tryPasskey(false);break;
-    case 'lockon':case 'lockon2':case 'addpk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
+    case 'lockon':case 'lockon2':case 'addpk':case 'usepk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
     case 'settings':openSettings();break;
     case 'setback':location.hash=setFrom&&setFrom!=='#instellingen'?setFrom:'';break;

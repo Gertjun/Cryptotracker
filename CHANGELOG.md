@@ -7,12 +7,28 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.25.0`) en de naam van het zip-bestand (`crypto-tracker-3.25.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.26.0`) en de naam van het zip-bestand (`crypto-tracker-3.26.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.26.0 – 10 november 2026
+Na het opnieuw installeren van de app kun je je bestaande passkey weer gebruiken, in plaats van steeds een nieuwe te maken.
+
+### Toegevoegd
+- **Bestaande passkey gebruiken**: bij het instellen van de app-vergrendeling, en in Instellingen › Beveiliging, kies je nu tussen "Bestaande passkey gebruiken" en "Nieuwe passkey maken". Heb je de app verwijderd en opnieuw op je beginscherm gezet (bijvoorbeeld voor een nieuw icoon), dan staat je passkey nog in je wachtwoordbeheer: kies Bestaande, bevestig met Face ID en klaar.
+
+### Gewijzigd
+- Na het instellen van de vergrendeling maakt de app niet meer vanzelf een nieuwe passkey, maar vraagt hij eerst welke je wilt gebruiken.
+
+### Let op
+- Je oude passkeys "Crypto Portfolio" in je wachtwoordbeheer zijn ook te kiezen als bestaande passkey. Overbodige kun je daar verwijderen; zorg dat je er één houdt.
+
+### Technisch
+- Passkeys krijgen een vast PRF-invoergeheim (`PK_SALT`) in plaats van een willekeurig geheim dat alleen op het apparaat stond; `reusePasskey()` vraagt een passkey zonder vaste lijst. Bestaande koppelingen met een eigen geheim blijven werken.
+- Nieuwe test `tests/specs/passkey.spec.mjs` met een virtuele passkey van Chromium.
 
 ## 3.25.0 – 10 november 2026
 Vijf wensen in één keer: break-even, bijdrage per munt, meebewegen met bitcoin, munten vergelijken en het Overzicht zelf indelen.
