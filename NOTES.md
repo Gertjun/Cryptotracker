@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 10 november 2026 · versie **3.24.3**
+Laatst bijgewerkt: 10 november 2026 · versie **3.25.0**
 
 ---
 
@@ -27,7 +27,7 @@ Laatst bijgewerkt: 10 november 2026 · versie **3.24.3**
 
 ## 2. Testen
 
-- Zie `tests/README.md`. Er zijn 53 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), zijbalk met gewone schuifbalken (`zijbalk.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates, de kolommen van Bezittingen en marktsentiment (`markt.spec.mjs`).
+- Zie `tests/README.md`. Er zijn 58 tests op twee schermformaten: rooktest, toegankelijkheid (axe in alle zes thema's, themakeuze, toetsenbord), berekeningen, synchronisatie met koppelcode, beveiliging en robuustheid (`beveiliging.spec.mjs`: wachtwoordregels, synchroniseren bij verlaten, twee tabbladen, gegevensversie, back-up en app-wisselaar), passen op het scherm (`fit.spec.mjs`), zijbalk met gewone schuifbalken (`zijbalk.spec.mjs`), rendementskalender (`kalender.spec.mjs`), CoinGecko-tempo, updates, de kolommen van Bezittingen, marktsentiment (`markt.spec.mjs`) en de inzichtblokken van 3.25.0 (`inzicht.spec.mjs`).
 - **Vaste klok:** de tests gebruiken de vaste datum 26 okt 2026 12:00 UTC. Bedragen uit de test-export liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## 3. Bekende problemen en open punten
@@ -35,7 +35,7 @@ Laatst bijgewerkt: 10 november 2026 · versie **3.24.3**
 - **iOS 26/27-vervaging bovenin** bij de app op het beginscherm. Sinds 3.20.3 op telefoon en tablet geen 40 punten extra meer, maar 14 px ruimte in de vaste bovenbalk (D39). **Nog niet door Geert bevestigd op de iPhone.** De effen statusbalk (`apple-mobile-web-app-status-bar-style: default`) blijft.
 - **CoinGecko zonder sleutel:** de eerste keer laden met veel munten duurt 10–15 s door het tempo. Advies: een gratis Demo-sleutel. Sinds 3.23.3 gaat de koersupdate wel altijd voor (D45). Nog te traag? Optie: een GitHub-taak die elk uur koersen ophaalt (zie D45, nog niet gekozen).
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
-- **Wishlist open (38):** W4–W8, W10, W11, W15–W23, W25–W46 (W24 ingebouwd in 3.22.0; W46 op 5 nov: geld verdelen volgens je doelverdeling, bewust zonder voorspellingen). W19–W38 zijn op 28 okt toegevoegd, W39–W45 (inzicht in rendement) op 30 okt; nog niets van gebouwd. Advies aan Geert: begin met W39 (jaarrendement) en W40 (hoe gingen je verkopen), daarna W17. W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
+- **Wishlist open (33):** W4–W8, W10, W11, W15, W16, W18–W23, W25, W26, W28–W33, W35–W43, W46. W17, W27, W34, W44 en W45 ingebouwd in 3.25.0. Advies aan Geert: daarna W39 (jaarrendement) en W40 (hoe gingen je verkopen). W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
 - **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
 - **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
@@ -45,6 +45,7 @@ Laatst bijgewerkt: 10 november 2026 · versie **3.24.3**
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
 - **10 nov 2026:**
+  - 3.25.0: vijf wensen in één versie (Geert vroeg ze samen): break-even (W45), bijdrage per munt (W17), meebewegen met bitcoin (W44), munten vergelijken (W27), Overzicht indelen (W34); D50–D54. Nieuwe test `inzicht.spec.mjs`. Nog niet door Geert bekeken.
   - 3.24.3: lijn Geïnvesteerd valt bij 1U/4U/24U niet meer buiten de grafiek (D49). Nieuwe test in `calc.spec.mjs`.
 - **9 nov 2026:**
   - 3.24.2: versienummer in de zijbalk verspringt niet meer op Transacties/Analyse; alleen de muntenlijst schuift (D48). Nieuwe test `zijbalk.spec.mjs`.

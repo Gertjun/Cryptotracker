@@ -86,6 +86,12 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - `fetchChart()` gebruikt een cache (`chartTtl`) en voegt gelijktijdige gelijke verzoeken samen.
   - Tests zetten `globalThis.__cgFast=true`.
 - **Marktsentiment (W24, D41):** `refreshFng()` haalt de angst- en hebzuchtmeter van `api.alternative.me/fng/?limit=8` (hooguit één keer per uur, na een fout pas na 10 minuten) en bewaart die in `localStorage` `cpt.fng` (`{ts, pts:[[tijd, waarde, klasse]]}`, openbare gegevens, onversleuteld). `fngCard()` tekent het blok `#fngCard` in `.side-col` op het Overzicht: stand nu, balk (rood → geel → groen), gisteren en vorige week. Uit te zetten met `settings.fng=false` (per apparaat, Instellingen › Weergave); dan geen verbinding. Tests: `routeFng()` in `tests/mock.mjs`.
+- **Inzicht (3.25.0):**
+  - Break-even: `beNeed(c)`; regel `.be-note` op de munt-pagina en kolom `be` in `HCOLS` (standaard uit).
+  - Bijdrage per munt: `ctbCard()` in Analyse › Rendement, met `coinContrib(from,to)`, `ctbStart()`/`ctbNext()` (ook kwartaal) en `settings.ctbU`/`ctbAt`; bladeren met `data-act="ctbnav"`.
+  - Meebewegen met bitcoin: `betaCard()` in Vergelijken, met `btcBeta(reeks, bitcoinMap)` op dezelfde dagkoersen als Risico (`dailySeries`, `pfRiskSeries`, `riskLoad`).
+  - Munten vergelijken: `cmpCard()` in Vergelijken, `cmpOpts()`, `coinNameOf()`, `settings.cmpIds`/`cmpR`; keuzelijsten `data-act="cmpsel"` (change-event).
+  - Overzicht indelen: `HOME_BLOCKS`, `homeBlocks()`, `setHomeBlocks()`, `homeBlocksHTML(H)` in `renderHome()`; blad `openHomeBlocks()`, verplaatsen `moveHomeBlock()`; `settings.home = {order, hide}` (per apparaat). Een nieuw blok op het Overzicht: toevoegen aan `HOME_BLOCKS` en aan het object `H` in `renderHome()`.
 - **Overige functies:**
   - Doelen, vaste inleg (`planDo`), doelverdeling (`allocCard`), wat-als (`whatIfCard`), risico (`riskCard`), gemiddelde-prijs-calculator (`avgCalcCard`), verkoopsimulator (`sellSimCard`);
   - eerdere versie terugzetten (`openVersions`), koppelcode (`makePairCode`/`readPairCode`), app-vergrendeling met passkey (WebAuthn PRF) en herstelwachtwoord.
@@ -116,7 +122,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Kop `## X.Y.Z – datum`, één zin samenvatting.
   - Secties `### Toegevoegd / Gewijzigd / Verbeterd / Opgelost / Technisch / Let op`, met vetgedrukte labels.
   - Bij een wens schrijf je "(wens Wn)".
-- **Wishlist:** een ingebouwde wens verdwijnt met `tools/wish.py Wn`. Een nieuwe wens krijgt het eerstvolgende vrije nummer; de hoogste is nu W46.
+- **Wishlist:** een ingebouwde wens verdwijnt met `tools/wish.py Wn`. Een nieuwe wens krijgt het eerstvolgende vrije nummer; de hoogste is nu W46 (vrije nummers niet hergebruiken).
 
 ## 5. Stijl en vormgeving
 

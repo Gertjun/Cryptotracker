@@ -268,3 +268,29 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** `paintPf()` neemt de lijn Geïnvesteerd mee in de y-as, ook bij 1U, 4U en 24U, zolang de as daardoor hooguit 3× zo hoog wordt als de waarde alleen nodig heeft. Anders blijft de schaal op de waardelijn (D11).
 - **Waarom:** na een aankoop van € 100 sprong geïnvesteerd naar € 450, terwijl de as tot ± € 396 liep; de lijn viel buiten de grafiek (screenshot van Geert).
 - **Niet gekozen:** geïnvesteerd altijd meenemen (dan is een uurbeweging van een paar euro weer een platte lijn); alleen het laatste punt meenemen (geeft een willekeurige schaal).
+
+### D50 – Afstand tot break-even (10 nov 2026, 3.25.0, wens W45)
+- **Besluit:** `beNeed(c)` = geïnvesteerd / waarde − 1, alleen bij verlies. Op de munt-pagina een regel onder het resultaat (`.be-note`) met het percentage en de break-evenkoers (geïnvesteerd / aantal, dus inclusief kosten). Daarnaast kolom `be` "Tot break-even" in `HCOLS`, standaard uit (`off:true`) en met de laagste prioriteit (`p:13`).
+- **Waarom:** na −50% is +100% nodig; dat is niet intuïtief.
+- **Niet gekozen:** de kolom standaard aan (dan past de tabel op 1440 px niet meer zonder kolommen te verbergen, D24); de regel ook in de telefoonlijst (te vol).
+
+### D51 – Bijdrage per munt per kalenderperiode (10 nov 2026, 3.25.0, wens W17)
+- **Besluit:** blok "Bijdrage per munt" in Analyse › Rendement (`ctbCard()`). Bijdrage = (waarde − kostprijs + gerealiseerd) aan het eind min hetzelfde aan het begin, per munt uit `coinStates()` (`coinContrib(from,to)`). Periodes: Maand, Kwartaal, Jaar (kalenderperiodes, bladeren met ‹ ›) en Alles. Keuze in `settings.ctbU` en `settings.ctbAt` (per apparaat).
+- **Waarom:** Geert wilde zien welke munt zijn resultaat maakte. Kalenderperiodes sluiten aan bij de rendementskalender (D27).
+- **Niet gekozen:** voortschrijdende periodes (laatste 30 dagen); dan kun je niet terugbladeren naar een bepaalde maand.
+- **Let op:** "Samen" kan een cent afwijken van Beste en slechtste munt (afronding in FIFO); de test staat 2 cent toe.
+
+### D52 – Meebewegen met bitcoin: bèta en samenhang (10 nov 2026, 3.25.0, wens W44)
+- **Besluit:** blok "Meebewegen met bitcoin" in Analyse › Vergelijken (`betaCard()`), onder Risico. Per munt en voor "je crypto samen" (`pfRiskSeries`, huidige verdeling) de bèta t.o.v. bitcoin uit dagrendementen van het afgelopen jaar (`btcBeta`), getoond als "als bitcoin −10%" en de correlatie in woorden (sterk ≥ 0,8, matig ≥ 0,5, zwak ≥ 0,2, anders bijna geen). Minimaal 30 dagen. Gebruikt dezelfde koersen als Risico (`dailySeries`, `riskLoad`), dus geen extra verzoeken behalve bitcoin zelf.
+- **Waarom:** laat zien of munten echt spreiding geven.
+- **Niet gekozen:** getallen als "bèta 0,86" of "correlatie 0,72" (vakjargon); een eigen periodekeuze.
+
+### D53 – Munten vergelijken in één grafiek (10 nov 2026, 3.25.0, wens W27)
+- **Besluit:** blok "Munten vergelijken" in Analyse › Vergelijken (`cmpCard()`). Drie keuzelijsten (derde mag leeg) met bitcoin, ethereum, je eigen munten en de volglijst (`cmpOpts()`); periode 1M, 3M of 1J. Alle lijnen beginnen op 0% vanaf het laatste beginpunt van de gekozen reeksen. Lijnen hebben verschillende kleuren (`PAL`) én streepjes (`CMP_DASH`), zodat kleur niet het enige verschil is. Keuze in `settings.cmpIds`, `settings.cmpR` (per apparaat). Mislukt ophalen: niet vaker dan eens per minuut opnieuw (`cmpTried`).
+- **Waarom:** Geert wilde zien welke munt het beste liep, ook munten die hij niet heeft.
+- **Niet gekozen:** een zoekveld voor elke munt op CoinGecko (dubbel met de volglijst); muis/vinger-uitlezing zoals de portfoliografiek (kan later).
+
+### D54 – Overzicht zelf indelen, per apparaat (10 nov 2026, 3.25.0, wens W34)
+- **Besluit:** `HOME_BLOCKS` met twee groepen: bij de grafiek (`side`: Verdeling, Cash, Doelen, Marktsentiment, Cijfers) en lijsten (`main`: Bezittingen, Gesloten posities, Volglijst). Volgorde en verborgen blokken in `settings.home = {order, hide}`; geen `home` = standaard. Blad "Overzicht indelen" (`openHomeBlocks`, zelfde opbouw als Kolommen aanpassen, D20) via een knop onderaan het Overzicht en in Instellingen › Weergave. Marktsentiment aan/uit is `settings.fng` (D41), dus geen dubbele instelling. Zijn alle blokken bij de grafiek uit, dan krijgt `.home-grid` de klasse `.no-side` en neemt de grafiek de volle breedte.
+- **Waarom:** de wens zegt "per apparaat"; op de telefoon wil je misschien minder dan op de laptop.
+- **Niet gekozen:** synchroniseren via `data.cfg`; de grafiek of "Sinds je vorige bezoek" verplaatsbaar maken; slepen (zie D20).
