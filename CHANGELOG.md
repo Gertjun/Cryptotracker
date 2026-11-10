@@ -7,12 +7,26 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.24.3`) en de naam van het zip-bestand (`crypto-tracker-3.24.3.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-3.25.0`) en de naam van het zip-bestand (`crypto-tracker-3.25.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 3.25.0 – 10 november 2026
+Vijf wensen in één keer: break-even, bijdrage per munt, meebewegen met bitcoin, munten vergelijken en het Overzicht zelf indelen.
+
+### Toegevoegd
+- **Afstand tot break-even** (wens W45): staat een munt op verlies, dan zie je op de munt-pagina hoeveel procent de koers nog moet stijgen tot je quitte speelt, en tot welke koers. Ook als kolom "Tot break-even" bij Bezittingen (standaard uit, aan te zetten via Kolommen aanpassen).
+- **Bijdrage per munt** (wens W17): nieuw blok in Analyse › Rendement. Per maand, kwartaal of jaar (met bladeren) of alles samen: hoeveel euro elke munt bijdroeg aan je resultaat, van grootste winnaar tot grootste verliezer.
+- **Meebewegen met bitcoin** (wens W44): nieuw blok in Analyse › Vergelijken, bijvoorbeeld "als bitcoin 10% daalt, daalt je crypto gemiddeld 8,6%", ook per munt, met hoe vast dat verband is (sterk, matig, zwak). Over de dagkoersen van het afgelopen jaar.
+- **Munten vergelijken** (wens W27): nieuw blok in Analyse › Vergelijken met twee of drie munten in één grafiek in procenten, over 1 maand, 3 maanden of 1 jaar. Ook munten van je volglijst. Keuze per apparaat.
+- **Overzicht zelf indelen** (wens W34): knop "Overzicht indelen" onderaan het Overzicht en in Instellingen › Weergave. Zet blokken aan of uit (Verdeling, Cash, Doelen, Marktsentiment, Cijfers, Bezittingen, Gesloten posities, Volglijst) en kies de volgorde. Per apparaat; de grafiek blijft bovenaan.
+
+### Technisch
+- Nieuwe tests in `tests/specs/inzicht.spec.mjs`.
+- Marktsentiment uitzetten via Overzicht indelen is dezelfde instelling als in Instellingen (`settings.fng`).
 
 ## 3.24.3 – 10 november 2026
 De lijn Geïnvesteerd valt bij 1U, 4U en 24U niet meer buiten de grafiek.

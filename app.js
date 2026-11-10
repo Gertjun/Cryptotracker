@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='3.24.3 (10 nov 2026)';
+const APP_VERSION='3.25.0 (10 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -471,6 +471,7 @@ async function fetchChart0(id,days,low){
 /* ---------- weergave ---------- */
 // Na het opnieuw opbouwen van het scherm de toetsenbordfocus terugzetten op hetzelfde element
 function focusKey(e){if(!e||e===document.body)return null;if(e.id)return '#'+CSS.escape(e.id);
+  if(e.dataset?.act==='ctbnav')return `[data-act="ctbnav"][data-d="${CSS.escape(e.dataset.d)}"]`;
   if(e.dataset?.act==='pview')return `[data-act="pview"][data-v="${CSS.escape(e.dataset.v)}"]`;
   for(const k of ['setsec','act','sort','wsort','prange','range','tf','rp','theme','cal','type'])if(e.dataset?.[k]!=null)return `[data-${k}="${CSS.escape(e.dataset[k])}"]`;
   if(e.getAttribute?.('href'))return `a[href="${CSS.escape(e.getAttribute('href'))}"]`;
@@ -645,7 +646,11 @@ const HCOLS=[
   {k:'value',n:'Waarde',s:'value',td:c=>`<td class="m"><b>${money(c.value,2)}</b></td>`},
   {k:'cost',p:6,n:'Geïnvesteerd',td:c=>`<td class="m">${money(c.cost,2)}</td>`},
   {k:'plabs',n:'Winst/verlies',s:'plabs',td:c=>`<td class="m ${cls(c.unreal)}"><b>${signed(c.unreal)}</b></td>`},
-  {k:'pl',p:2,n:'Winst/verlies %',h:'%',s:'pl',td:c=>`<td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td>`}];
+  {k:'pl',p:2,n:'Winst/verlies %',h:'%',s:'pl',td:c=>`<td class="${cls(c.unreal)}"><b>${pct(c.unrealPct)}</b></td>`},
+  {k:'be',p:13,n:'Stijging nodig tot break-even',h:'<abbr title="Stijging nodig tot break-even">Tot break-even</abbr>',off:true,td:c=>{const v=beNeed(c);return `<td>${v==null?'–':pct(v)}</td>`}}];
+// Afstand tot break-even (wens W45): hoeveel procent de koers nog moet stijgen tot je quitte speelt; alleen bij verlies.
+// Na −50% is dat +100%: waarde × (1 + x) = geïnvesteerd → x = geïnvesteerd / waarde − 1.
+function beNeed(c){return c&&c.cost>0&&c.value>0&&c.value<c.cost-1e-9?(c.cost/c.value-1)*100:null}
 // alle kolommen in de gekozen volgorde (nieuwe kolommen uit een latere versie komen achteraan), met hide=true/false
 // Kolommen met off:true staan standaard uit; 'show' onthoudt welke daarvan je aanzette. Een nieuwe kolom komt op zijn standaardplek (na zijn voorganger).
 function holdCols(){const h=data.cfg?.hcols||{},by=Object.fromEntries(HCOLS.map(x=>[x.k,x])),hide=new Set(h.hide||[]),show=new Set(h.show||[]);
@@ -751,6 +756,30 @@ function syncBadge(){
 function updBadges(){const si=$('#setSync');if(si){si.outerHTML=syncInfoHTML();updSetNav()}document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
 window.addEventListener('offline',()=>{updBadges();if(!locked)toast('Geen internet: je ziet de laatst bekende koersen')});
 window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer online');refreshPrices();refreshFng();syncNow(true)});
+/* ---------- Overzicht zelf indelen (wens W34) ---------- */
+// Blokken aan/uit en in een andere volgorde, per apparaat (settings.home = {order, hide}). De grafiek staat altijd bovenaan.
+// 'side' = bij de grafiek (laptop ernaast, telefoon eronder), 'main' = de lijsten eronder. Marktsentiment volgt settings.fng (D41).
+const HOME_BLOCKS=[{k:'alloc',n:'Verdeling',g:'side'},{k:'cash',n:'Cash',g:'side'},{k:'goals',n:'Doelen',g:'side'},{k:'fng',n:'Marktsentiment',g:'side'},
+  {k:'kv',n:'Cijfers (tablet en laptop)',g:'side'},{k:'hold',n:'Bezittingen',g:'main'},{k:'closed',n:'Gesloten posities',g:'main'},{k:'watch',n:'Volglijst',g:'main'}];
+function homeBlocks(){const h=settings.home||{},by=Object.fromEntries(HOME_BLOCKS.map(x=>[x.k,x])),hide=new Set(h.hide||[]);
+  const keys=(h.order||[]).filter(k=>by[k]);
+  HOME_BLOCKS.forEach((x,i)=>{if(keys.includes(x.k))return;let j=-1;for(let p=i-1;p>=0&&j<0;p--)j=keys.indexOf(HOME_BLOCKS[p].k);keys.splice(j+1,0,x.k)});
+  return keys.map(k=>({...by[k],hide:k==='fng'?!fngOn():hide.has(k)}))}
+function setHomeBlocks(bl){const order=bl.map(x=>x.k),hide=bl.filter(x=>x.hide&&x.k!=='fng').map(x=>x.k);
+  if(!hide.length&&order.join()===HOME_BLOCKS.map(x=>x.k).join())delete settings.home;else settings.home={order,hide};saveSettings()}
+// de blokken in de gekozen volgorde; H = {sleutel: html of functie die html geeft}
+function homeBlocksHTML(H){const out={side:'',main:''};for(const b of homeBlocks())if(!b.hide)out[b.g]+=(typeof H[b.k]==='function'?H[b.k]():H[b.k])||'';return out}
+function openHomeBlocks(focus){
+  const bl=homeBlocks(),grp=g=>{const l=bl.filter(x=>x.g===g);return `<ol class="col-list">${l.map((x,i)=>`<li><label class="chk"><input type="checkbox" data-hblk="${x.k}"${x.hide?'':' checked'}><span>${esc(x.n)}</span></label>
+    <span class="col-mv"><button type="button" class="icon-btn" data-act="hblkmv" data-k="${x.k}" data-d="-1" aria-label="${esc(x.n)} omhoog"${i?'':' disabled'}><span aria-hidden="true">↑</span></button><button type="button" class="icon-btn" data-act="hblkmv" data-k="${x.k}" data-d="1" aria-label="${esc(x.n)} omlaag"${i<l.length-1?'':' disabled'}><span aria-hidden="true">↓</span></button></span></li>`).join('')}</ol>`};
+  openSheet(`<h2 class="h3">Overzicht indelen</h2><p class="mt-0 hint">Kies welke blokken het Overzicht laat zien, en in welke volgorde. De grafiek staat altijd bovenaan. Je keuze geldt alleen voor dit apparaat.</p>
+  <h3 class="section-t">Bij de grafiek</h3><p class="mt-0 hint">Op de laptop ernaast, op de telefoon eronder.</p>${grp('side')}
+  <h3 class="section-t">Lijsten</h3>${grp('main')}
+  <div class="two"><button type="button" class="btn sec" data-act="hblkreset">Standaard herstellen</button><button type="button" class="btn" data-act="closesheet">Klaar</button></div>`);
+  if(focus){const el=$('#sheetCard').querySelector(focus);(el&&!el.disabled?el:$('#sheetCard').querySelector(`[data-k="${focus.match(/data-k="([^"]+)"/)?.[1]}"]:not([disabled])`))?.focus()}
+}
+function moveHomeBlock(k,d){const bl=homeBlocks(),x=bl.find(b=>b.k===k);if(!x)return;const grp=bl.filter(b=>b.g===x.g),y=grp[grp.indexOf(x)+d];if(!y)return;
+  const a=bl.indexOf(x),b=bl.indexOf(y);[bl[a],bl[b]]=[bl[b],bl[a]];setHomeBlocks(bl);render();openHomeBlocks(`[data-act="hblkmv"][data-k="${k}"][data-d="${d}"]`)}
 function renderHome(){
   $('#topbar').innerHTML=topbarHTML(null);
   const p=portfolio();
@@ -780,7 +809,19 @@ function renderHome(){
     <div><span class="label">Laatste 24 uur</span><b class="${cls(p.ch24)}"><span class="m">${signed(p.ch24)}</span> <small>${pct(p.ch24Pct)}</small></b></div>
     <div><span class="label">Gerealiseerd</span><b class="m ${cls(p.realized)}">${signed(p.realized)}</b></div>
     <div><span class="label">Open posities</span><b>${p.open.length}</b></div></div>`;
-  $('#view').innerHTML=`${issuesBanner()}${sinceCard()}${inEUR(planDueCard)}<div class="home-grid"><div class="panel">
+  const BL=homeBlocksHTML({alloc:()=>tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:'',cash:cashCard,goals:()=>inEUR(()=>goalsCard(true)),fng:fngCard,kv,
+    hold:()=>`<div class="list-head"><h2>Bezittingen</h2>
+    ${sorted.length?'<button type="button" class="link only-d" data-act="hcols">Kolommen aanpassen</button>':''}
+    <label class="sr-only" for="sortSel">Sorteer bezittingen op</label><select id="sortSel" data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
+  ${sorted.length?`<ul class="list only-m">${sorted.map(c=>{
+    const v=mode==='24h'?c.ch24:c.unrealPct;
+    return `<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}
+      <div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta"><span class="m">${qtyf(c.qty)}</span> ${esc((c.meta.symbol||'').toUpperCase())} · gem. <span class="m">${money(c.avg)}</span></div></div>
+      <div class="right"><div class="v m">${money(c.value,2)}</div><div class="chg ${cls(mode==='24h'?c.ch24:c.unreal)}"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div>
+      <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['1u','1 uur',c.ch1h],['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}`,
+    closed:()=>`${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}`,
+    watch:watchSection});
+  $('#view').innerHTML=`${issuesBanner()}${sinceCard()}${inEUR(planDueCard)}<div class="home-grid${BL.side?'':' no-side'}"><div class="panel">
   <section class="hero">
     <div class="label">${p.hasCash?'Totale waarde':'Portfoliowaarde'}</div>
     <div class="big" id="heroVal">${heroValHTML(p.hasCash?p.total:p.value)}</div>${unitMenuHTML()}
@@ -791,18 +832,8 @@ function renderHome(){
   <div class="chart-wrap" id="pchart"><div class="chart-msg">Grafiek laden…</div></div><div id="plegend"></div>
   <fieldset class="ranges"><legend class="sr-only">Periode van de grafiek</legend>${PRANGES.map(([d,l])=>`<button type="button" data-prange="${d}" class="${settings.pRange===d?'on':''}">${l}</button>`).join('')}</fieldset>
   <div class="period" id="pperiod"></div></div>
-  <div class="side-col">${tot>0?`<div class="card"><div class="alloc-bar" aria-hidden="true">${segs.map(s=>`<div style="flex:${s.v};background:${s.col}"></div>`).join('')}</div><div class="legend">${segs.map(s=>`<span><i style="background:${s.col}"></i>${esc(s.n)} ${(s.v/tot*100).toFixed(1).replace('.',',')}%</span>`).join('')}</div></div>`:''}${cashCard}${inEUR(()=>goalsCard(true))}${fngCard()}${kv}</div></div>
-  <div class="list-head"><h2>Bezittingen</h2>
-    ${sorted.length?'<button type="button" class="link only-d" data-act="hcols">Kolommen aanpassen</button>':''}
-    <label class="sr-only" for="sortSel">Sorteer bezittingen op</label><select id="sortSel" data-act="sort" class="only-m"><option value="value"${settings.sort==='value'?' selected':''}>Waarde</option><option value="pl"${settings.sort==='pl'?' selected':''}>Winst/verlies %</option><option value="plabs"${settings.sort==='plabs'?' selected':''}>Winst/verlies €</option><option value="name"${settings.sort==='name'?' selected':''}>Naam</option></select></div>
-  ${sorted.length?`<ul class="list only-m">${sorted.map(c=>{
-    const v=mode==='24h'?c.ch24:c.unrealPct;
-    return `<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}
-      <div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta"><span class="m">${qtyf(c.qty)}</span> ${esc((c.meta.symbol||'').toUpperCase())} · gem. <span class="m">${money(c.avg)}</span></div></div>
-      <div class="right"><div class="v m">${money(c.value,2)}</div><div class="chg ${cls(mode==='24h'?c.ch24:c.unreal)}"><span class="m">${mode==='24h'?'':signed(c.unreal)+' '}</span>${pct(v)}</div></div>
-      <div class="mkt-chg"><span class="sr-only">Koersverandering: </span>${[['1u','1 uur',c.ch1h],['24u','24 uur',c.ch24],['7d','7 dagen',c.ch7],['30d','30 dagen',c.ch30]].map(([l,L,v])=>`<span><abbr class="label" title="${L}">${l}</abbr> <span class="${cls(v)}">${pct1(v)}</span></span>`).join('')}</div></li>`}).join('')}</ul>${holdingsTable(sorted)}`:'<div class="empty-card card">Geen open posities</div>'}
-  ${p.closed.length?`<details class="closed"><summary>Gesloten posities (${p.closed.length})</summary><ul class="list">${p.closed.map(c=>`<li class="row" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name"><a class="rowlink" href="#coin/${encodeURIComponent(c.coinId)}">${esc(c.meta.name)}</a></div><div class="meta">${c.txs.length} transacties</div></div><div class="right"><div class="label">Gerealiseerd</div><div class="semibold ${cls(c.realized)} m">${signed(c.realized)}</div></div></li>`).join('')}</ul></details>`:''}
-  ${watchSection()}`;
+  <div class="side-col">${BL.side}</div></div>
+  ${BL.main}<p class="home-edit"><button type="button" class="link" data-act="homeblocks">Overzicht indelen</button></p>`;
   drawPortfolioChart();placeUnitMenu();need4h();
 }
 /* ---------- import uit Bitvavo (CSV) ---------- */
@@ -1155,6 +1186,29 @@ function riskCard(){
   <div class="tbl-scroll"><table class="rt"><caption class="sr-only">Risico per munt over het afgelopen jaar</caption><tr><th scope="col">Munt</th><th scope="col">Aandeel</th><th scope="col">Beweeglijk­heid</th><th scope="col">Grootste daling</th><th scope="col">Nu onder top</th></tr>
   ${row('Je crypto samen','100%',P,true)}${W.map(x=>row(esc(symOf(x.c)),pct0(x.w*100),x.r)).join('')}</table></div>
   <p class="hint mb-0">Over het afgelopen jaar. <b>Beweeglijkheid</b>: hoe sterk de koers van dag tot dag schommelt, omgerekend naar een jaar (standaarddeviatie); hoger is onrustiger. <b>Grootste daling</b>: het grootste verlies van een top naar een later dal. <b>Nu onder top</b>: hoe ver de koers nu onder de hoogste koers van het jaar staat. "Je crypto samen" rekent met je huidige verdeling, alsof je die het hele jaar had gehad.${miss?' – = minder dan 30 dagen koersen bekend.':''}</p></div>`}
+/* ---------- meebewegen met bitcoin (wens W44) ---------- */
+// Per munt en voor je crypto samen: hoeveel procent beweegt het gemiddeld als bitcoin 10% beweegt (bèta), en hoe vast
+// hangt dat samen (correlatie). Over de dagkoersen van het afgelopen jaar, dezelfde reeksen als het blok Risico.
+function btcBeta(a,B){const r=[],m=new Map(a);
+  for(const [d,v] of a){const v0=m.get(d-1),b0=B.get(d-1),b1=B.get(d);if(v0>0&&b0>0&&b1>0)r.push([v/v0-1,b1/b0-1])}
+  const n=r.length;if(n<30)return{n,beta:null,corr:null};
+  const mx=r.reduce((s,x)=>s+x[0],0)/n,mb=r.reduce((s,x)=>s+x[1],0)/n;let cv=0,vx=0,vb=0;
+  for(const [x,b] of r){cv+=(x-mx)*(b-mb);vx+=(x-mx)**2;vb+=(b-mb)**2}
+  return{n,beta:vb>0?cv/vb:null,corr:vx>0&&vb>0?cv/Math.sqrt(vx*vb):null}}
+const corrTxt=c=>c==null?'–':c>=0.8?'sterk':c>=0.5?'matig':c>=0.2?'zwak':'bijna geen';
+function betaCard(){
+  const cs=openCoins(),tot=cs.reduce((s,c)=>s+c.value,0);if(!cs.length||!(tot>0))return '';
+  const loading=riskLoad(['bitcoin',...cs.map(c=>c.coinId)]),B=new Map(dailySeries('bitcoin'));
+  const W=cs.map(c=>({c,w:c.value/tot,b:btcBeta(dailySeries(c.coinId),B)})),P=btcBeta(pfRiskSeries(W),B);
+  const at10=x=>x.beta==null?'–':pct1(-x.beta*10),onlyBtc=cs.length===1&&cs[0].coinId==='bitcoin';
+  const row=(name,r,b)=>`<tr><th scope="row">${b?`<b>${name}</b>`:name}</th><td class="${r.beta>0?'down':r.beta<0?'up':''}">${at10(r)}</td><td>${corrTxt(r.corr)}</td></tr>`;
+  const lead=P.beta==null?'':onlyBtc?'<p class="risk-lead">Je hebt alleen bitcoin, dus je crypto beweegt precies mee.</p>'
+    :`<p class="risk-lead">Als bitcoin 10% daalt, daalt je crypto gemiddeld <b>${pct1(Math.abs(P.beta)*10).replace(/^[+−]/,'')}</b>${P.beta<0?' (en stijgt dan juist)':''}. ${P.corr>=0.8?'Je munten gaan vrijwel steeds samen met bitcoin op en neer: weinig spreiding.':P.corr>=0.5?'Je munten volgen bitcoin grotendeels, maar niet altijd.':'Je munten volgen bitcoin maar beperkt: dat geeft spreiding.'}</p>`;
+  return `<div class="card risk beta"><h2 class="h3">Meebewegen met bitcoin</h2>${lead}
+  ${loading?'<p class="hint">Koersen van het afgelopen jaar ophalen…</p>':''}
+  <div class="tbl-scroll"><table class="rt"><caption class="sr-only">Hoe sterk je munten meebewegen met bitcoin, over het afgelopen jaar</caption><tr><th scope="col">Munt</th><th scope="col">Als bitcoin −10%</th><th scope="col">Samenhang</th></tr>
+  ${row('Je crypto samen',P,true)}${W.map(x=>row(esc(symOf(x.c))+(x.c.coinId==='bitcoin'?' <span class="label">(zelf)</span>':''),x.b)).join('')}</table></div>
+  <p class="hint mb-0">Over de dagkoersen van het afgelopen jaar. <b>Als bitcoin −10%</b>: hoeveel de munt gemiddeld meebeweegt op een dag dat bitcoin 10% daalt; bij een stijging werkt het andersom. <b>Samenhang</b>: hoe vast dat verband is. Bij <i>sterk</i> beweegt de munt bijna altijd mee; bij <i>zwak</i> gaat hij vaak zijn eigen gang en geeft hij meer spreiding. Dit is een gemiddelde uit het verleden, geen voorspelling.${W.some(x=>x.b.beta==null)?' – = minder dan 30 dagen koersen bekend.':''}</p></div>`}
 /* ---------- doelverdeling en herbalanceren (wens W3) ---------- */
 // Eén doelverdeling per portefeuille: {id:'alloc-<pf>', items:{coinId|'__cash': procent}}
 const allocOf=pf=>live(data.allocs).find(a=>a.id==='alloc-'+pf);
@@ -1241,7 +1295,7 @@ function renderReports(){
   const ord0=(h,n)=>h.replace('<div class="card','<div style="order:'+n+'" class="card');
   if(tab==='plannen'){$('#view').innerHTML=cols(ord0(goalsCard(false),1)+ord0(allocCard(),3),ord0(plansCard(),2));initAlloc();return}
   if(!TX().length){$('#view').innerHTML=`${repTabsHTML(tab)}<div class="empty"><b>Nog geen gegevens</b>Voeg transacties toe om je analyse te zien.</div>`;return}
-  if(tab==='vergelijken'){$('#view').innerHTML=cols(ord0(whatIfCard(),1)+ord0(benchCard(),3),ord0(riskCard(),2)+ord0(dcaCard(),4));initWhatIf();fitBars();return}
+  if(tab==='vergelijken'){$('#view').innerHTML=cols(ord0(whatIfCard(),1)+ord0(benchCard(),4)+ord0(cmpCard(),6),ord0(riskCard(),2)+ord0(betaCard(),3)+ord0(dcaCard(),5));initWhatIf();fitBars();return}
   if(tab==='administratie'){$('#view').innerHTML=cols(ord0(repAccCard(),1)+ord0(checkCard(),3),ord0(repJanCard(),2)+ord0(exportCard(),4));return}
   const S={};coinIds().forEach(id=>S[id]=coinStates(id));
   const p=portfolio(),hasCash=p.hasCash,now=Date.now(),first=Math.min(...TX().map(txTime)),fd=new Date(first),nd=new Date(now);
@@ -1281,7 +1335,7 @@ function renderReports(){
 
     // Rendement: laptop links rendement en beste/slechtste munt, rechts inleg en kalender
   const ord=ord0;
-  $('#view').innerHTML=cols(ord(retCard,1)+ord(perfCard,4),ord(inCard,2)+ord(calCard(),3));
+  $('#view').innerHTML=cols(ord(retCard,1)+ord(perfCard,4),ord(inCard,2)+ord(calCard(),3)+ord(ctbCard(),5));
   fitBars();
 }
 /* ---------- sinds je vorige bezoek ---------- */
@@ -1352,6 +1406,37 @@ function calCard(){
   ${nav}<div class="cal${u==='month'||u==='year'?' cal-4':''}${u==='year'?' mt-10':''}">${u==='day'?['ma','di','wo','do','vr','za','zo'].map(d=>`<div class="h">${d}</div>`).join(''):''}${'<div class="cd e"></div>'.repeat(lead)}${slots.map(cell).join('')}</div>
   <div class="mt-10 kv"><div><span class="label">Totaal ${totL}</span><b class="m ${cls(tot)}">${signed(tot)}</b></div>
   <div><span class="label">${plural} in de plus / min</span><b><span class="up">${pos}</span> / <span class="down">${neg}</span></b></div></div></div>`;
+}
+
+/* ---------- bijdrage per munt (wens W17) ---------- */
+// Per munt: wat leverde hij op in een maand, kwartaal of jaar? Bijdrage = (waarde − kostprijs + gerealiseerd) aan het eind
+// min hetzelfde aan het begin. Samen is dat je resultaat in crypto over die periode (stortingen en aankopen tellen niet als winst).
+const CTB_U={month:'Maand',quarter:'Kwartaal',year:'Jaar',all:'Alles'};
+function ctbStart(u,ts){const d=new Date(ts);return u==='quarter'?new Date(d.getFullYear(),Math.floor(d.getMonth()/3)*3,1).getTime():pStart(u,ts)}
+function ctbNext(u,ts){if(u!=='quarter')return pNext(u,ts);const d=new Date(ts);d.setMonth(d.getMonth()+3);return d.getTime()}
+function coinContrib(from,to){
+  const out=[];
+  for(const id of coinIds()){const st=coinStates(id),c=TX().find(t=>t.coinId===id)||{};let est=false;
+    const m=ts=>{const i=lastAtOrBefore(st,ts);if(i<0)return 0;const [,q,cost,r]=st[i];if(q<=1e-12)return r-cost;
+      let pr=priceAt(id,ts);if(pr==null){est=true;pr=priceEst(id,ts)}return (pr!=null?q*pr:cost)-cost+r};
+    const v=m(to)-m(from);if(Math.abs(v)>=0.005)out.push({id,name:c.name||id,sym:(c.symbol||id).toUpperCase(),v,est})}
+  return out.sort((a,b)=>b.v-a.v)}
+function ctbCard(){
+  const u=CTB_U[settings.ctbU]?settings.ctbU:'month',now=Date.now(),first=Math.min(...TX().map(txTime));
+  const cur=u==='all'?0:ctbStart(u,now),min=u==='all'?0:ctbStart(u,first);
+  let a=u==='all'?first-1:Math.min(cur,Math.max(min,+settings.ctbAt>0?ctbStart(u,+settings.ctbAt):cur));
+  const b=u==='all'?now:Math.min(ctbNext(u,a),now),rows=coinContrib(a,b),tot=rows.reduce((s,x)=>s+x.v,0),mx=Math.max(1e-9,...rows.map(x=>Math.abs(x.v)));
+  const d=new Date(a),title=u==='month'?monthLbl(a,{month:'long',year:'numeric'}):u==='quarter'?`Kwartaal ${Math.floor(d.getMonth()/3)+1} ${d.getFullYear()}`:u==='year'?d.getFullYear():'';
+  const lw={month:['Vorige maand','Volgende maand'],quarter:['Vorig kwartaal','Volgend kwartaal'],year:['Vorig jaar','Volgend jaar']}[u];
+  const nav=u==='all'?'':`<div class="cal-nav"><button type="button" data-act="ctbnav" data-d="-1" ${a<=min?'disabled':''} aria-label="${lw[0]}">‹</button><b>${title}${a===cur?' <span class="label">(tot nu)</span>':''}</b><button type="button" data-act="ctbnav" data-d="1" ${a>=cur?'disabled':''} aria-label="${lw[1]}">›</button></div>`;
+  const seg=`<fieldset class="seg mini"><legend class="sr-only">Periode bijdrage per munt</legend>${Object.entries(CTB_U).map(([k,l])=>`<button type="button" data-rp="ctbU:${k}" class="${u===k?'on':''}">${l}</button>`).join('')}</fieldset>`;
+  const best=rows[0],worst=rows[rows.length-1];
+  const lead=rows.length>1&&best.v>0&&worst.v<0?`<p class="ctb-lead">Je ${tot>=0?'winst':'verlies'} kwam vooral ${tot>=0?'uit':'door'} <b>${esc(tot>=0?best.sym:worst.sym)}</b>, terwijl ${esc(tot>=0?worst.sym:best.sym)} je <b class="m ${tot>=0?'down':'up'}">${signed(tot>=0?worst.v:best.v)}</b> ${tot>=0?'kostte':'opleverde'}.</p>`:'';
+  return `<div class="card ctb"><h2 class="h3">Bijdrage per munt</h2>${seg}<p class="hint">Wat elke munt opleverde in deze periode: koerswinst of -verlies plus de winst of het verlies op verkopen, min kosten. Aankopen tellen niet als winst.</p>
+  ${nav}${rows.length?`${lead}<table class="rt ctb-t"><caption class="sr-only">Bijdrage per munt aan je resultaat${title?' in '+esc(String(title).toLowerCase()):''}, van grootste winnaar tot grootste verliezer</caption>
+  ${rows.map(x=>`<tr><th scope="row"><a class="rowlink" href="#coin/${encodeURIComponent(x.id)}"><abbr title="${esc(x.name)}">${esc(x.sym)}</abbr></a></th><td class="ctb-b" aria-hidden="true"><i class="${x.v>=0?'pos':'neg'}" style="width:${(Math.abs(x.v)/mx*100).toFixed(1)}%"></i></td><td class="m ${cls(x.v)}">${x.est?'≈ ':''}${signed(x.v)}</td></tr>`).join('')}
+  <tr><th scope="row"><b>Samen</b></th><td aria-hidden="true"></td><td class="m ${cls(tot)}"><b>${signed(tot)}</b></td></tr></table>${rows.some(x=>x.est)?'<p class="note-after hint">≈ = geen dagkoers bewaard; geschat uit de dichtstbijzijnde bekende koers.</p>':''}`
+  :'<p class="hint mb-0">Geen munten met winst of verlies in deze periode.</p>'}</div>`;
 }
 
 /* ---------- exporteren ---------- */
@@ -1606,6 +1691,42 @@ function benchCard(){
   }
   return `<div class="card"><h2 class="h3">Vergelijking</h2><p class="hint">Wat als je elke ${hasCashTx()?'storting':'aankoop'} direct in één munt had gestoken?</p>
   <label class="bench-label label">Vergelijk met ${sel}</label>${body}</div>`;
+}
+/* ---------- munten vergelijken in één grafiek (wens W27) ---------- */
+// Twee of drie munten in procenten vanaf het begin van de periode, ook munten die je niet hebt (volglijst).
+// Keuze per apparaat: settings.cmpIds (3 plekken, '' = leeg) en settings.cmpR ('30', '90' of '365').
+const CMP_R=[['30','1M'],['90','3M'],['365','1J']],CMP_DASH=['','6 4','2 3'];
+let cmpErr={},cmpTried={};   // cmpTried: niet steeds opnieuw ophalen als het mislukt (bijv. CoinGecko druk)
+function cmpOpts(){return [...new Set(['bitcoin','ethereum',...coinIds(),...live(data.watch).map(w=>w.id)])]}
+function coinNameOf(id){return (data.txs.find(t=>t.coinId===id)||live(data.watch).find(w=>w.id===id)||{}).name||({bitcoin:'Bitcoin',ethereum:'Ethereum'}[id])||id}
+function cmpCard(){
+  const opts=cmpOpts(),r=CMP_R.some(([d])=>d===settings.cmpR)?settings.cmpR:'90';
+  let ids=Array.isArray(settings.cmpIds)?settings.cmpIds.slice(0,3):[];
+  if(!ids.length){const own=openCoins().map(c=>c.coinId);ids=[...new Set([own[0]||'bitcoin',own[1]||'ethereum',...opts])].slice(0,2)}
+  while(ids.length<3)ids.push('');ids=ids.map(id=>opts.includes(id)?id:'');
+  const sel=(i)=>`<div class="field cmp-f"><label for="cmp_${i}">Munt ${i+1}${i===2?' (mag leeg)':''}</label><select id="cmp_${i}" class="cmp-sel" data-act="cmpsel" data-i="${i}">${i===2||!ids[i]?'<option value="">–</option>':''}${opts.map(id=>`<option value="${esc(id)}"${id===ids[i]?' selected':''}>${esc(coinNameOf(id))}</option>`).join('')}</select></div>`;
+  const chosen=[...new Set(ids.filter(Boolean))],ser=[];let pending=false,failed=[];
+  chosen.forEach((id,i)=>{const key=id+'|'+r,c=chartCache[key];
+    if(!c&&!cmpErr[key])pending=true;
+    if(!c||Date.now()-c.ts>=chartTtl(r)){if(!cmpErr[key]&&!(performance.now()-(cmpTried[key]??-1e9)<6e4)){cmpTried[key]=performance.now();fetchChart(id,r).then(()=>{if(/^#analyse/.test(location.hash)&&repTab()==='vergelijken')keepFocus(()=>inEUR(renderReports))}).catch(()=>{cmpErr[key]=1;if(/^#analyse/.test(location.hash)&&repTab()==='vergelijken')keepFocus(()=>inEUR(renderReports))})}}
+    if(c?.pts?.length>1)ser.push({id,i:ids.indexOf(id),pts:c.pts});else if(cmpErr[key])failed.push(coinNameOf(id))});
+  let body='';
+  if(chosen.length<2)body='<p class="hint">Kies minstens twee verschillende munten.</p>';
+  else if(pending||ser.length<2)body=`<p class="hint">${pending||!failed.length?'Koersen ophalen…':'Koersen niet beschikbaar voor '+esc(failed.join(', '))+'.'}</p>`;
+  else{
+    const t0=Math.max(...ser.map(x=>x.pts[0][0])),t1=Math.min(...ser.map(x=>x.pts[x.pts.length-1][0]));
+    ser.forEach(x=>{const p=x.pts.filter(q=>q[0]>=t0&&q[0]<=t1),b=p[0][1];x.l=p.map(q=>[q[0],(q[1]/b-1)*100]);x.end=x.l[x.l.length-1][1]});
+    let lo=Math.min(0,...ser.flatMap(x=>x.l.map(q=>q[1]))),hi=Math.max(0,...ser.flatMap(x=>x.l.map(q=>q[1])));if(hi-lo<1e-9){hi+=1;lo-=1}
+    const X=t=>(t-t0)/(t1-t0||1)*1000,Y=v=>4+(1-(v-lo)/(hi-lo))*92,zero=Y(0).toFixed(2);
+    const best=[...ser].sort((a,b)=>b.end-a.end)[0],days=Math.round((t1-t0)/DAY);
+    body=`<div class="bchart cmp-chart"><svg aria-hidden="true" focusable="false" viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="M0 ${zero}H1000" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>${ser.map(x=>`<path d="${x.l.map((q,j)=>(j?'L':'M')+X(q[0]).toFixed(1)+' '+Y(q[1]).toFixed(2)).join('')}" fill="none" stroke="${PAL[x.i]}" stroke-width="2.2" stroke-dasharray="${CMP_DASH[x.i]}" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`).join('')}</svg>
+      <span class="cmp-y cmp-hi label">${pct1(hi)}</span><span class="cmp-y cmp-lo label">${pct1(lo)}</span></div>${xAxisRow(t0,t1)}
+      <ul class="cmp-legend">${ser.map(x=>`<li><svg class="cmp-key" aria-hidden="true" focusable="false" viewBox="0 0 24 6"><path d="M0 3H24" stroke="${PAL[x.i]}" stroke-width="3" stroke-dasharray="${CMP_DASH[x.i]}"/></svg>${esc(coinNameOf(x.id))} <b class="${cls(x.end)}">${pct1(x.end)}</b></li>`).join('')}</ul>
+      <p class="note-after hint"><b>${esc(coinNameOf(best.id))}</b> liep het beste in de afgelopen ${days} dagen. Alle lijnen beginnen op 0%, zodat je ziet welke munt het meest steeg of daalde, los van de koers.</p>`}
+  return `<div class="card cmp"><h2 class="h3">Munten vergelijken</h2>
+  <fieldset class="seg mini"><legend class="sr-only">Periode munten vergelijken</legend>${CMP_R.map(([d,l])=>`<button type="button" data-rp="cmpR:${d}" class="${r===d?'on':''}">${l}</button>`).join('')}</fieldset>
+  <div class="cmp-sels">${[0,1,2].map(sel).join('')}</div>${body}
+  <p class="hint mb-0">Andere munt erbij? Zet hem op je volglijst; dan staat hij hier ook in de lijst.</p></div>`;
 }
 /* ---------- volglijst ---------- */
 function watchSection(){
@@ -2108,6 +2229,7 @@ function renderCoin(id){
   <div class="pl-card stat wide card">
     <div class="label">Ongerealiseerde winst/verlies</div>
     <div class="pl-big ${cls(c.unreal)}"><span class="m">${signed(c.unreal)}</span> <span class="pl-pct">${pct(c.unrealPct)}</span></div>
+    ${beNeed(c)!=null?`<p class="be-note hint">Tot break-even: de koers moet nog <b>${pct(beNeed(c))}</b> stijgen, tot <b class="m">${money(c.cost/c.qty)}</b>. Na een daling is de stijging die je nodig hebt altijd groter: na −50% is dat +100%.</p>`:''}
   </div>
   <div class="stats">
     <div class="stat"><div class="label">Waarde</div><div class="val m">${money(c.value,2)}</div></div>
@@ -2398,6 +2520,10 @@ function renderSettings(){
   <section class="card" aria-labelledby="st_unit"><h2 class="h3" id="st_unit">Bedragen tonen in</h2>
   <fieldset class="seg"><legend class="sr-only">Bedragen tonen in</legend>${[['EUR','Euro €'],['USD','Dollar $'],['BTC','Bitcoin ₿']].map(([v,l])=>`<button type="button" data-unit="${v}" class="${(settings.unit||'EUR')===v?'on all':'all'}">${l}</button>`).join('')}</fieldset>
   <p class="mt-0 hint">Geldt voor Overzicht, munten en Transacties. Dollar: omgerekend tegen de koers van nu. Bitcoin: aankopen, verkopen en stortingen tegen de bitcoinkoers van dat moment, dus je winst in bitcoin laat zien of je beter deed dan bitcoin aanhouden. Formulieren, Analyse en het jaaroverzicht blijven in euro.${settings.unit&&settings.unit!=='EUR'&&fx.ts?` Koers bijgewerkt ${fmtTs(fx.ts)}.`:''}</p>
+  </section>
+  <section class="card" aria-labelledby="st_home"><h2 class="h3" id="st_home">Overzicht</h2>
+  <p class="mt-0 hint">Zet blokken op het Overzicht aan of uit en kies de volgorde. Geldt alleen voor dit apparaat.</p>
+  <button type="button" class="btn sec" data-act="homeblocks">Overzicht indelen</button>
   </section>`)}
   ${pane('pf',pfSettingsHTML())}
   ${pane('sec',`<section class="card" aria-labelledby="st_sec"><h2 class="h3" id="st_sec">Beveiliging</h2>
@@ -2782,6 +2908,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.setsec){showSetSec(a.dataset.setsec);return}
   if(a.dataset.unit){setUnit(a.dataset.unit,a);return}
   if(a.dataset.cal){const now=Date.now(),yr=settings.calU==='week'||settings.calU==='month',k=yr?'calYear':'calMonth';let m=+settings[k]||pStart(yr?'year':'month',now);const d=new Date(m);if(yr)d.setFullYear(d.getFullYear()+(+a.dataset.cal));else d.setMonth(d.getMonth()+(+a.dataset.cal));settings[k]=d.getTime();saveSettings();keepFocus(renderReports);return}
+  if(a.dataset.act==='ctbnav'){const u=settings.ctbU||'month',d=new Date(ctbStart(u,+settings.ctbAt||Date.now()));d.setMonth(d.getMonth()+(+a.dataset.d)*(u==='year'?12:u==='quarter'?3:1));settings.ctbAt=d.getTime();saveSettings();keepFocus(renderReports);return}
   if(a.dataset.goal){openGoal(a.dataset.goal);return}
   if(a.dataset.theme){settings.theme=a.dataset.theme;saveSettings();applyTheme();document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on',b===a));const ta=$('#themeAuto');if(ta)ta.hidden=a.dataset.theme!=='auto';updSetNav();return}
   if(a.dataset.wpick){const c=JSON.parse(a.dataset.wpick);setWatch(c,true);closeSheet();location.hash='#coin/'+encodeURIComponent(c.id);render();toast(c.name+' staat op je volglijst');return}
@@ -2832,6 +2959,9 @@ document.addEventListener('click',e=>{
     case 'closesheet':closeSheet();break;
     case 'hcols':openHoldCols();break;
     case 'hcolmv':moveHoldCol(a.dataset.k,+a.dataset.d);break;
+    case 'homeblocks':openHomeBlocks();break;
+    case 'hblkmv':moveHomeBlock(a.dataset.k,+a.dataset.d);break;
+    case 'hblkreset':delete settings.home;if(!fngOn()){settings.fng=true;refreshFng()}saveSettings();render();openHomeBlocks('[data-act="hblkreset"]');toast('Standaardindeling hersteld');break;
     case 'hcolreset':setHoldCols(HCOLS.map(x=>({k:x.k,off:x.off,hide:!!x.off})));render();openHoldCols('[data-act="hcolreset"]');toast('Standaardkolommen hersteld');break;
     case 'unitmenu':if(!hasPopover){const i=UNITS.findIndex(x=>x[0]===(settings.unit||'EUR'));setUnit(UNITS[(i+1)%3][0],a)}break;
     case 'pview':settings.pView=a.dataset.v;saveSettings();document.querySelectorAll('[data-act=pview]').forEach(b=>{const on=b.dataset.v===a.dataset.v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});drawPortfolioChart();if($('#pzchart'))drawPfZoom();break;
@@ -2887,7 +3017,7 @@ document.addEventListener('click',e=>{
   }
 });
 $('#bvFile').onchange=e=>{const f=e.target.files[0];if(f){closeSheet();startImport(f)}};
-document.addEventListener('change',e=>{if(e.target.dataset.hcol){const cols=holdCols(),x=cols.find(c=>c.k===e.target.dataset.hcol);if(x){x.hide=!e.target.checked;setHoldCols(cols);render();if(x.k==='ch4h'&&!x.hide)need4h()}return}if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
+document.addEventListener('change',e=>{if(e.target.dataset.hblk){const bl=homeBlocks(),x=bl.find(b=>b.k===e.target.dataset.hblk);if(x){if(x.k==='fng'){settings.fng=e.target.checked;if(e.target.checked)refreshFng()}x.hide=!e.target.checked;setHomeBlocks(bl);render()}return}if(e.target.dataset.hcol){const cols=holdCols(),x=cols.find(c=>c.k===e.target.dataset.hcol);if(x){x.hide=!e.target.checked;setHoldCols(cols);render();if(x.k==='ch4h'&&!x.hide)need4h()}return}if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='cmpsel'){const ids=[0,1,2].map(i=>$('#cmp_'+i)?.value||'');settings.cmpIds=ids;saveSettings();keepFocus(()=>inEUR(renderReports));return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
 $('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
 window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);render()});
 // Plusknop opzij bij omlaag scrollen (dekt dan geen knoppen of totalen af), terug bij omhoog scrollen of bovenaan

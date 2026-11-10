@@ -17,9 +17,6 @@ De betaalde kosten per broker en per jaar, en als percentage van je aankopen. Je
 ### W10 – Maandafsluiting
 De eerste keer dat je de app in een nieuwe maand opent, zie je een korte samenvatting van de vorige maand: resultaat, inleg, beste en slechtste munt, betaalde kosten en hoe je ervoor staat ten opzichte van je doelen.
 
-### W17 – Bijdrage per munt aan je rendement
-Kies een periode (maand, kwartaal, jaar) en zie per munt hoeveel euro die bijdroeg aan je resultaat, van grootste winnaar tot grootste verliezer. Je ziet dan bijvoorbeeld dat je +€ 200 deze maand vooral uit ETH kwam, terwijl BTC je € 40 kostte. Past in Rapporten › Analyse.
-
 ### W20 – Vergelijken met sparen en inflatie
 Je rendement naast wat een spaarrekening (rente zelf in te stellen) en de inflatie in dezelfde periode hadden opgeleverd. Zo zie je of crypto het risico waard was.
 
@@ -46,12 +43,6 @@ Per aankoop je koopprijs vergeleken met de gemiddelde koers in die week of maand
 
 ### W43 – Rendement tegenover risico per munt
 Per munt hoeveel rendement je kreeg per "eenheid schommeling". Een munt met +30% en een rustige koers scoort dan beter dan een munt met +30% die alle kanten op schiet. Gebruikt dezelfde gegevens als het blok Risico, dus geen extra koersaanvragen.
-
-### W44 – Hoe sterk bewegen je munten mee met bitcoin?
-Bijvoorbeeld "als bitcoin 10% daalt, daalt jouw portfolio gemiddeld 14%", ook per munt. Zo zie je of je munten echt spreiding geven of dat alles samen op en neer gaat.
-
-### W45 – Afstand tot break-even
-Bij munten die op verlies staan: hoeveel procent de koers nog moet stijgen tot je quitte speelt. Na −50% is dat namelijk +100%, niet +50%.
 
 ## Kopen en verkopen voorbereiden
 
@@ -109,9 +100,6 @@ Bij munten die pas kort bestaan (zoals Axis Robotics) heeft de grafiek bij "1J" 
 
 **Oplossing:** is de geschiedenis veel korter dan de gekozen periode, dan haalt de app de koersen opnieuw op voor precies die korte periode. Dat levert koersen per uur op. Rechtsonder in de grafiek staat dan "Koersen bekend vanaf …".
 
-### W27 – Munten vergelijken in één grafiek
-Twee of drie munten in één grafiek in procenten, ook munten die je niet hebt. Zo zie je welke het beste liep in dezelfde periode.
-
 ## Markt
 
 ### W25 – Totale cryptomarkt en aandeel van bitcoin
@@ -124,9 +112,6 @@ Bij elke munt op de volglijst hoeveel hij gestegen of gedaald is sinds je hem gi
 
 ### W33 – Transactie herhalen
 Eén tik op een bestaande transactie geeft een nieuw formulier met dezelfde munt, broker en hetzelfde bedrag, met de datum van nu.
-
-### W34 – Overzicht zelf indelen
-Blokken op het overzicht aan- of uitzetten en in een andere volgorde zetten. Je keuze geldt per apparaat.
 
 ### W36 – Notities per munt
 Op de munt-pagina een eigen notitie: waarom je de munt hebt, handige links en je plan. Synchroniseert met je andere gegevens.

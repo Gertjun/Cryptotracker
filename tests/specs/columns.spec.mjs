@@ -46,7 +46,7 @@ test('kolomkeuze komt mee bij het samenvoegen van twee apparaten',async({page},t
     const a={txs:[],cfg:{mod:1}},b={txs:[],cfg:{mod:2,hcols:{order:['pl','qty'],hide:['ch7']}}};
     const m=merge(a,b);data.cfg=m.cfg;
     return holdCols().map(x=>x.k+(x.hide?'-':'')).join()});
-  expect(r).toBe('pl,qty,avg,price,ch1h,ch4h-,ch24,ch7-,ch30,ch1y-,value,cost,plabs');
+  expect(r).toBe('pl,be-,qty,avg,price,ch1h,ch4h-,ch24,ch7-,ch30,ch1y-,value,cost,plabs');   // be (3.25.0) staat standaard uit, na zijn voorganger %
 });
 
 test('volglijst heeft dezelfde kolommen als Bezittingen, met 0 voor wat je niet hebt',async({page},testInfo)=>{

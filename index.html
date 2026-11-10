@@ -314,6 +314,11 @@ a{color:var(--accent)}
 .since-g>div{background:var(--card2);border-radius:12px;padding:10px}
 .since-g b{display:block;font-size:16px;margin-top:2px}
 @media (min-width:1000px), (min-width:700px) and (min-height:700px){.since-g{grid-template-columns:repeat(4,1fr)}}
+.ctb-lead{margin:4px 0 10px}
+.ctb-lead .m{white-space:nowrap}
+.ctb-t .ctb-b{width:45%;padding-left:8px;padding-right:8px}
+.ctb-t .ctb-b i{display:block;height:10px;border-radius:3px;min-width:2px}
+.ctb-t .ctb-b i.pos{background:var(--green)}.ctb-t .ctb-b i.neg{background:var(--red)}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
 .cal-nav button{background:var(--card2);border:0;color:var(--text);width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:18px}
 .cal-nav button:disabled{opacity:.3;cursor:default}
@@ -373,6 +378,17 @@ a{color:var(--accent)}
 .gbar{height:8px;border-radius:4px;background:var(--card2);overflow:hidden;margin:7px 0 5px}
 .gbar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
 .gbar i.done{background:var(--green)}
+.cmp-sels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+@media (max-width:420px){.cmp-sels{grid-template-columns:1fr}}
+.cmp-f{margin:0}
+.cmp-sel{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 8px;min-height:44px;color:var(--text);font-size:16px}
+.bchart.cmp-chart{margin-left:52px}
+.cmp-y{position:absolute;left:-52px;width:48px;text-align:right;font-size:11px}
+.cmp-hi{top:0}.cmp-lo{bottom:0}
+.cmp-chart+.pc-xr{margin-left:52px}
+.cmp-legend{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.cmp-legend li{display:flex;align-items:center;gap:6px}
+.cmp-key{width:24px;height:6px;flex:none}
 .bench-sel{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:6px 8px;color:var(--text);font-size:14px;max-width:100%}
 .bchart{position:relative;height:150px;margin:10px 0 4px}
 .bchart svg{width:100%;height:100%;display:block;overflow:visible}
@@ -478,6 +494,7 @@ a{color:var(--accent)}
   .d-top .sync{flex:none;margin-right:8px;font-size:12px}
   .fab{display:none}
   .home-grid,.coin-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+  .home-grid.no-side{grid-template-columns:minmax(0,1fr)}
   /* munt-pagina: links de grafiek met daaronder de hulpmiddelen (calculators, alerts), rechts resultaat, cijfers en marktinformatie */
   .coin-grid{grid-template-areas:"chart side" "tools side";grid-template-rows:auto 1fr}
   .coin-grid>.panel{grid-area:chart}.coin-grid>.coin-side{grid-area:side}.coin-grid>.coin-tools{grid-area:tools}
@@ -569,6 +586,8 @@ a{color:var(--accent)}
 .watch-hint{margin:6px 0 10px !important}
 .pl-card{padding:14px !important;margin-bottom:10px !important}
 .pl-big{font-size:26px !important;font-weight:700 !important}
+.be-note{margin:6px 0 0}
+.home-edit{margin:18px 0 6px;text-align:center}
 .pl-pct{font-size:17px !important}
 .val-lg{font-size:22px !important}
 .oversold{font-size:11px !important;color:var(--yellow) !important}
