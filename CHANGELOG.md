@@ -7,12 +7,22 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.1`) en de naam van het zip-bestand (`crypto-tracker-4.0.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.2`) en de naam van het zip-bestand (`crypto-tracker-4.0.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 4.0.2 – 11 november 2026
+Synchronisatie en versleuteling controleren wijzigingen vollediger en reageren veiliger op ongeldige gegevens.
+
+### Verbeterd
+- **Synchronisatiecontrole**: veranderingen in bestaande koersarchiefdagen worden nu meegenomen; niet alleen het aantal dagen.
+- **Conflicten**: een afgewezen GitHub-opslag wordt niet meer als geslaagde synchronisatie gemeld; de app probeert opnieuw met de nieuwste versie.
+- **Versleuteling**: alleen de bekende PBKDF2-instellingen (250.000 voor oude bestanden en 600.000 voor nieuwe) worden geaccepteerd. Onbekende instellingen worden direct geweigerd.
+- **Beveiligingsuitleg**: Instellingen vermeldt dat GitHub-inloggegevens lokaal versleuteld worden bewaard wanneer app-vergrendeling aanstaat.
+
 
 ## 4.0.1 – 11 november 2026
 De historische koersschattingen blijven nu actueel als je bestaande transacties of koersdata wijzigt.
