@@ -95,3 +95,17 @@ test('back-up downloaden op de laptop, en inhoud verborgen in de app-wisselaar',
   await vis(true);expect(await page.evaluate(()=>document.body.classList.contains('shield'))).toBe(true);
   await vis(false);expect(await page.evaluate(()=>document.body.classList.contains('shield'))).toBe(false);
 });
+
+
+test('versleuteling accepteert alleen bekende PBKDF2-instellingen',async({page})=>{
+  await openApp(page);
+  const r=await page.evaluate(()=>{
+    const valid=[kdfRounds(250000),kdfRounds(600000)];
+    const invalid=[0,1,249999,600001,1e9,1.5,'600000'].map(v=>{
+      try{kdfRounds(v);return false}catch(e){return /onbekende sleutelinstellingen/.test(e.message)}
+    });
+    return{valid,invalid};
+  });
+  expect(r.valid).toEqual([250000,600000]);
+  expect(r.invalid.every(Boolean)).toBe(true);
+});
