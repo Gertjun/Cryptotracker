@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='4.0.1 (11 nov 2026)';
+const APP_VERSION='4.0.2 (11 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -2572,7 +2572,7 @@ function renderSettings(){
   const sf=$('#s_fng');if(sf)sf.onchange=()=>{settings.fng=sf.checked;saveSettings();if(sf.checked)refreshFng()};
   const sa=$('#s_auto');if(sa)sa.onchange=()=>{lockCfg.autoLock=+sa.value;saveLock()};
 }
-function syncInfoHTML(){return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>`}
+function syncInfoHTML(){return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
 // Instellingen is een eigen scherm (#instellingen). openSettings() opent of ververst het; formulieren zijn gewoon in beeld.
 let setFrom='';
 function openSettings(){
@@ -2651,9 +2651,11 @@ async function doPairIn(btn){
 // PBKDF2-rondes (D56): nieuw versleuteld 600.000, zoals in de andere apps. Het aantal staat als 'it' in het versleutelde object;
 // zonder 'it' is het van vóór 4.0.0 en dus 250.000. Zo blijven oude bestanden, back-ups, koppelcodes en de vergrendeling werken.
 const KDF_IT=600000,KDF_IT_OLD=250000;
-async function deriveKey(pass,salt,it=KDF_IT_OLD){const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:it,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+const KDF_ALLOWED=new Set([KDF_IT_OLD,KDF_IT]);
+function kdfRounds(it){const n=it??KDF_IT_OLD;if(!Number.isSafeInteger(n)||!KDF_ALLOWED.has(n))throw new Error('Dit versleutelde bestand gebruikt onbekende sleutelinstellingen. Werk de app bij of controleer het bestand.');return n}
+async function deriveKey(pass,salt,it=KDF_IT_OLD){const rounds=kdfRounds(it),base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:rounds,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
 async function encryptObj(obj,pass){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const key=await deriveKey(pass,salt,KDF_IT);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));return{v:1,alg:'AES-GCM/PBKDF2-SHA256',it:KDF_IT,salt:bufToB64(salt),iv:bufToB64(iv),ct:bufToB64(ct)}}
-async function decryptObj(o,pass){const key=await deriveKey(pass,b64ToBuf(o.salt),o.it||KDF_IT_OLD);try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBuf(o.iv)},key,b64ToBuf(o.ct));return JSON.parse(dec.decode(pt))}catch(e){throw new Error('Versleutelwachtwoord klopt niet')}}
+async function decryptObj(o,pass){const rounds=kdfRounds(o?.it??KDF_IT_OLD),key=await deriveKey(pass,b64ToBuf(o.salt),rounds);try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBuf(o.iv)},key,b64ToBuf(o.ct));return JSON.parse(dec.decode(pt))}catch(e){throw new Error('Versleutelwachtwoord klopt niet')}}
 const utf8ToB64=s=>bufToB64(enc.encode(s));
 const b64ToUtf8=s=>dec.decode(b64ToBuf(s.replace(/\s/g,'')));
 function merge(a,b){
@@ -2666,7 +2668,7 @@ function merge(a,b){
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
   return{...a,...b,v:Math.max(a.v||0,b.v||0),txs:[...m.values()],deleted,updated:Math.max(a.updated||0,b.updated||0),...(cfg.mod?{cfg}:{}),hist,watch:mergeList(a.watch,b.watch),alerts:mergeList(a.alerts,b.alerts),goals:mergeList(a.goals,b.goals),plans:mergeList(a.plans,b.plans),portfolios:mergeList(a.portfolios,b.portfolios),allocs:mergeList(a.allocs,b.allocs)};
 }
-const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[]),...(d.portfolios||[]),...(d.allocs||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.values(d.hist||{}).reduce((n,h)=>n+Object.keys(h).length,0)]);
+const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id,t.mod]),[...(d.deleted||[])].sort(),d.cfg?.mod||0,[...(d.watch||[]),...(d.alerts||[]),...(d.goals||[]),...(d.plans||[]),...(d.portfolios||[]),...(d.allocs||[])].map(x=>x.id+':'+x.mod).sort().join(),Object.keys(d.hist||{}).sort().map(id=>[id,Object.keys(d.hist[id]||{}).sort().map(day=>[day,d.hist[id][day]])])] );
 // 20 s wachten, zodat meerdere wijzigingen samen één versie op GitHub worden; bij het verlaten van de app direct (flushSync).
 // Een kort versleutelwachtwoord mag alleen als er op GitHub al een bestand is (dan is het het bestaande wachtwoord).
 async function saveSyncForm(btn){
@@ -2801,8 +2803,8 @@ async function openVault(raw){
   locked=false;start();
 }
 async function unlockPw(pw){
-  const c=lockCfg.pw;let raw;
-  try{raw=await aesDec(await deriveKey(pw,b64ToBuf(c.salt),c.it||KDF_IT_OLD),c)}catch(e){throw new Error('Wachtwoord klopt niet')}
+  const c=lockCfg.pw,rounds=kdfRounds(c.it??KDF_IT_OLD);let raw;
+  try{raw=await aesDec(await deriveKey(pw,b64ToBuf(c.salt),rounds),c)}catch(e){throw new Error('Wachtwoord klopt niet')}
   await openVault(raw);
 }
 async function unlockPasskey(){
