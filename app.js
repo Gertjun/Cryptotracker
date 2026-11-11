@@ -50,7 +50,9 @@ function persist(){
 const DATA_V=1;
 let tooNew=false;
 const isTooNew=d=>(d?.v||0)>DATA_V;
-function saveData(sync=true){data.updated=Date.now();if(!isTooNew(data))data.v=DATA_V;persist();if(sync)scheduleSync()}
+let estPts={},estRevision=0,estCacheRevision=-1;
+function invalidateEstPts(){estRevision++;estPts={}}
+function saveData(sync=true){invalidateEstPts();data.updated=Date.now();if(!isTooNew(data))data.v=DATA_V;persist();if(sync)scheduleSync()}
 function saveSettings(){persist()}
 function savePrices(){persist()}
 
@@ -412,7 +414,7 @@ function thin(pts,max=500){
 }
 let chartSaveT=null;
 function saveCharts(){clearTimeout(chartSaveT);chartSaveT=setTimeout(()=>{
-  const now=Date.now();for(const k in chartCache)if(now-chartCache[k].ts>7*864e5)delete chartCache[k];
+  const now=Date.now();let pruned=false;for(const k in chartCache)if(now-chartCache[k].ts>7*864e5){delete chartCache[k];pruned=true}if(pruned)invalidateEstPts();
   try{
     if(lockCfg){if(!DEK)return;const k=DEK,snap=enc.encode(JSON.stringify(chartCache));
       vaultQ=vaultQ.then(()=>aesEnc(k,snap)).then(o=>localStorage.setItem(LS_VCHARTS,JSON.stringify(o))).catch(()=>{})}
@@ -433,7 +435,7 @@ function addHist(id,pts){
     const d=Math.floor(t/DAY),e=h[d];
     if(!e||t-d*DAY<e[0]-d*DAY){h[d]=[Math.round(t/6e4)*6e4,+(+v).toPrecision(7)];ch=true}
   }
-  if(ch)histDirty();
+  if(ch){invalidateEstPts();histDirty()}
 }
 function withHist(id,pts){   // archiefpunten toevoegen vóór het begin van de opgehaalde reeks
   const h=data.hist?.[id];if(!h)return pts;
@@ -464,7 +466,7 @@ async function fetchChart0(id,days,low){
     let r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=${days}`,low);
     if(!r.ok&&r.status!==429&&days==='max')r=await cg(`/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${CUR}&days=365`);
     if(!r.ok)throw new Error(r.status===429?BUSY:r.status===401?'CoinGecko-sleutel ongeldig':'Grafiek niet beschikbaar');
-    const j=await r.json();addHist(id,j.prices||[]);chartCache[key]={ts:Date.now(),pts:thin(j.prices||[])};saveCharts();return chartCache[key].pts;
+    const j=await r.json();addHist(id,j.prices||[]);chartCache[key]={ts:Date.now(),pts:thin(j.prices||[])};invalidateEstPts();saveCharts();return chartCache[key].pts;
   }catch(e){if(c)return c.pts;throw e}   // bij een fout: laatst bekende grafiek tonen
 }
 
@@ -962,10 +964,8 @@ function priceAt(id,ts){
 // Geen koers in het archief (bijv. ouder dan CoinGecko's 365 dagen)? Schat hem uit de dichtstbijzijnde bekende
 // koersen ervoor en erna: je eigen aankoop-/verkoopkoersen, het koersarchief en bewaarde grafieken (lineair ertussen).
 // Is er helemaal niets, dan tellen de munten mee tegen je aankoopwaarde (resultaat 0) in plaats van € 0.
-let estPts={},estSig='';
 function knownPts(id){
-  const sig=data.txs.length+'|'+Object.keys(chartCache).length+'|'+Object.keys(data.hist||{}).reduce((n,k)=>n+Object.keys(data.hist[k]).length,0);
-  if(sig!==estSig){estPts={};estSig=sig}
+  if(estCacheRevision!==estRevision){estPts={};estCacheRevision=estRevision}
   if(estPts[id])return estPts[id];
   const a=[];for(const t of data.txs)if(t.coinId===id&&(t.type==='buy'||t.type==='sell')&&t.price>0)a.push([txTime(t),+t.price]);
   const h=data.hist?.[id];if(h)for(const k in h)if(h[k]&&h[k][1]>0)a.push([h[k][0],h[k][1]]);
@@ -2657,6 +2657,7 @@ async function decryptObj(o,pass){const key=await deriveKey(pass,b64ToBuf(o.salt
 const utf8ToB64=s=>bufToB64(enc.encode(s));
 const b64ToUtf8=s=>dec.decode(b64ToBuf(s.replace(/\s/g,'')));
 function merge(a,b){
+  invalidateEstPts();
   const deleted=[...new Set([...(a.deleted||[]),...(b.deleted||[])])],del=new Set(deleted),m=new Map();
   for(const t of [...(a.txs||[]),...(b.txs||[])]){if(del.has(t.id))continue;const e=m.get(t.id);if(!e||(t.mod||0)>(e.mod||0))m.set(t.id,t)}
   const ca=a.cfg||{mod:0},cb=b.cfg||{mod:0},cfg=(cb.mod||0)>(ca.mod||0)?cb:ca;   // nieuwste instelling wint
