@@ -78,3 +78,45 @@ test('24U: geïnvesteerd valt binnen de grafiek na een aankoop (D49)',async({pag
     const out={buy:run('1',buy),farIn};settings.pRange=old;el.remove();return out});
   expect(r).toEqual({buy:true,farIn:false});
 });
+
+test('historische koersschatting ververst na wijzigen van een bestaande transactie',async({page})=>{
+  await openApp(page);
+  const r=await page.evaluate(()=>{
+    data.txs=[{id:'estimate-1',coinId:'cache-test',type:'buy',date:'2025-01-01T00:00:00.000Z',price:10,qty:1,created:1}];
+    data.hist={};chartCache={};
+    const day1=Date.parse('2025-01-01T00:00:00.000Z');
+    const before=priceEst('cache-test',day1);
+    data.txs[0].price=20;saveData(false);
+    const afterPrice=priceEst('cache-test',day1);
+    data.txs[0].date='2025-01-02T00:00:00.000Z';data.txs[0].price=30;saveData(false);
+    const afterDate=priceEst('cache-test',Date.parse('2025-01-02T00:00:00.000Z'));
+    return{before,afterPrice,afterDate,point:knownPts('cache-test')[0]};
+  });
+  expect(r.before).toBe(10);
+  expect(r.afterPrice).toBe(20);
+  expect(r.afterDate).toBe(30);
+  expect(r.point[0]).toBe(Date.parse('2025-01-02T00:00:00.000Z'));
+});
+
+test('FIFO: aankopen op dezelfde dag, handelskosten en netwerkkosten',async({page})=>{
+  await openApp(page);
+  const r=await page.evaluate(()=>{
+    data.txs=[
+      {id:'buy-1',coinId:'fifo-test',type:'buy',date:'2025-01-01T10:00:00.000Z',created:1,qty:1,price:10,fee:2},
+      {id:'buy-2',coinId:'fifo-test',type:'buy',date:'2025-01-01T10:00:00.000Z',created:2,qty:1,price:20,fee:0},
+      {id:'sell-1',coinId:'fifo-test',type:'sell',date:'2025-01-02T10:00:00.000Z',created:3,qty:1.5,price:30,fee:1},
+      {id:'transfer-1',coinId:'fifo-test',type:'transfer',date:'2025-01-02T11:00:00.000Z',created:4,qty:0.1,feeQty:0.1}
+    ];
+    settings.pf='main';settings.unit='EUR';UNIT_ON=false;
+    const c=computeCoin('fifo-test');
+    return{qty:c.qty,cost:c.cost,realized:c.realized,totalBought:c.totalBought,sell:c.sellInfo['sell-1'],transfer:c.sellInfo['transfer-1']};
+  });
+  expect(r.qty).toBeCloseTo(0.4,10);
+  expect(r.cost).toBeCloseTo(8,10);
+  expect(r.realized).toBeCloseTo(20,10);
+  expect(r.totalBought).toBeCloseTo(32,10);
+  expect(r.sell.cost).toBeCloseTo(22,10);
+  expect(r.sell.pl).toBeCloseTo(22,10);
+  expect(r.transfer.cost).toBeCloseTo(2,10);
+  expect(r.transfer.pl).toBeCloseTo(-2,10);
+});
