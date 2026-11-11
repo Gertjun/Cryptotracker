@@ -2760,17 +2760,18 @@ async function syncNow(silent){
     const merged=remote?merge(data,remote):data;
     if(locked)return;
     data=merged;persist();
+    let conflict=false;
     if(!remote||sig(remote)!==sig(merged)){
       const body={message:'Portfolio bijgewerkt '+new Date().toISOString(),content:utf8ToB64(JSON.stringify(await encryptObj(merged,g.pass))),branch:g.branch};
       if(sha)body.sha=sha;
       const p=await fetchT(url,{method:'PUT',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify(body)},30000);
-      if(p.status===409||p.status===422){syncAgain=true}
+      if(p.status===409||p.status===422){syncAgain=true;conflict=true}
       else if(p.status===404)throw new Error('Repository niet gevonden of geen schrijfrechten');
       else if(!p.ok)throw new Error('Opslaan op GitHub mislukt ('+p.status+')');
     }
-    settings.lastGh=Date.now();saveSettings();setSync('ok');
+    if(conflict){setSync('busy')}
+    else{settings.lastGh=Date.now();saveSettings();setSync('ok');if(!silent)toast('Gesynchroniseerd')}
     if(before!==sig(data)){refreshPrices();render()}
-    if(!silent)toast('Gesynchroniseerd');
   }catch(e){setSync('err',e.message||'Geen verbinding');if(!silent)toast(e.message||'Sync mislukt')}
   finally{syncing=false;if(syncAgain){syncAgain=false;setTimeout(()=>syncNow(true),800)}}
 }
