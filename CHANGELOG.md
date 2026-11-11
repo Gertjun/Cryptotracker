@@ -7,12 +7,19 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.0`) en de naam van het zip-bestand (`crypto-tracker-4.0.0.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.1`) en de naam van het zip-bestand (`crypto-tracker-4.0.0.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+## 4.0.1 – 11 november 2026
+De historische koersschattingen blijven nu actueel als je bestaande transacties of koersdata wijzigt.
+
+### Opgelost
+- **Historische koerscache**: de cache wordt nu opnieuw opgebouwd wanneer transacties, koersarchief of grafiekdata veranderen. Daardoor blijven historische schattingen niet langer hangen op een oude transactieprijs of -datum.
+- **FIFO-regressietests**: extra controle op aankopen op dezelfde dag, handelskosten bij aankoop en verkoop, en netwerkkosten bij een wallet-overboeking.
 
 ## 4.0.0 – 10 november 2026
 Je versleutelde gegevens zijn beter beschermd tegen het raden van je wachtwoord, net als in je andere apps.
