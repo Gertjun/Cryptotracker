@@ -47,3 +47,15 @@ test('nieuw apparaat koppelen met koppelcode en pincode',async({browser})=>{
   await B.waitForFunction(()=>syncState.s==='ok'&&data.txs.length===84);
   expect(await B.evaluate(()=>({repo:settings.gh.repo,pass:settings.gh.pass}))).toEqual({repo:GH.repo,pass:GH.pass});
 });
+
+
+test('wijziging van een bestaande historische koersdag wordt herkend',async({page})=>{
+  await openApp(page);
+  const r=await page.evaluate(()=>{
+    const a={txs:[],deleted:[],hist:{bitcoin:{20000:[20000*86400000,100]}}};
+    const b={txs:[],deleted:[],hist:{bitcoin:{20000:[20000*86400000,101]}}};
+    return{before:sig(a),after:sig(b),different:sig(a)!==sig(b)};
+  });
+  expect(r.different).toBe(true);
+  expect(r.before).not.toBe(r.after);
+});
