@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 11 november 2026 · in ontwikkeling: **4.0.2** (fase 2, nog niet uitgebracht)
+Laatst bijgewerkt: 12 november 2026 · versie **4.0.2** (fase 2 technisch gevalideerd; samenvoeging gereed)
 
 ---
 
@@ -37,7 +37,7 @@ Laatst bijgewerkt: 11 november 2026 · in ontwikkeling: **4.0.2** (fase 2, nog n
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
 - **Wishlist open (33):** W4–W8, W10, W11, W15, W16, W18–W23, W25, W26, W28–W33, W35–W43, W46. W17, W27, W34, W44 en W45 ingebouwd in 3.25.0. Advies aan Geert: daarna W39 (jaarrendement) en W40 (hoe gingen je verkopen). W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
-- **Synchronisatie en beveiliging (fase 2):** in ontwikkeling op `fix/phase-2-sync-security`; nog niet uitgebracht of getest op GitHub Actions. Nieuwe controles op PBKDF2-instellingen, historische koerswijzigingen en sync-conflicten.
+- **Synchronisatie en beveiliging (fase 2):** wijzigingen voor 4.0.2 staan in PR #39. De volledige GitHub Actions-testset is op de actuele commit geslaagd (12 nov 2026). Na samenvoeging is fase 2 onderdeel van `main`; de app is daarmee nog niet automatisch op een echte iPhone gecontroleerd.
 - **Passkey hergebruiken (3.26.0, D55)** nog niet op een echte iPhone bevestigd: vergrendeling uit en weer aan, dan "Bestaande passkey gebruiken". `inzicht.spec.mjs` › meebewegen met bitcoin faalde één keer bij de volle testrun op de telefoon (los steeds groen); in de gaten houden.
 - **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
 - **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
@@ -46,7 +46,8 @@ Laatst bijgewerkt: 11 november 2026 · in ontwikkeling: **4.0.2** (fase 2, nog n
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
-- **11 nov 2026:** fase 2 in ontwikkeling (4.0.2): synchronisatiehandtekening uitgebreid naar volledige koersarchiefwaarden; PBKDF2-instellingen begrensd tot bekende oude/nieuwe waarden; conflicten worden niet als geslaagde sync getoond; uitleg lokale opslagbeveiliging toegevoegd. Tests uitgebreid. Nog niet lokaal of op GitHub Actions gedraaid.
+- **12 nov 2026:** fase 2 (4.0.2) technisch gevalideerd. De volledige GitHub Actions-run op commit `26d6e655` is geslaagd, inclusief Playwright-installatie en `npm run test:all`; ook de eerdere mislukte check op dezelfde commit is bij een nieuwe uitvoering geslaagd. Documentatie bijgewerkt vóór samenvoeging van PR #39.
+- **11 nov 2026:** fase 2 gebouwd (4.0.2): synchronisatiehandtekening uitgebreid naar volledige koersarchiefwaarden; PBKDF2-instellingen begrensd tot bekende oude/nieuwe waarden; conflicten worden niet als geslaagde sync getoond; uitleg lokale opslagbeveiliging toegevoegd. Regressietests toegevoegd.
 - **10 nov 2026:**
   - 4.0.0: apps uniform gemaakt. PBKDF2 naar 600.000 rondes zoals de andere apps, met `it` in het versleutelde object (D56). De passkey-aanpak met vaste PRF (D55) is nu de standaard voor al Geerts apps.
   - 3.26.0: na opnieuw installeren een bestaande passkey uit het wachtwoordbeheer hergebruiken, in plaats van steeds een nieuwe (D55). Nieuwe test `passkey.spec.mjs`. Nog niet op een echte iPhone bevestigd.
