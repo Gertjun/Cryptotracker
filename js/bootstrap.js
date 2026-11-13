@@ -13,6 +13,7 @@ const coreModules = [
   './core/sync.js',
   './core/ui.js',
   './core/vault.js',
+  './core/legacy-adapter.js',
 ];
 
 async function startLegacyApp() {
@@ -38,6 +39,7 @@ try {
     sync: modules[9],
     ui: modules[10],
     vault: modules[11],
+    legacyAdapter: modules[12],
   });
 } catch (error) {
   // Core wordt pas in de volgende migratiefase aan de app gekoppeld.
