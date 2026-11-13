@@ -10,7 +10,6 @@ const coreModules = [
   './core/nav.js',
   './core/pair.js',
   './core/records.js',
-  './core/shell.js',
   './core/sync.js',
   './core/ui.js',
   './core/vault.js',
@@ -36,10 +35,9 @@ try {
     nav: modules[6],
     pair: modules[7],
     records: modules[8],
-    shell: modules[9],
-    sync: modules[10],
-    ui: modules[11],
-    vault: modules[12],
+    sync: modules[9],
+    ui: modules[10],
+    vault: modules[11],
   });
 } catch (error) {
   // Core wordt pas in de volgende migratiefase aan de app gekoppeld.
