@@ -8,7 +8,7 @@ Deze map bevat onveranderlijke kopieën van bestaande bestanden die vóór een m
 - Het pad onder `backup/` volgt het oorspronkelijke repositorypad; achter de bestandsnaam staat `.backup`.
 - Bestaande backups worden nooit overschreven. Bij volgende wijzigingen blijft de eerste kopie de oorspronkelijke nulmeting.
 - Nieuwe bestanden hebben geen voorafgaande backup nodig.
-- Deze map is alleen voor herstel in de bronrepository en wordt niet opgenomen in de PWA-release-zip.
+- Deze map is alleen voor herstel in de bronrepository. De map wordt uitgesloten van zowel de PWA-release-zip als de GitHub Pages-publicatie via `_config.yml`.
 - Dit zijn codebackups, geen back-ups van gebruikersgegevens. Gegevensbestanden in SyncData vallen onder een apart, expliciet databehoudplan.
 
 ## Huidige backups
