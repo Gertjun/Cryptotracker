@@ -11,7 +11,7 @@ Gebruik (vanuit de hoofdmap van de repository):
 Het script verhoogt APP_VERSION in app.js en de cache-naam in sw.js, zet de changelog-tekst
 bovenaan CHANGELOG.md (met de datum van vandaag) en maakt crypto-tracker-X.Y.Z.zip in de
 uitvoermap (standaard: ../releases). De zip bevat de map 'crypto-tracker' zonder node_modules
-en testresultaten.
+en testresultaten en de herstelbackups.
 """
 import sys,re,subprocess,datetime,os
 root=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,5 +36,5 @@ open(f'{root}/CHANGELOG.md','w',encoding='utf-8').write(cl)
 os.makedirs(out,exist_ok=True);z=os.path.join(out,f'crypto-tracker-{v}.zip')
 if os.path.exists(z):os.remove(z)
 name=os.path.basename(root)
-subprocess.run(['zip','-qr',z,name,'-x',f'{name}/tests/node_modules/*',f'{name}/tests/test-results/*',f'{name}/tests/playwright-report/*',f'{name}/.git/*'],cwd=os.path.dirname(root),check=True)
+subprocess.run(['zip','-qr',z,name,'-x',f'{name}/tests/node_modules/*',f'{name}/tests/test-results/*',f'{name}/tests/playwright-report/*',f'{name}/backup/*',f'{name}/.git/*'],cwd=os.path.dirname(root),check=True)
 print('OK',v,z)
