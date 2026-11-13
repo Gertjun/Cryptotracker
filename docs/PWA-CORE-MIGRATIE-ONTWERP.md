@@ -55,7 +55,7 @@ De bestaande Crypto Portfolio-passkeys gebruiken een andere PRF-invoer dan PWA-C
 - De backup wordt eerst vastgelegd; pas daarna mag het oorspronkelijke bestand worden gewijzigd.
 - Een eenmaal gemaakte backup wordt nooit overschreven of aangepast. Bij een volgende afzonderlijke migratiefase wordt eerst gecontroleerd of al een backup bestaat; een bestaande backup blijft de oorspronkelijke nulmeting.
 - Nieuwe bestanden hoeven niet vooraf te worden geback-upt.
-- Backups zijn herstelmateriaal in de bronrepository en worden uitgesloten van de PWA-distributie en release-zip.
+- Backups zijn herstelmateriaal in de bronrepository en worden uitgesloten van de PWA-distributie, GitHub Pages-publicatie (via `_config.yml`) en release-zip (via `tools/release.py`).
 - Dit codebackupbeleid vervangt geen back-up van gebruikersgegevens. Het bestaande versleutelde bestand in SyncData blijft afzonderlijk en onaangeroerd.
 
 ## Veiligheidsgrenzen
