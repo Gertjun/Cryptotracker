@@ -9,6 +9,7 @@ const PRECACHE = [
   "icon-192.png",
   "icon-512.png",
   "js/bootstrap.js",
+  "js/core/legacy-adapter.js",
   "js/config.js",
   "core-manifest.json",
   "pwa-core.lock.json",
