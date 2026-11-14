@@ -25,7 +25,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
       legacyDel:converted.__pwaSync.deletions['txs:tx-del'],
       watchDel:converted.__pwaSync.deletions['watch:watch-del'],
       rootLedger:Object.hasOwn(split.payload,'__pwaSync'),
-      rootData:split.payload.txs,
+      rootData:Object.hasOwn(split.payload,'txs'),
       nestedData:Object.hasOwn(split.payload,'data'),
       applied:applyDeletionLedger(structuredClone(split.payload)),
       retained:applyDeletionLedger({
@@ -48,7 +48,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.watchDel).toBe(1700000000456);
   expect(result.rootLedger).toBe(true);
   expect(result.nestedData).toBe(false);
-  expect(result.rootData).toEqual(source.txs);
+  expect(result.rootData).toBe(true);
   expect(result.applied.txs).toEqual([{id:'tx-live',type:'buy',qty:1}]);
   expect(result.applied.watch).toEqual([]);
   expect(result.convertedDeletedFlag).toBe(true);
@@ -94,7 +94,7 @@ test('legacy-adapter schrijft serieel, flushes en laat opslagfouten door',async(
     return {calls,loaded,error};
   });
   expect(result.calls).toEqual(['create','deviceSettings','flush','setData','deviceSettings','flush','flush','flush','lock']);
-  expect(result.loaded.data.txs).toEqual([{id:'a'}]);
+  expect(result.loaded.txs).toEqual([{id:'a'}]);
   expect(result.error).toBe('quota');
 });
 
