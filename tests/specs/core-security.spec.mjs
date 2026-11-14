@@ -80,6 +80,7 @@ test('Core-wachtwoord wijzigen, passkey aanmaken en bestaande passkey opnieuw ko
   await page.locator('#core-confirm-password').fill(NEW_PASSWORD);
   await page.locator('[data-act=corechpw-save]').click();
   await expect.poll(()=>remoteSha).toBe('security-core-sha-2');
+  await expect(page.locator('#sheet')).toBeHidden();
   const updatedKdf=await page.evaluate(async()=>{
     const vault=await import('/js/core/vault.js');
     return vault.getEnvelope().kdf.salt;
