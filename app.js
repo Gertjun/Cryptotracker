@@ -33,7 +33,7 @@ let syncState={s:'off',msg:''},cgState={s:'off',msg:''};
 let syncTimer=null;
 let lockCfg=(()=>{try{return JSON.parse(localStorage.getItem(LS_LOCK))}catch(e){return null}})();
 let DEK=null,dekRaw=null,locked=!!lockCfg,vaultQ=Promise.resolve();
-let coreMode=false,coreRuntime=null;
+let coreMode=false,coreGateActive=true,coreRuntime=null;
 
 // Met vergrendeling aan staan transacties, koersen en GitHub-gegevens alleen versleuteld in de 'vault'.
 function persist(){
@@ -2753,6 +2753,7 @@ function restoreSnapshot(snap){
   data={...data,txs,deleted:[...del],...lists,updated:now};
 }
 async function syncNow(silent){
+  if(coreGateActive&&!coreMode)return;
   if(coreMode){if(!coreRuntime)return;try{return await coreRuntime.syncNow(silent)}catch(e){setSync('err',e.message||'Core-synchronisatie mislukt');return}}
   const g=settings.gh;if(locked||tooNew||!g.token||!g.repo||!g.pass)return;
   if(syncing){syncAgain=true;return}
@@ -3118,7 +3119,7 @@ window.CryptoPortfolioLegacy=Object.freeze({
   snapshot:()=>({data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null}),
   hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
   legacyLocked:()=>!!lockCfg&&locked,
-  startLegacy:()=>{if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
+  startLegacy:()=>{coreGateActive=false;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
   activateCore:(payload,box)=>{coreMode=true;locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});const app=box?.app||{};settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start()},
   applyCoreData:(payload)=>{data=structuredClone(payload||{});invalidateEstPts();render()},
   lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},
@@ -3126,8 +3127,7 @@ window.CryptoPortfolioLegacy=Object.freeze({
   merge,toast,
   setSyncError:(message)=>setSync('err',message)
 });
-if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
-else if(!window.PWACoreV1)start();
+/* De Core-runtime bepaalt de startmodus; geen legacy-sync vóór die keuze. */
 // Nieuwe versie online gezet? De service worker haalt hem op; dan verschijnt een melding om te vernieuwen.
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   let hadCtrl=!!navigator.serviceWorker.controller;
