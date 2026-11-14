@@ -387,7 +387,7 @@ export async function initialize(coreModules) {
     }
   });
   if (vault.hasVault()) unlockScreen();
-  else if (window.CryptoPortfolioLegacy.legacyLocked()) window.CryptoPortfolioLegacy.startLegacy();
+  else if (window.CryptoPortfolioLegacy.legacyLocked()) window.CryptoPortfolioLegacy.startLegacy({ allowSync: false });
   else setupScreen();
 }
 

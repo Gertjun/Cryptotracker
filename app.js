@@ -1,6 +1,6 @@
 'use strict';
 /* ---------- opslag ---------- */
-const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
+const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
 const APP_VERSION='4.0.2 (11 nov 2026)';
@@ -422,6 +422,7 @@ let chartSaveT=null;
 function saveCharts(){clearTimeout(chartSaveT);chartSaveT=setTimeout(()=>{
   const now=Date.now();let pruned=false;for(const k in chartCache)if(now-chartCache[k].ts>7*864e5){delete chartCache[k];pruned=true}if(pruned)invalidateEstPts();
   try{
+    if(coreMode){localStorage.setItem(LS_CORE_CHARTS,JSON.stringify(chartCache));return}
     if(lockCfg){if(!DEK)return;const k=DEK,snap=enc.encode(JSON.stringify(chartCache));
       vaultQ=vaultQ.then(()=>aesEnc(k,snap)).then(o=>localStorage.setItem(LS_VCHARTS,JSON.stringify(o))).catch(()=>{})}
     else localStorage.setItem(LS_CHARTS,JSON.stringify(chartCache));
@@ -3092,6 +3093,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented
 // dan slaat het de samengevoegde stand op; het andere tabblad neemt die dan weer over.
 async function otherTab(e){
   try{
+    if(coreMode)return;
     if(e.key===LS_LOCK){if(e.newValue!==e.oldValue)location.reload();return}
     let theirs,gh=null;
     if(e.key===LS_DATA&&!lockCfg)theirs=JSON.parse(e.newValue||'null');
@@ -3131,8 +3133,8 @@ window.CryptoPortfolioLegacy=Object.freeze({
   snapshot:()=>({data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null}),
   hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
   legacyLocked:()=>!!lockCfg&&locked,
-  startLegacy:()=>{coreGateActive=false;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
-  activateCore:(payload,box)=>{coreMode=true;locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});const app=box?.app||{};settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start()},
+  startLegacy:({allowSync=true}={})=>{coreGateActive=!allowSync;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
+  activateCore:(payload,box)=>{coreMode=true;chartCache=load(LS_CORE_CHARTS,{});locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});const app=box?.app||{};settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start()},
   applyCoreData:(payload)=>{data=structuredClone(payload||{});invalidateEstPts();render()},
   lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},
   setRuntime:(runtime)=>{coreRuntime=runtime},

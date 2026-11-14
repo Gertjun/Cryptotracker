@@ -19,6 +19,27 @@ test('Core-startscherm blokkeert legacy-start en legacy-sync',async({page})=>{
   expect(githubCalls).toEqual([]);
 });
 
+test('legacy openen voor Core-migratie start geen oude GitHub-sync',async({page})=>{
+  const githubCalls=[];
+  await page.addInitScript(()=>{
+    localStorage.setItem('cpt.data',JSON.stringify({v:1,updated:1,deleted:[],txs:[]}));
+    localStorage.setItem('cpt.settings',JSON.stringify({
+      gh:{token:'test-token',repo:'Gertjun/SyncData',path:'crypto-portfolio.enc.json',branch:'main',pass:'legacy-password'},
+    }));
+  });
+  await page.route('https://api.github.com/**',async route=>{
+    githubCalls.push({method:route.request().method(),url:route.request().url()});
+    return route.fulfill({status:404,json:{message:'Not Found'}});
+  });
+  await page.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
+  await page.route('https://api.alternative.me/**',route=>route.fulfill({json:{data:[]}}));
+  await page.goto('/index.html');
+  await expect(page.locator('#core-gate')).toBeVisible();
+  await page.evaluate(()=>window.CryptoPortfolioLegacy.startLegacy({allowSync:false}));
+  await page.waitForTimeout(100);
+  expect(githubCalls).toEqual([]);
+});
+
 test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemoeid',async({page})=>{
   const githubCalls=[];
   await page.addInitScript(()=>{
@@ -33,6 +54,7 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
       gh:{token:'test-token',repo:'Gertjun/SyncData',path:'crypto-portfolio.enc.json',branch:'main',pass:'legacy-password'},
     }));
     localStorage.setItem('cpt.prices',JSON.stringify({bitcoin:{eur:25000}}));
+    localStorage.setItem('cpt.charts',JSON.stringify({legacyMarker:{ts:Date.now(),pts:[]}}));
   });
   await page.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
   await page.route('https://api.alternative.me/**',route=>route.fulfill({json:{data:[]}}));
@@ -63,6 +85,7 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
       legacyData:localStorage.getItem('cpt.data'),
       legacySettings:localStorage.getItem('cpt.settings'),
       legacyPrices:localStorage.getItem('cpt.prices'),
+      legacyCharts:localStorage.getItem('cpt.charts'),
       legacyVault:localStorage.getItem('cpt.vault'),
       coreVault:localStorage.getItem('cpt:vault'),
     };
@@ -82,6 +105,22 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   expect(result.legacyVault).toBeNull();
   expect(result.coreVault).not.toBeNull();
   expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.enc.json'))).toBe(false);
+  await page.evaluate(()=>{
+    window.dispatchEvent(new StorageEvent('storage',{key:'cpt.data',newValue:JSON.stringify({
+      v:1,updated:Date.now(),deleted:[],
+      txs:[{id:'legacy-other-tab-tx',type:'buy',coinId:'ethereum',qty:2,price:1000,fee:0,date:'2025-02-01',mod:Date.now()}],
+    })}));
+    chartCache.coreModeProbe={ts:Date.now(),pts:[]};
+    saveCharts();
+  });
+  await page.waitForTimeout(1700);
+  const isolation=await page.evaluate(async()=>{
+    const vault=await import('/js/core/vault.js');
+    return {ids:vault.getData().txs.map(tx=>tx.id),legacyCharts:localStorage.getItem('cpt.charts'),coreCharts:localStorage.getItem('cpt:charts')};
+  });
+  expect(isolation.ids).not.toContain('legacy-other-tab-tx');
+  expect(isolation.legacyCharts).toBe(result.legacyCharts);
+  expect(isolation.coreCharts).toContain('coreModeProbe');
   expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.pwa-core-v1.json'))).toBe(true);
   await page.evaluate(()=>{
     data.txs.push({id:'core-only-tx',type:'buy',coinId:'ethereum',qty:1,price:1000,fee:0,date:'2025-02-01',mod:Date.now()});
