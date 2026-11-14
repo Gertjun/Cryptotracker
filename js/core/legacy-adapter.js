@@ -84,6 +84,7 @@ export function splitLegacySnapshot(snapshot) {
   delete convertedData[SYSTEM_KEY];
   const repoParts = typeof gh.repo === 'string' ? gh.repo.trim().split('/') : [];
   const deviceSettings = {
+    ...clone(snapshot.coreDeviceSettings),
     github: {
       owner: repoParts.length === 2 ? repoParts[0] : '',
       repo: repoParts.length === 2 ? repoParts[1] : '',
