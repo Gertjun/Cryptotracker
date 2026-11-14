@@ -2582,10 +2582,10 @@ function renderSettings(){
     const oldPass=$('#s_pass');if(oldPass)oldPass.closest('.field').hidden=true;
     const deviceCard=$('#st_dev')?.closest('.card');if(deviceCard)deviceCard.hidden=true;
     const sec=$('#st_sec')?.closest('.card');
-    if(sec){sec.innerHTML='<h2 class="h3" id="st_sec">Beveiliging</h2><p class="mt-0 hint">PWA-Core versleutelt de gegevens standaard. Gebruik hetzelfde Core-wachtwoord op elk apparaat. Je oude app-vergrendeling blijft lokaal bewaard voor terugval.</p><p class="hint">Een bestaande Crypto Portfolio-passkey kan opnieuw aan de Core-datasleutel worden gekoppeld.</p><button type="button" class="btn sec" data-act="corepasskey">Bestaande passkey aan Core koppelen</button>'}
+    if(sec){sec.innerHTML='<h2 class="h3" id="st_sec">Beveiliging</h2><p class="mt-0 hint">PWA-Core versleutelt de gegevens standaard. Gebruik hetzelfde Core-wachtwoord op elk apparaat. Je oude app-vergrendeling blijft lokaal bewaard voor terugval.</p><p class="hint">Een bestaande Crypto Portfolio-passkey kan opnieuw aan de Core-datasleutel worden gekoppeld.</p><button type="button" class="btn sec" data-act="corepasskey">Bestaande passkey aan Core koppelen</button><button type="button" class="btn sec" data-act="corelock">Nu vergrendelen</button>'}
   }
 }
-function syncInfoHTML(){return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
+function syncInfoHTML(){if(coreMode)return `<p class="hint" id="setSync">Core-bestand: <b>crypto-portfolio.pwa-core-v1.json</b>. Je GitHub-token en apparaatinstellingen staan versleuteld in de lokale Core-kluis. Het oude synchronisatiebestand blijft apart en wordt niet gewijzigd.${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>`;return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
 // Instellingen is een eigen scherm (#instellingen). openSettings() opent of ververst het; formulieren zijn gewoon in beeld.
 let setFrom='';
 function openSettings(){
@@ -2921,6 +2921,7 @@ async function securityAction(act,el){
   try{
     if(coreMode){
       if(act==='corepasskey'){el.disabled=true;try{await coreRuntime.enrollExistingPasskey()}finally{el.disabled=false}return}
+      if(act==='corelock'){await coreRuntime.lock();return}
       if(['lockon','lockon2','addpk','usepk','rmpk','chpw','chpw2','lockoff'].includes(act))return toast('De Core-kluis is standaard versleuteld. Gebruik de Core-beveiligingsinstellingen.');
     }
     if(act==='lockon')return pwSheet('App-vergrendeling instellen','Kies eerst een <b>herstelwachtwoord</b>. Daarmee open je de app als de passkey niet beschikbaar is. Raak je dit kwijt én werkt de passkey niet meer, dan is de data op dit apparaat niet meer te openen (wel via GitHub-sync of een back-up).','lockon2');
@@ -3033,7 +3034,7 @@ document.addEventListener('click',e=>{
       refreshPrices()})();break;
     case 'add':$('#btnAdd').click();break;
     case 'unlockpk':tryPasskey(false);break;
-    case 'lockon':case 'lockon2':case 'addpk':case 'usepk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
+    case 'corepasskey':case 'corelock':case 'lockon':case 'lockon2':case 'addpk':case 'usepk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
     case 'settings':openSettings();break;
     case 'setback':location.hash=setFrom&&setFrom!=='#instellingen'?setFrom:'';break;
@@ -3136,7 +3137,8 @@ window.CryptoPortfolioLegacy=Object.freeze({
   lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},
   setRuntime:(runtime)=>{coreRuntime=runtime},
   merge,toast,
-  setSyncError:(message)=>setSync('err',message)
+  setSyncError:(message)=>setSync('err',message),
+  setSyncStatus:(status,message='')=>setSync(status,message)
 });
 /* De Core-runtime bepaalt de startmodus; geen legacy-sync vóór die keuze. */
 // Nieuwe versie online gezet? De service worker haalt hem op; dan verschijnt een melding om te vernieuwen.
