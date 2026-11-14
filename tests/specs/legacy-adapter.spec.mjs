@@ -17,6 +17,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
       settings:{theme:'dark',gh:{token:'secret-token',repo:'Gertjun/SyncData',path:'old.enc.json',branch:'main',pass:'legacy-secret'}},
       prices:{bitcoin:{price:123}},
       visit:{last:'overview'},
+      coreDeviceSettings:{autoLockMinutes:15},
     });
     return {
       sourceUnchanged:!source.__pwaSync && source.deleted[0]==='tx-old',
@@ -59,6 +60,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.deviceSettings.app.visit).toEqual({last:'overview'});
   expect(result.payload.schema).toBe(1);
   expect(result.payload.v).toBe(1);
+  expect(result.deviceSettings.autoLockMinutes).toBe(15);
   expect(result.deviceSettings.github.token).toBe('secret-token');
   expect(result.deviceSettings.github.owner).toBe('Gertjun');
   expect(result.deviceSettings.github.repo).toBe('SyncData');
