@@ -61,15 +61,6 @@ async function once(gh, { merge, migrate = (d) => d, schemaVersion = Infinity })
     return 'uploaded';
   }
   if (meta.force) {
-    if (meta.keyDirty) {
-      // De restore is voorafgegaan door een sync. De historische back-up kan
-      // een andere datasleutel hebben; ontsleutel de huidige remote dan niet
-      // met die nieuwe sleutel. Controleer eerst dat de remote SHA nog gelijk
-      // is aan de vooraf gesynchroniseerde versie en upload daarna conditioneel.
-      if (!meta.sha || remote.sha !== meta.sha) throw new ConflictError();
-      await upload(gh, meta.sha, 'back-up hersteld met vooraf behouden verwijdergeschiedenis');
-      return 'restored';
-    }
     const currentRemote = await vault.decryptRemote(remote.envelope);
     if ((currentRemote?.schema ?? 0) > schemaVersion) throw new UpdateRequiredError();
     const restored = vault.reconcileRestoredBackup(currentRemote);
