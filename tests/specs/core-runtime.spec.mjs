@@ -94,3 +94,64 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   const after=await page.evaluate(()=>localStorage.getItem('cpt.data'));
   expect(after).toBe(result.legacyData);
 });
+
+test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',async({browser})=>{
+  let remoteText=null,remoteSha=0;
+  const attachGitHub=async page=>page.route('https://api.github.com/**',async route=>{
+    const request=route.request(),url=new URL(request.url());
+    if(request.method()==='OPTIONS')return route.fulfill({status:204,headers:{
+      'access-control-allow-origin':'*',
+      'access-control-allow-methods':'GET, PUT, OPTIONS',
+      'access-control-allow-headers':'authorization,accept,x-github-api-version,content-type',
+    }});
+    if(request.method()==='GET'&&url.pathname==='/repos/Gertjun/SyncData'){
+      return route.fulfill({json:{private:true,default_branch:'main'}});
+    }
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      if(!remoteText)return route.fulfill({status:404,json:{message:'Not Found'}});
+      return route.fulfill({json:{sha:'remote-'+remoteSha,encoding:'base64',content:Buffer.from(remoteText).toString('base64')}});
+    }
+    if(request.method()==='PUT'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      const body=JSON.parse(request.postData());
+      remoteText=Buffer.from(body.content,'base64').toString();
+      remoteSha++;
+      return route.fulfill({status:201,json:{content:{sha:'remote-'+remoteSha}}});
+    }
+    return route.fulfill({status:404,json:{message:'Not Found'}});
+  });
+  const contextA=await browser.newContext({viewport:{width:1280,height:800}});
+  const pageA=await contextA.newPage();
+  await pageA.addInitScript(()=>{
+    localStorage.setItem('cpt.data',JSON.stringify({v:1,updated:1,deleted:[],txs:[{id:'shared-tx',type:'buy',coinId:'bitcoin',qty:1,price:25000,fee:0,date:'2025-01-01',mod:1}]}));
+    localStorage.setItem('cpt.settings',JSON.stringify({gh:{repo:'Gertjun/SyncData',token:'test-token',path:'crypto-portfolio.enc.json',branch:'main',pass:'old-password'}}));
+  });
+  await pageA.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
+  await attachGitHub(pageA);
+  await pageA.goto('/index.html');
+  await pageA.locator('#core-password').fill('shared core password 123');
+  await pageA.locator('#core-password-confirm').fill('shared core password 123');
+  await pageA.locator('[data-core-action=migrate]').click();
+  await pageA.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await pageA.waitForFunction(()=>window.PWACoreV1?.vault?.getSyncMeta?.().sha==='remote-1');
+  const contextB=await browser.newContext({viewport:{width:1280,height:800}});
+  const pageB=await contextB.newPage();
+  await pageB.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
+  await attachGitHub(pageB);
+  await pageB.goto('/index.html');
+  await pageB.locator('#core-owner').fill('Gertjun');
+  await pageB.locator('#core-repo').fill('SyncData');
+  await pageB.locator('#core-token').fill('test-token');
+  await pageB.locator('#core-branch').fill('main');
+  await pageB.locator('#core-password').fill('shared core password 123');
+  await pageB.locator('[data-core-action=import]').click();
+  await pageB.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  const result=await pageB.evaluate(async()=>{
+    const vault=await import('/js/core/vault.js');
+    return {txs:vault.getData().txs,device:await vault.getDeviceSettings()};
+  });
+  expect(result.txs.map(tx=>tx.id)).toContain('shared-tx');
+  expect(result.device.github.path).toBe('crypto-portfolio.pwa-core-v1.json');
+  expect(result.device.github.token).toBe('test-token');
+  await contextA.close();
+  await contextB.close();
+});
