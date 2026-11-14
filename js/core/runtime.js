@@ -223,7 +223,91 @@ async function unlockPasskey() {
 async function enrollExistingPasskey() {
   if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
   await adapter.enrollExistingPasskey(biometric);
-  window.CryptoPortfolioLegacy.toast('Passkey aan Core gekoppeld');
+  window.CryptoPortfolioLegacy.toast('Bestaande passkey aan Core gekoppeld');
+}
+
+async function enrollNewPasskey() {
+  if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
+  if (!(await biometric.isSupported())) throw new Error('Passkeys met PRF worden niet door deze browser of dit apparaat ondersteund.');
+  await biometric.enroll(vault.getDataKey());
+  window.CryptoPortfolioLegacy.toast('Nieuwe Core-passkey toegevoegd');
+}
+
+async function changePassword(current, next) {
+  if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
+  if (typeof next !== 'string' || next.length < 12) throw new Error('Kies een nieuw wachtwoord van minimaal 12 tekens.');
+  await vault.changePassword(current, next);
+  await vault.flush();
+  await syncNow(false);
+}
+
+async function githubApi(url) {
+  const settings = appGithubSettings();
+  if (!settings.owner || !settings.repo || !settings.token) throw new Error('Stel eerst Core-synchronisatie in.');
+  let response;
+  try {
+    response = await fetch(url, { headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${settings.token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+    }, cache: 'no-store' });
+  } catch {
+    throw new Error('Geen verbinding met GitHub.');
+  }
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new Error('GitHub-token ongeldig of onvoldoende bevoegd.');
+    if (response.status === 404) throw new Error('Core-versie niet gevonden. Controleer repository en branch.');
+    throw new Error(`GitHub gaf fout ${response.status}.`);
+  }
+  return response.json();
+}
+
+async function listVersions() {
+  if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
+  await syncNow(true); // Bewaar de huidige stand voordat de geschiedenis wordt getoond.
+  const settings = appGithubSettings();
+  const base = `https://api.github.com/repos/${encodeURIComponent(settings.owner)}/${encodeURIComponent(settings.repo)}`;
+  const query = new URLSearchParams({ path: settings.path, sha: settings.branch, per_page: '40' });
+  const commits = await githubApi(`${base}/commits?${query}`);
+  return commits.map(commit => ({
+    sha: commit.sha,
+    ts: Date.parse(commit.commit?.committer?.date || commit.commit?.author?.date),
+  })).filter(version => version.sha && Number.isFinite(version.ts));
+}
+
+async function readVersionEnvelope(sha) {
+  if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
+  if (!/^[a-f0-9]{7,40}$/i.test(sha)) throw new Error('Ongeldige versie-id.');
+  const settings = appGithubSettings();
+  const base = `https://api.github.com/repos/${encodeURIComponent(settings.owner)}/${encodeURIComponent(settings.repo)}`;
+  const path = settings.path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+  const file = await githubApi(`${base}/contents/${path}?ref=${encodeURIComponent(sha)}`);
+  let encoded = file.content;
+  if (file.encoding !== 'base64' || !encoded) {
+    const blob = await githubApi(`${base}/git/blobs/${file.sha}`);
+    encoded = blob.content;
+  }
+  if (!encoded) throw new Error('De Core-versie bevat geen leesbare kluisinhoud.');
+  const bytes = Uint8Array.from(atob(encoded.replace(/\\s/g, '')), char => char.charCodeAt(0));
+  const envelope = JSON.parse(new TextDecoder().decode(bytes));
+  vault.validateEnvelope(envelope);
+  return envelope;
+}
+
+async function previewVersion(sha) {
+  const envelope = await readVersionEnvelope(sha);
+  return vault.decryptRemote(envelope);
+}
+
+async function restoreVersion(sha, password) {
+  if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
+  const envelope = await readVersionEnvelope(sha);
+  const result = await vault.restoreBackup(envelope, password);
+  if (!result.sameKey) biometric.disable(); // Oude passkey kan een andere datasleutel niet meer ontgrendelen.
+  await vault.flush();
+  window.CryptoPortfolioLegacy.applyCoreData(vault.getData());
+  await syncNow(false);
+  return { sameKey: result.sameKey };
 }
 
 async function updateGitHub(config) {
@@ -334,6 +418,11 @@ const runtime = Object.freeze({
   syncNow,
   updateGitHub,
   enrollExistingPasskey,
+  enrollNewPasskey,
+  changePassword,
+  listVersions,
+  previewVersion,
+  restoreVersion,
   lock,
   isActive: () => active,
 });

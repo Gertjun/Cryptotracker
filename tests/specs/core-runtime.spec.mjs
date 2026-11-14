@@ -134,6 +134,45 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   expect(after).toBe(result.legacyData);
 });
 
+test('Core-instellingen tonen wachtwoordbeheer, nieuwe passkey en Core-versiegeschiedenis',async({page})=>{
+  let remoteText=null;
+  await page.addInitScript(()=>{
+    localStorage.setItem('cpt.data',JSON.stringify({v:1,updated:1,deleted:[],txs:[]}));
+    localStorage.setItem('cpt.settings',JSON.stringify({gh:{token:'test-token',repo:'Gertjun/SyncData',path:'crypto-portfolio.enc.json',branch:'main',pass:'legacy-password'}}));
+  });
+  await page.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
+  await page.route('https://api.alternative.me/**',route=>route.fulfill({json:{data:[]}}));
+  await page.route('https://api.github.com/**',async route=>{
+    const request=route.request(),url=new URL(request.url());
+    if(request.method()==='GET'&&url.pathname==='/repos/Gertjun/SyncData')return route.fulfill({json:{private:true,default_branch:'main'}});
+    if(request.method()==='GET'&&url.pathname.endsWith('/commits'))return route.fulfill({json:[{sha:'abcdef1234567890abcdef1234567890abcdef12',commit:{committer:{date:'2026-11-14T10:00:00Z'}}}]});
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      if(!remoteText)return route.fulfill({status:404,json:{message:'Not Found'}});
+      return route.fulfill({json:{sha:'synthetic-blob',encoding:'base64',content:Buffer.from(remoteText).toString('base64')}});
+    }
+    if(request.method()==='PUT'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      remoteText=Buffer.from(JSON.parse(request.postData()).content,'base64').toString();
+      return route.fulfill({status:201,json:{content:{sha:'synthetic-file-sha'}}});
+    }
+    return route.fulfill({status:200,json:{private:true,default_branch:'main'}});
+  });
+  await page.goto('/index.html');
+  await page.locator('#core-password').fill('correct horse battery staple');
+  await page.locator('#core-password-confirm').fill('correct horse battery staple');
+  await page.locator('[data-core-action=migrate]').click();
+  await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await page.locator('[data-act=settings]').first().click();
+  await expect(page.locator('[data-act=corepasskeynew]')).toBeVisible();
+  await expect(page.locator('[data-act=corechpw]')).toBeVisible();
+  await page.locator('[data-act=corechpw]').click();
+  await expect(page.locator('#core-current-password')).toBeVisible();
+  await page.locator('[data-act=closesheet]').click().catch(()=>{});
+  await page.locator('[data-act=versions]').click();
+  await expect(page.locator('#verOut')).toContainText('14 nov');
+  await page.locator('[data-act=verpick]').click();
+  await expect(page.locator('#core-ver-password')).toBeVisible();
+  await expect(page.locator('#verOut')).toContainText('Deze Core-versie terugzetten');
+});
 test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',async({browser})=>{
   let remoteText=null,remoteSha=0;
   const attachGitHub=async page=>page.route('https://api.github.com/**',async route=>{

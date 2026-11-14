@@ -2514,7 +2514,7 @@ function renderSettings(){
   <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
   </section>
   <section class="card" aria-labelledby="st_dev"><h2 class="h3" id="st_dev">Apparaten en versies</h2>
-  ${settings.gh.token&&settings.gh.repo&&settings.gh.pass?'<p class="mt-0 hint">Koppel een ander apparaat met een koppelcode, of zet je gegevens terug naar een eerdere versie.</p><button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<p class="mt-0 hint">Heb je de synchronisatie al op een ander apparaat ingesteld? Maak daar een koppelcode en vul die hier in.</p><button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
+  ${(coreMode?settings.gh.token&&settings.gh.repo:settings.gh.token&&settings.gh.repo&&settings.gh.pass)?'<p class="mt-0 hint">Koppel een ander apparaat met een koppelcode, of zet je gegevens terug naar een eerdere Core-versie.</p><button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<p class="mt-0 hint">Heb je de synchronisatie al op een ander apparaat ingesteld? Maak daar een koppelcode en vul die hier in.</p><button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
   </section>`)}
   ${pane('view',`<section class="card" aria-labelledby="st_view"><h2 class="h3" id="st_view">Thema</h2>
   <fieldset class="seg theme-seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch','linear-gradient(135deg,#f3f4f7 50%,#0b0d12 50%)'],...THEMES.map(([v,l,bg,ac])=>[v,l,`linear-gradient(135deg,${bg} 55%,${ac} 55%)`])].map(([v,l,sw])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}"><span class="theme-sw" style="background:${sw}" aria-hidden="true"></span>${l}</button>`).join('')}</fieldset>
@@ -2534,7 +2534,12 @@ function renderSettings(){
   </section>`)}
   ${pane('pf',pfSettingsHTML())}
   ${pane('sec',`<section class="card" aria-labelledby="st_sec"><h2 class="h3" id="st_sec">Beveiliging</h2>
-  ${lockCfg?`
+  ${coreMode?`<p class="mt-0 hint">De PWA-Core-kluis is altijd versleuteld. Beheer hier de toegang tot deze kluis op dit apparaat.</p>
+  ${pkSupported()?'<button type="button" class="btn sec" data-act="corepasskey">Bestaande passkey koppelen</button><button type="button" class="btn sec" data-act="corepasskeynew">Nieuwe passkey maken</button>':'<p class="hint">Passkeys met PRF worden niet door deze browser ondersteund.</p>'}
+  <p class="hint">Een bestaande passkey kan opnieuw worden gekoppeld na herinstallatie. Een nieuwe passkey maakt een aparte credential voor deze app.</p>
+  <button type="button" class="btn sec" data-act="corechpw">Core-wachtwoord wijzigen</button>
+  <button type="button" class="btn danger" data-act="corelock">Kluis nu vergrendelen</button>`
+  :lockCfg?`
   ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="note-sm label">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button type="button" data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="mt-0 hint">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
   ${pkSupported()?'<button type="button" class="btn sec" data-act="usepk">Bestaande passkey gebruiken</button><button type="button" class="btn sec" data-act="addpk">Nieuwe passkey maken</button><p class="hint">Heb je de app opnieuw geïnstalleerd? Kies dan Bestaande passkey: je passkey staat nog in je wachtwoordbeheer.</p>':'<p class="hint">Passkeys werken alleen als de app via https draait (GitHub Pages).</p>'}
   <div class="mt-12 field"><label for="s_auto">Automatisch vergrendelen na</label><select id="s_auto">${[[0,'Direct bij verlaten'],[1,'1 minuut'],[5,'5 minuten'],[15,'15 minuten'],[60,'1 uur'],[-1,'Nooit (alleen bij herstarten)']].map(([v,l])=>`<option value="${v}"${(lockCfg.autoLock??5)===v?' selected':''}>${l}</option>`).join('')}</select></div>
@@ -2719,7 +2724,12 @@ async function ghFileAt(ref){   // versleuteld bestand zoals het was in commit/b
   const rr=await fetchT(url,{headers:{...h,Accept:'application/vnd.github.raw'},cache:'no-store'});if(!rr.ok)throw new Error('GitHub gaf fout '+rr.status);return rr.text()}
 let verList=null,verPick=null;
 async function openVersions(){
-  if(coreMode)return toast('Versiegeschiedenis van het oude synchronisatiebestand is niet beschikbaar in Core.');
+  if(coreMode){
+    verList=null;verPick=null;openSheet(`<h2 class="h3">Core-versiegeschiedenis</h2><p class="mt-0 hint" id="verMsg">Versies ophalen…</p><div id="verOut"></div>`);
+    try{verList=await coreRuntime.listVersions();renderVersions()}
+    catch(e){if($('#verMsg'))$('#verMsg').textContent=e.message||'Versies ophalen mislukt'}
+    return;
+  }
   const g=settings.gh;if(!g.token||!g.repo||!g.pass)return toast('Zet eerst GitHub-synchronisatie aan');
   verList=null;verPick=null;openSheet(`<h2 class="h3">Eerdere versie terugzetten</h2><p class="mt-0 hint" id="verMsg">Versies ophalen…</p><div id="verOut"></div>`);
   try{if(!navigator.onLine)throw new Error('Geen internetverbinding');
@@ -2733,8 +2743,32 @@ function renderVersions(){
   const out=$('#verOut');if(!out||!verList)return;
   $('#verMsg').innerHTML=verList.length?`Elke synchronisatie bewaart een versie op GitHub. Kies er een om te bekijken. De bovenste is de huidige stand. <span class="label">(laatste ${verList.length})</span>`:'Nog geen eerdere versies gevonden.';
   out.innerHTML=`<ul class="list ver-list">${verList.map((v,i)=>`<li class="row"><button type="button" class="rowlink grow" data-act="verpick" data-sha="${esc(v.sha)}">${tm(v.ts,new Date(v.ts).toLocaleString('nl-NL',{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),true)}${i===0?' <span class="label">· huidige stand</span>':''}</button><span class="label" aria-hidden="true">›</span></li>`).join('')}</ul>`}
+async function pickCoreVersion(sha){
+  const v=verList?.find(x=>x.sha===sha);if(!v)return;
+  openSheet(`<h2 class="h3">Core-versie van ${new Date(v.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</h2><p class="mt-0 hint" id="verMsg">Versie ophalen en ontsleutelen…</p><div id="verOut"></div>`);
+  try{
+    const snap=await coreRuntime.previewVersion(sha);verPick={sha,ts:v.ts,snap};
+    const oldTx=(snap.txs||[]).filter(t=>!(snap.deleted||[]).includes(t.id));
+    const currentTx=(data.txs||[]).filter(t=>!(data.deleted||[]).includes(t.id));
+    const oldLast=oldTx.map(t=>t.date).sort().pop();
+    const newIds=new Set(currentTx.map(t=>t.id)),oldIds=new Set(oldTx.map(t=>t.id));
+    const added=currentTx.filter(t=>!oldIds.has(t.id)).length,gone=oldTx.filter(t=>!newIds.has(t.id)).length;
+    $('#verMsg').textContent='';
+    $('#verOut').innerHTML=`<div class="kv card-alt card">
+      <div><span class="label">Transacties in deze versie</span><b class="m">${oldTx.length}</b></div>
+      <div><span class="label">Nu</span><b class="m">${currentTx.length}</b></div>
+      <div><span class="label">Sindsdien toegevoegd</span><b class="m">${added}</b></div>
+      <div><span class="label">Sindsdien verwijderd</span><b class="m">${gone}</b></div>
+      <div><span class="label">Laatste transactie in deze versie</span><b>${oldLast?esc(fmtDate(oldLast)):'–'}</b></div></div>
+      <p class="hint">Terugzetten vervangt de Core-kluisinhoud door deze versie en synchroniseert de teruggezette stand naar GitHub. De Core-kluis bewaart de verwijdergeschiedenis waar mogelijk. Vul het wachtwoord in waarmee deze versie is versleuteld. Als de datasleutel afwijkt, moet je de passkey op dit apparaat opnieuw koppelen.</p>
+      <div class="field"><label for="core-ver-password">Wachtwoord van deze versie</label><input id="core-ver-password" type="password" autocomplete="current-password"></div>
+      <button type="button" class="btn danger" data-act="verrestore">Deze Core-versie terugzetten</button>
+      <button type="button" class="btn sec" data-act="versions">Terug naar de lijst</button>`;
+  }catch(e){$('#verMsg').textContent=e.message||'Versie ophalen mislukt'}
+}
 const verSummary=d=>{const tx=(d.txs||[]).filter(t=>!(d.deleted||[]).includes(t.id)),last=tx.map(t=>t.date).sort().pop();return {n:tx.length,last}};
 async function pickVersion(sha){
+  if(coreMode)return pickCoreVersion(sha);
   const v=verList?.find(x=>x.sha===sha);if(!v)return;
   openSheet(`<h2 class="h3">Versie van ${new Date(v.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</h2><p class="mt-0 hint" id="verMsg">Versie ophalen en ontsleutelen…</p><div id="verOut"></div>`);
   try{const snap=await decryptObj(JSON.parse(await ghFileAt(sha)),settings.gh.pass);verPick={sha,ts:v.ts,snap};
@@ -2922,8 +2956,23 @@ async function securityAction(act,el){
   try{
     if(coreMode){
       if(act==='corepasskey'){el.disabled=true;try{await coreRuntime.enrollExistingPasskey()}finally{el.disabled=false}return}
+      if(act==='corepasskeynew'){el.disabled=true;try{await coreRuntime.enrollNewPasskey()}finally{el.disabled=false}return}
+      if(act==='corechpw'){
+        openSheet(`<h2 class="h3">Core-wachtwoord wijzigen</h2><p class="hint">Het nieuwe wachtwoord wordt onderdeel van de versleutelde Core-kluis en moet op andere apparaten bij de volgende ontgrendeling worden gebruikt.</p>
+          <div class="field"><label for="core-current-password">Huidig Core-wachtwoord</label><input id="core-current-password" type="password" autocomplete="current-password"></div>
+          <div class="field"><label for="core-new-password">Nieuw Core-wachtwoord (minimaal 12 tekens)</label><input id="core-new-password" type="password" autocomplete="new-password"></div>
+          <div class="field"><label for="core-confirm-password">Herhaal nieuw Core-wachtwoord</label><input id="core-confirm-password" type="password" autocomplete="new-password"></div>
+          <button type="button" class="btn" data-act="corechpw-save">Wachtwoord wijzigen en synchroniseren</button>`);
+        return;
+      }
+      if(act==='corechpw-save'){
+        const current=$('#core-current-password')?.value||'',next=$('#core-new-password')?.value||'',confirmPw=$('#core-confirm-password')?.value||'';
+        if(next.length<12)return toast('Kies een wachtwoord van minimaal 12 tekens.');
+        if(next!==confirmPw)return toast('De nieuwe wachtwoorden zijn niet gelijk.');
+        el.disabled=true;try{await coreRuntime.changePassword(current,next);closeSheet();toast('Core-wachtwoord gewijzigd en gesynchroniseerd')}finally{el.disabled=false}return;
+      }
       if(act==='corelock'){await coreRuntime.lock();return}
-      if(['lockon','lockon2','addpk','usepk','rmpk','chpw','chpw2','lockoff'].includes(act))return toast('De Core-kluis is standaard versleuteld. Gebruik de Core-beveiligingsinstellingen.');
+      if(['lockon','lockon2','addpk','usepk','rmpk','chpw','chpw2','lockoff'].includes(act))return toast('Gebruik de Core-beveiligingsinstellingen.');
     }
     if(act==='lockon')return pwSheet('App-vergrendeling instellen','Kies eerst een <b>herstelwachtwoord</b>. Daarmee open je de app als de passkey niet beschikbaar is. Raak je dit kwijt én werkt de passkey niet meer, dan is de data op dit apparaat niet meer te openen (wel via GitHub-sync of een back-up).','lockon2');
     if(act==='lockon2'){const pw=readPw();if(!pw)return;el.disabled=true;await enableLock(pw);render();
@@ -2991,7 +3040,15 @@ document.addEventListener('click',e=>{
     case 'savegoal':saveGoal(a.dataset.id);break;
     case 'versions':openVersions();break;
     case 'verpick':pickVersion(a.dataset.sha);break;
-    case 'verrestore':if(verPick&&confirm('Je gegevens terugzetten naar de versie van '+new Date(verPick.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'?')){restoreSnapshot(verPick.snap);saveData();closeSheet();render();refreshPrices();toast('Versie teruggezet')}break;
+    case 'verrestore':
+      if(coreMode&&verPick){
+        const password=$('#core-ver-password')?.value||'';
+        if(!password){toast('Vul het wachtwoord van deze versie in.');break}
+        if(confirm('De Core-kluis terugzetten naar de versie van '+new Date(verPick.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'?')){
+          a.disabled=true;coreRuntime.restoreVersion(verPick.sha,password).then(()=>{closeSheet();render();refreshPrices();toast('Core-versie teruggezet en gesynchroniseerd')}).catch(err=>toast(err.message||'Terugzetten mislukt')).finally(()=>{a.disabled=false});
+        }
+      }else if(verPick&&confirm('Je gegevens terugzetten naar de versie van '+new Date(verPick.ts).toLocaleString('nl-NL',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+'?')){restoreSnapshot(verPick.snap);saveData();closeSheet();render();refreshPrices();toast('Versie teruggezet')}
+      break;
     case 'simsell':if(simSell)openTx({coinId:simSell.coinId,type:'sell',total:simSell.total,price:simSell.price,fee:simSell.fee});break;
     case 'avgbuy':if(avgBuy)openTx({coinId:avgBuy.coinId,type:'buy',total:avgBuy.total,price:avgBuy.price,fee:avgBuy.fee});break;
     case 'addplan':openPlan();break;
@@ -3035,7 +3092,7 @@ document.addEventListener('click',e=>{
       refreshPrices()})();break;
     case 'add':$('#btnAdd').click();break;
     case 'unlockpk':tryPasskey(false);break;
-    case 'corepasskey':case 'corelock':case 'lockon':case 'lockon2':case 'addpk':case 'usepk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
+    case 'corepasskey':case 'corepasskeynew':case 'corechpw':case 'corechpw-save':case 'corelock':case 'lockon':case 'lockon2':case 'addpk':case 'usepk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
     case 'settings':openSettings();break;
     case 'setback':location.hash=setFrom&&setFrom!=='#instellingen'?setFrom:'';break;
