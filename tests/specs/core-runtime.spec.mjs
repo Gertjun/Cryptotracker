@@ -138,6 +138,8 @@ test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',as
   await pageB.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
   await attachGitHub(pageB);
   await pageB.goto('/index.html');
+  // GitHub-velden staan bewust achter de inklapbare instellingen.
+  await pageB.locator('#core-gate details summary').click();
   await pageB.locator('#core-owner').fill('Gertjun');
   await pageB.locator('#core-repo').fill('SyncData');
   await pageB.locator('#core-token').fill('test-token');
