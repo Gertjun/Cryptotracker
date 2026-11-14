@@ -27,6 +27,14 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
       rootLedger:Object.hasOwn(split.payload,'__pwaSync'),
       nestedLedger:Object.hasOwn(split.payload.data,'__pwaSync'),
       applied:applyDeletionLedger(structuredClone(split.payload)),
+      retained:applyDeletionLedger({
+        ...structuredClone(split.payload),
+        __pwaSync:{
+          ...structuredClone(split.payload.__pwaSync),
+          devices:{deviceA:{createdAt:1,lastSeenAt:1,acknowledged:{}}},
+        },
+      }),
+      convertedDeletedFlag:converted.txs.find(x=>x.id==='tx-del').deleted===true,
       settings:split.payload.settings,
       deviceSettings:split.deviceSettings,
       payload:split.payload,
@@ -41,6 +49,9 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.nestedLedger).toBe(false);
   expect(result.applied.data.txs).toEqual([{id:'tx-live',type:'buy',qty:1}]);
   expect(result.applied.data.watch).toEqual([]);
+  expect(result.convertedDeletedFlag).toBe(true);
+  expect(result.retained.data.txs.find(x=>x.id==='tx-del').deleted).toBe(true);
+  expect(result.retained.data.watch.find(x=>x.id==='watch-del').deleted).toBe(true);
   expect(result.settings).toEqual({theme:'dark'});
   expect(result.deviceSettings.github.token).toBe('secret-token');
   expect(result.deviceSettings.github.path).toBe('crypto-portfolio.pwa-core-v1.json');
