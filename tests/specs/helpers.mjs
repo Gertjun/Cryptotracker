@@ -12,7 +12,7 @@ export async function openApp(page,{theme='dark',fngFail=false}={}){
   page.on('pageerror',e=>errors.push('JS: '+e.message));
   page.on('console',m=>{const t=m.text();if(m.type()==='error'&&!/Failed to load resource|ERR_|status of 404/.test(t))errors.push('console: '+t)});
   await page.addInitScript(()=>document.addEventListener('securitypolicyviolation',e=>console.error('CSP-blokkade: '+e.violatedDirective+' '+e.blockedURI)));
-  await page.addInitScript(()=>{globalThis.__cgFast=true});   // nep-CoinGecko: geen wachttijd tussen verzoeken nodig
+  await page.addInitScript(()=>{globalThis.__cgFast=true;globalThis.__CPT_TEST_LEGACY__=true});   // nep-CoinGecko: geen wachttijd tussen verzoeken nodig
   await page.clock.setFixedTime(NOW);
   await routeCG(page,null,NOW);
   await routeFng(page,NOW,{fail:fngFail});
