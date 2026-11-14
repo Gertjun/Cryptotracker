@@ -140,8 +140,8 @@ async function activate() {
   await installAppSettings(await vault.getDeviceSettings());
   active = true;
   const g = appGithubSettings();
-  window.CryptoPortfolioLegacy.activateCore(vault.getData(), deviceSettings);
   window.CryptoPortfolioLegacy.setRuntime(runtime);
+  window.CryptoPortfolioLegacy.activateCore(vault.getData(), deviceSettings);
   if (g.owner && g.repo && g.token) {
     void syncNow(true);
   }
