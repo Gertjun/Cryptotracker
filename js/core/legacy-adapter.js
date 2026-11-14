@@ -82,10 +82,12 @@ export function splitLegacySnapshot(snapshot) {
   const convertedData = convertLegacyDeletions(snapshot.data);
   const syncState = convertedData[SYSTEM_KEY] || emptySyncState();
   delete convertedData[SYSTEM_KEY];
+  const repoParts = typeof gh.repo === 'string' ? gh.repo.trim().split('/') : [];
   const deviceSettings = {
     github: {
+      owner: repoParts.length === 2 ? repoParts[0] : '',
+      repo: repoParts.length === 2 ? repoParts[1] : '',
       token: typeof gh.token === 'string' ? gh.token : '',
-      repo: typeof gh.repo === 'string' ? gh.repo : '',
       path: 'crypto-portfolio.pwa-core-v1.json',
       branch: typeof gh.branch === 'string' && gh.branch ? gh.branch : 'main',
     },
