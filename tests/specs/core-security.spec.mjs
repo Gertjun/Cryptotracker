@@ -53,7 +53,9 @@ test('Core-wachtwoord wijzigen, passkey aanmaken en bestaande passkey opnieuw ko
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   await page.waitForFunction(()=>window.PWACoreV1?.vault?.getSyncMeta?.().sha==='security-core-sha-1');
 
-  await page.evaluate(()=>{location.hash='#instellingen';showSetSec('sec')});
+  await page.evaluate(()=>{location.hash='#instellingen'});
+  await expect(page.locator('#setView')).toBeVisible();
+  await page.evaluate(()=>showSetSec('sec'));
   await page.locator('[data-act=corepasskeynew]').click();
   await expect.poll(()=>page.evaluate(()=>localStorage.getItem('cpt:biometric'))).not.toBeNull();
 
@@ -69,7 +71,9 @@ test('Core-wachtwoord wijzigen, passkey aanmaken en bestaande passkey opnieuw ko
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
 
   // Wachtwoord wijzigen via de echte instellingen-UI.
-  await page.evaluate(()=>{location.hash='#instellingen';showSetSec('sec')});
+  await page.evaluate(()=>{location.hash='#instellingen'});
+  await expect(page.locator('#setView')).toBeVisible();
+  await page.evaluate(()=>showSetSec('sec'));
   await page.locator('[data-act=corechpw]').click();
   await page.locator('#core-current-password').fill(CURRENT_PASSWORD);
   await page.locator('#core-new-password').fill(NEW_PASSWORD);
