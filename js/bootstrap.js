@@ -1,5 +1,5 @@
-// Tijdelijke module-bootstrap voor de gecontroleerde Core-integratie.
-// De bestaande app blijft voorlopig een klassiek script; PR C koppelt de adapter.
+// Laad de vastgepinde PWA-Core-modules naast de bestaande klassieke app.
+// app.js blijft een klassiek script zodat bestaande globals en regressietests intact blijven.
 const coreModules = [
   './config.js',
   './core/biometric.js',
@@ -15,14 +15,6 @@ const coreModules = [
   './core/vault.js',
   './core/legacy-adapter.js',
 ];
-
-async function startLegacyApp() {
-  const script = document.createElement('script');
-  script.src = './app.js';
-  script.async = false;
-  script.onerror = () => console.error('Crypto Portfolio kon app.js niet laden.');
-  document.body.append(script);
-}
 
 try {
   const modules = await Promise.all(coreModules.map((path) => import(path)));
@@ -41,9 +33,8 @@ try {
     vault: modules[11],
     legacyAdapter: modules[12],
   });
+  window.dispatchEvent(new CustomEvent('pwa-core-ready', { detail: window.PWACoreV1 }));
 } catch (error) {
-  // Core wordt pas in de volgende migratiefase aan de app gekoppeld.
-  // Een bootstrapfout mag de bestaande, nog actieve app niet blokkeren.
-  console.error('PWA-Core kon nog niet worden geladen; legacy-app blijft actief.', error);
+  // De legacy-app blijft bruikbaar; Core-integratie wordt pas actief na succesvolle import.
+  console.error('PWA-Core kon niet worden geladen; legacy-opslag blijft actief.', error);
 }
-await startLegacyApp();
