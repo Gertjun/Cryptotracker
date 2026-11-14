@@ -4,6 +4,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   await page.goto('/');
   const result=await page.evaluate(async()=>{
     const {convertLegacyDeletions,splitLegacySnapshot}=await import('/js/core/legacy-adapter.js');
+    const {applyDeletionLedger}=await import('/js/core/deletions.js');
     const source={
       v:1,updated:1700000000000,deleted:['tx-old'],
       txs:[{id:'tx-live',type:'buy',qty:1},{id:'tx-del',del:true,mod:1700000000123}],
@@ -20,9 +21,12 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
     return {
       sourceUnchanged:!source.__pwaSync && source.deleted[0]==='tx-old',
       unknownPreserved:converted.futureField.keep.join(',')==='a,1',
-      txDeletion:converted.__pwaSync.deletions['txs:tx-old'],
-      legacyDel:converted.__pwaSync.deletions['txs:tx-del'],
-      watchDel:converted.__pwaSync.deletions['watch:watch-del'],
+      txDeletion:converted.__pwaSync.deletions['data/txs:tx-old'],
+      legacyDel:converted.__pwaSync.deletions['data/txs:tx-del'],
+      watchDel:converted.__pwaSync.deletions['data/watch:watch-del'],
+      rootLedger:Object.hasOwn(split.payload,'__pwaSync'),
+      nestedLedger:Object.hasOwn(split.payload.data,'__pwaSync'),
+      applied:applyDeletionLedger(structuredClone(split.payload)),
       settings:split.payload.settings,
       deviceSettings:split.deviceSettings,
       payload:split.payload,
@@ -33,6 +37,10 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.txDeletion).toBe(1700000000000);
   expect(result.legacyDel).toBe(1700000000123);
   expect(result.watchDel).toBe(1700000000456);
+  expect(result.rootLedger).toBe(true);
+  expect(result.nestedLedger).toBe(false);
+  expect(result.applied.data.txs).toEqual([{id:'tx-live',type:'buy',qty:1}]);
+  expect(result.applied.data.watch).toEqual([]);
   expect(result.settings).toEqual({theme:'dark'});
   expect(result.deviceSettings.github.token).toBe('secret-token');
   expect(result.deviceSettings.github).not.toHaveProperty('pass');
@@ -87,4 +95,23 @@ test('sessielock weigert ontbrekende Web Locks en bezette sessie',async({page})=
   expect(result.missing).toContain('blijft gesloten');
   expect(result.busy).toContain('al actief');
   expect(result.ok).toBe(42);
+});
+
+
+test('legacy-adapter koppelt bestaande passkey aan de Core-datasleutel via de Core-API',async({page})=>{
+  await page.goto('/');
+  const result=await page.evaluate(async()=>{
+    const {createLegacyStorageAdapter}=await import('/js/core/legacy-adapter.js');
+    const coreDataKey={marker:'core-data-key'};
+    const fakeVault={
+      async setData(){}, async flush(){}, getData(){return{}},
+      getDataKey(){return coreDataKey},
+    };
+    const adapter=createLegacyStorageAdapter(fakeVault);
+    let received=null;
+    const biometric={async enrollExisting(key){received=key;return 'enrolled'}};
+    const outcome=await adapter.enrollExistingPasskey(biometric);
+    return {sameKey:received===coreDataKey,outcome};
+  });
+  expect(result).toEqual({sameKey:true,outcome:'enrolled'});
 });
