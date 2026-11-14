@@ -43,6 +43,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.applied.data.watch).toEqual([]);
   expect(result.settings).toEqual({theme:'dark'});
   expect(result.deviceSettings.github.token).toBe('secret-token');
+  expect(result.deviceSettings.github.path).toBe('crypto-portfolio.pwa-core-v1.json');
   expect(result.deviceSettings.github).not.toHaveProperty('pass');
   expect(JSON.stringify(result.payload)).not.toContain('secret-token');
   expect(JSON.stringify(result.payload)).not.toContain('legacy-secret');
