@@ -23,7 +23,7 @@ function collectLegacyTombstones(value, path = [], found = {}, fallback = 0) {
   }
   if (!value || typeof value !== 'object') return found;
   if (typeof value.id === 'string' && value.id && value.del === true) {
-    const key = `${path.join('/') }:${value.id}`;
+    const key = `data/${path.join('/')}:${value.id}`;
     found[key] = Math.max(found[key] || 0, timestampOf(value, fallback));
   }
   for (const [key, child] of Object.entries(value)) {
@@ -43,7 +43,7 @@ export function convertLegacyDeletions(legacyData) {
 
   for (const id of Array.isArray(data.deleted) ? data.deleted : []) {
     if (typeof id !== 'string' || !id) continue;
-    const key = `txs:${id}`;
+    const key = `data/txs:${id}`;
     state.deletions[key] = Math.max(Number(state.deletions[key]) || 0, fallback);
   }
   for (const [key, time] of Object.entries(collectLegacyTombstones(data, [], {}, fallback))) {
@@ -64,6 +64,10 @@ export function splitLegacySnapshot(snapshot) {
   const settings = clone(snapshot.settings);
   const gh = settings.gh && typeof settings.gh === 'object' ? settings.gh : {};
   delete settings.gh;
+  delete settings.visit;
+  const convertedData = convertLegacyDeletions(snapshot.data);
+  const syncState = convertedData[SYSTEM_KEY] || emptySyncState();
+  delete convertedData[SYSTEM_KEY];
   const deviceSettings = {
     github: {
       token: typeof gh.token === 'string' ? gh.token : '',
@@ -75,10 +79,11 @@ export function splitLegacySnapshot(snapshot) {
   return {
     payload: {
       schema: 1,
-      data: convertLegacyDeletions(snapshot.data),
+      data: convertedData,
       settings,
       prices: clone(snapshot.prices),
       visit: snapshot.visit ?? null,
+      [SYSTEM_KEY]: syncState,
     },
     deviceSettings,
   };
@@ -133,6 +138,18 @@ export function createLegacyStorageAdapter(vault) {
     async flush() {
       await writes;
       await vault.flush();
+    },
+
+    /**
+     * Koppelt een bestaande WebAuthn-passkey opnieuw aan de Core-datasleutel.
+     * De credential kan dezelfde blijven; Core gebruikt zijn eigen PRF/HKDF-afleiding.
+     */
+    async enrollExistingPasskey(biometric) {
+      if (!biometric || typeof biometric.enrollExisting !== 'function') {
+        throw new TypeError('De PWA-Core-biometrie-API ontbreekt.');
+      }
+      await this.flush();
+      return biometric.enrollExisting(vault.getDataKey());
     },
 
     async lock() {
