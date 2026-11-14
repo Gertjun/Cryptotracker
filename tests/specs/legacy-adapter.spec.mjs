@@ -21,11 +21,12 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
     return {
       sourceUnchanged:!source.__pwaSync && source.deleted[0]==='tx-old',
       unknownPreserved:converted.futureField.keep.join(',')==='a,1',
-      txDeletion:converted.__pwaSync.deletions['data/txs:tx-old'],
-      legacyDel:converted.__pwaSync.deletions['data/txs:tx-del'],
-      watchDel:converted.__pwaSync.deletions['data/watch:watch-del'],
+      txDeletion:converted.__pwaSync.deletions['txs:tx-old'],
+      legacyDel:converted.__pwaSync.deletions['txs:tx-del'],
+      watchDel:converted.__pwaSync.deletions['watch:watch-del'],
       rootLedger:Object.hasOwn(split.payload,'__pwaSync'),
-      nestedLedger:Object.hasOwn(split.payload.data,'__pwaSync'),
+      rootData:split.payload.txs,
+      nestedData:Object.hasOwn(split.payload,'data'),
       applied:applyDeletionLedger(structuredClone(split.payload)),
       retained:applyDeletionLedger({
         ...structuredClone(split.payload),
@@ -35,7 +36,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
         },
       }),
       convertedDeletedFlag:converted.txs.find(x=>x.id==='tx-del').deleted===true,
-      settings:split.payload.settings,
+      settings:split.deviceSettings.app.settings,
       deviceSettings:split.deviceSettings,
       payload:split.payload,
     };
@@ -46,13 +47,18 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.legacyDel).toBe(1700000000123);
   expect(result.watchDel).toBe(1700000000456);
   expect(result.rootLedger).toBe(true);
-  expect(result.nestedLedger).toBe(false);
-  expect(result.applied.data.txs).toEqual([{id:'tx-live',type:'buy',qty:1}]);
-  expect(result.applied.data.watch).toEqual([]);
+  expect(result.nestedData).toBe(false);
+  expect(result.rootData).toEqual(source.txs);
+  expect(result.applied.txs).toEqual([{id:'tx-live',type:'buy',qty:1}]);
+  expect(result.applied.watch).toEqual([]);
   expect(result.convertedDeletedFlag).toBe(true);
-  expect(result.retained.data.txs.find(x=>x.id==='tx-del').deleted).toBe(true);
-  expect(result.retained.data.watch.find(x=>x.id==='watch-del').deleted).toBe(true);
+  expect(result.retained.txs.find(x=>x.id==='tx-del').deleted).toBe(true);
+  expect(result.retained.watch.find(x=>x.id==='watch-del').deleted).toBe(true);
   expect(result.settings).toEqual({theme:'dark'});
+  expect(result.deviceSettings.app.prices.bitcoin.price).toBe(123);
+  expect(result.deviceSettings.app.visit).toEqual({last:'overview'});
+  expect(result.payload.schema).toBe(1);
+  expect(result.payload.v).toBe(1);
   expect(result.deviceSettings.github.token).toBe('secret-token');
   expect(result.deviceSettings.github.owner).toBe('Gertjun');
   expect(result.deviceSettings.github.repo).toBe('SyncData');
