@@ -54,7 +54,7 @@ async function openMigratedCore(page,{raceAfterHistoryRead=false}={}){
   await page.goto('/index.html');
   historicalEnvelope=await page.evaluate(async({password})=>{
     const c=await import('/js/core/crypto.js');
-    const {APP}=await import('/js/core/config.js');
+    const {APP}=await import('/js/config.js');
     const kdf={name:'PBKDF2-SHA256',iterations:APP.kdfIterations,salt:c.bytesToB64(c.randomBytes(16))};
     const kek=await c.passwordKey(password,c.b64ToBytes(kdf.salt),kdf.iterations);
     const key=await c.generateDataKey();
