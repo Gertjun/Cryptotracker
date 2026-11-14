@@ -1,0 +1,19 @@
+name: PWA-Core validation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-core-pin:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify pinned Core release and file checksums
+        run: node tools/pin.mjs verify
+      - name: Verify Core files are in the static service-worker precache
+        run: node tools/precache.mjs --manifest core-manifest.json --service-worker sw.js
