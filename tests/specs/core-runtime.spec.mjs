@@ -163,13 +163,14 @@ test('Core-instellingen tonen wachtwoordbeheer, nieuwe passkey en Core-versieges
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   await page.evaluate(()=>{location.hash='#instellingen'});
   await expect(page.locator('#setView')).toBeVisible();
-  await page.locator('[data-setsec=sec]').click();
+  // Op telefoonformaat is de onderdelenlijst bewust verborgen; selecteer hetzelfde paneel via de appfunctie.
+  await page.evaluate(()=>showSetSec('sec'));
   await expect(page.locator('[data-act=corepasskeynew]')).toBeVisible();
   await expect(page.locator('[data-act=corechpw]')).toBeVisible();
   await page.locator('[data-act=corechpw]').click();
   await expect(page.locator('#core-current-password')).toBeVisible();
   await page.locator('[data-act=closesheet]').first().click();
-  await page.locator('[data-setsec=sync]').click();
+  await page.evaluate(()=>showSetSec('sync'));
   await page.locator('[data-act=versions]').click();
   await expect(page.locator('#verOut')).toContainText('14 nov');
   await page.locator('[data-act=verpick]').click();
