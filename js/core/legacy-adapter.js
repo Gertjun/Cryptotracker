@@ -23,7 +23,7 @@ function collectLegacyTombstones(value, path = [], found = {}, fallback = 0) {
   }
   if (!value || typeof value !== 'object') return found;
   if (typeof value.id === 'string' && value.id && value.del === true) {
-    const key = `data/${path.join('/')}:${value.id}`;
+    const key = `${path.join('/')}:${value.id}`;
     found[key] = Math.max(found[key] || 0, timestampOf(value, fallback));
   }
   for (const [key, child] of Object.entries(value)) {
@@ -56,7 +56,7 @@ export function convertLegacyDeletions(legacyData) {
 
   for (const id of Array.isArray(data.deleted) ? data.deleted : []) {
     if (typeof id !== 'string' || !id) continue;
-    const key = `data/txs:${id}`;
+    const key = `txs:${id}`;
     state.deletions[key] = Math.max(Number(state.deletions[key]) || 0, fallback);
   }
   for (const [key, time] of Object.entries(collectLegacyTombstones(data, [], {}, fallback))) {
@@ -91,14 +91,16 @@ export function splitLegacySnapshot(snapshot) {
       path: 'crypto-portfolio.pwa-core-v1.json',
       branch: typeof gh.branch === 'string' && gh.branch ? gh.branch : 'main',
     },
-  };
-  return {
-    payload: {
-      schema: 1,
-      data: convertedData,
+    app: {
       settings,
       prices: clone(snapshot.prices),
       visit: snapshot.visit ?? null,
+    },
+  };
+  return {
+    payload: {
+      ...convertedData,
+      schema: 1,
       [SYSTEM_KEY]: syncState,
     },
     deviceSettings,
@@ -149,6 +151,11 @@ export function createLegacyStorageAdapter(vault) {
 
     load() {
       return clone(vault.getData());
+    },
+
+    async loadDeviceSettings() {
+      if (typeof vault.getDeviceSettings !== 'function') return null;
+      return clone(await vault.getDeviceSettings());
     },
 
     async flush() {
