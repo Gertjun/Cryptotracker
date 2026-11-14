@@ -2586,9 +2586,8 @@ function renderSettings(){
   if(coreMode){
     const path=$('#s_path');if(path){path.value='crypto-portfolio.pwa-core-v1.json';path.readOnly=true;path.closest('.field').hidden=true}
     const oldPass=$('#s_pass');if(oldPass)oldPass.closest('.field').hidden=true;
-    const deviceCard=$('#st_dev')?.closest('.card');if(deviceCard)deviceCard.hidden=true;
-    const sec=$('#st_sec')?.closest('.card');
-    if(sec){sec.innerHTML='<h2 class="h3" id="st_sec">Beveiliging</h2><p class="mt-0 hint">PWA-Core versleutelt de gegevens standaard. Gebruik hetzelfde Core-wachtwoord op elk apparaat. Je oude app-vergrendeling blijft lokaal bewaard voor terugval.</p><p class="hint">Een bestaande Crypto Portfolio-passkey kan opnieuw aan de Core-datasleutel worden gekoppeld.</p><button type="button" class="btn sec" data-act="corepasskey">Bestaande passkey aan Core koppelen</button><button type="button" class="btn sec" data-act="corelock">Nu vergrendelen</button>'}
+    // De Core-specifieke beveiligings- en versiebediening staat al in de pane-rendering hierboven.
+    // Laat die inhoud intact: een tweede innerHTML-render zou wachtwoordbeheer en nieuwe passkeys verwijderen.
   }
 }
 function syncInfoHTML(){if(coreMode)return `<p class="hint" id="setSync">Core-bestand: <b>crypto-portfolio.pwa-core-v1.json</b>. Je GitHub-token en apparaatinstellingen staan versleuteld in de lokale Core-kluis. Het oude synchronisatiebestand blijft apart en wordt niet gewijzigd.${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>`;return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
