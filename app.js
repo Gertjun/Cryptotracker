@@ -2577,6 +2577,13 @@ function renderSettings(){
   for(const k of ['themeD','themeL']){const el=$('#s_'+k);if(el)el.onchange=()=>{settings[k]=el.value;saveSettings();applyTheme()}}
   const sf=$('#s_fng');if(sf)sf.onchange=()=>{settings.fng=sf.checked;saveSettings();if(sf.checked)refreshFng()};
   const sa=$('#s_auto');if(sa)sa.onchange=()=>{lockCfg.autoLock=+sa.value;saveLock()};
+  if(coreMode){
+    const path=$('#s_path');if(path){path.value='crypto-portfolio.pwa-core-v1.json';path.readOnly=true;path.closest('.field').hidden=true}
+    const oldPass=$('#s_pass');if(oldPass)oldPass.closest('.field').hidden=true;
+    const deviceCard=$('#st_dev')?.closest('.card');if(deviceCard)deviceCard.hidden=true;
+    const sec=$('#st_sec')?.closest('.card');
+    if(sec){sec.innerHTML='<h2 class="h3" id="st_sec">Beveiliging</h2><p class="mt-0 hint">PWA-Core versleutelt de gegevens standaard. Gebruik hetzelfde Core-wachtwoord op elk apparaat. Je oude app-vergrendeling blijft lokaal bewaard voor terugval.</p><p class="hint">Een bestaande Crypto Portfolio-passkey kan opnieuw aan de Core-datasleutel worden gekoppeld.</p><button type="button" class="btn sec" data-act="corepasskey">Bestaande passkey aan Core koppelen</button>'}
+  }
 }
 function syncInfoHTML(){return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
 // Instellingen is een eigen scherm (#instellingen). openSettings() opent of ververst het; formulieren zijn gewoon in beeld.
@@ -2912,6 +2919,10 @@ document.addEventListener('input',e=>{const m=e.target.dataset?.pwmeter;if(m&&$(
 function readPw(){const a=$('#p_1').value,b=$('#p_2').value;if(a.length<PW_MIN){fieldErr('p_1',`Kies minimaal ${PW_MIN} tekens, bijvoorbeeld een zin van een paar woorden`);return null}if(a!==b){fieldErr('p_2','Wachtwoorden zijn niet gelijk');return null}return a}
 async function securityAction(act,el){
   try{
+    if(coreMode){
+      if(act==='corepasskey'){el.disabled=true;try{await coreRuntime.enrollExistingPasskey()}finally{el.disabled=false}return}
+      if(['lockon','lockon2','addpk','usepk','rmpk','chpw','chpw2','lockoff'].includes(act))return toast('De Core-kluis is standaard versleuteld. Gebruik de Core-beveiligingsinstellingen.');
+    }
     if(act==='lockon')return pwSheet('App-vergrendeling instellen','Kies eerst een <b>herstelwachtwoord</b>. Daarmee open je de app als de passkey niet beschikbaar is. Raak je dit kwijt én werkt de passkey niet meer, dan is de data op dit apparaat niet meer te openen (wel via GitHub-sync of een back-up).','lockon2');
     if(act==='lockon2'){const pw=readPw();if(!pw)return;el.disabled=true;await enableLock(pw);render();
       toast('Vergrendeling aan');openSettings();if(pkSupported())pkSheet();return}
