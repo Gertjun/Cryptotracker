@@ -9,7 +9,7 @@ async function openMigratedCore(page,{raceAfterHistoryRead=false}={}){
   let remoteText=null;
   let remoteSha=null;
   let putBodies=[];
-  let racePending=false;
+
 
   await page.addInitScript(()=>{
     localStorage.setItem('cpt.data',JSON.stringify({
@@ -29,13 +29,12 @@ async function openMigratedCore(page,{raceAfterHistoryRead=false}={}){
     }
     if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
       if(url.searchParams.get('ref')===HISTORICAL_SHA){
-        racePending=raceAfterHistoryRead;
+        if(raceAfterHistoryRead)remoteSha='sha-raced-after-preview';
         return route.fulfill({json:{
           sha:'historical-blob',encoding:'base64',
           content:Buffer.from(JSON.stringify(historicalEnvelope)).toString('base64'),
         }});
       }
-      if(racePending){remoteSha='sha-raced-after-preview';racePending=false;}
       if(!remoteText)return route.fulfill({status:404,json:{message:'Not Found'}});
       return route.fulfill({json:{
         sha:remoteSha,encoding:'base64',content:Buffer.from(remoteText).toString('base64'),
@@ -44,6 +43,7 @@ async function openMigratedCore(page,{raceAfterHistoryRead=false}={}){
     if(request.method()==='PUT'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
       const body=JSON.parse(request.postData());
       putBodies.push(body);
+      if(body.sha&&body.sha!==remoteSha)return route.fulfill({status:409,json:{message:'Conflict'}});
       remoteText=Buffer.from(body.content,'base64').toString();
       remoteSha=putBodies.length===1?'sha-current-1':'sha-restored-2';
       return route.fulfill({status:201,json:{content:{sha:remoteSha}}});
@@ -114,9 +114,10 @@ test('historisch herstel overschrijft geen GitHub-versie die na de preview veran
   },{sha:HISTORICAL_SHA,password:HISTORICAL_PASSWORD});
 
   expect(outcome.ok).toBe(false);
-  expect(outcome.message).toContain('tegelijk op een ander apparaat gewijzigd');
+  expect(outcome.message).toContain('bestand is tegelijk op een ander apparaat gewijzigd');
   expect(remote.getRemoteSha()).toBe('sha-raced-after-preview');
-  expect(remote.getPuts()).toHaveLength(1);
+  expect(remote.getPuts()).toHaveLength(2);
+  expect(remote.getPuts()[1].sha).toBe('sha-current-1');
   const state=await page.evaluate(async()=>{
     const vault=await import('/js/core/vault.js');
     return vault.getData().txs.map(tx=>tx.id);
