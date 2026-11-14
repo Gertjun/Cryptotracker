@@ -72,7 +72,7 @@ export function splitLegacySnapshot(snapshot) {
     github: {
       token: typeof gh.token === 'string' ? gh.token : '',
       repo: typeof gh.repo === 'string' ? gh.repo : '',
-      path: typeof gh.path === 'string' && gh.path ? gh.path : 'crypto-portfolio.pwa-core-v1.json',
+      path: 'crypto-portfolio.pwa-core-v1.json',
       branch: typeof gh.branch === 'string' && gh.branch ? gh.branch : 'main',
     },
   };
