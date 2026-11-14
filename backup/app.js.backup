@@ -1,6 +1,6 @@
 'use strict';
 /* ---------- opslag ---------- */
-const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts';
+const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
 const APP_VERSION='4.0.2 (11 nov 2026)';
@@ -33,9 +33,15 @@ let syncState={s:'off',msg:''},cgState={s:'off',msg:''};
 let syncTimer=null;
 let lockCfg=(()=>{try{return JSON.parse(localStorage.getItem(LS_LOCK))}catch(e){return null}})();
 let DEK=null,dekRaw=null,locked=!!lockCfg,vaultQ=Promise.resolve();
+let coreMode=false,coreGateActive=true,coreRuntime=null;
 
 // Met vergrendeling aan staan transacties, koersen en GitHub-gegevens alleen versleuteld in de 'vault'.
 function persist(){
+  if(coreMode){
+    const snapshot={data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null};
+    coreRuntime?.save(snapshot).catch(e=>setSync('err',e.message||'Opslaan in Core mislukt'));
+    return;
+  }
   if(lockCfg){
     localStorage.setItem(LS_SET,JSON.stringify({...settings,visit:undefined,gh:{path:settings.gh.path,branch:settings.gh.branch,token:'',repo:'',pass:''}}));
     if(!DEK)return;
@@ -416,6 +422,7 @@ let chartSaveT=null;
 function saveCharts(){clearTimeout(chartSaveT);chartSaveT=setTimeout(()=>{
   const now=Date.now();let pruned=false;for(const k in chartCache)if(now-chartCache[k].ts>7*864e5){delete chartCache[k];pruned=true}if(pruned)invalidateEstPts();
   try{
+    if(coreMode){localStorage.setItem(LS_CORE_CHARTS,JSON.stringify(chartCache));return}
     if(lockCfg){if(!DEK)return;const k=DEK,snap=enc.encode(JSON.stringify(chartCache));
       vaultQ=vaultQ.then(()=>aesEnc(k,snap)).then(o=>localStorage.setItem(LS_VCHARTS,JSON.stringify(o))).catch(()=>{})}
     else localStorage.setItem(LS_CHARTS,JSON.stringify(chartCache));
@@ -2571,8 +2578,15 @@ function renderSettings(){
   for(const k of ['themeD','themeL']){const el=$('#s_'+k);if(el)el.onchange=()=>{settings[k]=el.value;saveSettings();applyTheme()}}
   const sf=$('#s_fng');if(sf)sf.onchange=()=>{settings.fng=sf.checked;saveSettings();if(sf.checked)refreshFng()};
   const sa=$('#s_auto');if(sa)sa.onchange=()=>{lockCfg.autoLock=+sa.value;saveLock()};
+  if(coreMode){
+    const path=$('#s_path');if(path){path.value='crypto-portfolio.pwa-core-v1.json';path.readOnly=true;path.closest('.field').hidden=true}
+    const oldPass=$('#s_pass');if(oldPass)oldPass.closest('.field').hidden=true;
+    const deviceCard=$('#st_dev')?.closest('.card');if(deviceCard)deviceCard.hidden=true;
+    const sec=$('#st_sec')?.closest('.card');
+    if(sec){sec.innerHTML='<h2 class="h3" id="st_sec">Beveiliging</h2><p class="mt-0 hint">PWA-Core versleutelt de gegevens standaard. Gebruik hetzelfde Core-wachtwoord op elk apparaat. Je oude app-vergrendeling blijft lokaal bewaard voor terugval.</p><p class="hint">Een bestaande Crypto Portfolio-passkey kan opnieuw aan de Core-datasleutel worden gekoppeld.</p><button type="button" class="btn sec" data-act="corepasskey">Bestaande passkey aan Core koppelen</button><button type="button" class="btn sec" data-act="corelock">Nu vergrendelen</button>'}
+  }
 }
-function syncInfoHTML(){return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
+function syncInfoHTML(){if(coreMode)return `<p class="hint" id="setSync">Core-bestand: <b>crypto-portfolio.pwa-core-v1.json</b>. Je GitHub-token en apparaatinstellingen staan versleuteld in de lokale Core-kluis. Het oude synchronisatiebestand blijft apart en wordt niet gewijzigd.${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>`;return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
 // Instellingen is een eigen scherm (#instellingen). openSettings() opent of ververst het; formulieren zijn gewoon in beeld.
 let setFrom='';
 function openSettings(){
@@ -2673,6 +2687,14 @@ const sig=d=>JSON.stringify([[...d.txs].sort((x,y)=>x.id<y.id?-1:1).map(t=>[t.id
 // Een kort versleutelwachtwoord mag alleen als er op GitHub al een bestand is (dan is het het bestaande wachtwoord).
 async function saveSyncForm(btn){
   const g={...settings.gh,repo:$('#s_repo').value.trim(),token:$('#s_token').value.trim(),path:$('#s_path').value.trim()||'crypto-portfolio.enc.json',branch:$('#s_branch').value.trim()||'main',pass:$('#s_pass').value};
+  if(coreMode){
+    const parts=g.repo.split('/').filter(Boolean);
+    if(parts.length!==2)return fieldErr('s_repo','Vul eigenaar/repository in, bijvoorbeeld Gertjun/SyncData.');
+    if(!g.token)return fieldErr('s_token','Vul een GitHub-token in.');
+    try{await coreRuntime.updateGitHub({owner:parts[0],repo:parts[1],token:g.token,branch:g.branch});settings.gh={...g,path:'crypto-portfolio.pwa-core-v1.json',pass:''};saveSettings();openSettings()}
+    catch(e){fieldErr('s_token',e.message||'Core-instellingen opslaan mislukt')}
+    return;
+  }
   if(g.pass&&g.pass!==settings.gh.pass&&g.pass.length<PW_MIN&&g.repo&&g.token){
     btn.disabled=true;let exists=null;
     try{const r=await fetchT(`https://api.github.com/repos/${g.repo}/contents/${g.path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(g.branch)}`,{headers:{Authorization:'Bearer '+g.token,Accept:'application/vnd.github.object'},cache:'no-store'});
@@ -2697,6 +2719,7 @@ async function ghFileAt(ref){   // versleuteld bestand zoals het was in commit/b
   const rr=await fetchT(url,{headers:{...h,Accept:'application/vnd.github.raw'},cache:'no-store'});if(!rr.ok)throw new Error('GitHub gaf fout '+rr.status);return rr.text()}
 let verList=null,verPick=null;
 async function openVersions(){
+  if(coreMode)return toast('Versiegeschiedenis van het oude synchronisatiebestand is niet beschikbaar in Core.');
   const g=settings.gh;if(!g.token||!g.repo||!g.pass)return toast('Zet eerst GitHub-synchronisatie aan');
   verList=null;verPick=null;openSheet(`<h2 class="h3">Eerdere versie terugzetten</h2><p class="mt-0 hint" id="verMsg">Versies ophalen…</p><div id="verOut"></div>`);
   try{if(!navigator.onLine)throw new Error('Geen internetverbinding');
@@ -2738,6 +2761,8 @@ function restoreSnapshot(snap){
   data={...data,txs,deleted:[...del],...lists,updated:now};
 }
 async function syncNow(silent){
+  if(coreGateActive&&!coreMode)return;
+  if(coreMode){if(!coreRuntime)return;try{return await coreRuntime.syncNow(silent)}catch(e){setSync('err',e.message||'Core-synchronisatie mislukt');return}}
   const g=settings.gh;if(locked||tooNew||!g.token||!g.repo||!g.pass)return;
   if(syncing){syncAgain=true;return}
   syncing=true;setSync('busy');
@@ -2801,7 +2826,7 @@ async function openVault(raw){
   settings.gh=Object.assign({token:'',repo:'',path:'crypto-portfolio.enc.json',branch:'main',pass:''},obj.gh);
   prices=obj.prices||{};if(obj.visit)settings.visit=obj.visit;
   try{const vc=JSON.parse(localStorage.getItem(LS_VCHARTS)||'null');chartCache=vc?JSON.parse(dec.decode(await aesDec(key,vc))):{}}catch(e){chartCache={}}
-  locked=false;start();
+  locked=false;start();window.dispatchEvent(new Event('cpt-legacy-unlocked'));
 }
 async function unlockPw(pw){
   const c=lockCfg.pw,rounds=kdfRounds(c.it??KDF_IT_OLD);let raw;
@@ -2854,6 +2879,7 @@ async function enableLock(pw){
 }
 function disableLock(){lockCfg=null;DEK=null;dekRaw=null;localStorage.removeItem(LS_LOCK);localStorage.removeItem(LS_VAULT);localStorage.removeItem(LS_VCHARTS);persist();saveCharts()}
 function lockNow(){
+  if(coreMode){void coreRuntime?.lock();return}
   if(!lockCfg)return;closeZoom();
   DEK=null;dekRaw=null;locked=true;clearTimeout(syncTimer);
   data={txs:[],deleted:[],updated:0};prices={};chartCache={};settings.gh={...settings.gh,token:'',repo:'',pass:'',cgKey:''};
@@ -2894,6 +2920,11 @@ document.addEventListener('input',e=>{const m=e.target.dataset?.pwmeter;if(m&&$(
 function readPw(){const a=$('#p_1').value,b=$('#p_2').value;if(a.length<PW_MIN){fieldErr('p_1',`Kies minimaal ${PW_MIN} tekens, bijvoorbeeld een zin van een paar woorden`);return null}if(a!==b){fieldErr('p_2','Wachtwoorden zijn niet gelijk');return null}return a}
 async function securityAction(act,el){
   try{
+    if(coreMode){
+      if(act==='corepasskey'){el.disabled=true;try{await coreRuntime.enrollExistingPasskey()}finally{el.disabled=false}return}
+      if(act==='corelock'){await coreRuntime.lock();return}
+      if(['lockon','lockon2','addpk','usepk','rmpk','chpw','chpw2','lockoff'].includes(act))return toast('De Core-kluis is standaard versleuteld. Gebruik de Core-beveiligingsinstellingen.');
+    }
     if(act==='lockon')return pwSheet('App-vergrendeling instellen','Kies eerst een <b>herstelwachtwoord</b>. Daarmee open je de app als de passkey niet beschikbaar is. Raak je dit kwijt én werkt de passkey niet meer, dan is de data op dit apparaat niet meer te openen (wel via GitHub-sync of een back-up).','lockon2');
     if(act==='lockon2'){const pw=readPw();if(!pw)return;el.disabled=true;await enableLock(pw);render();
       toast('Vergrendeling aan');openSettings();if(pkSupported())pkSheet();return}
@@ -3004,7 +3035,7 @@ document.addEventListener('click',e=>{
       refreshPrices()})();break;
     case 'add':$('#btnAdd').click();break;
     case 'unlockpk':tryPasskey(false);break;
-    case 'lockon':case 'lockon2':case 'addpk':case 'usepk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
+    case 'corepasskey':case 'corelock':case 'lockon':case 'lockon2':case 'addpk':case 'usepk':case 'rmpk':case 'chpw':case 'chpw2':case 'lockoff':securityAction(a.dataset.act,a);break;
     case 'privacy':settings.privacy=!settings.privacy;saveSettings();render();break;
     case 'settings':openSettings();break;
     case 'setback':location.hash=setFrom&&setFrom!=='#instellingen'?setFrom:'';break;
@@ -3062,6 +3093,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented
 // dan slaat het de samengevoegde stand op; het andere tabblad neemt die dan weer over.
 async function otherTab(e){
   try{
+    if(coreMode)return;
     if(e.key===LS_LOCK){if(e.newValue!==e.oldValue)location.reload();return}
     let theirs,gh=null;
     if(e.key===LS_DATA&&!lockCfg)theirs=JSON.parse(e.newValue||'null');
@@ -3097,8 +3129,20 @@ let histTimer=null;
 function start(){document.body.classList.remove('locked');navigator.storage?.persist?.().catch(()=>{});if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();refreshFng();syncNow(true)}
-if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}
-else start();
+window.CryptoPortfolioLegacy=Object.freeze({
+  snapshot:()=>({data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null}),
+  hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
+  legacyLocked:()=>!!lockCfg&&locked,
+  startLegacy:({allowSync=true}={})=>{coreGateActive=!allowSync;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
+  activateCore:(payload,box)=>{coreMode=true;chartCache=load(LS_CORE_CHARTS,{});locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});const app=box?.app||{};settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start()},
+  applyCoreData:(payload)=>{data=structuredClone(payload||{});invalidateEstPts();render()},
+  lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},
+  setRuntime:(runtime)=>{coreRuntime=runtime},
+  merge,toast,
+  setSyncError:(message)=>setSync('err',message),
+  setSyncStatus:(status,message='')=>setSync(status,message)
+});
+/* De Core-runtime bepaalt de startmodus; geen legacy-sync vóór die keuze. */
 // Nieuwe versie online gezet? De service worker haalt hem op; dan verschijnt een melding om te vernieuwen.
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   let hadCtrl=!!navigator.serviceWorker.controller;
