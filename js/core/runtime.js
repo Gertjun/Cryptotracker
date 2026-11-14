@@ -301,6 +301,10 @@ async function previewVersion(sha) {
 
 async function restoreVersion(sha, password) {
   if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
+  // Werk eerst de huidige kluis en verwijderledger bij. De daaropvolgende
+  // restore kan een andere datasleutel gebruiken; sync.js overschrijft dan
+  // alleen de SHA die we hier aantoonbaar hebben gesynchroniseerd.
+  await syncNow(true);
   const envelope = await readVersionEnvelope(sha);
   const result = await vault.restoreBackup(envelope, password);
   if (!result.sameKey) biometric.disable(); // Oude passkey kan een andere datasleutel niet meer ontgrendelen.
