@@ -6,6 +6,8 @@ test('Core-startscherm blokkeert legacy-start en legacy-sync',async({page})=>{
   await page.goto('/index.html');
   await expect(page.locator('#core-gate')).toBeVisible();
   await expect(page.locator('#core-gate')).toContainText('PWA-Core instellen');
+  const serviceWorker = await page.request.get('/sw.js');
+  expect(await serviceWorker.text()).toContain('"js/core/runtime.js"');
   const state=await page.evaluate(()=>({
     legacyBridge:!!window.CryptoPortfolioLegacy,
     legacyData:localStorage.getItem('cpt.data'),
