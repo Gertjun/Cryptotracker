@@ -32,6 +32,19 @@ function collectLegacyTombstones(value, path = [], found = {}, fallback = 0) {
   return found;
 }
 
+function normalizeLegacyDeletionFlags(value) {
+  if (Array.isArray(value)) {
+    for (const item of value) normalizeLegacyDeletionFlags(item);
+    return value;
+  }
+  if (!value || typeof value !== 'object') return value;
+  if (typeof value.id === 'string' && value.id && value.del === true) value.deleted = true;
+  for (const [key, child] of Object.entries(value)) {
+    if (key !== SYSTEM_KEY) normalizeLegacyDeletionFlags(child);
+  }
+  return value;
+}
+
 /**
  * Zet de oude Cryptotracker-verwijderadministratie om naar de Core-ledger.
  * De originele data wordt niet gemuteerd; onbekende velden blijven behouden.
@@ -49,6 +62,7 @@ export function convertLegacyDeletions(legacyData) {
   for (const [key, time] of Object.entries(collectLegacyTombstones(data, [], {}, fallback))) {
     state.deletions[key] = Math.max(Number(state.deletions[key]) || 0, time);
   }
+  normalizeLegacyDeletionFlags(data);
   data[SYSTEM_KEY] = state;
   return data;
 }
