@@ -12,7 +12,8 @@ let deviceSettings = { github: {}, app: {} };
 let releaseSession = null;
 let sessionTask = null;
 let active = false;
-let syncRunning = false;
+let syncPromise = null;
+let syncAgain = false;
 let lastHiddenAt = 0;
 let lockTimer = null;
 
@@ -54,7 +55,6 @@ function githubFields(initial = {}) {
 }
 
 function setupScreen(error = '') {
-  const legacy = core.legacyAdapter.LEGACY_KEYS;
   const hasLegacy = core.legacyAdapter && window.CryptoPortfolioLegacy.hasLegacyData();
   const oldGh = hasLegacy ? window.CryptoPortfolioLegacy.snapshot().settings?.gh || {} : {};
   const repo = typeof oldGh.repo === 'string' ? oldGh.repo.split('/') : [];
@@ -72,7 +72,7 @@ function setupScreen(error = '') {
       <button class="btn sec" type="button" data-core-action="import">Bestaande Core-kluis van GitHub openen</button>
       <details><summary>GitHub-instellingen</summary><div class="mt-2">${githubFields(initial)}</div></details>
       <p class="hint">Gebruik een nieuw Core-wachtwoord van minimaal 12 tekens. Dit is niet het oude synchronisatiewachtwoord.</p>
-      ${formField('core-password', 'Nieuw Core-wachtwoord', 'password', '', 'new-password')}
+      ${formField('core-password', 'Core-wachtwoord (nieuw bij migratie, bestaand bij koppelen)', 'password', '', 'current-password')}
       ${formField('core-password-confirm', 'Herhaal Core-wachtwoord', 'password', '', 'new-password')}
       <button class="btn sec" type="button" data-core-action="empty">Nieuwe lege kluis maken</button>
     </div>`, error);
@@ -90,12 +90,12 @@ function unlockScreen(error = '') {
     <button class="btn sec" type="button" data-core-action="lock-info">Waarom is dit nodig?</button>`, error);
 }
 
-function githubConfigFromForm() {
+function githubConfigFromForm({ required = true } = {}) {
   const owner = $('#core-owner')?.value.trim();
   const repo = $('#core-repo')?.value.trim();
   const token = $('#core-token')?.value.trim();
   const branch = $('#core-branch')?.value.trim() || 'main';
-  if (!owner || !repo || !token) throw new Error('Vul GitHub-eigenaar, repository en token in.');
+  if (required && (!owner || !repo || !token)) throw new Error('Vul GitHub-eigenaar, repository en token in.');
   return { owner, repo, token, branch, path: 'crypto-portfolio.pwa-core-v1.json' };
 }
 
@@ -120,8 +120,8 @@ async function acquireSession() {
 
 async function installAppSettings(settingsBox) {
   deviceSettings = settingsBox && typeof settingsBox === 'object'
-    ? { github: settingsBox.github || {}, app: settingsBox.app || {} }
-    : { github: {}, app: {} };
+    ? { autoLockMinutes: 5, ...settingsBox, github: settingsBox.github || {}, app: settingsBox.app || {} }
+    : { autoLockMinutes: 5, github: {}, app: {} };
   adapter = createLegacyStorageAdapter(vault);
 }
 
@@ -143,7 +143,7 @@ async function activate() {
   window.CryptoPortfolioLegacy.setRuntime(runtime);
   window.CryptoPortfolioLegacy.activateCore(vault.getData(), deviceSettings);
   if (g.owner && g.repo && g.token) {
-    void syncNow(true);
+    void syncNow(true).catch(() => {});
   }
   scheduleAutoLock();
 }
@@ -156,18 +156,18 @@ async function createFromLegacy() {
   const snapshot = window.CryptoPortfolioLegacy.snapshot();
   if (!snapshot.data || typeof snapshot.data !== 'object') throw new Error('De bestaande gegevens zijn niet beschikbaar.');
   await acquireSession();
-  const { payload, deviceSettings: settingsBox } = core.legacyAdapter.splitLegacySnapshot({
+  const migrationSnapshot = {
     ...snapshot,
     settings: { ...snapshot.settings, gh: {
       repo: `${$('#core-owner')?.value.trim() || ''}/${$('#core-repo')?.value.trim() || ''}`,
       token: $('#core-token')?.value.trim() || '',
       branch: $('#core-branch')?.value.trim() || 'main',
     } },
-  });
-  await vault.create(pw, payload);
-  await vault.setDeviceSettings(settingsBox);
-  await vault.flush();
-  await installAppSettings(settingsBox);
+    coreDeviceSettings: { autoLockMinutes: 5 },
+  };
+  const migrationAdapter = createLegacyStorageAdapter(vault);
+  await migrationAdapter.create(pw, migrationSnapshot);
+  await installAppSettings(await vault.getDeviceSettings());
   await activate();
 }
 
@@ -178,7 +178,8 @@ async function createEmpty() {
   if (pw !== confirm) throw new Error('De wachtwoorden zijn niet gelijk.');
   await acquireSession();
   const settingsBox = {
-    github: githubConfigFromForm(),
+    autoLockMinutes: 5,
+    github: githubConfigFromForm({ required: false }),
     app: { settings: {}, prices: {}, visit: null },
   };
   await vault.create(pw, { schema: 1, v: 1, txs: [], deleted: [], updated: Date.now() });
@@ -199,7 +200,7 @@ async function importFromGitHub() {
   if (!remote) throw new Error('Geen Core-kluis gevonden op het opgegeven pad. Controleer repository en branch.');
   await vault.importEnvelope(remote.envelope, pw);
   const current = await vault.getDeviceSettings();
-  const next = current || { github: config, app: {} };
+  const next = current || { autoLockMinutes: 5, github: config, app: {} };
   next.github = config;
   await vault.setDeviceSettings(next);
   await vault.flush();
@@ -240,29 +241,41 @@ async function updateGitHub(config) {
   await syncNow(false);
 }
 
-async function syncNow(silent = true) {
-  if (!active || syncRunning) return;
-  const settings = appGithubSettings();
-  if (!settings.owner || !settings.repo || !settings.token) return;
-  syncRunning = true;
-  try {
-    await sync.syncNow({
-      settings,
-      merge: (local, remote) => window.CryptoPortfolioLegacy.merge(local, remote),
-      migrate: (payload) => payload,
-      schemaVersion: 1,
-    });
-    const next = vault.getData();
-    window.CryptoPortfolioLegacy.applyCoreData(next);
-    await vault.flush();
-    if (!silent) window.CryptoPortfolioLegacy.toast('Core-synchronisatie voltooid');
-  } catch (error) {
-    window.CryptoPortfolioLegacy.setSyncError(error?.message || 'Core-synchronisatie mislukt');
-    if (!silent) window.CryptoPortfolioLegacy.toast(error?.message || 'Core-synchronisatie mislukt');
-    throw error;
-  } finally {
-    syncRunning = false;
+function syncNow(silent = true) {
+  if (!active) return Promise.resolve();
+  if (syncPromise) {
+    syncAgain = true;
+    return syncPromise;
   }
+  syncPromise = (async () => {
+    do {
+      syncAgain = false;
+      const settings = appGithubSettings();
+      if (!settings.owner || !settings.repo || !settings.token) {
+        window.CryptoPortfolioLegacy.setSyncStatus('off', '');
+        return;
+      }
+      window.CryptoPortfolioLegacy.setSyncStatus('busy', '');
+      try {
+        await sync.syncNow({
+          settings,
+          merge: (local, remote) => window.CryptoPortfolioLegacy.merge(local, remote),
+          migrate: (payload) => payload,
+          schemaVersion: 1,
+        });
+        const next = vault.getData();
+        window.CryptoPortfolioLegacy.applyCoreData(next);
+        await vault.flush();
+        window.CryptoPortfolioLegacy.setSyncStatus('ok', '');
+        if (!silent) window.CryptoPortfolioLegacy.toast('Core-synchronisatie voltooid');
+      } catch (error) {
+        window.CryptoPortfolioLegacy.setSyncError(error?.message || 'Core-synchronisatie mislukt');
+        if (!silent) window.CryptoPortfolioLegacy.toast(error?.message || 'Core-synchronisatie mislukt');
+        throw error;
+      }
+    } while (syncAgain && active);
+  })().finally(() => { syncPromise = null; });
+  return syncPromise;
 }
 
 async function save(snapshot) {
@@ -270,6 +283,7 @@ async function save(snapshot) {
   try {
     await adapter.save({
       ...snapshot,
+      coreDeviceSettings: { autoLockMinutes: deviceSettings.autoLockMinutes ?? 5 },
       settings: { ...snapshot.settings, gh: {
         repo: `${deviceSettings.github?.owner || ''}/${deviceSettings.github?.repo || ''}`,
         token: deviceSettings.github?.token || '',
@@ -289,7 +303,9 @@ function scheduleAutoLock() {
   const minutes = Number(deviceSettings.autoLockMinutes ?? 5);
   if (minutes < 0) return;
   lockTimer = setTimeout(() => {
+    if (!active) return;
     if (document.hidden) void lock();
+    else scheduleAutoLock();
   }, Math.max(1, minutes) * 60_000);
 }
 
@@ -297,11 +313,13 @@ async function lock() {
   if (!active) return;
   clearTimeout(lockTimer);
   try {
+    if (syncPromise) await syncPromise.catch(() => {});
     await adapter.flush();
     await vault.flush();
   } finally {
     active = false;
     adapter = null;
+    deviceSettings = { autoLockMinutes: 5, github: {}, app: {} };
     await vault.lock();
     window.CryptoPortfolioLegacy.lockCore();
     const release = releaseSession;
@@ -325,6 +343,7 @@ async function handleAction(action) {
   if (action === 'empty') return createEmpty();
   if (action === 'import') return importFromGitHub();
   if (action === 'passkey') return unlockPasskey();
+  if (action === 'corelock') return lock();
   if (action === 'lock-info') {
     setError('De Core-kluis gebruikt een eigen datasleutel. Op elk apparaat moet dezelfde bestaande kluis worden geopend.');
     return;
@@ -351,6 +370,12 @@ export async function initialize(coreModules) {
     catch (error) { setError(error); button.disabled = false; }
   });
   window.addEventListener('cpt-legacy-unlocked', () => setupScreen());
+  window.addEventListener('pagehide', () => {
+    if (active) {
+      void adapter?.flush().catch(() => {});
+      void vault.flush().catch(() => {});
+    }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       lastHiddenAt = Date.now();
