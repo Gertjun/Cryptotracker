@@ -301,13 +301,26 @@ async function previewVersion(sha) {
 
 async function restoreVersion(sha, password) {
   if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
-  // Werk eerst de huidige kluis en verwijderledger bij. De daaropvolgende
-  // restore kan een andere datasleutel gebruiken; sync.js overschrijft dan
-  // alleen de SHA die we hier aantoonbaar hebben gesynchroniseerd.
+  // Synchroniseer eerst de actuele payload en verwijderledger. De Core-sync
+  // blijft ongewijzigd; bij een andere datasleutel uploaden we de restore met
+  // een compare-and-swap op de vooraf gecontroleerde GitHub-bestandsha.
   await syncNow(true);
+  const settings = appGithubSettings();
+  const client = github.createClient(settings);
+  const current = await client.getFile();
+  const meta = vault.getSyncMeta();
+  if (!current || !meta.sha || current.sha !== meta.sha) {
+    throw new Error('Het Core-bestand op GitHub is intussen gewijzigd. Herstel is gestopt om overschrijven te voorkomen. Synchroniseer opnieuw en probeer daarna nogmaals.');
+  }
   const envelope = await readVersionEnvelope(sha);
   const result = await vault.restoreBackup(envelope, password);
-  if (!result.sameKey) biometric.disable(); // Oude passkey kan een andere datasleutel niet meer ontgrendelen.
+  if (!result.sameKey) {
+    biometric.disable(); // Oude passkey kan een andere datasleutel niet meer ontgrendelen.
+    await vault.flush();
+    const uploadedRevision = vault.getPersistedRevision();
+    const nextSha = await client.putFile(vault.getEnvelope(), current.sha, 'Crypto Portfolio: Core-back-up hersteld');
+    vault.markSynced(nextSha, uploadedRevision);
+  }
   await vault.flush();
   window.CryptoPortfolioLegacy.applyCoreData(vault.getData());
   await syncNow(false);
