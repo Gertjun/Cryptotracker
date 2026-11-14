@@ -54,6 +54,8 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.retained.data.watch.find(x=>x.id==='watch-del').deleted).toBe(true);
   expect(result.settings).toEqual({theme:'dark'});
   expect(result.deviceSettings.github.token).toBe('secret-token');
+  expect(result.deviceSettings.github.owner).toBe('Gertjun');
+  expect(result.deviceSettings.github.repo).toBe('SyncData');
   expect(result.deviceSettings.github.path).toBe('crypto-portfolio.pwa-core-v1.json');
   expect(result.deviceSettings.github).not.toHaveProperty('pass');
   expect(JSON.stringify(result.payload)).not.toContain('secret-token');
