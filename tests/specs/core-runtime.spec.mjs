@@ -225,6 +225,7 @@ test('Core-instellingen tonen wachtwoordbeheer, nieuwe passkey en Core-versieges
   await page.locator('#core-password-confirm').fill('correct horse battery staple');
   await page.locator('[data-core-action=migrate]').click();
   await expect(page.locator('#core-gate')).toContainText('Er is geen bestaand SyncData-bestand ingelezen');
+  await expect(page.locator('#core-gate')).toContainText('repository, branch, pad of toegang niet klopt');
   await expect(page.locator('[data-core-action=confirm-migrate]')).toContainText('zonder remote data');
   expect(await page.evaluate(()=>localStorage.getItem('cpt:vault'))).toBeNull();
   await page.locator('[data-core-action=confirm-migrate]').click();
@@ -283,6 +284,7 @@ test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',as
   await pageA.locator('#core-password-confirm').fill('shared core password 123');
   await pageA.locator('[data-core-action=migrate]').click();
   await expect(pageA.locator('#core-gate')).toContainText('Er is geen bestaand SyncData-bestand ingelezen');
+  await expect(pageA.locator('#core-gate')).toContainText('repository, branch, pad of toegang niet klopt');
   expect(await pageA.evaluate(()=>localStorage.getItem('cpt:vault'))).toBeNull();
   await pageA.locator('[data-core-action=confirm-migrate]').click();
   await pageA.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
