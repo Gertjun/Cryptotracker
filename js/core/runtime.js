@@ -346,6 +346,12 @@ async function updateGitHub(config) {
 
 function syncNow(silent = true) {
   if (!active) return Promise.resolve();
+  // De legacy-app roept syncNow ook aan bij het starten en periodiek.
+  // Core-synchronisatie blijft uit totdat de gebruiker die expliciet activeert.
+  if (deviceSettings.syncEnabled === false) {
+    window.CryptoPortfolioLegacy.setSyncStatus('off', '');
+    return Promise.resolve();
+  }
   if (syncPromise) {
     syncAgain = true;
     return syncPromise;
