@@ -239,3 +239,33 @@ test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',as
   await contextA.close();
   await contextB.close();
 });
+
+
+test('mislukte Core-bootstrap start legacy zonder legacy-GitHub-sync',async({page})=>{
+  const githubCalls=[];
+  await page.addInitScript(()=>{
+    localStorage.setItem('cpt.data',JSON.stringify({v:1,updated:1,deleted:[],txs:[]}));
+    localStorage.setItem('cpt.settings',JSON.stringify({
+      gh:{token:'test-token',repo:'Gertjun/SyncData',path:'crypto-portfolio.enc.json',branch:'main',pass:'legacy-password'},
+    }));
+    window.__coreBootstrapFailed=false;
+    window.addEventListener('pwa-core-error',()=>{window.__coreBootstrapFailed=true});
+  });
+  await page.route('**/js/config.js',route=>route.abort());
+  await page.route('https://api.github.com/**',async route=>{
+    githubCalls.push({method:route.request().method(),url:route.request().url()});
+    return route.fulfill({status:404,json:{message:'Not Found'}});
+  });
+  await page.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
+  await page.route('https://api.alternative.me/**',route=>route.fulfill({json:{data:[]}}));
+  await page.goto('/index.html');
+  await page.waitForFunction(()=>window.__coreBootstrapFailed===true&&!!window.CryptoPortfolioLegacy);
+  await page.waitForTimeout(150);
+  expect(githubCalls).toEqual([]);
+  const state=await page.evaluate(()=>({
+    legacyBridge:!!window.CryptoPortfolioLegacy,
+    legacyData:localStorage.getItem('cpt.data'),
+  }));
+  expect(state.legacyBridge).toBe(true);
+  expect(state.legacyData).toContain('"txs":[]');
+});
