@@ -114,10 +114,18 @@ export function createLegacyStorageAdapter(vault) {
     throw new TypeError('Een geldige PWA-Core-vault is vereist.');
   }
   let writes = Promise.resolve();
+  let writeSequence = 0;
+  const writeFailures = [];
 
   function enqueue(job) {
+    const sequence = ++writeSequence;
     const run = writes.then(job);
-    writes = run.catch(() => {});
+    // Houd de wachtrij bruikbaar na een fout, maar verlies de fout niet:
+    // flush() moet kunnen melden dat een eerdere opslag niet is gelukt.
+    writes = run.then(
+      () => {},
+      (error) => { writeFailures.push({ sequence, error }); },
+    );
     return run;
   }
 
@@ -160,7 +168,14 @@ export function createLegacyStorageAdapter(vault) {
     },
 
     async flush() {
-      await writes;
+      const through = writeSequence;
+      const pending = writes;
+      await pending;
+      const failedIndex = writeFailures.findIndex((failure) => failure.sequence <= through);
+      if (failedIndex !== -1) {
+        const [{ error }] = writeFailures.splice(failedIndex, 1);
+        throw error;
+      }
       await vault.flush();
     },
 
