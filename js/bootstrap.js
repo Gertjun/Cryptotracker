@@ -15,5 +15,5 @@ try {
 } catch (error) {
   console.error('PWA-Core kon niet worden gestart.',error);
   window.dispatchEvent(new CustomEvent('pwa-core-error',{detail:error}));
-  window.CryptoPortfolioLegacy?.startLegacy();
+  window.CryptoPortfolioLegacy?.startLegacy({allowSync:false});
 }
