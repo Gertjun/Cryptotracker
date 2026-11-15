@@ -120,8 +120,15 @@ async function acquireSession() {
 
 async function installAppSettings(settingsBox) {
   deviceSettings = settingsBox && typeof settingsBox === 'object'
-    ? { autoLockMinutes: 5, ...settingsBox, github: settingsBox.github || {}, app: settingsBox.app || {} }
-    : { autoLockMinutes: 5, github: {}, app: {} };
+    ? {
+      autoLockMinutes: 5,
+      ...settingsBox,
+      // Synchronisatie is opt-in: ontbrekende of oudere instellingen betekenen uit.
+      syncEnabled: settingsBox.syncEnabled === true,
+      github: settingsBox.github || {},
+      app: settingsBox.app || {},
+    }
+    : { autoLockMinutes: 5, syncEnabled: false, github: {}, app: {} };
   adapter = createLegacyStorageAdapter(vault);
 }
 
@@ -142,7 +149,7 @@ async function activate() {
   const g = appGithubSettings();
   window.CryptoPortfolioLegacy.setRuntime(runtime);
   window.CryptoPortfolioLegacy.activateCore(vault.getData(), deviceSettings);
-  if (deviceSettings.syncEnabled !== false && g.owner && g.repo && g.token) {
+  if (deviceSettings.syncEnabled === true && g.owner && g.repo && g.token) {
     void syncNow(true).catch(() => {});
   }
   scheduleAutoLock();
@@ -348,7 +355,7 @@ function syncNow(silent = true) {
   if (!active) return Promise.resolve();
   // De legacy-app roept syncNow ook aan bij het starten en periodiek.
   // Core-synchronisatie blijft uit totdat de gebruiker die expliciet activeert.
-  if (deviceSettings.syncEnabled === false) {
+  if (deviceSettings.syncEnabled !== true) {
     window.CryptoPortfolioLegacy.setSyncStatus('off', '');
     return Promise.resolve();
   }
