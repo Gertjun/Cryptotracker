@@ -178,7 +178,7 @@ async function createFromLegacy() {
   pendingMigration = { pw, snapshot, migrationData, owner, repo, token, branch };
   const remoteNote = legacyRemote
     ? 'Het bestaande SyncData-bestand is gevonden en alleen-lezen samengevoegd met de lokale gegevens.'
-    : 'Er is geen bestaand SyncData-bestand ingelezen. Deze migratie bevat daarom alleen de gegevens op dit apparaat. Controleer dit zorgvuldig voordat je doorgaat.';
+    : 'Er is geen bestaand SyncData-bestand ingelezen. Dit kan betekenen dat het bestand ontbreekt of dat repository, branch, pad of toegang niet klopt. Controleer die instellingen; bevestig alleen lokale migratie als je dat bewust wilt.';
   const confirmLabel = legacyRemote ? 'Bevestig migratie naar Core' : 'Bevestig lokale migratie zonder remote data';
   show('Controleer de gegevens vóór migratie',
     'Dit overzicht toont uitsluitend aantallen. Er zijn nog geen gegevens naar de nieuwe Core-kluis geschreven.',
