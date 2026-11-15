@@ -102,6 +102,12 @@ test('migratie voegt legacy GitHub-data read-only samen en laat oud remote besta
   await page.locator('#core-password').fill('correct horse battery staple');
   await page.locator('#core-password-confirm').fill('correct horse battery staple');
   await page.locator('[data-core-action=migrate]').click();
+  await expect(page.locator('#core-gate')).toContainText('Controleer de gegevens vóór migratie');
+  await expect(page.locator('#core-gate')).toContainText('Het bestaande SyncData-bestand is gevonden');
+  await expect(page.locator('#core-gate')).toContainText('Transacties');
+  await expect(page.locator('#core-gate')).toContainText('Koershistoriepunten');
+  expect(await page.evaluate(()=>localStorage.getItem('cpt:vault'))).toBeNull();
+  await page.locator('[data-core-action=confirm-migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   await page.waitForFunction(()=>localStorage.getItem('cpt:vault')!==null);
   const historyAccess=await page.evaluate(async()=>{
@@ -218,6 +224,10 @@ test('Core-instellingen tonen wachtwoordbeheer, nieuwe passkey en Core-versieges
   await page.locator('#core-password').fill('correct horse battery staple');
   await page.locator('#core-password-confirm').fill('correct horse battery staple');
   await page.locator('[data-core-action=migrate]').click();
+  await expect(page.locator('#core-gate')).toContainText('Er is geen bestaand SyncData-bestand ingelezen');
+  await expect(page.locator('[data-core-action=confirm-migrate]')).toContainText('zonder remote data');
+  expect(await page.evaluate(()=>localStorage.getItem('cpt:vault'))).toBeNull();
+  await page.locator('[data-core-action=confirm-migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main'}));
   await page.evaluate(()=>{location.hash='#instellingen'});
@@ -272,6 +282,9 @@ test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',as
   await pageA.locator('#core-password').fill('shared core password 123');
   await pageA.locator('#core-password-confirm').fill('shared core password 123');
   await pageA.locator('[data-core-action=migrate]').click();
+  await expect(pageA.locator('#core-gate')).toContainText('Er is geen bestaand SyncData-bestand ingelezen');
+  expect(await pageA.evaluate(()=>localStorage.getItem('cpt:vault'))).toBeNull();
+  await pageA.locator('[data-core-action=confirm-migrate]').click();
   await pageA.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   expect(remoteText).toBeNull();
   await pageA.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main'}));
