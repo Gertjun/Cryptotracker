@@ -218,7 +218,7 @@ Als één van deze voorwaarden niet is aangetoond, blijft de migratie in de feat
 
 Peildatum: 15 november 2026. De actuele implementatie staat op `feat/pwa-core-migration-with-backups` in draft PR #40.
 
-- De PWA-Core v1.0.0-pin, manifestchecksums en service-worker-precache zijn gevalideerd; GitHub Actions-run #122 (`validate-core-pin`) is geslaagd.
+- De PWA-Core v1.0.0-pin, manifestchecksums en service-worker-precache zijn gevalideerd; GitHub Actions-run #154 (`validate-core-pin`) is geslaagd.
 - De module-bootstrap, Core-configuratie, opslagadapter, Core-vault, sync-gate, versiegeschiedenis/herstel en passkey-integratie zijn op de featurebranch aanwezig.
 - De legacy-opslag blijft gescheiden van Core-opslag. De nieuwe Core-sync gebruikt uitsluitend `crypto-portfolio.pwa-core-v1.json`; de fallback na een mislukte Core-bootstrap start de legacy-interface met `allowSync:false`.
 - De meest recente GitHub Actions-controles voor PR-head `6b07ad53240abc86eefa7604d091da9132ce6c09` zijn geslaagd: Tests-run #306 (`43708217151`) en PWA-Core validation-run #154 (`43708217155`). De testworkflow draaide op de GitHub PR-merge-ref en rapporteerde **126 passed, 34 skipped**; beide nieuwe foutafhandelingstests zijn expliciet geslaagd.
