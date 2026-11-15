@@ -420,17 +420,22 @@ async function lock() {
     if (syncPromise) await syncPromise.catch(() => {});
     await adapter.flush();
     await vault.flush();
-  } finally {
-    active = false;
-    adapter = null;
-    deviceSettings = { autoLockMinutes: 5, github: {}, app: {} };
-    await vault.lock();
-    window.CryptoPortfolioLegacy.lockCore();
-    const release = releaseSession;
-    releaseSession = null;
-    if (release) release();
-    unlockScreen();
+  } catch (error) {
+    // Vergrendel nooit na een mislukte opslag: de enige actuele kopie kan
+    // nog in het geheugen staan. Laat de sessie actief zodat opnieuw opslaan kan.
+    window.CryptoPortfolioLegacy.setSyncError(error?.message || 'Opslagcontrole vóór vergrendelen mislukt');
+    throw error;
   }
+
+  active = false;
+  adapter = null;
+  deviceSettings = { autoLockMinutes: 5, github: {}, app: {} };
+  await vault.lock();
+  window.CryptoPortfolioLegacy.lockCore();
+  const release = releaseSession;
+  releaseSession = null;
+  if (release) release();
+  unlockScreen();
 }
 
 const runtime = Object.freeze({
