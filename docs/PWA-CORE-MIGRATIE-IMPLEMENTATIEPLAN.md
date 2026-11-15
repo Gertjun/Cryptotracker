@@ -221,11 +221,12 @@ Peildatum: 15 november 2026. De actuele implementatie staat op `feat/pwa-core-mi
 - De PWA-Core v1.0.0-pin, manifestchecksums en service-worker-precache zijn gevalideerd; GitHub Actions-run #122 (`validate-core-pin`) is geslaagd.
 - De module-bootstrap, Core-configuratie, opslagadapter, Core-vault, sync-gate, versiegeschiedenis/herstel en passkey-integratie zijn op de featurebranch aanwezig.
 - De legacy-opslag blijft gescheiden van Core-opslag. De nieuwe Core-sync gebruikt uitsluitend `crypto-portfolio.pwa-core-v1.json`; de fallback na een mislukte Core-bootstrap start de legacy-interface met `allowSync:false`.
-- GitHub Actions Tests-run #274 op head `e8cc1c04663eadd0270494c23f6b540f856004de` is geslaagd: **121 passed, 34 skipped**. Eén bestaande timinggevoelige test (`meebewegen met bitcoin`) faalde eerst en slaagde bij retry; de run markeert die als flaky, niet als blijvende failure.
-- De nieuwe regressietest `mislukte Core-bootstrap start legacy zonder legacy-GitHub-sync` is geslaagd.
+- De meest recente GitHub Actions-tests op PR-head `a913f692547bf0fa5172a60309ba512eb08ab839` zijn geslaagd (run #43707360951): **126 passed, 34 skipped**. De twee runs voor Tests en PWA-Core validation op de PR-head zijn beide groen.
+- De regressietests `adapter.flush geeft een eerdere opslagfout door en laat vervolgschrijfacties toe` en `Core blijft ontgrendeld wanneer opslaan vóór vergrendelen mislukt` zijn beide geslaagd. De eerste controleert ook dat een opslagfout bij herhaald flushen blijft bestaan totdat een latere volledige save slaagt.
+- De testresultaten zijn afkomstig van synthetische gegevens en mocks; er zijn geen echte gebruikersgegevens opgehaald, ontsleuteld of gemigreerd.
 - De tests gebruiken synthetische gegevens en mocks. Er zijn geen echte gebruikersgegevens opgehaald, ontsleuteld of gemigreerd.
 - De originele SyncData-file `crypto-portfolio.enc.json` is niet opgehaald, ontsleuteld of gewijzigd. De nieuwe Core-file is niet aangemaakt in echte SyncData.
 - B07 fysieke acceptatie op een echte iPhone/iPad blijft **NOT RUN** en is een harde go/no-go-gate. Ook echte passkey-inschrijving, apparaatmigratie en synchronisatie tussen echte apparaten zijn nog niet uitgevoerd.
 - PR #40 blijft open en draft. Er is niet naar `main` geschreven en er is geen merge uitgevoerd.
 
-**Volgende technische stap:** de migratiecode en testdekking verder auditen op randgevallen en foutafhandeling. Daarna volgt de afgesproken fysieke acceptatie; pas na expliciete goedkeuring kan een echte data-cutover worden gepland.
+**Volgende technische stap:** gerichte audit van de resterende sync-, herstel- en sessierandgevallen. Daarna volgt de afgesproken fysieke acceptatie; pas na expliciete goedkeuring kan een echte data-cutover worden gepland.
