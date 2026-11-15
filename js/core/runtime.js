@@ -250,7 +250,14 @@ async function changePassword(current, next) {
   await syncNow(false);
 }
 
+function assertSyncEnabled() {
+  if (deviceSettings.syncEnabled !== true) {
+    throw new Error('Activeer eerst Core-synchronisatie om GitHub-versies te openen.');
+  }
+}
+
 async function githubApi(url) {
+  assertSyncEnabled();
   const settings = appGithubSettings();
   if (!settings.owner || !settings.repo || !settings.token) throw new Error('Stel eerst Core-synchronisatie in.');
   let response;
@@ -310,6 +317,7 @@ async function previewVersion(sha) {
 
 async function restoreVersion(sha, password) {
   if (!active) throw new Error('Ontgrendel eerst de Core-kluis.');
+  assertSyncEnabled();
   // Synchroniseer eerst de actuele payload en verwijderledger. De Core-sync
   // blijft ongewijzigd; bij een andere datasleutel uploaden we de restore met
   // een compare-and-swap op de vooraf gecontroleerde GitHub-bestandsha.
