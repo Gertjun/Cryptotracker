@@ -3187,6 +3187,36 @@ function start(){document.body.classList.remove('locked');navigator.storage?.per
   render();refreshPrices();refreshFng();syncNow(true)}
 window.CryptoPortfolioLegacy=Object.freeze({
   snapshot:()=>({data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null}),
+  // Eenmalige legacy-import: uitsluitend GET; de oude remote wordt nooit aangepast.
+  readLegacyRemote:async()=>{
+    const g=settings.gh||{};
+    if(!g.repo&&!g.token&&!g.pass)return null;
+    if(!g.repo||!g.token||!g.pass)throw new Error('De oude GitHub-synchronisatie is niet volledig ingesteld. Controleer repository, token en versleutelwachtwoord voordat je migreert.');
+    const parts=String(g.repo).trim().split('/');
+    if(parts.length!==2||!parts[0]||!parts[1])throw new Error('De oude GitHub-repository heeft geen geldig eigenaar/repository-formaat.');
+    const path=String(g.path||'crypto-portfolio.enc.json').split('/').map(encodeURIComponent).join('/');
+    const url=`https://api.github.com/repos/${parts.map(encodeURIComponent).join('/')}/contents/${path}`;
+    const headers={Authorization:'Bearer '+g.token.trim(),Accept:'application/vnd.github.object'};
+    if(!navigator.onLine)throw new Error('Geen internetverbinding om de oude GitHub-gegevens te controleren.');
+    const response=await fetchT(url+'?ref='+encodeURIComponent(g.branch||'main')+'&_='+Date.now(),{headers,cache:'no-store'},30000);
+    if(response.status===404)return null;
+    if(response.status===401)throw new Error('Het oude GitHub-token is ongeldig of verlopen.');
+    if(!response.ok)throw new Error('Oude GitHub-gegevens konden niet worden opgehaald ('+response.status+').');
+    const file=await response.json();
+    let text;
+    if(file.content&&file.encoding==='base64')text=b64ToUtf8(file.content);
+    else{
+      const raw=await fetchT(url+'?ref='+encodeURIComponent(g.branch||'main')+'&_='+Date.now(),{headers:{...headers,Accept:'application/vnd.github.raw'},cache:'no-store'},30000);
+      if(!raw.ok)throw new Error('Oude GitHub-bestand kon niet als raw-inhoud worden opgehaald ('+raw.status+').');
+      text=await raw.text();
+    }
+    let remote;
+    try{remote=await decryptObj(JSON.parse(text),g.pass)}
+    catch(error){throw new Error(error?.message||'Het oude GitHub-bestand kon niet worden ontsleuteld.')}
+    if(isTooNew(remote))throw new Error('De oude GitHub-gegevens zijn gemaakt met een nieuwere app-versie. Werk de app eerst bij.');
+    if(!remote||typeof remote!=='object'||Array.isArray(remote)||!Array.isArray(remote.txs))throw new Error('Het oude GitHub-bestand bevat geen herkenbare Cryptotracker-gegevens.');
+    return structuredClone(remote);
+  },
   hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
   legacyLocked:()=>!!lockCfg&&locked,
   startLegacy:({allowSync=true}={})=>{coreGateActive=!allowSync;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
