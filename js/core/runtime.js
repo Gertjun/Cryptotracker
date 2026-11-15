@@ -142,7 +142,7 @@ async function activate() {
   const g = appGithubSettings();
   window.CryptoPortfolioLegacy.setRuntime(runtime);
   window.CryptoPortfolioLegacy.activateCore(vault.getData(), deviceSettings);
-  if (g.owner && g.repo && g.token) {
+  if (deviceSettings.syncEnabled !== false && g.owner && g.repo && g.token) {
     void syncNow(true).catch(() => {});
   }
   scheduleAutoLock();
@@ -163,7 +163,7 @@ async function createFromLegacy() {
       token: $('#core-token')?.value.trim() || '',
       branch: $('#core-branch')?.value.trim() || 'main',
     } },
-    coreDeviceSettings: { autoLockMinutes: 5 },
+    coreDeviceSettings: { autoLockMinutes: 5, syncEnabled: false },
   };
   const migrationAdapter = createLegacyStorageAdapter(vault);
   await migrationAdapter.create(pw, migrationSnapshot);
@@ -179,6 +179,7 @@ async function createEmpty() {
   await acquireSession();
   const settingsBox = {
     autoLockMinutes: 5,
+    syncEnabled: false,
     github: githubConfigFromForm({ required: false }),
     app: { settings: {}, prices: {}, visit: null },
   };
@@ -202,6 +203,7 @@ async function importFromGitHub() {
   const current = await vault.getDeviceSettings();
   const next = current || { autoLockMinutes: 5, github: config, app: {} };
   next.github = config;
+  next.syncEnabled = true;
   await vault.setDeviceSettings(next);
   await vault.flush();
   await activate();
@@ -329,7 +331,7 @@ async function restoreVersion(sha, password) {
 
 async function updateGitHub(config) {
   if (!active) throw new Error('De Core-kluis is vergrendeld.');
-  deviceSettings = { ...deviceSettings, github: {
+  deviceSettings = { ...deviceSettings, syncEnabled: true, github: {
     owner: config.owner,
     repo: config.repo,
     token: config.token,
