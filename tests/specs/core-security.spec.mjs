@@ -52,7 +52,10 @@ test('Core-wachtwoord wijzigen, passkey aanmaken en bestaande passkey opnieuw ko
   await page.locator('#core-password-confirm').fill(CURRENT_PASSWORD);
   await page.locator('[data-core-action=migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
-  // De migratie is lokaal; deze beveiligingstest geeft daarna bewust toestemming.
+  // De eenmalige migratie mag het oude bestand alleen-lezen ophalen. Vanaf dit
+  // punt mag Core het oude bestand niet meer benaderen.
+  paths.length=0;
+  // De beveiligingstest geeft daarna bewust toestemming voor Core-sync.
   await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({
     owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main',
   }));
