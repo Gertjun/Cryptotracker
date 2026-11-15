@@ -16,6 +16,7 @@ let syncPromise = null;
 let syncAgain = false;
 let lastHiddenAt = 0;
 let lockTimer = null;
+let pendingMigration = null;
 
 const $ = (selector) => document.querySelector(selector);
 const clone = (value) => structuredClone(value ?? {});
@@ -162,27 +163,58 @@ async function createFromLegacy() {
   if (pw !== confirm) throw new Error('De wachtwoorden zijn niet gelijk.');
   const snapshot = window.CryptoPortfolioLegacy.snapshot();
   if (!snapshot.data || typeof snapshot.data !== 'object') throw new Error('De bestaande gegevens zijn niet beschikbaar.');
-  // Haal de bestaande legacy-remote alleen-lezen op en voeg die vóór de eerste
-  // Core-write samen. Bij een ongeldige/ontoegankelijke remote stopt migratie fail-closed.
+
+  // Alleen lezen en samenvoegen in geheugen. Er wordt nog niets naar Core of GitHub geschreven.
   const legacyRemote = await window.CryptoPortfolioLegacy.readLegacyRemote();
   const migrationData = legacyRemote
     ? window.CryptoPortfolioLegacy.merge(snapshot.data, legacyRemote)
     : snapshot.data;
+  const counts = core.legacyAdapter.summarizeLegacyData(migrationData);
+  const owner = $('#core-owner')?.value.trim() || '';
+  const repo = $('#core-repo')?.value.trim() || '';
+  const token = $('#core-token')?.value.trim() || '';
+  const branch = $('#core-branch')?.value.trim() || 'main';
+
+  pendingMigration = { pw, snapshot, migrationData, owner, repo, token, branch };
+  const remoteNote = legacyRemote
+    ? 'Het bestaande SyncData-bestand is gevonden en alleen-lezen samengevoegd met de lokale gegevens.'
+    : 'Er is geen bestaand SyncData-bestand ingelezen. Deze migratie bevat daarom alleen de gegevens op dit apparaat. Controleer dit zorgvuldig voordat je doorgaat.';
+  const confirmLabel = legacyRemote ? 'Bevestig migratie naar Core' : 'Bevestig lokale migratie zonder remote data';
+  show('Controleer de gegevens vóór migratie',
+    'Dit overzicht toont uitsluitend aantallen. Er zijn nog geen gegevens naar de nieuwe Core-kluis geschreven.',
+    `<p>${escapeHtml(remoteNote)}</p>
+      <dl class="core-migration-summary">
+        <div><dt>Transacties</dt><dd>${counts.transactions}</dd></div>
+        <div><dt>Collectie-items</dt><dd>${counts.collections}</dd></div>
+        <div><dt>Koershistoriepunten</dt><dd>${counts.history}</dd></div>
+        <div><dt>Verwijdermarkeringen</dt><dd>${counts.deletionMarkers}</dd></div>
+      </dl>
+      <p class="hint">De oude lokale opslag en het oude remote bestand blijven onaangeroerd. Core-synchronisatie blijft uit totdat je die later zelf inschakelt.</p>
+      <div class="core-actions">
+        <button class="btn" type="button" data-core-action="confirm-migrate">${confirmLabel}</button>
+        <button class="btn sec" type="button" data-core-action="cancel-migrate">Annuleren</button>
+      </div>`);
+}
+
+async function confirmLegacyMigration() {
+  if (!pendingMigration) throw new Error('Er staat geen migratie ter bevestiging klaar. Begin opnieuw.');
+  const pending = pendingMigration;
   await acquireSession();
   const migrationSnapshot = {
-    ...snapshot,
-    data: migrationData,
-    settings: { ...snapshot.settings, gh: {
-      repo: `${$('#core-owner')?.value.trim() || ''}/${$('#core-repo')?.value.trim() || ''}`,
-      token: $('#core-token')?.value.trim() || '',
-      branch: $('#core-branch')?.value.trim() || 'main',
+    ...pending.snapshot,
+    data: pending.migrationData,
+    settings: { ...pending.snapshot.settings, gh: {
+      repo: pending.owner && pending.repo ? `${pending.owner}/${pending.repo}` : '',
+      token: pending.token,
+      branch: pending.branch,
     } },
     coreDeviceSettings: { autoLockMinutes: 5, syncEnabled: false },
   };
   const migrationAdapter = createLegacyStorageAdapter(vault);
-  await migrationAdapter.create(pw, migrationSnapshot);
+  await migrationAdapter.create(pending.pw, migrationSnapshot);
   await installAppSettings(await vault.getDeviceSettings());
   await activate();
+  pendingMigration = null;
 }
 
 async function createEmpty() {
@@ -487,6 +519,8 @@ const runtime = Object.freeze({
 
 async function handleAction(action) {
   if (action === 'migrate') return createFromLegacy();
+  if (action === 'confirm-migrate') return confirmLegacyMigration();
+  if (action === 'cancel-migrate') { pendingMigration = null; return setupScreen(); }
   if (action === 'empty') return createEmpty();
   if (action === 'import') return importFromGitHub();
   if (action === 'passkey') return unlockPasskey();
