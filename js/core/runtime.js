@@ -1,5 +1,5 @@
 // Runtimebrug tussen de bestaande Cryptotracker-UI en de PWA-Core-kluis.
-// De legacy-opslag en het oude SyncData-bestand worden nooit aangepast of gelezen via GitHub.
+// Legacy-opslag blijft behouden; het oude SyncData-bestand wordt alleen-lezen geïmporteerd en nooit gewijzigd.
 import * as vault from './vault.js';
 import * as sync from './sync.js';
 import * as github from './github.js';
