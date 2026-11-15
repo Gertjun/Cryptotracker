@@ -76,6 +76,9 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   await page.locator('[data-core-action=migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   await page.waitForFunction(()=>localStorage.getItem('cpt:vault')!==null);
+  // Lokale migratie schrijft nog niet naar GitHub; de eerste sync vereist een aparte actie.
+  expect(githubCalls).toEqual([]);
+  await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main'}));
   await page.waitForFunction(()=>window.PWACoreV1?.vault?.getSyncMeta?.().sha==='core-file-sha');
   const result=await page.evaluate(async()=>{
     const vault=await import('/js/core/vault.js');
@@ -161,6 +164,7 @@ test('Core-instellingen tonen wachtwoordbeheer, nieuwe passkey en Core-versieges
   await page.locator('#core-password-confirm').fill('correct horse battery staple');
   await page.locator('[data-core-action=migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main'}));
   await page.evaluate(()=>{location.hash='#instellingen'});
   await expect(page.locator('#setView')).toBeVisible();
   // Op telefoonformaat is de onderdelenlijst bewust verborgen; selecteer hetzelfde paneel via de appfunctie.
@@ -214,6 +218,8 @@ test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',as
   await pageA.locator('#core-password-confirm').fill('shared core password 123');
   await pageA.locator('[data-core-action=migrate]').click();
   await pageA.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  expect(remoteText).toBeNull();
+  await pageA.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main'}));
   await pageA.waitForFunction(()=>window.PWACoreV1?.vault?.getSyncMeta?.().sha==='remote-1');
   const contextB=await browser.newContext({viewport:{width:1280,height:800}});
   const pageB=await contextB.newPage();
