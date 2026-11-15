@@ -76,6 +76,13 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   await page.locator('[data-core-action=migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   await page.waitForFunction(()=>localStorage.getItem('cpt:vault')!==null);
+  // Een gewone app-save mag de expliciete sync-toestemming niet inschakelen.
+  await page.evaluate(()=>window.PWACoreV1.runtime.save(window.CryptoPortfolioLegacy.snapshot()));
+  const consent=await page.evaluate(async()=>{
+    const vault=await import('/js/core/vault.js');
+    return (await vault.getDeviceSettings()).syncEnabled;
+  });
+  expect(consent).toBe(false);
   // Lokale migratie schrijft nog niet naar GitHub; de eerste sync vereist een aparte actie.
   expect(githubCalls).toEqual([]);
   await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main'}));
