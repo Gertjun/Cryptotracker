@@ -1,8 +1,8 @@
 # Cryptotracker – volledig PWA-Core-migratieplan
 
-Status: implementatie in draft PR #40; geen echte gebruikersdatamigratie of data-cutover uitgevoerd  
-Doelbranch: `feat/pwa-core-migration-with-backups`  
-Basisapp: `main` op `d1d380408cda9cec6e3dc777c89610d16f681b47` (appversie 4.0.2)  
+Status per 15 november 2026: PR #40 is gemerged; de implementatie staat op `main` (`fbfbdeda3c4aab5ccb3054ce7e1f2f4b52e759e0`). GitHub Actions-tests (#43750271183), Core-validatie (#43750271224) en Pages-deployment (#43750266839) zijn succesvol. Er is nog geen echte gebruikersdatamigratie of data-cutover uitgevoerd. De live pagina is niet handmatig/functioneel gecontroleerd.  
+Historische implementatiebranch: `feat/pwa-core-migration-with-backups`  
+Basisapp vóór migratie: appversie 4.0.2  
 Core-pin: PWA-Core `v1.0.0`, releasecommit `1a9c31f489290853fdc3aa4e62f199b21a338030`
 
 ## 1. Doel en ontwerpbesluit
@@ -192,7 +192,7 @@ Na cutover:
 
 Een codebackup is geen gebruikersdatabackup. De migratiewizard moet daarom vóór de eerste Core-write ook een bruikbare, versleutelde export/herstelmogelijkheid aanbieden of aantoonbaar kunnen terugvallen op de onaangeroerde legacy-bronnen.
 
-## 12. Uitvoering in kleine, controleerbare PR-stappen
+## 12. Historisch uitvoeringsplan in kleine, controleerbare PR-stappen
 
 1. **PR A – Voorbereiding en backupbeleid:** huidige draft PR #40; documentatie, backups en uitsluiting van Pages/release. Geen runtimewijzigingen.
 2. **PR B – Core-pin en bootstrap:** Core v1.0.0-bestanden, config, lockfile, module-bootstrap, service-worker/precache en validators. Nog geen gebruikersdatamigratie.
@@ -219,21 +219,17 @@ De migratie gaat pas naar productie wanneer:
 
 Als één van deze voorwaarden niet is aangetoond, blijft de migratie in de featurebranch en blijft de oude app/data de actieve basis.
 
-## 14. Huidige stand
+## 14. Huidige stand en resterende acceptatie
 
-Peildatum: 15 november 2026. De actuele implementatie staat op `feat/pwa-core-migration-with-backups` in draft PR #40.
+Peildatum: 15 november 2026.
 
-- De actuele code-/test-head is `d25172e6b1e691ab11b2e18670b222f2a0569b64`. De vastgepinde PWA-Core v1.0.0-bestanden, manifestchecksums en service-worker-precache zijn op deze head gevalideerd: push-run #283 (`43745243662`) en PR-run #284 (`43745248202`). In `js/core/runtime.js` is de whitespace-normalisatie van base64-inhoud bij versieherstel gecorrigeerd.
-- De volledige Tests-workflow is op deze code-/test-head tweemaal geslaagd: push-run #435 (`43745243659`) en PR-run #436 (`43745248201`). Beide runs voltooiden `npm ci`, Playwright Chromium-installatie, HTML-validatie en `npm run test:all`; beide rapporteerden **128 geslaagde, 34 overgeslagen en 0 mislukte tests**. De suite duurde respectievelijk 2,2 en 2,4 minuten. De beveiligingstest voor synchroniseren bij het verlaten van de app wacht nu expliciet tot een eventuele samengevoegde initialisatie-sync is afgerond; zo wordt de meting niet beïnvloed door een vertraagde achtergrond-sync.
-- De huidige PR-head is `6e053d7186c556c51127dcfcd11e6bf36db3f77c` en bevat na de functionele code-/test-head alleen documentatie-updates. Ook deze actuele head is opnieuw gevalideerd: Tests-push-run #441 (`43748809392`) en PR-run #442 (`43748813711`) rapporteerden **128 passed, 34 skipped, 0 failed**; Core-pin/prescache-push-run #289 (`43748809318`) en PR-run #290 (`43748813752`) zijn eveneens groen.
-- De migratiewizard toont vóór de eerste Core-write aantallen transacties, collectie-items, koershistoriepunten en verwijdermarkeringen. Een 404 bij de oude GitHub-file wordt niet als bewijs van afwezigheid behandeld: de gebruiker krijgt ook de mogelijkheid van een foutieve repository, branch, pad of toegangsrechten te zien en moet lokale-only migratie afzonderlijk bevestigen.
-- Lokale migratie en nieuwe lege kluizen starten met synchronisatie uit. Ontbrekende/oude instellingen blijven uit; alleen expliciete activering via GitHub-instellingen of bewust importeren van een bestaande Core-kluis zet synchronisatie aan. Gewone saves veranderen deze toestemming niet.
-- Automatische sync-triggers, versiegeschiedenis, versie-preview en herstel respecteren dezelfde opt-in-grens. De regressietest controleert dat lijst-, preview- en herstelpogingen zonder toestemming worden geweigerd en geen GitHub-verzoeken veroorzaken.
-- De foutdoorlatende opslagadapter houdt mislukte writes vast totdat een latere volledige save succesvol is. Een flushfout verhindert vergrendeling; de actieve sessie blijft beschikbaar voor herstel.
-- De legacy-opslag blijft gescheiden van Core-opslag. De nieuwe Core-sync gebruikt uitsluitend `crypto-portfolio.pwa-core-v1.json`; de fallback na een mislukte Core-bootstrap start de legacy-interface met `allowSync:false`.
-- Alle recente tests gebruiken synthetische gegevens en mocks; er zijn geen echte gebruikersgegevens opgehaald, ontsleuteld of gemigreerd.
-- De originele SyncData-file `crypto-portfolio.enc.json` is niet opgehaald, ontsleuteld of gewijzigd. De nieuwe Core-file is niet aangemaakt in echte SyncData.
-- B07 fysieke acceptatie op een echte iPhone/iPad blijft **NOT RUN** en is een harde go/no-go-gate. Ook echte passkey-inschrijving, apparaatmigratie en synchronisatie tussen echte apparaten zijn nog niet uitgevoerd.
-- PR #40 blijft open en draft. Er is niet naar `main` geschreven en er is geen merge uitgevoerd.
+- **Integratie:** PR #40 is gemerged. De actuele `main`-head is `fbfbdeda3c4aab5ccb3054ce7e1f2f4b52e759e0`.
+- **Automatische controle:** GitHub Actions-testworkflow #43750271183 en Core-validatie #43750271224 zijn succesvol.
+- **Publicatie:** GitHub Pages-deploymentworkflow #43750266839 is succesvol. Dit bevestigt de geslaagde workflow, niet een handmatige browser-/runtimecontrole van de gepubliceerde pagina.
+- **Synthetische tests:** de migratie-PR rapporteerde 128 geslaagde, 34 overgeslagen en 0 mislukte tests; de laatste PR-checks op de toenmalige head waren groen. Er zijn geen echte gebruikersgegevens gebruikt.
+- **Legacybescherming:** de bestaande SyncData-file `crypto-portfolio.enc.json` is niet opgehaald, ontsleuteld of gewijzigd. De nieuwe Core-file is niet aangemaakt in echte SyncData. De oude lokale opslag blijft behouden.
+- **Synchronisatie:** Core-sync blijft opt-in; een echte activering of data-cutover is nog niet uitgevoerd.
+- **Nog uit te voeren:** geïsoleerde acceptatie met uitsluitend synthetische gegevens; fysieke iPhone/Safari- en Windows/Hello-tests; twee-apparatensynchronisatie; herstel-/rollbackcontrole; daarna B07 samen met de andere gemigreerde apps.
+- **Niet aangetoond:** een live functionele controle in de browser, echte passkey-inschrijving op apparaten en fysieke acceptatie. De succesvolle Pages-workflow mag niet als bewijs daarvoor worden geïnterpreteerd.
 
-**Volgende technische stap:** de automatische code- en regressiecontrole is afgerond; de gerichte controle van import-, sync-opt-in-, versie-preview- en herstelpaden is uitgevoerd. De volgende acceptatiestap blijft bewust uitgesteld totdat de overige PWA-migraties zijn afgerond: daarna B07 en de fysieke iPhone/iPad-, Windows/Hello- en twee-apparatentests uitvoeren. De echte data-cutover blijft een afzonderlijke stap en gebeurt niet zonder expliciete goedkeuring.
+**Volgende stap:** werk de fysieke en geïsoleerde acceptatie gefaseerd af. De echte SyncData-import, het aanmaken van de Core-file en het activeren van Core-sync blijven afzonderlijke handelingen en vereisen voorafgaande expliciete toestemming.
