@@ -13,6 +13,40 @@ export const LEGACY_KEYS = Object.freeze({
 });
 
 const clone = (value) => structuredClone(value ?? {});
+
+/** Geeft alleen aantallen terug voor de expliciete pre-importcontrole; geen recordinhoud. */
+export function summarizeLegacyData(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new TypeError('De legacy-data ontbreken of hebben een ongeldig formaat.');
+  }
+  const collectionKeys = ['watch', 'alerts', 'goals', 'plans', 'portfolios', 'allocs'];
+  const collections = collectionKeys.reduce((count, key) => count + (Array.isArray(data[key]) ? data[key].length : 0), 0);
+  const history = Object.values(data.hist && typeof data.hist === 'object' ? data.hist : {})
+    .reduce((count, series) => count + (Array.isArray(series)
+      ? series.length
+      : series && typeof series === 'object' ? Object.keys(series).length : 0), 0);
+  let tombstones = 0;
+  const visit = (value) => {
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+    if (!value || typeof value !== 'object') return;
+    if (value.del === true || value.deleted === true) tombstones++;
+    for (const [key, child] of Object.entries(value)) {
+      if (key !== SYSTEM_KEY) visit(child);
+    }
+  };
+  visit(data);
+  const deletedTransactions = Array.isArray(data.deleted) ? data.deleted.length : 0;
+  return Object.freeze({
+    transactions: Array.isArray(data.txs) ? data.txs.length : 0,
+    collections,
+    history,
+    deletionMarkers: deletedTransactions + tombstones,
+  });
+}
+
 const timestampOf = (record, fallback = 0) =>
   Number(record?.updatedAt ?? record?.mod ?? record?.updated ?? record?.created ?? fallback) || 0;
 
