@@ -76,6 +76,18 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   await page.locator('[data-core-action=migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   await page.waitForFunction(()=>localStorage.getItem('cpt:vault')!==null);
+  const historyAccess=await page.evaluate(async()=>{
+    const runtime=window.PWACoreV1.runtime;
+    const attempts=await Promise.allSettled([
+      runtime.listVersions(),
+      runtime.previewVersion('abcdef1234567'),
+      runtime.restoreVersion('abcdef1234567','test-password'),
+    ]);
+    return attempts.map(result=>result.status==='rejected'?result.reason.message:'unexpected-success');
+  });
+  const consentError='Activeer eerst Core-synchronisatie om GitHub-versies te openen.';
+  expect(historyAccess).toEqual([consentError,consentError,consentError]);
+  expect(githubCalls).toEqual([]);
   // Een gewone app-save mag de expliciete sync-toestemming niet inschakelen.
   await page.evaluate(()=>window.PWACoreV1.runtime.save(window.CryptoPortfolioLegacy.snapshot()));
   const consent=await page.evaluate(async()=>{
