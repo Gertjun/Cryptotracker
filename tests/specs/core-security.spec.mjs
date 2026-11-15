@@ -43,6 +43,7 @@ test('Core-wachtwoord wijzigen, passkey aanmaken en bestaande passkey opnieuw ko
       remoteSha='security-core-sha-'+(++writes);
       return route.fulfill({status:201,json:{content:{sha:remoteSha}}});
     }
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.enc.json'))return route.fulfill({status:404,json:{message:'Not Found'}});
     return route.fulfill({status:200,json:{private:true,default_branch:'main'}});
   });
 
