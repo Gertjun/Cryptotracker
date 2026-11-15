@@ -48,6 +48,7 @@ async function openMigratedCore(page,{raceAfterHistoryRead=false}={}){
       remoteSha=putBodies.length===1?'sha-current-1':'sha-restored-2';
       return route.fulfill({status:201,json:{content:{sha:remoteSha}}});
     }
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.enc.json'))return route.fulfill({status:404,json:{message:'Not Found'}});
     return route.fulfill({status:200,json:{private:true,default_branch:'main'}});
   });
 
