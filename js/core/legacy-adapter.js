@@ -123,7 +123,12 @@ export function createLegacyStorageAdapter(vault) {
     // Houd de wachtrij bruikbaar na een fout, maar verlies de fout niet:
     // flush() moet kunnen melden dat een eerdere opslag niet is gelukt.
     writes = run.then(
-      () => {},
+      () => {
+        // Een latere volledige snapshot herstelt eerdere mislukte saves.
+        for (let index = writeFailures.length - 1; index >= 0; index--) {
+          if (writeFailures[index].sequence < sequence) writeFailures.splice(index, 1);
+        }
+      },
       (error) => { writeFailures.push({ sequence, error }); },
     );
     return run;
@@ -173,8 +178,8 @@ export function createLegacyStorageAdapter(vault) {
       await pending;
       const failedIndex = writeFailures.findIndex((failure) => failure.sequence <= through);
       if (failedIndex !== -1) {
-        const [{ error }] = writeFailures.splice(failedIndex, 1);
-        throw error;
+        // Blijf de fout melden tot een latere volledige save succesvol is.
+        throw writeFailures[failedIndex].error;
       }
       await vault.flush();
     },
