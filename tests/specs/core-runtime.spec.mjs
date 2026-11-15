@@ -75,6 +75,7 @@ test('migratie voegt legacy GitHub-data read-only samen en laat oud remote besta
     if(request.method()==='PUT'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
       return route.fulfill({status:201,json:{content:{sha:'core-file-sha'}}});
     }
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.enc.json'))return route.fulfill({status:404,json:{message:'Not Found'}});
     return route.fulfill({status:200,json:{private:true,default_branch:'main'}});
   });
   await page.goto('/index.html');
@@ -210,6 +211,7 @@ test('Core-instellingen tonen wachtwoordbeheer, nieuwe passkey en Core-versieges
       remoteText=Buffer.from(JSON.parse(request.postData()).content,'base64').toString();
       return route.fulfill({status:201,json:{content:{sha:'synthetic-file-sha'}}});
     }
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.enc.json'))return route.fulfill({status:404,json:{message:'Not Found'}});
     return route.fulfill({status:200,json:{private:true,default_branch:'main'}});
   });
   await page.goto('/index.html');
