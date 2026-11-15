@@ -389,7 +389,10 @@ async function save(snapshot) {
   try {
     await adapter.save({
       ...snapshot,
-      coreDeviceSettings: { autoLockMinutes: deviceSettings.autoLockMinutes ?? 5 },
+      coreDeviceSettings: {
+        autoLockMinutes: deviceSettings.autoLockMinutes ?? 5,
+        syncEnabled: deviceSettings.syncEnabled,
+      },
       settings: { ...snapshot.settings, gh: {
         repo: `${deviceSettings.github?.owner || ''}/${deviceSettings.github?.repo || ''}`,
         token: deviceSettings.github?.token || '',
