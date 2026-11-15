@@ -358,6 +358,9 @@ function syncNow(silent = true) {
       }
       window.CryptoPortfolioLegacy.setSyncStatus('busy', '');
       try {
+        // Wacht ook op nog niet naar de vault doorgestuurde app-writes.
+        // vault.flush() alleen ziet uitsluitend writes die al in de vault-wachtrij staan.
+        await adapter.flush();
         await sync.syncNow({
           settings,
           merge: (local, remote) => window.CryptoPortfolioLegacy.merge(local, remote),
