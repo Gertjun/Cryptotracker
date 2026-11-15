@@ -162,9 +162,16 @@ async function createFromLegacy() {
   if (pw !== confirm) throw new Error('De wachtwoorden zijn niet gelijk.');
   const snapshot = window.CryptoPortfolioLegacy.snapshot();
   if (!snapshot.data || typeof snapshot.data !== 'object') throw new Error('De bestaande gegevens zijn niet beschikbaar.');
+  // Haal de bestaande legacy-remote alleen-lezen op en voeg die vóór de eerste
+  // Core-write samen. Bij een ongeldige/ontoegankelijke remote stopt migratie fail-closed.
+  const legacyRemote = await window.CryptoPortfolioLegacy.readLegacyRemote();
+  const migrationData = legacyRemote
+    ? window.CryptoPortfolioLegacy.merge(snapshot.data, legacyRemote)
+    : snapshot.data;
   await acquireSession();
   const migrationSnapshot = {
     ...snapshot,
+    data: migrationData,
     settings: { ...snapshot.settings, gh: {
       repo: `${$('#core-owner')?.value.trim() || ''}/${$('#core-repo')?.value.trim() || ''}`,
       token: $('#core-token')?.value.trim() || '',
