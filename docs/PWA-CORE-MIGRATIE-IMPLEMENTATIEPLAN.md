@@ -194,7 +194,7 @@ Een codebackup is geen gebruikersdatabackup. De migratiewizard moet daarom vóó
 
 ## 12. Historisch uitvoeringsplan in kleine, controleerbare PR-stappen
 
-1. **PR A – Voorbereiding en backupbeleid:** huidige draft PR #40; documentatie, backups en uitsluiting van Pages/release. Geen runtimewijzigingen.
+1. **PR A – Voorbereiding en backupbeleid:** uitgevoerd als onderdeel van PR #40 (inmiddels gemerged); documentatie, backups en uitsluiting van Pages/release. Geen runtimewijzigingen in deze stap.
 2. **PR B – Core-pin en bootstrap:** Core v1.0.0-bestanden, config, lockfile, module-bootstrap, service-worker/precache en validators. Nog geen gebruikersdatamigratie.
 3. **PR C – Opslagadapter:** Core vault achter de bestaande UI, foutafhandeling, Web Locks en lokale synthetische tests. Legacy opslag blijft intact; legacy sync nog niet uitgezet.
 4. **PR D – Datamodel en sync-adapter:** mergefunctie, tombstonevertaling, Core GitHub-client, nieuw remote pad en tests die oude PUT blokkeren.
