@@ -1,6 +1,6 @@
 # Cryptotracker – volledig PWA-Core-migratieplan
 
-Status: voorbereid plan; nog geen runtime- of gebruikersdatamigratie uitgevoerd  
+Status: implementatie in draft PR #40; geen echte gebruikersdatamigratie of data-cutover uitgevoerd  
 Doelbranch: `feat/pwa-core-migration-with-backups`  
 Basisapp: `main` op `d1d380408cda9cec6e3dc777c89610d16f681b47` (appversie 4.0.2)  
 Core-pin: PWA-Core `v1.0.0`, releasecommit `1a9c31f489290853fdc3aa4e62f199b21a338030`
@@ -216,9 +216,16 @@ Als één van deze voorwaarden niet is aangetoond, blijft de migratie in de feat
 
 ## 14. Huidige stand
 
-- Cryptotracker `main` is tijdens de planvoorbereiding opnieuw gecontroleerd op commit `d1d3804`.
-- Draft PR #40 bevat de voorbereidende backupmaatregelen.
-- De twee bestaande backupbestanden zijn exact vergeleken met hun bronbestanden.
-- GitHub Actions Tests-run #123 op PR #40 is afgerond met conclusie `success`; de stap `npm run test:all` is geslaagd.
-- Er zijn nog geen runtimebestanden van Cryptotracker gewijzigd, geen Core-bestanden in de app geïntegreerd en geen gebruikersgegevens gemigreerd.
-- De originele SyncData-file is niet opgehaald, ontsleuteld of gewijzigd.
+Peildatum: 15 november 2026. De actuele implementatie staat op `feat/pwa-core-migration-with-backups` in draft PR #40.
+
+- De PWA-Core v1.0.0-pin, manifestchecksums en service-worker-precache zijn gevalideerd; GitHub Actions-run #122 (`validate-core-pin`) is geslaagd.
+- De module-bootstrap, Core-configuratie, opslagadapter, Core-vault, sync-gate, versiegeschiedenis/herstel en passkey-integratie zijn op de featurebranch aanwezig.
+- De legacy-opslag blijft gescheiden van Core-opslag. De nieuwe Core-sync gebruikt uitsluitend `crypto-portfolio.pwa-core-v1.json`; de fallback na een mislukte Core-bootstrap start de legacy-interface met `allowSync:false`.
+- GitHub Actions Tests-run #274 op head `e8cc1c04663eadd0270494c23f6b540f856004de` is geslaagd: **121 passed, 34 skipped**. Eén bestaande timinggevoelige test (`meebewegen met bitcoin`) faalde eerst en slaagde bij retry; de run markeert die als flaky, niet als blijvende failure.
+- De nieuwe regressietest `mislukte Core-bootstrap start legacy zonder legacy-GitHub-sync` is geslaagd.
+- De tests gebruiken synthetische gegevens en mocks. Er zijn geen echte gebruikersgegevens opgehaald, ontsleuteld of gemigreerd.
+- De originele SyncData-file `crypto-portfolio.enc.json` is niet opgehaald, ontsleuteld of gewijzigd. De nieuwe Core-file is niet aangemaakt in echte SyncData.
+- B07 fysieke acceptatie op een echte iPhone/iPad blijft **NOT RUN** en is een harde go/no-go-gate. Ook echte passkey-inschrijving, apparaatmigratie en synchronisatie tussen echte apparaten zijn nog niet uitgevoerd.
+- PR #40 blijft open en draft. Er is niet naar `main` geschreven en er is geen merge uitgevoerd.
+
+**Volgende technische stap:** de migratiecode en testdekking verder auditen op randgevallen en foutafhandeling. Daarna volgt de afgesproken fysieke acceptatie; pas na expliciete goedkeuring kan een echte data-cutover worden gepland.
