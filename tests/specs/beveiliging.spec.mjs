@@ -44,7 +44,12 @@ test('kort wachtwoord mag wel als er al een bestand op GitHub staat',async({page
 test('wijzigingen gaan samen naar GitHub, en direct bij het verlaten van de app',async({page})=>{
   const st={file:null,puts:0};await fakeGitHub(st)(page);await openApp(page);
   await page.evaluate(()=>{Object.assign(settings.gh,{token:'t',repo:'u/r',pass:'paars konijn op de fiets',branch:'main',path:'p.json'});saveSettings()});
-  await page.evaluate(()=>syncNow(false));await page.waitForFunction(()=>syncState.s==='ok');
+  await page.evaluate(()=>syncNow(false));
+  // syncState wordt vlak vóór de finally-afhandeling op 'ok' gezet. Wacht ook
+  // op een eventuele samengevoegde follow-up-sync uit de initialisatie.
+  await page.waitForFunction(()=>syncState.s==='ok'&&!syncing);
+  await page.waitForTimeout(1000);
+  await page.waitForFunction(()=>syncState.s==='ok'&&!syncing);
   const before=st.puts;
   await page.evaluate(()=>{for(let i=0;i<3;i++){(data.watch=data.watch||[]).push({id:'w'+i,coinId:'bitcoin',mod:Date.now()+i});saveData()}});
   await page.waitForTimeout(2500);

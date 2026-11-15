@@ -61,6 +61,8 @@ test('meebewegen met bitcoin (W44)',async({page})=>{
   // bitcoin zelf beweegt precies mee
   await expect(card.locator('tr',{hasText:'(zelf)'})).toContainText('−10,0%');
   await expect(card.locator('tr',{hasText:'(zelf)'})).toContainText('sterk');
+  // Wacht tot de asynchrone koershistorie is bijgewerkt; anders vergelijken we twee verschillende snapshots.
+  await expect(card.getByText('Koersen van het afgelopen jaar ophalen…')).toHaveCount(0,{timeout:30000});
   // de waarde in de tabel is dezelfde bèta als de berekening
   const want=await page.evaluate(()=>{const B=new Map(dailySeries('bitcoin'));return pct1(-btcBeta(dailySeries('ethereum'),B).beta*10)});
   expect(want).toMatch(/%$/);

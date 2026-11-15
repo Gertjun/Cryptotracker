@@ -1,6 +1,34 @@
 // Service worker: app werkt offline; koersen en GitHub-sync gaan altijd via het netwerk.
-const CACHE = 'crypto-portfolio-4.0.2';
-const SHELL = ['./', 'index.html', 'app.js', 'manifest.json', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'crypto-portfolio-4.0.2-core2';
+const PRECACHE = [
+  "index.html",
+  "app.js",
+  "manifest.json",
+  "icon.svg",
+  "icon-180.png",
+  "icon-192.png",
+  "icon-512.png",
+  "js/bootstrap.js",
+  "js/core/legacy-adapter.js",
+  "js/core/runtime.js",
+  "js/config.js",
+  "core-manifest.json",
+  "pwa-core.lock.json",
+  "css/base.css",
+  "js/core/biometric.js",
+  "js/core/crypto.js",
+  "js/core/deletions.js",
+  "js/core/dom.js",
+  "js/core/github.js",
+  "js/core/nav.js",
+  "js/core/pair.js",
+  "js/core/records.js",
+  "js/core/shell.js",
+  "js/core/sync.js",
+  "js/core/ui.js",
+  "js/core/vault.js"
+];
+const SHELL = PRECACHE;
 
 self.addEventListener('install', e => {
   // cache: 'reload' = altijd vers van de server, niet uit de browsercache (GitHub Pages laat bestanden 10 minuten bewaren)

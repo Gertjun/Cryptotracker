@@ -1,0 +1,4 @@
+# GitHub Pages publiceert de app vanaf de repository-root.
+# Herstelbackups zijn alleen voor broncodeherstel en mogen niet publiek via Pages staan.
+exclude:
+  - backup/
