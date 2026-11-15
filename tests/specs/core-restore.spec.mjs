@@ -73,6 +73,8 @@ async function openMigratedCore(page,{raceAfterHistoryRead=false}={}){
   await page.locator('#core-password').fill(PASSWORD);
   await page.locator('#core-password-confirm').fill(PASSWORD);
   await page.locator('[data-core-action=migrate]').click();
+  await expect(page.locator('#core-gate')).toContainText('Er is geen bestaand SyncData-bestand ingelezen');
+  await page.locator('[data-core-action=confirm-migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   // Lokale migratie geeft geen synchronisatietoestemming; dit testscenario
   // activeert GitHub-synchronisatie expliciet voordat herstel wordt getest.
