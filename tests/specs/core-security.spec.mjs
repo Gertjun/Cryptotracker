@@ -51,6 +51,10 @@ test('Core-wachtwoord wijzigen, passkey aanmaken en bestaande passkey opnieuw ko
   await page.locator('#core-password-confirm').fill(CURRENT_PASSWORD);
   await page.locator('[data-core-action=migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  // De migratie is lokaal; deze beveiligingstest geeft daarna bewust toestemming.
+  await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({
+    owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main',
+  }));
   await page.waitForFunction(()=>window.PWACoreV1?.vault?.getSyncMeta?.().sha==='security-core-sha-1');
 
   await page.evaluate(()=>{location.hash='#instellingen'});
