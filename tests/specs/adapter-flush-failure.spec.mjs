@@ -29,6 +29,7 @@ test('adapter.flush geeft een eerdere opslagfout door en laat vervolgschrijfacti
   });
   expect(result.saveError).toBe('synthetic quota failure');
   expect(result.flushError).toBe('synthetic quota failure');
-  expect(result.flushCalls).toBe(1);
+  // save() flushes its write; adapter.flush() then verifies the queue is drained.
+  expect(result.flushCalls).toBe(2);
   expect(result.stored.txs).toEqual([{ id: 'retry-ok' }]);
 });
