@@ -40,8 +40,10 @@ test('legacy openen voor Core-migratie start geen oude GitHub-sync',async({page}
   expect(githubCalls).toEqual([]);
 });
 
-test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemoeid',async({page})=>{
+test('migratie voegt legacy GitHub-data read-only samen en laat oud remote bestand ongemoeid',async({page})=>{
   const githubCalls=[];
+  let legacyEnvelopeText=null;
+  let legacyWrites=0;
   await page.addInitScript(()=>{
     localStorage.setItem('cpt.data',JSON.stringify({
       v:1,updated:1700000000000,deleted:[],
@@ -61,6 +63,12 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   await page.route('https://api.github.com/**',async route=>{
     const request=route.request(),url=new URL(request.url());
     githubCalls.push({method:request.method(),path:url.pathname});
+    if(url.pathname.endsWith('/contents/crypto-portfolio.enc.json')){
+      if(request.method()==='GET')return route.fulfill({json:{
+        sha:'legacy-blob-sha',encoding:'base64',content:Buffer.from(legacyEnvelopeText).toString('base64'),
+      }});
+      if(request.method()==='PUT'){legacyWrites++;return route.fulfill({status:500,json:{message:'Legacy writes are forbidden'}});}
+    }
     if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
       return route.fulfill({status:404,json:{message:'Not Found'}});
     }
@@ -70,6 +78,25 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
     return route.fulfill({status:200,json:{private:true,default_branch:'main'}});
   });
   await page.goto('/index.html');
+  legacyEnvelopeText=await page.evaluate(async()=>{
+    const password='legacy-password';
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:600000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt']);
+    const remote={
+      v:1,updated:1700000001000,deleted:[],
+      txs:[
+        {id:'legacy-tx-1',type:'buy',coinId:'bitcoin',qty:0.1,price:26000,fee:0,date:'2025-01-01',mod:1700000001000},
+        {id:'legacy-remote-tx',type:'buy',coinId:'ethereum',qty:2,price:1500,fee:0,date:'2024-12-01',mod:1700000001000},
+      ],
+      watch:[],alerts:[],goals:[],plans:[],portfolios:[],allocs:[],
+      hist:{ethereum:{1500:[1700000001000,1500]}},
+    };
+    const encrypted=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(remote)));
+    const b64=bytes=>btoa(String.fromCharCode(...bytes));
+    return JSON.stringify({v:1,alg:'AES-GCM/PBKDF2-SHA256',it:600000,salt:b64(salt),iv:b64(iv),ct:b64(new Uint8Array(encrypted))});
+  });
   await expect(page.locator('[data-core-action=migrate]')).toBeVisible();
   await page.locator('#core-password').fill('correct horse battery staple');
   await page.locator('#core-password-confirm').fill('correct horse battery staple');
@@ -87,7 +114,9 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   });
   const consentError='Activeer eerst Core-synchronisatie om GitHub-versies te openen.';
   expect(historyAccess).toEqual([consentError,consentError,consentError]);
-  expect(githubCalls).toEqual([]);
+  expect(githubCalls.filter(call=>call.path.endsWith('/contents/crypto-portfolio.enc.json')&&call.method==='GET')).toHaveLength(1);
+  expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.pwa-core-v1.json'))).toBe(false);
+  expect(legacyWrites).toBe(0);
   // Een gewone app-save mag de expliciete sync-toestemming niet inschakelen.
   await page.evaluate(()=>window.PWACoreV1.runtime.save(window.CryptoPortfolioLegacy.snapshot()));
   const consent=await page.evaluate(async()=>{
@@ -95,8 +124,9 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
     return (await vault.getDeviceSettings()).syncEnabled;
   });
   expect(consent).toBe(false);
-  // Lokale migratie schrijft nog niet naar GitHub; de eerste sync vereist een aparte actie.
-  expect(githubCalls).toEqual([]);
+  // Alleen de legacy-GET vond plaats; Core-sync vereist nog steeds een aparte actie.
+  expect(githubCalls.filter(call=>call.path.endsWith('/contents/crypto-portfolio.pwa-core-v1.json'))).toEqual([]);
+  expect(legacyWrites).toBe(0);
   await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main'}));
   await page.waitForFunction(()=>window.PWACoreV1?.vault?.getSyncMeta?.().sha==='core-file-sha');
   const result=await page.evaluate(async()=>{
@@ -112,8 +142,10 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
       coreVault:localStorage.getItem('cpt:vault'),
     };
   });
-  expect(result.payload.txs).toHaveLength(1);
-  expect(result.payload.txs[0].id).toBe('legacy-tx-1');
+  expect(result.payload.txs).toHaveLength(2);
+  expect(result.payload.txs.find(tx=>tx.id==='legacy-tx-1').price).toBe(26000);
+  expect(result.payload.txs.some(tx=>tx.id==='legacy-remote-tx')).toBe(true);
+  expect(result.payload.hist.ethereum).toBeTruthy();
   expect(result.payload.schema).toBe(1);
   expect(result.payload).toHaveProperty('__pwaSync');
   expect(result.device.github.path).toBe('crypto-portfolio.pwa-core-v1.json');
@@ -126,7 +158,9 @@ test('migratie schrijft naar Core en laat legacy-opslag en oud remote pad ongemo
   expect(result.legacyPrices).toContain('25000');
   expect(result.legacyVault).toBeNull();
   expect(result.coreVault).not.toBeNull();
-  expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.enc.json'))).toBe(false);
+  expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.enc.json')&&call.method==='GET')).toBe(true);
+  expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.enc.json')&&call.method==='PUT')).toBe(false);
+  expect(legacyWrites).toBe(0);
   await page.evaluate(()=>{
     window.dispatchEvent(new StorageEvent('storage',{key:'cpt.data',newValue:JSON.stringify({
       v:1,updated:Date.now(),deleted:[],
