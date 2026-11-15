@@ -135,6 +135,10 @@ Core synchroniseert uitsluitend met `crypto-portfolio.pwa-core-v1.json`. De best
 
 De GitHub-configuratie wordt vertaald van het oude `owner/repo`-veld naar Core's afzonderlijke `owner`, `repo`, `branch`, `path` en `token`. Het token wordt apparaatgebonden en versleuteld bewaard. De Core-kluis gebruikt zijn eigen wachtwoord- en datasleutelstructuur; het oude syncwachtwoord wordt niet als Core-encryptiesleutel hergebruikt zonder expliciete gebruikerskeuze.
 
+**Synchronisatie is expliciet opt-in.** Een lokale migratie of het aanmaken van een lege kluis zet `syncEnabled` op `false`. Ontbrekende of oudere apparaatinstellingen worden eveneens als uit behandeld; alleen de letterlijke waarde `true` activeert synchronisatie. Automatische start-, periodieke-, online- en visibility-triggers doen zonder die toestemming geen GitHub-verzoeken. Een gewone app-save kan de toestemming niet inschakelen. De gebruiker activeert sync via de expliciete GitHub-instellingenactie (`updateGitHub)); het bewust importeren/openen van een bestaande Core-kluis vanaf GitHub activeert sync voor dat apparaat. Ook versiegeschiedenis, preview en herstel zijn achter dezelfde toestemmingscontrole geplaatst. Een poging zonder toestemming wordt lokaal geweigerd voordat de GitHub-client wordt aangeroepen.
+
+Opslagfouten blijven zichtbaar voor de flush-/lockgrens: een mislukte write wordt niet stil uit de wachtrij verwijderd. De fout blijft flush blokkeren totdat een latere volledige snapshot-save succesvol is. Vergrendelen laat bij een flushfout de sessie actief, zodat de gebruiker opnieuw kan opslaan in plaats van de enige actuele geheugenkopie kwijt te raken.
+
 Uitrolvolgorde:
 1. Vooraf synchroniseren alle bestaande apparaten met de legacy-app en bevestigen ze dat ze up-to-date zijn.
 2. Vanaf het cutovermoment worden geen nieuwe wijzigingen meer in de oude app gemaakt.
@@ -218,14 +222,15 @@ Als één van deze voorwaarden niet is aangetoond, blijft de migratie in de feat
 
 Peildatum: 15 november 2026. De actuele implementatie staat op `feat/pwa-core-migration-with-backups` in draft PR #40.
 
-- De PWA-Core v1.0.0-pin, manifestchecksums en service-worker-precache zijn gevalideerd; GitHub Actions-run #154 (`validate-core-pin`) is geslaagd.
-- De module-bootstrap, Core-configuratie, opslagadapter, Core-vault, sync-gate, versiegeschiedenis/herstel en passkey-integratie zijn op de featurebranch aanwezig.
+- De PWA-Core v1.0.0-pin, manifestchecksums en service-worker-precache zijn gevalideerd. De meest recente PWA-Core validation-runs op PR-head `0ed688dedec95050e33f91ae8f700b7fa29305ff` zijn beide geslaagd: push-run #43712071816 en PR-run #43712076831.
+- De volledige Tests-workflow is voor dezelfde exacte head geslaagd: push-run #43712071847 en PR-run #43712076847. De stappen `npm ci`, Playwright Chromium-installatie en `npm run test:all` zijn alle succesvol afgerond. Er wordt hier geen exact aantal tests vermeld omdat de runlogs niet als controleerbaar testrapport zijn vastgelegd in deze statusnotitie.
+- Lokale migratie en nieuwe lege kluizen starten met synchronisatie uit. Ontbrekende/oude instellingen blijven uit; alleen expliciete activering via GitHub-instellingen of bewust importeren van een bestaande Core-kluis zet synchronisatie aan. Gewone saves veranderen deze toestemming niet.
+- Automatische sync-triggers, versiegeschiedenis, versie-preview en herstel respecteren dezelfde opt-in-grens. De regressietest controleert dat lijst-, preview- en herstelpogingen zonder toestemming worden geweigerd en geen GitHub-verzoeken veroorzaken.
+- De foutdoorlatende opslagadapter houdt mislukte writes vast totdat een latere volledige save succesvol is. Een flushfout verhindert vergrendeling; de actieve sessie blijft beschikbaar voor herstel.
 - De legacy-opslag blijft gescheiden van Core-opslag. De nieuwe Core-sync gebruikt uitsluitend `crypto-portfolio.pwa-core-v1.json`; de fallback na een mislukte Core-bootstrap start de legacy-interface met `allowSync:false`.
-- De meest recente GitHub Actions-controles voor PR-head `6b07ad53240abc86eefa7604d091da9132ce6c09` zijn geslaagd: Tests-run #306 (`43708217151`) en PWA-Core validation-run #154 (`43708217155`). De testworkflow draaide op de GitHub PR-merge-ref en rapporteerde **126 passed, 34 skipped**; beide nieuwe foutafhandelingstests zijn expliciet geslaagd.
-- De regressietests `adapter.flush geeft een eerdere opslagfout door en laat vervolgschrijfacties toe` en `Core blijft ontgrendeld wanneer opslaan vóór vergrendelen mislukt` zijn beide geslaagd. De eerste controleert ook dat een opslagfout bij herhaald flushen blijft bestaan totdat een latere volledige save slaagt.
-- De testresultaten zijn afkomstig van synthetische gegevens en mocks; er zijn geen echte gebruikersgegevens opgehaald, ontsleuteld of gemigreerd.
+- Alle recente tests gebruiken synthetische gegevens en mocks; er zijn geen echte gebruikersgegevens opgehaald, ontsleuteld of gemigreerd.
 - De originele SyncData-file `crypto-portfolio.enc.json` is niet opgehaald, ontsleuteld of gewijzigd. De nieuwe Core-file is niet aangemaakt in echte SyncData.
 - B07 fysieke acceptatie op een echte iPhone/iPad blijft **NOT RUN** en is een harde go/no-go-gate. Ook echte passkey-inschrijving, apparaatmigratie en synchronisatie tussen echte apparaten zijn nog niet uitgevoerd.
 - PR #40 blijft open en draft. Er is niet naar `main` geschreven en er is geen merge uitgevoerd.
 
-**Volgende technische stap:** gerichte audit van de resterende sync-, herstel- en sessierandgevallen. Daarna volgt de afgesproken fysieke acceptatie; pas na expliciete goedkeuring kan een echte data-cutover worden gepland.
+**Volgende technische stap:** gerichte eindcontrole van de versieherstel- en importpaden, gevolgd door een beoordeling of de automatische migratie veilig klaar is voor fysieke acceptatie. B07 en echte apparaat-/dataacceptatie blijven afzonderlijke gates; er wordt geen echte data-cutover uitgevoerd zonder expliciete goedkeuring.
