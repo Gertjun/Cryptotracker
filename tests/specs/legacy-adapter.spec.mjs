@@ -1,5 +1,22 @@
 import {test,expect} from '@playwright/test';
 
+test('legacy-adapter geeft een privacyveilig pre-importoverzicht met aantallen',async({page})=>{
+  await page.goto('/');
+  const result=await page.evaluate(async()=>{
+    const {summarizeLegacyData}=await import('/js/core/legacy-adapter.js');
+    return summarizeLegacyData({
+      txs:[{id:'tx-1'},{id:'tx-2',del:true}],
+      watch:[{id:'w-1'},{id:'w-2'}],
+      alerts:[{id:'a-1'}],
+      hist:{btc:{'2026-01-01':1,'2026-01-02':2},eth:{'2026-01-01':3}},
+      deleted:['tx-old'],
+      plans:[{id:'p-1',deleted:true}],
+    });
+  });
+  expect(result).toEqual({transactions:2,collections:4,history:3,deletionMarkers:3});
+});
+
+
 test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({page})=>{
   await page.goto('/');
   const result=await page.evaluate(async()=>{
