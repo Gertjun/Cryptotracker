@@ -23,12 +23,14 @@ test('adapter.flush geeft een eerdere opslagfout door en laat vervolgschrijfacti
     const snapshot = { data: { v: 1, txs: [{ id: 'retry-ok' }], deleted: [] }, settings: {}, prices: {} };
     const saveError = await adapter.save(snapshot).then(() => '', error => error.message);
     const flushError = await adapter.flush().then(() => '', error => error.message);
+    const repeatedFlushError = await adapter.flush().then(() => '', error => error.message);
     await adapter.save(snapshot);
     await adapter.flush();
-    return { saveError, flushError, flushCalls, stored };
+    return { saveError, flushError, repeatedFlushError, flushCalls, stored };
   });
   expect(result.saveError).toBe('synthetic quota failure');
   expect(result.flushError).toBe('synthetic quota failure');
+  expect(result.repeatedFlushError).toBe('synthetic quota failure');
   // save() flushes its write; adapter.flush() then verifies the queue is drained.
   expect(result.flushCalls).toBe(2);
   expect(result.stored.txs).toEqual([{ id: 'retry-ok' }]);
