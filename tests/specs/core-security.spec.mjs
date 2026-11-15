@@ -51,6 +51,8 @@ test('Core-wachtwoord wijzigen, passkey aanmaken en bestaande passkey opnieuw ko
   await page.locator('#core-password').fill(CURRENT_PASSWORD);
   await page.locator('#core-password-confirm').fill(CURRENT_PASSWORD);
   await page.locator('[data-core-action=migrate]').click();
+  await expect(page.locator('#core-gate')).toContainText('Er is geen bestaand SyncData-bestand ingelezen');
+  await page.locator('[data-core-action=confirm-migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   // De eenmalige migratie mag het oude bestand alleen-lezen ophalen. Vanaf dit
   // punt mag Core het oude bestand niet meer benaderen.
