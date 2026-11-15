@@ -73,6 +73,11 @@ async function openMigratedCore(page,{raceAfterHistoryRead=false}={}){
   await page.locator('#core-password-confirm').fill(PASSWORD);
   await page.locator('[data-core-action=migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  // Lokale migratie geeft geen synchronisatietoestemming; dit testscenario
+  // activeert GitHub-synchronisatie expliciet voordat herstel wordt getest.
+  await page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({
+    owner:'Gertjun',repo:'SyncData',token:'test-token',branch:'main',
+  }));
   await page.waitForFunction(()=>window.PWACoreV1?.vault?.getSyncMeta?.().sha==='sha-current-1');
   return {
     getRemote:()=>remoteText,
