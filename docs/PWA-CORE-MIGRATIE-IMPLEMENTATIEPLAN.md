@@ -105,11 +105,12 @@ De import gebeurt in de browser, nadat de gebruiker de bestaande lokale kluis he
 2. Lees het bestaande SyncData-bestand uitsluitend met GET, via de bestaande GitHub-instellingen en het bestaande legacy-syncwachtwoord. Ondersteun ook de GitHub-respons voor bestanden groter dan 1 MB.
 3. Ontsleutel de legacy-envelop alleen in het geheugen van de browser.
 4. Combineer lokale en remote legacy-data met de bestaande mergefunctie. De import stopt bij een onduidelijke, ongeldige of nieuwere gegevensversie; er wordt dan niets geschreven.
-5. Toon een controleoverzicht met aantallen transacties, collecties, koershistorie en verwijdermarkeringen. Toon geen gevoelige recordinhoud.
-6. Maak de Core-kluis aan met een door de gebruiker gekozen Core-kluiswachtwoord. De gebruiker kan bewust hetzelfde wachtwoord kiezen als voorheen, maar de nieuwe Core-envelop en sleutelafleiding blijven nieuw.
-7. Schrijf de gemigreerde data eerst naar de nieuwe lokale Core-opslag en lees die na flush terug voor een structurele vergelijking.
-8. Pas na geslaagde lokale verificatie mag de app de nieuwe Core-envelop naar het nieuwe SyncData-pad schrijven. Deze externe datastap vereist vooraf expliciete goedkeuring.
-9. Laat alle legacy-opslag en het oude remote bestand ongemoeid.
+5. Als het oude remote bestand met HTTP 404 ontbreekt, mag de app niet stilzwijgend alleen lokaal migreren. Toon expliciet dat remote gegevens niet zijn ingelezen en vraag een afzonderlijke bevestiging voor een lokale-only import. Bij andere lees-/authenticatiefouten stopt de migratie.
+6. Toon vóór de eerste Core-write een controleoverzicht met aantallen transacties, collectie-items, koershistoriepunten en verwijdermarkeringen. Toon geen gevoelige recordinhoud.
+7. Maak de Core-kluis aan met een door de gebruiker gekozen Core-kluiswachtwoord. De gebruiker kan bewust hetzelfde wachtwoord kiezen als voorheen, maar de nieuwe Core-envelop en sleutelafleiding blijven nieuw.
+8. Schrijf de gemigreerde data eerst naar de nieuwe lokale Core-opslag en lees die na flush terug voor een structurele vergelijking.
+9. Pas na geslaagde lokale verificatie mag de app de nieuwe Core-envelop naar het nieuwe SyncData-pad schrijven. Deze externe datastap vereist vooraf expliciete goedkeuring.
+10. Laat alle legacy-opslag en het oude remote bestand ongemoeid.
 
 De import is idempotent: opnieuw starten mag geen transacties dupliceren, verwijderingen terugdraaien of de oude remote file wijzigen.
 
