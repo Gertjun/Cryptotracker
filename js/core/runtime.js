@@ -343,7 +343,7 @@ async function readVersionEnvelope(sha) {
     encoded = blob.content;
   }
   if (!encoded) throw new Error('De Core-versie bevat geen leesbare kluisinhoud.');
-  const bytes = Uint8Array.from(atob(encoded.replace(/\\s/g, '')), char => char.charCodeAt(0));
+  const bytes = Uint8Array.from(atob(encoded.replace(/\s/g, '')), char => char.charCodeAt(0));
   const envelope = JSON.parse(new TextDecoder().decode(bytes));
   vault.validateEnvelope(envelope);
   return envelope;
