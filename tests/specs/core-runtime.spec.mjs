@@ -494,3 +494,106 @@ test('Core sync retries a stale concurrent SHA and preserves changes from two in
   await A.context.close();
   await B.context.close();
 });
+
+
+test('Core sync retains an offline edit across reload and merges a remote device edit',async({browser})=>{
+  let remoteText=null,remoteVersion=0;
+  const attachGitHub=async page=>page.route('https://api.github.com/**',async route=>{
+    const request=route.request(),url=new URL(request.url());
+    if(request.method()==='OPTIONS')return route.fulfill({status:204,headers:{
+      'access-control-allow-origin':'*',
+      'access-control-allow-methods':'GET, PUT, OPTIONS',
+      'access-control-allow-headers':'authorization,accept,x-github-api-version,content-type',
+    }});
+    if(request.method()==='GET'&&url.pathname==='/repos/Gertjun/SyncData'){
+      return route.fulfill({json:{private:true,default_branch:'main'}});
+    }
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      if(!remoteText)return route.fulfill({status:404,json:{message:'Not Found'}});
+      return route.fulfill({json:{
+        sha:'offline-sha-'+remoteVersion,encoding:'base64',
+        content:Buffer.from(remoteText).toString('base64'),
+      }});
+    }
+    if(request.method()==='PUT'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      const body=JSON.parse(request.postData());
+      const currentSha=remoteText?'offline-sha-'+remoteVersion:null;
+      if(currentSha&&body.sha!==currentSha)return route.fulfill({status:409,json:{message:'SHA conflict'}});
+      remoteText=Buffer.from(body.content,'base64').toString();
+      remoteVersion++;
+      return route.fulfill({status:remoteVersion===1?201:200,json:{content:{sha:'offline-sha-'+remoteVersion}}});
+    }
+    return route.fulfill({status:404,json:{message:'Not Found'}});
+  });
+  const contextA=await browser.newContext({viewport:{width:1280,height:800}});
+  const pageA=await contextA.newPage();
+  await attachGitHub(pageA);
+  await pageA.goto('/index.html');
+  const password='offline shared core password 123';
+  await pageA.locator('#core-password').fill(password);
+  await pageA.locator('#core-password-confirm').fill(password);
+  await pageA.locator('[data-core-action=empty]').click();
+  await pageA.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await pageA.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({
+    owner:'Gertjun',repo:'SyncData',token:'synthetic-token',branch:'main',
+  }));
+
+  const contextB=await browser.newContext({viewport:{width:1280,height:800}});
+  const pageB=await contextB.newPage();
+  await attachGitHub(pageB);
+  await pageB.goto('/index.html');
+  await pageB.locator('#core-gate details summary').click();
+  await pageB.locator('#core-owner').fill('Gertjun');
+  await pageB.locator('#core-repo').fill('SyncData');
+  await pageB.locator('#core-token').fill('synthetic-token');
+  await pageB.locator('#core-branch').fill('main');
+  await pageB.locator('#core-password').fill(password);
+  await pageB.locator('[data-core-action=import]').click();
+  await pageB.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await pageB.waitForFunction(async()=>{
+    const vault=await import('/js/core/vault.js');
+    const meta=vault.getSyncMeta();
+    return typeof meta.sha==='string'&&meta.sha.startsWith('offline-sha-')&&!meta.dirty;
+  });
+
+  await pageB.evaluate(async()=>{
+    const vault=await import('/js/core/vault.js');
+    const data=structuredClone(vault.getData());
+    data.txs.push({id:'online-device-change',type:'buy',coinId:'ethereum',qty:2,price:200,fee:0,date:'2026-11-16',created:2,mod:1700000000002});
+    await vault.setData(data);
+    await window.PWACoreV1.runtime.syncNow(false);
+  });
+
+  await contextA.setOffline(true);
+  await pageA.evaluate(async()=>{
+    const vault=await import('/js/core/vault.js');
+    const data=structuredClone(vault.getData());
+    data.txs.push({id:'offline-device-change',type:'buy',coinId:'bitcoin',qty:1,price:100,fee:0,date:'2026-11-16',created:1,mod:1700000000001});
+    await vault.setData(data);
+    await vault.flush();
+  });
+  await pageA.close();
+
+  await contextA.setOffline(false);
+  const recoveredPage=await contextA.newPage();
+  await attachGitHub(recoveredPage);
+  await recoveredPage.goto('/index.html');
+  await recoveredPage.locator('#core-unlock-password').fill(password);
+  await recoveredPage.locator('#core-unlock-form button[type=submit]').click();
+  await recoveredPage.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await recoveredPage.waitForFunction(async()=>{
+    const vault=await import('/js/core/vault.js');
+    const meta=vault.getSyncMeta();
+    return typeof meta.sha==='string'&&meta.sha.startsWith('offline-sha-')&&!meta.dirty;
+  });
+
+  const finalData=await recoveredPage.evaluate(async raw=>{
+    const vault=await import('/js/core/vault.js');
+    return vault.decryptRemote(JSON.parse(raw));
+  },remoteText);
+  const ids=finalData.txs.map(tx=>tx.id);
+  expect(ids).toContain('offline-device-change');
+  expect(ids).toContain('online-device-change');
+  await contextA.close();
+  await contextB.close();
+});
