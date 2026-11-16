@@ -1,4 +1,4 @@
-// App-configuratie voor de vastgepinde PWA-Core v1.0.0.
+// App-configuratie voor de vastgepinde PWA-Core v1.1.0.
 export const APP = {
   name: 'Crypto Portfolio',
   version: '4.0.2',
