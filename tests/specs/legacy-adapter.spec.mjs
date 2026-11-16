@@ -154,3 +154,56 @@ test('legacy-adapter koppelt bestaande passkey aan de Core-datasleutel via de Co
   });
   expect(result).toEqual({sameKey:true,outcome:'enrolled'});
 });
+
+
+test('Cryptotracker merge is deterministic for equal timestamps and preserves disjoint settings edits',async({page})=>{
+  await page.goto('/');
+  const result=await page.evaluate(()=>{
+    const merge=window.CryptoPortfolioLegacy.merge;
+    const a={
+      v:1,deleted:[],
+      txs:[{id:'same-tx',mod:100,note:'from-a'}],
+      cfg:{mod:500,theme:'dark',unit:'EUR'},
+      watch:[{id:'same-watch',mod:100,name:'A'}],
+      goals:[{id:'deleted-goal',mod:100,del:false}],
+      hist:{btc:{'2026-01-01':[1767225600000,100]}},
+    };
+    const b={
+      v:1,deleted:[],
+      txs:[{id:'same-tx',mod:100,note:'from-b'}],
+      cfg:{mod:500,currency:'EUR',unit:'USD'},
+      watch:[{id:'same-watch',mod:100,name:'B'}],
+      goals:[{id:'deleted-goal',mod:100,del:true}],
+      hist:{eth:{'2026-01-01':[1767225600000,200]}},
+    };
+    const ab=merge(a,b),ba=merge(b,a);
+    const select=x=>({
+      tx:x.txs.find(t=>t.id==='same-tx'),
+      cfg:x.cfg,
+      watch:x.watch.find(w=>w.id==='same-watch'),
+      goal:x.goals.find(g=>g.id==='deleted-goal'),
+      hist:Object.keys(x.hist).sort(),
+    });
+    return {ab:select(ab),ba:select(ba)};
+  });
+  expect(result.ab).toEqual(result.ba);
+  expect(result.ab.cfg).toMatchObject({theme:'dark',currency:'EUR',mod:500});
+  expect(result.ab.cfg.unit).toBe('USD');
+  expect(result.ab.goal.del).toBe(true);
+  expect(result.ab.hist).toEqual(['btc','eth']);
+});
+
+test('Cryptotracker merge never resurrects a deleted transaction',async({page})=>{
+  await page.goto('/');
+  const result=await page.evaluate(()=>{
+    const merge=window.CryptoPortfolioLegacy.merge;
+    const local={txs:[],deleted:['gone'],updated:200};
+    const remote={txs:[{id:'gone',mod:999,note:'stale device'}],deleted:[],updated:100};
+    const ab=merge(local,remote),ba=merge(remote,local);
+    return {ab:ab.txs,ba:ba.txs,deletedA:ab.deleted,deletedB:ba.deleted};
+  });
+  expect(result.ab).toEqual([]);
+  expect(result.ba).toEqual([]);
+  expect(result.deletedA).toContain('gone');
+  expect(result.deletedB).toContain('gone');
+});
