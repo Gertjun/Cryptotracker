@@ -15,7 +15,7 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 ---
 
 ## 4.0.3 – 16 november 2026
-Cryptotracker gebruikt nu dezelfde bijgewerkte PWA-Core-basis als de andere apps en gaat veiliger om met gelijktijdige wijzigingen.
+Cryptotracker gebruikt nu de gedeelde PWA-Core-basis v1.1.0 en gaat veiliger om met gelijktijdige wijzigingen.
 
 ### Verbeterd
 - **Gedeelde Core:** bijgewerkt naar PWA-Core v1.1.0, inclusief de verbeterde opslagwachtrij, foutmeldingen bij opslaan en gedeelde sessievergrendeling.
