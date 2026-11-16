@@ -1,7 +1,7 @@
 // App-configuratie voor de vastgepinde PWA-Core v1.1.0.
 export const APP = {
   name: 'Crypto Portfolio',
-  version: '4.0.2',
+  version: '4.0.3',
   storagePrefix: 'cpt',
   defaultDataPath: 'crypto-portfolio.pwa-core-v1.json',
   defaultBranch: 'main',
