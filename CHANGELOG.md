@@ -27,7 +27,7 @@ Cryptotracker gebruikt nu dezelfde bijgewerkte PWA-Core-basis als de andere apps
 - Nieuwe tests voor twee gelijktijdige apparaten, gelijke wijzigingstijdstippen, verwijderingen en offline wijzigingen die na opnieuw openen synchroniseren.
 
 ### Let op
-- Deze versie is voorbereid in PR #44 en is nog niet samengevoegd of uitgerold. De bestaande versleutelde gegevens en het oude SyncData-bestand zijn niet aangeraakt.
+- Bestaande versleutelde gegevens en het oude SyncData-bestand blijven onaangeraakt; de nieuwe Core-synchronisatie blijft opt-in.
 
 ---
 
