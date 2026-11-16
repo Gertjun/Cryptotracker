@@ -492,7 +492,7 @@ async function lock() {
   window.CryptoPortfolioLegacy.lockCore();
   const release = releaseSession;
   releaseSession = null;
-  if (release) release();
+  if (release) await release();
   unlockScreen();
 }
 
