@@ -345,3 +345,34 @@ test('mislukte Core-bootstrap start legacy zonder legacy-GitHub-sync',async({pag
   expect(state.legacyBridge).toBe(true);
   expect(state.legacyData).toContain('"txs":[]');
 });
+
+
+test('legacy-ontgrendeling tijdens Core-overname laat het Core-instelscherm intact',async({page})=>{
+  let priceRequests=0;
+  await page.addInitScript(()=>{
+    localStorage.setItem('cpt.data',JSON.stringify({
+      v:1,updated:1,deleted:[],
+      txs:[{id:'legacy-btc',type:'buy',coinId:'bitcoin',qty:0.1,price:25000,fee:0,date:'2025-01-01',mod:1}],
+    }));
+    localStorage.setItem('cpt.settings',JSON.stringify({fng:false,gh:{token:'test-token',repo:'Gertjun/SyncData',path:'crypto-portfolio.enc.json',branch:'main',pass:'legacy-password'}}));
+  });
+  await page.route('https://api.coingecko.com/**',async route=>{
+    priceRequests++;
+    await new Promise(resolve=>setTimeout(resolve,250));
+    return route.fulfill({json:[{id:'bitcoin',current_price:60000,price_change_percentage_24h:0,image:'',market_cap:1,market_cap_rank:1,total_volume:1}]});
+  });
+  await page.route('https://api.github.com/**',route=>route.fulfill({status:404,json:{message:'Not Found'}}));
+  await page.goto('/index.html');
+  await expect(page.locator('#core-gate')).toContainText('PWA-Core instellen');
+  await page.evaluate(()=>{
+    // Zelfde startpad als na een geslaagde legacy-passkeyontgrendeling.
+    window.CryptoPortfolioLegacy.startLegacy({allowSync:false});
+    window.dispatchEvent(new Event('cpt-legacy-unlocked'));
+  });
+  await expect(page.locator('#core-gate')).toContainText('PWA-Core instellen');
+  await page.waitForTimeout(400);
+  await expect(page.locator('#core-gate')).toContainText('PWA-Core instellen');
+  expect(priceRequests).toBe(0);
+  expect(await page.evaluate(()=>localStorage.getItem('cpt.data'))).toContain('legacy-btc');
+  expect(await page.evaluate(()=>localStorage.getItem('cpt:vault'))).toBeNull();
+});
