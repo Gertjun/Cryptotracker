@@ -307,3 +307,12 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Gevolg:** MAJOR-versie. Een apparaat met een oudere versie kan een bestand met 600.000 rondes niet openen en meldt dat het wachtwoord niet klopt; de sync stopt dan vóór het samenvoegen, dus er gaat niets verloren. Bijwerken lost het op.
 - **Niet gekozen:** 250.000 houden (ongelijk aan de andere apps), of pas omzetten na een wachtwoordwijziging zoals in Vaste Lasten. Cryptotracker versleutelt bij elke sync opnieuw met een nieuwe salt, dus een apart moment om om te zetten is er niet.
 
+
+
+### D57 – PWA-Core als gedeelde opslag-/syncbasis en B07 vervangen (16 nov 2026, 4.0.3)
+- **Besluit:** Cryptotracker gebruikt PWA-Core v1.1.0 als gedeelde basis voor kluis, opslagwachtrij, synchronisatie, versleuteling en sessievergrendeling. De Cryptotracker-adapter en `merge()` blijven verantwoordelijk voor het app-eigen datamodel en de betekenis van transacties, portefeuilles, koershistorie en verwijderingen.
+- **Samenvoegen:** bij verschillende `mod`-tijdstippen wint de nieuwste wijziging. Bij gelijke tijdstippen is de uitkomst deterministisch; verwijderingen winnen. Verschillende `cfg`-velden worden bij gelijke tijdstippen samengevoegd; bij een botsing op hetzelfde veld geldt een vaste tie-breaker.
+- **Veiligheidsgrens:** Web Locks coördineren sessies binnen dezelfde lokale opslagcontext. Apparaten en iOS-opslagcontainers hoeven geen lock te delen. Gelijktijdige remote writes worden beschermd door de GitHub Contents-SHA; bij een conflict leest Core opnieuw, voegt samen en probeert opnieuw.
+- **B07:** de eis dat een geïnstalleerde iOS-PWA en een Safari-tab één Web Lock delen vervalt als migratiegate. De gedeeltelijke iPhone-waarneming blijft historisch vastgelegd, niet als PASS. De vervangende S01–S07-tests toetsen remote concurrency, merge-integriteit, tombstones, offline herstel en opslagfouten.
+- **Waarom:** de juiste garantie is dat wijzigingen tussen onafhankelijke apparaten behouden blijven, niet dat twee verschillende lokale opslagcontainers dezelfde browserlock gebruiken.
+- **Niet gekozen:** één gedeelde lock afdwingen tussen Safari en de Home Screen-PWA; dat is geen betrouwbare of noodzakelijke synchronisatiegarantie.
