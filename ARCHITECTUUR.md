@@ -18,7 +18,10 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 | Bestand | Inhoud |
 |---|---|
 | `index.html` | Alle HTML-skelet en **alle CSS** (in één `<style>`), CSP-meta, laadt `app.js`. |
-| `app.js` | **Alle JavaScript** (~2.600 regels, één bestand, geen build-stap of framework). |
+| `app.js` | App-schermen, datamodel, berekeningen en app-specifieke samenvoegfunctie `merge()`; geen framework of build-stap. |
+| `js/bootstrap.js` | Start de PWA-Core-runtime en koppelt die aan de bestaande app-UI. |
+| `js/core/runtime.js` / `js/core/legacy-adapter.js` | Brug tussen de bestaande Cryptotracker-UI/datamodel en de gedeelde PWA-Core-kluis. |
+| `js/core/` | Vastgepinde PWA-Core v1.1.0-modules; de allowlist en SHA-256-controles staan in `core-manifest.json`, de releasepin in `pwa-core.lock.json`. App-specifieke modules staan buiten die allowlist. |
 | `sw.js` | Service worker: offline-cache, netwerk eerst met `cache: 'no-cache'`. Cache-naam = versienummer. |
 | `manifest.json`, `icon*.png`, `icon.svg` | PWA-manifest en iconen. |
 | `README.md` | Voorpagina van de repository op GitHub: wat de app doet, installeren, gegevens en privacy. Werk bij als er een grote functie bijkomt. |
@@ -39,11 +42,12 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - de lijsten `watch`, `alerts`, `goals`, `plans`, `portfolios`, `allocs`. Elk item heeft `id`, `mod` (tijdstip) en eventueel `del:true`.
   - Een transactie heeft o.a. `type` (`buy`, `sell`, `deposit`, `withdraw`, `receive`, `transfer`, `other`), `coinId`, `qty`, `price`, `fee`, `date`, `acct` en `pf` (portefeuille; leeg = hoofdportefeuille).
 - **Synchronisatie:**
-  - `syncNow()`, `merge()`, `mergeList()`: nieuwste `mod` wint, bij gelijke tijd wint verwijderen.
-  - `encryptObj`/`decryptObj`: PBKDF2 600k (`KDF_IT`; aantal staat als `it` in het object, zonder `it` 250k) + AES-GCM (D56).
-  - GitHub Contents-API, met een raw-download boven 1 MB.
-  - `sig()` herkent wijzigingen.
-  - `scheduleSync()` wacht 20 s; `flushSync()` synchroniseert direct bij het verlaten van de app (D30).
+  - In Core-modus regelt `js/core/runtime.js` de app-brug en `js/core/sync.js` de gedeelde PWA-Core-synchronisatie. De GitHub-bestandsha voorkomt dat een verouderde upload een nieuwere remote versie overschrijft; bij conflict leest Core opnieuw, voegt samen en probeert opnieuw.
+  - `merge()` en `mergeList()` in `app.js` blijven app-specifiek: transacties, portefeuilles, allocaties, koershistorie, watchlists, alerts, doelen en plannen.
+  - Nieuwste `mod` wint. Bij gelijke tijdstippen is de keuze deterministisch; verwijderingen winnen. `cfg` voegt bij gelijke tijdstippen verschillende velden samen en kiest bij hetzelfde veld deterministisch.
+  - `js/core/legacy-adapter.js` vertaalt de oude `deleted[]`/`del:true`-verwijdermarkeringen naar de PWA-Core-ledger. Tombstones blijven behouden zolang actieve apparaten ze nog niet hebben bevestigd.
+  - `encryptObj`/`decryptObj` in de legacy-laag blijven beschikbaar voor oude gegevens en read-only import. Core gebruikt de eigen vault-/crypto-modules; PBKDF2 600k (`KDF_IT`; zonder `it` 250k) + AES-GCM (D56).
+  - De oude synchronisatiecode blijft uitsluitend als compatibiliteits-/fallbackpad aanwezig; Core-modus gebruikt die niet voor remote writes.
   - **Gegevensversie:** `DATA_V` en `data.v`; `isTooNew()`, `tooNew` en `showTooNew()` stoppen het synchroniseren als de gegevens van een nieuwere app-versie zijn (D32). `merge()` neemt onbekende onderdelen mee.
   - **Tabbladen:** `otherTab()` (storage-event) voegt wat een ander tabblad opslaat samen met de eigen gegevens (D31).
 - **Portefeuilles:** `TX()` geeft de transacties van de gekozen portefeuille (`curPf()`, `'__all'` = alles samen). Gebruik voor weergave en berekening altijd `TX()`, niet `data.txs`.
@@ -76,7 +80,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - De **Volglijst** gebruikt op de laptop dezelfde tabel (`holdingsTable(rows,true)`, rijen uit `watchRow()`: aantal, waarde, geïnvesteerd en resultaat 0, gem. prijs –), met een eigen sortering via de kolomkoppen: `watchSorted()` met `settings.wsort = {k, d:'desc'|'asc'}`, knoppen `data-wsort`; alleen kolommen met `ws:1` in `HCOLS` (en Munt) zijn klikbaar (D28).
 - **Tabellen passend maken: `fitTables()`** (na elke `render()` en bij `resize`). Bezittingen en Volglijst vormen één groep met dezelfde kolombreedtes; elke andere `table.tbl` (Transacties, transacties op de munt-pagina) staat op zichzelf. Het meet de breedte die de inhoud nodig heeft (`width:max-content`). Past dat niet, dan krijgen de cellen van kolommen met `data-p` de klasse `.c-off` (verborgen), hoogste `data-p` eerst, tot het past; daaronder staat een `.fit-note` met de verborgen kolommen. Kolommen zonder `data-p` blijven altijd staan. Prioriteiten: `p` in `HCOLS`, en `TXH` (gedeelde kolomkoppen van beide transactietabellen). Alleen als het daarna nog niet past, krijgt `.tbl-wrap` de klasse `.scroll` en schuift de tabel opzij. Anders is de overloop `clip`, zodat de kolomkoppen (`position:sticky`) bovenin blijven staan bij scrollen.
 - In tabellen staat de munt als **ticker** (BTC) met de volledige naam in `title` en `sr-only`; de kolom Aantal heeft geen muntsymbool. De kolom Broker · notitie (`noteCell()`) kapt af met de volledige tekst in `title`.
-- **`data.cfg`** is één object dat in zijn geheel samenvoegt (nieuwste `mod` wint). Wijzig het altijd met `{...data.cfg, …, mod:Date.now()}`, anders gaan andere instellingen verloren.
+- **`data.cfg`** is één object met wijzigingstijdstip `mod`. Bij verschillende tijdstippen wint de nieuwste versie; bij gelijke tijdstippen worden niet-conflicterende velden samengevoegd en wordt een botsing op hetzelfde veld deterministisch opgelost. Wijzig het altijd met `{...data.cfg, …, mod:Date.now()}`.
 - **Koersgrafiek op de munt-pagina:** `drawChart(c)`. Gebruikt dezelfde opbouw als de portfoliografiek (`.pc`, `.pc-plot`, `.pc-axis`) en dezelfde y-as-hulpjes `axisTicks()` en `tickLbl()`.
 - **Rendementskalender:** `calCard()` met `retRange(u,from,to)`; periode in `settings.calU` (dag/week/maand/jaar), bladeren met `data-cal` via `settings.calMonth` (dag) of `settings.calYear` (week, maand).
 - **x-as:** `xAxisRow(t0,t1,aw)` zet 5 tijdstippen onder een grafiek (`.pc-xr`, met `margin-right` = breedte y-as); `xFmt()` kiest tijd, dag of maand op basis van de lengte. Het vergrote venster gebruikt nog `.pc-x` met `xLbl()`.
