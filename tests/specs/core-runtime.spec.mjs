@@ -377,3 +377,117 @@ test('legacy-ontgrendeling tijdens Core-overname laat het Core-instelscherm inta
   expect(await page.evaluate(()=>localStorage.getItem('cpt.data'))).toContain('legacy-btc');
   expect(await page.evaluate(()=>localStorage.getItem('cpt:vault'))).toBeNull();
 });
+
+
+test('Core sync retries a stale concurrent SHA and preserves changes from two independent devices',async({browser})=>{
+  let remoteText=null,remoteVersion=0,conflicts=0;
+  let barrierEnabled=false,barrierReads=0,releaseBarrier;
+  let barrierPromise=new Promise(resolve=>{releaseBarrier=resolve});
+  const attachGitHub=async page=>page.route('https://api.github.com/**',async route=>{
+    const request=route.request(),url=new URL(request.url());
+    if(request.method()==='OPTIONS')return route.fulfill({status:204,headers:{
+      'access-control-allow-origin':'*',
+      'access-control-allow-methods':'GET, PUT, OPTIONS',
+      'access-control-allow-headers':'authorization,accept,x-github-api-version,content-type',
+    }});
+    if(request.method()==='GET'&&url.pathname==='/repos/Gertjun/SyncData'){
+      return route.fulfill({json:{private:true,default_branch:'main'}});
+    }
+    if(request.method()==='GET'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      if(!remoteText)return route.fulfill({status:404,json:{message:'Not Found'}});
+      const snapshot={sha:'core-sha-'+remoteVersion,text:remoteText};
+      if(barrierEnabled&&barrierReads<2){
+        barrierReads++;
+        if(barrierReads===2)releaseBarrier();
+        await barrierPromise;
+      }
+      return route.fulfill({json:{
+        sha:snapshot.sha,encoding:'base64',content:Buffer.from(snapshot.text).toString('base64'),
+      }});
+    }
+    if(request.method()==='PUT'&&url.pathname.endsWith('/contents/crypto-portfolio.pwa-core-v1.json')){
+      const body=JSON.parse(request.postData());
+      const currentSha=remoteText?'core-sha-'+remoteVersion:null;
+      if(currentSha&&body.sha!==currentSha){
+        conflicts++;
+        return route.fulfill({status:409,json:{message:'SHA conflict'}});
+      }
+      if(!currentSha&&body.sha)return route.fulfill({status:409,json:{message:'SHA conflict'}});
+      remoteText=Buffer.from(body.content,'base64').toString();
+      remoteVersion++;
+      return route.fulfill({status:remoteVersion===1?201:200,json:{content:{sha:'core-sha-'+remoteVersion}}});
+    }
+    return route.fulfill({status:404,json:{message:'Not Found'}});
+  });
+  const makePage=async()=>{
+    const context=await browser.newContext({viewport:{width:1280,height:800}});
+    const page=await context.newPage();
+    await attachGitHub(page);
+    await page.goto('/index.html');
+    return {context,page};
+  };
+  const password='shared core password 123';
+  const A=await makePage();
+  await A.page.locator('#core-password').fill(password);
+  await A.page.locator('#core-password-confirm').fill(password);
+  await A.page.locator('[data-core-action=empty]').click();
+  await A.page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await A.page.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({
+    owner:'Gertjun',repo:'SyncData',token:'synthetic-token',branch:'main',
+  }));
+  expect(remoteText).toBeTruthy();
+
+  const B=await makePage();
+  await B.page.locator('#core-gate details summary').click();
+  await B.page.locator('#core-owner').fill('Gertjun');
+  await B.page.locator('#core-repo').fill('SyncData');
+  await B.page.locator('#core-token').fill('synthetic-token');
+  await B.page.locator('#core-branch').fill('main');
+  await B.page.locator('#core-password').fill(password);
+  await B.page.locator('[data-core-action=import]').click();
+  await B.page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  await B.page.waitForFunction(()=>window.CryptoPortfolioLegacy?.getSyncStatus?.()?.s==='ok').catch(()=>{});
+  await B.page.waitForTimeout(250);
+  const initialSha='core-sha-'+remoteVersion;
+
+  await Promise.all([
+    A.page.evaluate(async()=>{
+      const vault=await import('/js/core/vault.js');
+      const data=structuredClone(vault.getData());
+      data.txs.push({id:'device-a-change',type:'buy',coinId:'bitcoin',qty:1,price:100,fee:0,date:'2026-11-16',created:1,mod:1700000000001});
+      await vault.setData(data);
+    }),
+    B.page.evaluate(async()=>{
+      const vault=await import('/js/core/vault.js');
+      const data=structuredClone(vault.getData());
+      data.txs.push({id:'device-b-change',type:'buy',coinId:'ethereum',qty:2,price:200,fee:0,date:'2026-11-16',created:2,mod:1700000000002});
+      await vault.setData(data);
+    }),
+  ]);
+
+  barrierEnabled=true;
+  const [syncA,syncB]=await Promise.allSettled([
+    A.page.evaluate(()=>window.PWACoreV1.runtime.syncNow(false)),
+    B.page.evaluate(()=>window.PWACoreV1.runtime.syncNow(false)),
+  ]);
+  expect(syncA.status).toBe('fulfilled');
+  expect(syncB.status).toBe('fulfilled');
+  expect(barrierReads).toBe(2);
+  expect(conflicts).toBeGreaterThanOrEqual(1);
+  barrierEnabled=false;
+
+  // Laat de eerste schrijver de door de tweede client samengevoegde eindstand ophalen.
+  await A.page.evaluate(()=>window.PWACoreV1.runtime.syncNow(false));
+  const finalData=await A.page.evaluate(async raw=>{
+    const vault=await import('/js/core/vault.js');
+    return vault.decryptRemote(JSON.parse(raw));
+  },remoteText);
+  const ids=finalData.txs.map(tx=>tx.id);
+  expect(ids).toContain('device-a-change');
+  expect(ids).toContain('device-b-change');
+  expect(finalData.__pwaSync).toBeTruthy();
+  expect(Object.keys(finalData.__pwaSync.devices||{}).length).toBeGreaterThanOrEqual(2);
+  expect(initialSha).not.toBe('core-sha-'+remoteVersion);
+  await A.context.close();
+  await B.context.close();
+});
