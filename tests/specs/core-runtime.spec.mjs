@@ -344,6 +344,7 @@ test('mislukte Core-bootstrap start legacy zonder legacy-GitHub-sync',async({pag
   }));
   expect(state.legacyBridge).toBe(true);
   expect(state.legacyData).toContain('"txs":[]');
+  await expect(page.locator('#app .top')).toBeVisible();
 });
 
 
@@ -366,7 +367,7 @@ test('legacy-ontgrendeling tijdens Core-overname laat het Core-instelscherm inta
   await expect(page.locator('#core-gate')).toContainText('PWA-Core instellen');
   await page.evaluate(()=>{
     // Zelfde startpad als na een geslaagde legacy-passkeyontgrendeling.
-    window.CryptoPortfolioLegacy.startLegacy({allowSync:false});
+    window.CryptoPortfolioLegacy.startLegacy({allowSync:false,coreHandoff:true});
     window.dispatchEvent(new Event('cpt-legacy-unlocked'));
   });
   await expect(page.locator('#core-gate')).toContainText('PWA-Core instellen');

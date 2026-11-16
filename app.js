@@ -33,7 +33,7 @@ let syncState={s:'off',msg:''},cgState={s:'off',msg:''};
 let syncTimer=null;
 let lockCfg=(()=>{try{return JSON.parse(localStorage.getItem(LS_LOCK))}catch(e){return null}})();
 let DEK=null,dekRaw=null,locked=!!lockCfg,vaultQ=Promise.resolve();
-let coreMode=false,coreGateActive=true,coreRuntime=null;
+let coreMode=false,coreGateActive=true,coreHandoffPending=false,coreRuntime=null;
 
 // Met vergrendeling aan staan transacties, koersen en GitHub-gegevens alleen versleuteld in de 'vault'.
 function persist(){
@@ -3182,7 +3182,7 @@ setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
 setInterval(()=>{if(!document.hidden)collectHistory()},6*3600e3);
 
 let histTimer=null;
-function start(){if(coreGateActive&&!coreMode)return;document.body.classList.remove('locked');navigator.storage?.persist?.().catch(()=>{});if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
+function start(){if(coreHandoffPending&&!coreMode)return;document.body.classList.remove('locked');navigator.storage?.persist?.().catch(()=>{});if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();refreshFng();syncNow(true)}
 window.CryptoPortfolioLegacy=Object.freeze({
@@ -3219,7 +3219,7 @@ window.CryptoPortfolioLegacy=Object.freeze({
   },
   hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
   legacyLocked:()=>!!lockCfg&&locked,
-  startLegacy:({allowSync=true}={})=>{coreGateActive=!allowSync;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
+  startLegacy:({allowSync=true,coreHandoff=false}={})=>{coreGateActive=!allowSync;coreHandoffPending=!!coreHandoff;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
   activateCore:(payload,box)=>{coreMode=true;chartCache=load(LS_CORE_CHARTS,{});locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});const app=box?.app||{};settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start()},
   applyCoreData:(payload)=>{data=structuredClone(payload||{});invalidateEstPts();render()},
   lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},
