@@ -571,6 +571,9 @@ test('Core sync retains an offline edit across reload and merges a remote device
     data.txs.push({id:'offline-device-change',type:'buy',coinId:'bitcoin',qty:1,price:100,fee:0,date:'2026-11-16',created:1,mod:1700000000001});
     await vault.setData(data);
     await vault.flush();
+    const deviceSettings=await vault.getDeviceSettings();
+    await vault.setDeviceSettings({...deviceSettings,syncEnabled:false});
+    await vault.flush();
   });
   await pageA.close();
 
@@ -581,6 +584,14 @@ test('Core sync retains an offline edit across reload and merges a remote device
   await recoveredPage.locator('#core-unlock-password').fill(password);
   await recoveredPage.locator('#core-unlock-form button[type=submit]').click();
   await recoveredPage.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
+  const localAfterReload=await recoveredPage.evaluate(async()=>{
+    const vault=await import('/js/core/vault.js');
+    return vault.getData().txs.map(tx=>tx.id);
+  });
+  expect(localAfterReload).toContain('offline-device-change');
+  await recoveredPage.evaluate(()=>window.PWACoreV1.runtime.updateGitHub({
+    owner:'Gertjun',repo:'SyncData',token:'synthetic-token',branch:'main',
+  }));
   await recoveredPage.waitForFunction(async()=>{
     const vault=await import('/js/core/vault.js');
     const meta=vault.getSyncMeta();
