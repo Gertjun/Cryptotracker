@@ -4,7 +4,8 @@ import * as vault from './vault.js';
 import * as sync from './sync.js';
 import * as github from './github.js';
 import * as biometric from './biometric.js';
-import { createLegacyStorageAdapter, withExclusiveSessionLock } from './legacy-adapter.js';
+import { createLegacyStorageAdapter } from './legacy-adapter.js';
+import * as sessionLock from './session-lock.js';
 
 let core;
 let adapter;
@@ -102,21 +103,13 @@ function githubConfigFromForm({ required = true } = {}) {
 
 async function acquireSession() {
   if (releaseSession) return;
-  let enteredResolve;
-  let enteredReject;
-  const entered = new Promise((resolve, reject) => {
-    enteredResolve = resolve;
-    enteredReject = reject;
-  });
-  const held = new Promise((resolve) => { releaseSession = resolve; });
-  sessionTask = withExclusiveSessionLock(() => {
-    enteredResolve();
-    return held;
-  }).catch((error) => {
-    releaseSession = null;
-    enteredReject(error);
-  });
-  await entered;
+  if (sessionTask) return sessionTask;
+  sessionTask = (async () => {
+    const handle = await sessionLock.acquireSessionLock();
+    if (!handle) throw new sessionLock.SessionLockBusyError();
+    releaseSession = () => handle.release();
+  })().finally(() => { sessionTask = null; });
+  return sessionTask;
 }
 
 async function installAppSettings(settingsBox) {
