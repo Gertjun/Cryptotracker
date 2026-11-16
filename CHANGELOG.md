@@ -7,10 +7,27 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.2`) en de naam van het zip-bestand (`crypto-tracker-4.0.2.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.3-core1`) en de naam van het zip-bestand (`crypto-tracker-4.0.2.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
+
+---
+
+## 4.0.3 – 16 november 2026
+Cryptotracker gebruikt nu dezelfde bijgewerkte PWA-Core-basis als de andere apps en gaat veiliger om met gelijktijdige wijzigingen.
+
+### Verbeterd
+- **Gedeelde Core:** bijgewerkt naar PWA-Core v1.1.0, inclusief de verbeterde opslagwachtrij, foutmeldingen bij opslaan en gedeelde sessievergrendeling.
+- **Samenvoegen:** wijzigingen met hetzelfde tijdstip krijgen nu een vaste uitkomst. Verschillende instellingenvelden kunnen tegelijk worden gewijzigd zonder elkaar te overschrijven; bij een botsing op hetzelfde veld geldt een vaste keuze. Verwijderingen blijven leidend.
+- **Synchronisatie:** bij twee apparaten die vanaf dezelfde GitHub-versie schrijven, wordt de verouderde upload geweigerd en opnieuw samengevoegd met de nieuwste versie.
+
+### Technisch
+- Core v1.1.0 is vastgepind in `pwa-core.lock.json`; de service worker laadt alle modules uit de Core-allowlist.
+- Nieuwe tests voor twee gelijktijdige apparaten, gelijke wijzigingstijdstippen, verwijderingen en offline wijzigingen die na opnieuw openen synchroniseren.
+
+### Let op
+- Deze versie is voorbereid in PR #44 en is nog niet samengevoegd of uitgerold. De bestaande versleutelde gegevens en het oude SyncData-bestand zijn niet aangeraakt.
 
 ---
 
