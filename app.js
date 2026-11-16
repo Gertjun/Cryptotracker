@@ -3182,7 +3182,7 @@ setInterval(()=>{if(!document.hidden)syncNow(true)},5*60000);
 setInterval(()=>{if(!document.hidden)collectHistory()},6*3600e3);
 
 let histTimer=null;
-function start(){document.body.classList.remove('locked');navigator.storage?.persist?.().catch(()=>{});if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
+function start(){if(coreGateActive&&!coreMode)return;document.body.classList.remove('locked');navigator.storage?.persist?.().catch(()=>{});if(settings.unit&&settings.unit!=='EUR')refreshFx().then(ensureBtcHist).then(()=>render());prevVisit=getVisit(curPf())?{...getVisit(curPf())}:null;sinceDismissed=false;migrateAccounts();clearTimeout(histTimer);histTimer=setTimeout(collectHistory,8000);
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();refreshFng();syncNow(true)}
 window.CryptoPortfolioLegacy=Object.freeze({
