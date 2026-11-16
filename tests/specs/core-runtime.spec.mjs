@@ -446,8 +446,11 @@ test('Core sync retries a stale concurrent SHA and preserves changes from two in
   await B.page.locator('#core-password').fill(password);
   await B.page.locator('[data-core-action=import]').click();
   await B.page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
-  await B.page.waitForFunction(()=>window.CryptoPortfolioLegacy?.getSyncStatus?.()?.s==='ok').catch(()=>{});
-  await B.page.waitForTimeout(250);
+  await B.page.waitForFunction(async()=>{
+    const vault=await import('/js/core/vault.js');
+    const meta=vault.getSyncMeta();
+    return typeof meta.sha==='string'&&meta.sha.startsWith('core-sha-')&&!meta.dirty;
+  });
   const initialSha='core-sha-'+remoteVersion;
 
   await Promise.all([
