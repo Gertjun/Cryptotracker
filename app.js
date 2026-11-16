@@ -189,8 +189,34 @@ function delPf(id){
 function coinIds(){return [...new Set(TX().filter(t=>t.coinId).map(t=>t.coinId))]}
 // Volglijst en prijsalerts: lijsten met 'del'-markering, zodat verwijderen ook via sync naar andere apparaten gaat
 const live=a=>(a||[]).filter(x=>!x.del);
-// nieuwste wijziging wint; bij precies hetzelfde tijdstip wint verwijderen (anders kan iets dat weg is terugkomen)
-function mergeList(a,b){const m=new Map();for(const x of [...(a||[]),...(b||[])]){const e=m.get(x.id);if(!e||(x.mod||0)>(e.mod||0)||((x.mod||0)===(e.mod||0)&&x.del&&!e.del))m.set(x.id,x)}return[...m.values()]}
+// Gelijke tijdstippen krijgen een vaste tie-breaker, zodat merge(a,b) en merge(b,a) hetzelfde resultaat geven.
+function canonicalValue(value){
+  if(Array.isArray(value))return '['+value.map(canonicalValue).join(',')+']';
+  if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonicalValue(value[k])).join(',')+'}';
+  return JSON.stringify(value);
+}
+function preferMergeRecord(candidate,current){
+  const cm=Number(candidate?.mod)||0,om=Number(current?.mod)||0;
+  if(cm!==om)return cm>om?candidate:current;
+  if(!!candidate?.del!==!!current?.del)return candidate.del?candidate:current;
+  return canonicalValue(candidate)>canonicalValue(current)?candidate:current;
+}
+function mergeList(a,b){const m=new Map();for(const x of [...(a||[]),...(b||[])]){const e=m.get(x.id);m.set(x.id,e?preferMergeRecord(x,e):x)}return[...m.values()]}
+function mergeConfig(a,b){
+  const am=Number(a?.mod)||0,bm=Number(b?.mod)||0;
+  if(am>bm)return a;if(bm>am)return b;
+  const out={...a,...b};
+  for(const key of new Set([...Object.keys(a||{}),...Object.keys(b||{})])){
+    if(key==='mod')continue;
+    const hasA=Object.hasOwn(a||{},key),hasB=Object.hasOwn(b||{},key);
+    if(hasA&&!hasB)out[key]=a[key];
+    else if(hasA&&hasB&&canonicalValue(a[key])!==canonicalValue(b[key])){
+      out[key]=canonicalValue(a[key])>canonicalValue(b[key])?a[key]:b[key];
+    }
+  }
+  out.mod=Math.max(am,bm);
+  return out;
+}
 const isWatched=id=>live(data.watch).some(w=>w.id===id);
 const watchOnly=()=>{const held=new Set(coinIds().filter(id=>computeCoin(id).qty>1e-12));return live(data.watch).filter(w=>!held.has(w.id))};   // munten die je al hebt staan al bij Bezittingen
 function priceIds(){return [...new Set([...coinIds(),...live(data.watch).map(w=>w.id),...live(data.alerts).filter(a=>!a.hit).map(a=>a.coinId)])]}
@@ -2679,8 +2705,8 @@ const b64ToUtf8=s=>dec.decode(b64ToBuf(s.replace(/\s/g,'')));
 function merge(a,b){
   invalidateEstPts();
   const deleted=[...new Set([...(a.deleted||[]),...(b.deleted||[])])],del=new Set(deleted),m=new Map();
-  for(const t of [...(a.txs||[]),...(b.txs||[])]){if(del.has(t.id))continue;const e=m.get(t.id);if(!e||(t.mod||0)>(e.mod||0))m.set(t.id,t)}
-  const ca=a.cfg||{mod:0},cb=b.cfg||{mod:0},cfg=(cb.mod||0)>(ca.mod||0)?cb:ca;   // nieuwste instelling wint
+  for(const t of [...(a.txs||[]),...(b.txs||[])]){if(del.has(t.id))continue;const e=m.get(t.id);m.set(t.id,e?preferMergeRecord(t,e):t)}
+  const cfg=mergeConfig(a.cfg||{mod:0},b.cfg||{mod:0});
   const hist={};   // koersarchief: alle dagen van beide kanten samenvoegen
   for(const src of [a.hist,b.hist])if(src)for(const id in src){const h=hist[id]||(hist[id]={});
     for(const d in src[id]){const e=src[id][d],x=h[d];if(!x||e[0]-d*DAY<x[0]-d*DAY)h[d]=e}}
