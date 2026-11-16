@@ -207,3 +207,35 @@ test('Cryptotracker merge never resurrects a deleted transaction',async({page})=
   expect(result.deletedA).toContain('gone');
   expect(result.deletedB).toContain('gone');
 });
+
+
+test('Core deletion ledger retains tombstones for offline devices and rejects stale resurrection',async({page})=>{
+  await page.goto('/');
+  const result=await page.evaluate(async()=>{
+    const {reconcileData,allDevicesAcknowledged,deactivateDevice,applyDeletionLedger}=await import('/js/core/deletions.js');
+    const key='txs:deleted-on-another-device';
+    const state={
+      version:1,
+      deletions:{[key]:100},
+      devices:{
+        active:{createdAt:1,lastSeenAt:200,acknowledged:{[key]:100}},
+        offline:{createdAt:2,lastSeenAt:50,acknowledged:{}},
+      },
+    };
+    const local={txs:[],deleted:[],__pwaSync:state};
+    const staleRemote={txs:[{id:'deleted-on-another-device',mod:999,note:'stale offline copy'}],deleted:[]};
+    const merged=reconcileData(local,staleRemote,(a,b)=>window.CryptoPortfolioLegacy.merge(a,b));
+    const before=allDevicesAcknowledged(merged.__pwaSync,key);
+    const afterDeactivation=deactivateDevice(merged.__pwaSync,'offline',300);
+    const after=allDevicesAcknowledged(afterDeactivation,key);
+    const cleaned=applyDeletionLedger({
+      txs:[{id:'deleted-on-another-device',deleted:true,updatedAt:100}],
+      __pwaSync:afterDeactivation,
+    });
+    return {mergedTxs:merged.txs,before,after,cleanedTxs:cleaned.txs};
+  });
+  expect(result.mergedTxs).toEqual([]);
+  expect(result.before).toBe(false);
+  expect(result.after).toBe(true);
+  expect(result.cleanedTxs).toEqual([]);
+});
