@@ -1,6 +1,87 @@
 // Factory voor per-vault WebAuthn PRF-enrollment en sleutelafleiding.
 import * as c from './crypto.js';
 
+const USER_HANDLE_MARKER = 'pwc1:';
+const USER_HANDLE_RANDOM_BYTES = 16;
+const USER_HANDLE_MAX_BYTES = 64;
+
+function validateUserHandleIdentity(storagePrefix, scope) {
+  if (typeof storagePrefix !== 'string' || !/^[a-z0-9][a-z0-9._-]*$/i.test(storagePrefix)) {
+    throw new TypeError('storagePrefix moet één stabiel namespace-segment zijn.');
+  }
+  if (typeof scope !== 'string' || !/^[a-z0-9-]{1,12}$/i.test(scope)) {
+    throw new TypeError('scope moet een korte, stabiele identificatie zijn.');
+  }
+}
+
+async function compactUserHandleTag(storagePrefix, scope) {
+  const identity = new TextEncoder().encode(`${scope.toLowerCase()}\0${storagePrefix}`);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', identity));
+  const shortHash = [...digest.slice(0, 12)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+  return `${USER_HANDLE_MARKER}${scope.toLowerCase()}:${shortHash}:`;
+}
+
+/**
+ * Bouwt een stabiele, app- en functienamespaced WebAuthn user.id.
+ * De volledige storagePrefix wordt gehasht; de resulterende ID blijft ruim
+ * onder de WebAuthn-limiet van 64 bytes, ook bij lange workspace-namen.
+ */
+export async function createUserHandle({ storagePrefix, scope = 'vault' } = {}) {
+  validateUserHandleIdentity(storagePrefix, scope);
+  const tag = new TextEncoder().encode(await compactUserHandleTag(storagePrefix, scope));
+  const userId = new Uint8Array(tag.length + USER_HANDLE_RANDOM_BYTES);
+  userId.set(tag);
+  userId.set(c.randomBytes(USER_HANDLE_RANDOM_BYTES), tag.length);
+  if (userId.byteLength > USER_HANDLE_MAX_BYTES) {
+    throw new RangeError('De gegenereerde WebAuthn user.id overschrijdt 64 bytes.');
+  }
+  return userId;
+}
+
+/**
+ * Controleert of een gestructureerde userHandle bij een andere app/functie
+ * hoort. Onherkenbare legacy-handles (waaronder null) blijven koppelbaar.
+ * legacyPrefixes en legacyTags zijn uitsluitend voor expliciet ondersteunde
+ * oude formaten van dezelfde app/functie.
+ */
+export async function isForeignUserHandle(
+  userHandle,
+  { storagePrefix, scope = 'vault', legacyPrefixes = [storagePrefix], legacyTags = [] } = {},
+) {
+  validateUserHandleIdentity(storagePrefix, scope);
+  if (!userHandle || userHandle.byteLength === 0) return false;
+
+  const id = userHandle instanceof ArrayBuffer
+    ? new Uint8Array(userHandle)
+    : ArrayBuffer.isView(userHandle)
+      ? new Uint8Array(userHandle.buffer, userHandle.byteOffset, userHandle.byteLength)
+      : null;
+  if (!id || id.byteLength === 0) return false;
+
+  const text = new TextDecoder().decode(id);
+  if (text.startsWith(USER_HANDLE_MARKER)) {
+    const match = /^pwc1:([a-z0-9-]{1,12}):([a-f0-9]{24}):/i.exec(text);
+    if (!match) return true;
+    const expected = await compactUserHandleTag(storagePrefix, scope);
+    return !text.startsWith(expected);
+  }
+
+  const acceptedTags = [
+    ...legacyPrefixes
+      .filter((prefix) => typeof prefix === 'string' && prefix.length > 0)
+      .map((prefix) => `${prefix}:`),
+    ...legacyTags.filter((tag) => typeof tag === 'string' && tag.length > 0),
+  ];
+  if (acceptedTags.some((tag) => text.startsWith(tag))) return false;
+
+  const colon = id.indexOf(0x3a);
+  // Oude willekeurige userHandles hebben geen herkenbare namespace.
+  if (colon < 1 || colon > 40) return false;
+  return true;
+}
+
 export function createBiometric({ storagePrefix, appName, storage = globalThis.localStorage } = {}) {
   if (typeof storagePrefix !== 'string' || !/^[a-z0-9][a-z0-9._-]*$/i.test(storagePrefix)) throw new TypeError('storagePrefix moet één stabiel namespace-segment zijn (letters, cijfers, punt, underscore of koppelteken; geen dubbele punt).');
   if (typeof appName !== 'string' || !appName.trim()) throw new TypeError('appName moet een niet-lege string zijn.');
@@ -20,22 +101,9 @@ const HKDF_INFO = `${storagePrefix}:biometric-kek:v1`;
 // op, ook na opnieuw installeren (als de lokale opslag gewist is). De invoer is
 // niet geheim; het geheim zit in de passkey en komt pas vrij na biometrie.
 const PRF_LABEL = `${storagePrefix}:biometric-prf:v1`;
-// Begin van user.id bij nieuwe passkeys, om passkeys van andere apps op
-// hetzelfde domein te herkennen.
-const USER_TAG = new TextEncoder().encode(`${storagePrefix}:`);
 
 async function appPrfSalt() {
   return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(PRF_LABEL)));
-}
-
-function belongsToOtherApp(userHandle) {
-  if (!userHandle || userHandle.byteLength === 0) return false;
-  const id = new Uint8Array(userHandle);
-  const colon = id.indexOf(0x3a);
-  // Oude passkeys (vóór dit kenmerk) hebben een willekeurige id: accepteren.
-  if (colon < 1 || colon > 40) return false;
-  if (id.length < USER_TAG.length) return true;
-  return !USER_TAG.every((b, i) => id[i] === b);
 }
 
 async function isSupported() {
@@ -107,9 +175,7 @@ async function store(dataKey, credentialId, prfSalt, secret) {
 /** Maakt een nieuwe passkey aan en gebruikt die voor ontgrendelen. */
 async function enroll(dataKey) {
   const prfSalt = await appPrfSalt();
-  const userId = new Uint8Array(USER_TAG.length + 16);
-  userId.set(USER_TAG);
-  userId.set(c.randomBytes(16), USER_TAG.length);
+  const userId = await createUserHandle({ storagePrefix, scope: 'vault' });
   const cred = await navigator.credentials.create({
     publicKey: {
       challenge: c.randomBytes(32),
@@ -152,7 +218,7 @@ async function enrollExisting(dataKey) {
       extensions: { prf: { eval: { first: prfSalt } } },
     },
   });
-  if (belongsToOtherApp(assertion.response.userHandle)) {
+  if (await isForeignUserHandle(assertion.response.userHandle, { storagePrefix, scope: 'vault' })) {
     throw new Error(`Deze passkey hoort bij een andere app. Kies "${appName} – ontgrendelen".`);
   }
   const out = assertion.getClientExtensionResults().prf?.results?.first;
