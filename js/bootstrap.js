@@ -7,8 +7,8 @@ function showBootstrapFailure() {
   const topbar = document.getElementById('topbar');
   const side = document.getElementById('side');
   const view = document.getElementById('view');
-  if (topbar) topbar.replaceChildren();
-  if (side) side.replaceChildren();
+  if (topbar) { topbar.replaceChildren(); topbar.hidden = true; }
+  if (side) { side.replaceChildren(); side.hidden = true; }
 
   const target = view || document.body;
   target.innerHTML = `<section class="lock" id="core-bootstrap-error" role="alert" aria-labelledby="core-bootstrap-error-title">
