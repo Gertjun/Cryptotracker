@@ -1,5 +1,25 @@
 // Laad de vastgepinde PWA-Core-modules naast de bestaande klassieke app.
 const coreModules = ['./config.js','./core/biometric.js','./core/crypto.js','./core/deletions.js','./core/dom.js','./core/github.js','./core/nav.js','./core/pair.js','./core/records.js','./core/sync.js','./core/ui.js','./core/vault.js','./core/legacy-adapter.js'];
+
+function showBootstrapFailure() {
+  document.body.classList.add('locked');
+  document.body.classList.remove('private');
+  const topbar = document.getElementById('topbar');
+  const side = document.getElementById('side');
+  const view = document.getElementById('view');
+  if (topbar) topbar.replaceChildren();
+  if (side) side.replaceChildren();
+
+  const target = view || document.body;
+  target.innerHTML = `<section class="lock" id="core-bootstrap-error" role="alert" aria-labelledby="core-bootstrap-error-title">
+    <div class="lock-ic" aria-hidden="true">🔒</div>
+    <h2 id="core-bootstrap-error-title">Cryptotracker kan niet veilig starten</h2>
+    <p class="hint">De beveiligde opslag kon niet worden geladen. Je gegevens zijn niet gewijzigd. Vernieuw de app of probeer het later opnieuw. De oude opslag wordt uit veiligheid niet automatisch geopend.</p>
+    <button class="btn" id="core-bootstrap-reload" type="button">App vernieuwen</button>
+  </section>`;
+  document.getElementById('core-bootstrap-reload')?.addEventListener('click', () => window.location.reload());
+}
+
 try {
   const modules = await Promise.all(coreModules.map((path) => import(path)));
   const core = Object.freeze({config:modules[0],biometric:modules[1],crypto:modules[2],deletions:modules[3],dom:modules[4],github:modules[5],nav:modules[6],pair:modules[7],records:modules[8],sync:modules[9],ui:modules[10],vault:modules[11],legacyAdapter:modules[12]});
@@ -15,5 +35,5 @@ try {
 } catch (error) {
   console.error('PWA-Core kon niet worden gestart.',error);
   window.dispatchEvent(new CustomEvent('pwa-core-error',{detail:error}));
-  window.CryptoPortfolioLegacy?.startLegacy({allowSync:false});
+  showBootstrapFailure();
 }
