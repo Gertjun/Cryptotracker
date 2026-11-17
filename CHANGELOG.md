@@ -7,12 +7,25 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.3-core1`) en de naam van het zip-bestand (`crypto-tracker-4.0.3.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.4-core1`) en de naam van het zip-bestand (`crypto-tracker-4.0.4.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
 ---
+
+
+## 4.0.4 – 17 november 2026
+Cryptotracker gebruikt PWA-Core v1.2.1. De bestaande passkeys blijven herkenbaar met de nieuwe, compacte WebAuthn-identificatie.
+
+### Verbeterd
+- **Gedeelde Core:** bijgewerkt naar PWA-Core v1.2.1; de Core-module maakt compacte, app- en functiegebonden WebAuthn-identificaties.
+- **Compatibiliteit:** bestaande Cryptotracker-passkeys met de oude `cpt:`-identificatie blijven bruikbaar.
+- **Versiecontrole:** het getoonde appversienummer is gelijkgetrokken met de changelog en service-worker-cache.
+
+### Beveiliging
+- De PRF-invoer, HKDF-context, credential-ID en bestaande verpakte datasleutel blijven ongewijzigd.
+- De Core-apparaatkoppelmodule is beschikbaar in de releasebundel; de bestaande handmatige koppelcode blijft de gebruikersflow. Er is geen QR-scherm toegevoegd.
 
 ## 4.0.3 – 16 november 2026
 Cryptotracker gebruikt nu de gedeelde PWA-Core-basis v1.1.0 en gaat veiliger om met gelijktijdige wijzigingen.

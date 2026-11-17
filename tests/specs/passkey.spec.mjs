@@ -40,3 +40,29 @@ test('bestaande passkey opnieuw gebruiken na opnieuw installeren',async({page})=
   await expect(page.locator('.lock')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('Core WebAuthn userHandles blijven compact en gescheiden per app en functie',async({page})=>{
+  await openApp(page);
+  const result=await page.evaluate(async()=>{
+    const core=await import('/js/core/biometric-factory.js');
+    const own=await core.createUserHandle({storagePrefix:'cpt',scope:'vault'});
+    const otherApp=await core.createUserHandle({storagePrefix:'other-app',scope:'vault'});
+    const otherScope=await core.createUserHandle({storagePrefix:'cpt',scope:'bundle'});
+    const legacy=new TextEncoder().encode('cpt:legacy-credential');
+    const foreignLegacy=new TextEncoder().encode('other-app:legacy-credential');
+    return {
+      bytes:own.byteLength,
+      ownAccepted:await core.isForeignUserHandle(own,{storagePrefix:'cpt',scope:'vault'}),
+      otherAppRejected:await core.isForeignUserHandle(otherApp,{storagePrefix:'cpt',scope:'vault'}),
+      otherScopeRejected:await core.isForeignUserHandle(otherScope,{storagePrefix:'cpt',scope:'vault'}),
+      legacyAccepted:await core.isForeignUserHandle(legacy,{storagePrefix:'cpt',scope:'vault'}),
+      foreignLegacyRejected:await core.isForeignUserHandle(foreignLegacy,{storagePrefix:'cpt',scope:'vault'}),
+    };
+  });
+  expect(result.bytes).toBeLessThanOrEqual(64);
+  expect(result.ownAccepted).toBe(false);
+  expect(result.otherAppRejected).toBe(true);
+  expect(result.otherScopeRejected).toBe(true);
+  expect(result.legacyAccepted).toBe(false);
+  expect(result.foreignLegacyRejected).toBe(true);
+});
