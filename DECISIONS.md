@@ -316,3 +316,10 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **B07:** de eis dat een geïnstalleerde iOS-PWA en een Safari-tab één Web Lock delen vervalt als migratiegate. De gedeeltelijke iPhone-waarneming blijft historisch vastgelegd, niet als PASS. De vervangende S01–S07-tests toetsen remote concurrency, merge-integriteit, tombstones, offline herstel en opslagfouten.
 - **Waarom:** de juiste garantie is dat wijzigingen tussen onafhankelijke apparaten behouden blijven, niet dat twee verschillende lokale opslagcontainers dezelfde browserlock gebruiken.
 - **Niet gekozen:** één gedeelde lock afdwingen tussen Safari en de Home Screen-PWA; dat is geen betrouwbare of noodzakelijke synchronisatiegarantie.
+
+
+### D58 – PWA-Core v1.2.1 en compacte WebAuthn-identificaties (17 nov 2026, 4.0.4)
+- **Besluit:** Cryptotracker gebruikt PWA-Core v1.2.1. Nieuwe passkeys gebruiken de compacte, app- en functiegebonden WebAuthn userHandle met scope `vault`.
+- **Compatibiliteit:** bestaande passkeys met de legacy `cpt:`-userHandle blijven herkenbaar en herbruikbaar. De PRF-invoer, HKDF-context, credential-ID en verpakte datasleutel worden niet gewijzigd.
+- **Koppelen:** de bestaande handmatige koppelcode blijft gehandhaafd (D13). De generieke Core QR-overdrachtsmodule wordt alleen meegeleverd als onderdeel van de gedeelde Core-release; er komt geen QR-scherm in Cryptotracker.
+- **Waarom:** uniforme Core-beveiliging en toekomstbestendige WebAuthn-identificaties, zonder bestaande passkeys of de afgesproken koppelervaring te breken.
