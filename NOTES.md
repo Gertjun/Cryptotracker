@@ -2,11 +2,14 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 18 november 2026 · versie **4.0.5** (PR #47–#50 gemerged; PWA-Core v1.2.2 vastgepind; CI/Core-validatie/Pages-deployment geslaagd; gebruiker heeft de praktijktest bevestigd; officiële app-release nog niet gepubliceerd)
+Laatst bijgewerkt: 18 november 2026 · versie **4.0.6** in voorbereiding; PWA-Core v1.3.0-integratie in PR #52.
 
 ---
 
 ## Actuele stand – 18 november 2026
+
+- PR #52 integreert PWA-Core v1.3.0 en vervangt de eigen koppelcode door `PWA-CORE-PAIR-2`. De code draagt uitsluitend owner/repo/branch/path/token over; het kluiswachtwoord wordt op het nieuwe apparaat apart ingevoerd. CoinGecko-instellingen en appgegevens komen via de bestaande versleutelde sync.
+- De wijziging is nog niet gemerged, uitgerold of fysiek getest. Oude koppelcodes moeten opnieuw worden aangemaakt.
 
 - `main` bevat appversie **4.0.5** en de officiële PWA-Core **v1.2.2**. PR #47–#50 zijn gemerged.
 - De post-merge testworkflow, Core-validatie en Pages-deployment zijn op de toen gecontroleerde mergecommit geslaagd.

@@ -21,7 +21,7 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 | `app.js` | App-schermen, datamodel, berekeningen en app-specifieke samenvoegfunctie `merge()`; geen framework of build-stap. |
 | `js/bootstrap.js` | Start de PWA-Core-runtime en koppelt die aan de bestaande app-UI. |
 | `js/core/runtime.js` / `js/core/legacy-adapter.js` | Brug tussen de bestaande Cryptotracker-UI/datamodel en de gedeelde PWA-Core-kluis. |
-| `js/core/` | Vastgepinde PWA-Core-modules; de allowlist en SHA-256-controles staan in `core-manifest.json`, de releasepin in `pwa-core.lock.json`. `js/config.js` bevat de zichtbare Core-versie en commit; een regressietest controleert dat die exact overeenkomen met de releasepin. De generieke Core-apparaatkoppelmodule is meegeleverd, maar Cryptotracker gebruikt bewust de bestaande handmatige koppelcode (D13); er is geen QR-gebruikersinterface. App-specifieke modules staan buiten die allowlist. |
+| `js/core/` | Vastgepinde PWA-Core-modules; de allowlist en SHA-256-controles staan in `core-manifest.json`, de releasepin in `pwa-core.lock.json`. Cryptotracker gebruikt `js/core/pair.js` voor handmatige `PWA-CORE-PAIR-2`-koppeling; alleen de vijf GitHub Sync-velden worden overgedragen. Kluiswachtwoord, CoinGecko-sleutel en appgegevens worden niet in de koppelcode opgenomen. App-specifieke modules staan buiten de Core-allowlist. |
 | `sw.js` | Service worker: offline-cache, netwerk eerst met `cache: 'no-cache'`. Cache-naam = versienummer. |
 | `manifest.json`, `icon*.png`, `icon.svg` | PWA-manifest en iconen. |
 | `README.md` | Voorpagina van de repository op GitHub: wat de app doet, installeren, gegevens en privacy. Werk bij als er een grote functie bijkomt. |

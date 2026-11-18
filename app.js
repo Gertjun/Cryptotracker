@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='4.0.5 (18 nov 2026)';
+const APP_VERSION='4.0.6 (18 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -2659,49 +2659,53 @@ async function importFile(e){
 const enc=new TextEncoder(),dec=new TextDecoder();
 const bufToB64=b=>{let s='';new Uint8Array(b).forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
 const b64ToBuf=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-/* ---------- koppelcode: een nieuw apparaat koppelen zonder alles over te typen ---------- */
-// De code bevat repository, token, bestand, branch, versleutelwachtwoord en CoinGecko-sleutel, versleuteld met een
-// willekeurige koppel-pincode die apart wordt getoond. Zonder die pincode is de code onbruikbaar.
-const PAIR_PRE='CPK1.';
-const PIN_CH='23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // zonder 0/O en 1/I/L: makkelijk over te typen
-function newPin(){const r=crypto.getRandomValues(new Uint8Array(8));const s=[...r].map(x=>PIN_CH[x%PIN_CH.length]).join('');return s.slice(0,4)+'-'+s.slice(4)}
-const normPin=p=>String(p||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
-async function makePairCode(pin){const g=settings.gh;
-  const o=await encryptObj({repo:g.repo,token:g.token,path:g.path,branch:g.branch,pass:g.pass,cgKey:data.cfg?.cgKey||'',made:Date.now()},normPin(pin));
-  return PAIR_PRE+utf8ToB64(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
-async function readPairCode(code,pin){
-  let s=String(code||'').trim().replace(/\s+/g,'');if(!s.startsWith(PAIR_PRE))throw new Error('Dit is geen koppelcode van Crypto Portfolio');
-  s=s.slice(PAIR_PRE.length).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
-  let o;try{o=JSON.parse(dec.decode(b64ToBuf(s)))}catch(e){throw new Error('De koppelcode is niet compleet; kopieer hem opnieuw')}
-  try{return await decryptObj(o,normPin(pin))}catch(e){throw new Error('De pincode klopt niet bij deze koppelcode')}}
+/* ---------- gedeelde PWA-Core apparaatkoppeling ---------- */
+const PAIR_CONTEXT='cpt', PAIR_USED_KEY='cpt:pairing:used', CORE_SYNC_PATH='crypto-portfolio.pwa-core-v1.json';
+async function makePairCode(pin){
+  const pair=await import('./js/core/pair.js'),g=settings.gh,parts=String(g.repo||'').split('/').filter(Boolean);
+  if(parts.length!==2)throw new Error('De GitHub-repository moet als eigenaar/repository zijn ingevuld.');
+  const syncConfig={owner:parts[0],repo:parts[1],branch:g.branch||'main',path:coreMode?CORE_SYNC_PATH:(g.path||'crypto-portfolio.enc.json'),token:g.token};
+  return (await pair.createPairingCode({syncConfig,pin,context:PAIR_CONTEXT,transport:'text'})).payload;
+}
+async function readPairCode(code,pin,now=Date.now()){
+  const pair=await import('./js/core/pair.js');
+  return pair.openPairingCode({payload:code,pin,context:PAIR_CONTEXT,now,transport:'text'});
+}
 async function openPairOut(){
-  const pin=newPin();openSheet(`<h2 class="h3">Ander apparaat koppelen</h2><p class="mt-0 hint">Koppelcode maken…</p>`);
+  const pair=await import('./js/core/pair.js'),pin=pair.newPin();
+  openSheet(`<h2 class="h3">Ander apparaat koppelen</h2><p class="mt-0 hint">Koppelcode maken…</p>`);
   const code=await makePairCode(pin);
   openSheet(`<h2 class="h3">Ander apparaat koppelen</h2>
-  <ol class="pair-steps hint"><li>Zet de koppelcode op je andere apparaat, bijvoorbeeld met <i>Kopiëren</i> en dan plakken via AirDrop, Notities of een bericht aan jezelf.</li>
-  <li>Open daar de app en kies <b>Instellingen › Synchronisatie › Koppelcode invoeren</b> (of de knop op het lege Overzicht).</li>
-  <li>Plak de code en typ de pincode over. Die pincode zie je alleen hier: stuur hem niet mee met de code.</li></ol>
+  <ol class="pair-steps hint"><li>Zet de koppelcode op je andere apparaat, bijvoorbeeld via AirDrop, Notities of een bericht aan jezelf.</li>
+  <li>Open daar de app en kies <b>Instellingen › Synchronisatie › Koppelcode invoeren</b>.</li>
+  <li>Typ de pincode apart over. Stuur de pincode niet samen met de code mee.</li></ol>
   <div class="field"><label for="pair_out">Koppelcode</label><textarea id="pair_out" rows="4" readonly spellcheck="false" class="pair-code">${esc(code)}</textarea></div>
   <button type="button" class="btn sec" data-act="paircopy">Kopiëren</button>
   <p class="pair-pin-l label">Pincode</p><p class="pair-pin m" aria-label="Pincode ${pin.split('').join(' ')}">${pin}</p>
-  <p class="hint">De code bevat je GitHub-token en versleutelwachtwoord, versleuteld met deze pincode. Maak je een nieuwe koppelcode, dan blijven oude codes werken zolang je token en wachtwoord niet veranderen.</p>
+  <p class="hint">De code bevat uitsluitend je GitHub Sync-instellingen en verloopt na drie minuten. Je kluiswachtwoord en CoinGecko-sleutel worden niet overgedragen. Vul het kluiswachtwoord op het nieuwe apparaat zelf in; de gegevens worden daarna via GitHub opgehaald.</p>
   <button type="button" class="btn" data-act="settings">Klaar</button>`);
 }
 function openPairIn(){
   openSheet(`<h2 class="h3">Koppelcode invoeren</h2><p class="mt-0 hint">Op je andere apparaat vind je de code bij <b>Instellingen › Synchronisatie › Ander apparaat koppelen</b>.</p>
-  <form class="js-form" novalidate><div class="field"><label for="pair_in">Koppelcode</label><textarea id="pair_in" rows="4" spellcheck="false" autocapitalize="off" autocorrect="off" class="pair-code" placeholder="CPK1.…"></textarea></div>
-  <div class="field"><label for="pair_pin">Pincode</label><input type="text" id="pair_pin" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" placeholder="XXXX-XXXX" maxlength="12"></div>
+  <form class="js-form" novalidate><div class="field"><label for="pair_in">Koppelcode</label><textarea id="pair_in" rows="4" spellcheck="false" autocapitalize="off" autocorrect="off" class="pair-code" placeholder="PWA-CORE-PAIR-2:…"></textarea></div>
+  <div class="field"><label for="pair_pin">Pincode</label><input type="text" id="pair_pin" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19"></div>
+  ${coreMode?'': '<div class="field"><label for="pair_pass">Wachtwoord van je kluis</label><input type="password" id="pair_pass" autocomplete="current-password" required></div>'}
   <button type="submit" class="btn" data-act="pairin">Koppelen en synchroniseren</button></form>`);
   $('#pair_in').focus();
 }
 async function doPairIn(btn){
-  const code=$('#pair_in').value,pin=$('#pair_pin').value;
-  if(!code.trim())return fieldErr('pair_in','Plak de koppelcode');if(normPin(pin).length!==8)return fieldErr('pair_pin','De pincode heeft 8 tekens, bijvoorbeeld AB3D-7KMP');
+  const code=$('#pair_in').value,pin=$('#pair_pin').value,pass=coreMode?'':($('#pair_pass')?.value||'');
+  if(!code.trim())return fieldErr('pair_in','Plak de koppelcode');
+  if(!coreMode&&!pass)return fieldErr('pair_pass','Vul het wachtwoord van je kluis in.');
   btn.disabled=true;
-  try{const c=await readPairCode(code,pin);
-    settings.gh={...settings.gh,repo:c.repo,token:c.token,path:c.path||settings.gh.path,branch:c.branch||'main',pass:c.pass};saveSettings();
-    if(c.cgKey){data.cfg={...(data.cfg||{}),cgKey:c.cgKey,mod:Date.now()};saveData()}
-    closeSheet();render();toast('Gekoppeld, gegevens ophalen…');await syncNow(false);refreshPrices();
+  try{
+    const pair=await import('./js/core/pair.js'),opened=await readPairCode(code,pin),g=opened.syncConfig;
+    if(coreMode&&g.path!==CORE_SYNC_PATH)throw new Error('Deze koppelcode verwijst niet naar het PWA-Core-synchronisatiebestand van Cryptotracker.');
+    if(coreMode)await coreRuntime.updateGitHub({owner:g.owner,repo:g.repo,token:g.token,branch:g.branch});
+    settings.gh={...settings.gh,repo:g.owner+'/'+g.repo,token:g.token,path:g.path,branch:g.branch,pass};saveSettings();
+    closeSheet();render();toast('Koppeling gecontroleerd, gegevens ophalen…');
+    if(!coreMode)await syncNow(false);
+    pair.markPairingUsed(localStorage,opened.pairingId,{storageKey:PAIR_USED_KEY});refreshPrices();
     if(!lockCfg&&pkSupported())openSheet(`<h2 class="h3">Ook Face ID gebruiken?</h2><p class="mt-0 hint">Dit apparaat is gekoppeld. Wil je de app op dit apparaat vergrendelen met Face ID, Touch ID of Windows Hello? Je gegevens op dit apparaat worden dan versleuteld opgeslagen. Je kunt dit ook later doen in Instellingen › Beveiliging.</p><button type="button" class="btn" data-act="lockon">App-vergrendeling instellen</button><button type="button" class="btn sec" data-act="closesheet">Later</button>`);
   }catch(e){btn.disabled=false;fieldErr(/pincode/i.test(e.message)?'pair_pin':'pair_in',e.message)}
 }

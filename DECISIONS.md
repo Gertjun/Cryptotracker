@@ -336,3 +336,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** Cryptotracker pinnt PWA-Core v1.2.2. Een record met een bestaande verwijdermarkering mag alleen terugkomen als `updatedAt` aantoonbaar nieuwer is dan de verwijdering; gelijke of ontbrekende tijdstempels blijven fail-closed.
 - **Waarom:** Cryptotracker gebruikt vaste IDs voor sommige gegevens. Een nieuw aangemaakt record mag na synchronisatie niet onbedoeld door een oude verwijdermarkering verdwijnen, terwijl oude/offline kopieën een verwijdering ook niet mogen terugdraaien.
 - **Niet gekozen:** een app-specifieke kopie of workaround; de correctie hoort in de gedeelde Core.
+
+
+### D61 – Gedeelde Core-apparaatkoppeling (18 november 2026)
+- **Besluit:** Cryptotracker gebruikt PWA-Core v1.3.0-protocol `PWA-CORE-PAIR-2` voor handmatige koppelcodes. De versleutelde envelop bevat uitsluitend owner, repo, branch, path en token.
+- **Gevolg:** het kluiswachtwoord wordt op het nieuwe apparaat afzonderlijk ingevoerd; de CoinGecko-sleutel en overige appgegevens komen via de bestaande versleutelde synchronisatie.
+- **Waarom:** één gedeeld protocol voorkomt afwijkende cryptografie en beperkt de overdracht tot de minimale GitHub Sync-configuratie.
