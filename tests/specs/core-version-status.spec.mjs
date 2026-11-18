@@ -18,6 +18,7 @@ test('Core-versie is zichtbaar en synchronisatiestatus is niet afhankelijk van h
     CryptoPortfolioLegacy.setRuntime({
       getInfo:()=>({coreVersion:'1.2.2',coreCommit:'14dc3ad12c56a448f7de47e2c4c39347475355f6'}),
       getSyncInfo:()=>({enabled:true,configured:true,lastSyncAt:null}),
+      syncNow:async()=>{},
     });
     CryptoPortfolioLegacy.activateCore(
       {txs:[],deleted:[],updated:0},
