@@ -2507,10 +2507,22 @@ function deleteTx(){
 // Op de telefoon staat alles onder elkaar (de lijst is daar verborgen). Het gekozen onderdeel staat in settings.setSec (per apparaat).
 const SETSECS=[['sync','Synchronisatie','Koppeling met GitHub, andere apparaten en eerdere versies'],['view','Weergave','Thema en valuta'],['pf','Portefeuilles','Aparte portefeuilles toevoegen en wijzigen'],['sec','Beveiliging','App-vergrendeling met Face ID of passkey'],['cg','Koersdata en markt','CoinGecko-sleutel, koersarchief en marktsentiment'],['data','Gegevens','Importeren uit Bitvavo, back-up en wissen'],['about','Over de app','Versie, wijzigingen en installeren']];
 const curSetSec=()=>SETSECS.some(x=>x[0]===settings.setSec)?settings.setSec:'sync';
+function coreSyncStatus(){
+  const info=coreRuntime?.getSyncInfo?.()||{};
+  if(syncState.s==='busy')return {state:'busy',label:'Synchroniseren…'};
+  if(syncState.s==='err')return {state:'err',label:'Synchronisatie mislukt'};
+  if(info.enabled!==true)return {state:'off',label:'Uitgeschakeld'};
+  if(info.configured!==true)return {state:'err',label:'Instellingen onvolledig'};
+  if(syncState.s==='ok'||info.lastSyncAt)return {state:'ok',label:'Gesynchroniseerd'};
+  return {state:'off',label:'Nog niet gesynchroniseerd'};
+}
 function setSecStatus(k){
   const g=settings.gh,ghOn=g.token&&g.repo&&g.pass;
   const dot=(st,t)=>`<span class="si-st"><span class="dot ${st}" aria-hidden="true"></span>${t}</span>`;
-  if(k==='sync')return ghOn?dot(syncState.s==='err'?'err':'ok',syncState.s==='err'?'Laatste poging mislukt':'Gekoppeld'):dot('off','Niet gekoppeld');
+  if(k==='sync'){
+    if(coreMode){const status=coreSyncStatus();return dot(status.state,status.label)}
+    return ghOn?dot(syncState.s==='err'?'err':'ok',syncState.s==='err'?'Laatste poging mislukt':'Gekoppeld'):dot('off','Niet gekoppeld');
+  }
   if(k==='view'){const t=settings.theme||'auto';return dot('off',`${t==='auto'?'Automatisch':(THEMES.find(x=>x[0]===t)||[,'Donker'])[1]} · ${({EUR:'Euro',USD:'Dollar',BTC:'Bitcoin'})[settings.unit||'EUR']}`)}
   if(k==='pf'){const n=pfList().length;return dot('off',n===1?'1 portefeuille':n+' portefeuilles')}
   if(k==='sec')return lockCfg?dot('ok','Vergrendeling aan'):dot('off','Vergrendeling uit');
@@ -2597,7 +2609,7 @@ function renderSettings(){
   <section class="card" aria-labelledby="st_danger"><h2 class="h3" id="st_danger">Gevarenzone</h2>
   <button type="button" class="btn danger" data-act="wipe">Alle transacties wissen</button></section>`)}
   ${pane('about',`<section class="card" aria-labelledby="st_about"><h2 class="h3" id="st_about">Over de app</h2>
-  <dl class="kv about-kv"><div><dt>Versie</dt><dd>${esc(APP_VERSION)}</dd></div><div><dt>Transacties</dt><dd>${data.txs.length}</dd></div><div><dt>Koersdata</dt><dd>CoinGecko</dd></div><div><dt>Marktsentiment</dt><dd>alternative.me</dd></div></dl>
+  <dl class="kv about-kv"><div><dt>Versie</dt><dd>${esc(APP_VERSION)}</dd></div>${coreMode?(()=>{const info=coreRuntime?.getInfo?.()||{};const version=info.coreVersion||'onbekend';const commit=info.coreCommit||'';return `<div><dt>PWA-Core</dt><dd><a href="https://github.com/Gertjun/PWA-Core/releases/tag/v${encodeURIComponent(version)}" target="_blank" rel="noopener noreferrer">v${esc(version)}</a>${commit?` · ${esc(commit.slice(0,7))}`:''}</dd></div>`})():''}<div><dt>Transacties</dt><dd>${data.txs.length}</dd></div><div><dt>Koersdata</dt><dd>CoinGecko</dd></div><div><dt>Marktsentiment</dt><dd>alternative.me</dd></div></dl>
   <p class="hint">Wat er per versie veranderd is, staat in de <a href="https://github.com/Gertjun/Cryptotracker/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">lijst met wijzigingen</a>.</p>
   </section>
   <section class="card" aria-labelledby="st_inst"><h2 class="h3" id="st_inst">Installeren</h2>
@@ -2617,7 +2629,7 @@ function renderSettings(){
     // Laat die inhoud intact: een tweede innerHTML-render zou wachtwoordbeheer en nieuwe passkeys verwijderen.
   }
 }
-function syncInfoHTML(){if(coreMode)return `<p class="hint" id="setSync">Core-bestand: <b>crypto-portfolio.pwa-core-v1.json</b>. Je GitHub-token en apparaatinstellingen staan versleuteld in de lokale Core-kluis. Het oude synchronisatiebestand blijft apart en wordt niet gewijzigd.${syncState.s==='err'?`<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}</p>`;return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
+function syncInfoHTML(){if(coreMode){const info=coreRuntime?.getSyncInfo?.()||{},status=coreSyncStatus();return `<p class="hint" id="setSync">Status: <b>${esc(status.label)}</b><br>Core-bestand: <b>crypto-portfolio.pwa-core-v1.json</b>. Je GitHub-token en apparaatinstellingen staan versleuteld in de lokale Core-kluis. Het oude synchronisatiebestand blijft apart en wordt niet gewijzigd.${info.lastSyncAt?`<br>Laatste geslaagde synchronisatie: <b>${esc(fmtTs(info.lastSyncAt))}</b>`:''}${syncState.s==='err'?'<br><span class="danger">Laatste fout: '+esc(syncState.msg)+'</span>':''}</p>`;} return `<p class="hint" id="setSync">Laatste synchronisatie: <b>${settings.lastGh?fmtTs(settings.lastGh):'nog niet'}</b>${syncState.s==='err'?' (laatste poging mislukt)':''}<br>Token: fine-grained, alleen deze repo, recht <i>Contents: Read and write</i>. ${syncState.s==='err'? `<br><span class="danger">Laatste fout: ${esc(syncState.msg)}</span>`:''}<br>${lockCfg?'Je GitHub-token en versleutelwachtwoord staan lokaal versleuteld opgeslagen.':'Zonder app-vergrendeling staan je GitHub-token en versleutelwachtwoord onversleuteld in de browseropslag. Zet app-vergrendeling aan om ze lokaal te versleutelen.'}</p>`}
 // Instellingen is een eigen scherm (#instellingen). openSettings() opent of ververst het; formulieren zijn gewoon in beeld.
 let setFrom='';
 function openSettings(){

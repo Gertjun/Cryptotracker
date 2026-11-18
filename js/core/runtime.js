@@ -6,6 +6,7 @@ import * as github from './github.js';
 import * as biometric from './biometric.js';
 import { createLegacyStorageAdapter } from './legacy-adapter.js';
 import * as sessionLock from './session-lock.js';
+import { APP } from '../config.js';
 
 let core;
 let adapter;
@@ -293,6 +294,20 @@ async function changePassword(current, next) {
   await syncNow(false);
 }
 
+function getSyncInfo() {
+  const settings = appGithubSettings();
+  const meta = vault.getSyncMeta();
+  return {
+    enabled: deviceSettings.syncEnabled === true,
+    configured: Boolean(settings.owner && settings.repo && settings.token),
+    lastSyncAt: Number.isFinite(meta?.lastSyncAt) ? meta.lastSyncAt : null,
+  };
+}
+
+function getInfo() {
+  return { coreVersion: APP.coreVersion, coreCommit: APP.coreCommit };
+}
+
 function assertSyncEnabled() {
   if (deviceSettings.syncEnabled !== true) {
     throw new Error('Activeer eerst Core-synchronisatie om GitHub-versies te openen.');
@@ -537,6 +552,8 @@ const runtime = Object.freeze({
   save,
   cleanupLegacyStorage,
   isLegacyMigrationVerified: () => active && deviceSettings.legacyMigrationVerified === true,
+  getInfo,
+  getSyncInfo,
   syncNow,
   updateGitHub,
   enrollExistingPasskey,

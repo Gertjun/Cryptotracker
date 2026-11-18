@@ -7,6 +7,7 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 | Bestand | Wat |
 |---|---|
 | `specs/core-deletion-revival.spec.mjs` | Vaste-ID-records mogen na een verwijdering alleen herleven met een aantoonbaar nieuwere wijziging; gelijke, oudere en ontbrekende tijdstempels blijven verwijderd. |
+| `specs/core-version-status.spec.mjs` | De zichtbare PWA-Core-versie en commit komen overeen met de releasepin; synchronisatiestatus toont uitgeschakeld, nog niet gesynchroniseerd, geslaagd of mislukt. |
 | `specs/smoke.spec.mjs` | Alle schermen openen zonder JavaScript-fouten of blokkades door de beveiligingsregels (CSP), ook een lege app. |
 | `specs/a11y.spec.mjs` | Toegankelijkheid (WCAG 2.2 AA) met axe-core, in het donkere en lichte thema, en de portfoliografiek met het toetsenbord. |
 | `specs/calc.spec.mjs` | Berekeningen: cash, inleg en gerealiseerde winst uit de test-export; grafiek en tabel tonen hetzelfde percentage; bitcoinweergave; afronding in formulieren; de verkoopsimulator. |
