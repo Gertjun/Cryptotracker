@@ -331,3 +331,8 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Behouden:** `cpt.lock`, `cpt.vault`, `cpt.vcharts` en alle Core-sleutels (`cpt:vault`, `cpt:device`, `cpt:sync`, `cpt:device-id`, `cpt:charts`).
 - **Waarom:** eerst aantonen dat data en secrets in de nieuwe kluis staan; herstelmogelijkheden niet onnodig verwijderen; nooit stilzwijgend gebruikersdata wissen.
 - **Niet gekozen:** automatische cleanup tijdens migratie of brede verwijdering op basis van prefix.
+
+### D60 – PWA-Core v1.2.2 voor correcte herleving van vaste-ID-records (18 nov 2026, 4.0.5)
+- **Besluit:** Cryptotracker pinnt PWA-Core v1.2.2. Een record met een bestaande verwijdermarkering mag alleen terugkomen als `updatedAt` aantoonbaar nieuwer is dan de verwijdering; gelijke of ontbrekende tijdstempels blijven fail-closed.
+- **Waarom:** Cryptotracker gebruikt vaste IDs voor sommige gegevens. Een nieuw aangemaakt record mag na synchronisatie niet onbedoeld door een oude verwijdermarkering verdwijnen, terwijl oude/offline kopieën een verwijdering ook niet mogen terugdraaien.
+- **Niet gekozen:** een app-specifieke kopie of workaround; de correctie hoort in de gedeelde Core.
