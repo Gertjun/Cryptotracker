@@ -17,8 +17,6 @@ test('Core-versie is zichtbaar en synchronisatiestatus is niet afhankelijk van h
   await openApp(page);
   await page.evaluate(({version,commit})=>{
     CryptoPortfolioLegacy.setRuntime({
-      // showSetSec() slaat de instellingen op; de fake runtime moet daarom
-      // hetzelfde save-contract aanbieden als de echte Core-runtime.
       save:async()=>{},
       getInfo:()=>({coreVersion:version,coreCommit:commit}),
       getSyncInfo:()=>({enabled:true,configured:true,lastSyncAt:null}),
@@ -31,9 +29,12 @@ test('Core-versie is zichtbaar en synchronisatiestatus is niet afhankelijk van h
     openSettings();
     showSetSec('about');
   },{version:configValue('coreVersion'),commit:configValue('coreCommit')});
-  await expect(page.locator('#st_about')).toContainText('PWA-Core');
-  await expect(page.locator('#st_about')).toContainText('1.2.2');
-  await expect(page.locator('#st_about')).toContainText('14dc3ad');
+
+  // #st_about is alleen de kop; de Core-versieregel staat in de volledige pane-inhoud eromheen.
+  const aboutPane=page.locator('.set-pane[data-pane="about"]');
+  await expect(aboutPane).toContainText('PWA-Core');
+  await expect(aboutPane).toContainText('1.2.2');
+  await expect(aboutPane).toContainText('14dc3ad');
 
   await page.evaluate(()=>showSetSec('sync'));
   await expect(page.locator('#setNav')).toContainText('Nog niet gesynchroniseerd');
