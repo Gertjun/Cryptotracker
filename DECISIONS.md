@@ -323,3 +323,11 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Compatibiliteit:** bestaande passkeys met de legacy `cpt:`-userHandle blijven herkenbaar en herbruikbaar. De PRF-invoer, HKDF-context, credential-ID en verpakte datasleutel worden niet gewijzigd.
 - **Koppelen:** de bestaande handmatige koppelcode blijft gehandhaafd (D13). De generieke Core QR-overdrachtsmodule wordt alleen meegeleverd als onderdeel van de gedeelde Core-release; er komt geen QR-scherm in Cryptotracker.
 - **Waarom:** uniforme Core-beveiliging en toekomstbestendige WebAuthn-identificaties, zonder bestaande passkeys of de afgesproken koppelervaring te breken.
+
+
+### D59 – Migratie-readback en expliciete legacy-opruiming (18 nov 2026, 4.0.5)
+- **Besluit:** een legacy-migratie is pas geverifieerd als zowel de Core-payload als de versleutelde apparaatinstellingen na opslag teruggelezen en exact vergeleken zijn, en de opslagwachtrij bevestigd is. Oude plaintext-opslag mag daarna alleen via een afzonderlijke, expliciet bevestigde gebruikersactie worden verwijderd.
+- **Toegestane opruiming:** uitsluitend `cpt.data`, `cpt.settings`, `cpt.prices` en `cpt.charts`, alleen op het apparaat waarop de migratie is geverifieerd.
+- **Behouden:** `cpt.lock`, `cpt.vault`, `cpt.vcharts` en alle Core-sleutels (`cpt:vault`, `cpt:device`, `cpt:sync`, `cpt:device-id`, `cpt:charts`).
+- **Waarom:** eerst aantonen dat data en secrets in de nieuwe kluis staan; herstelmogelijkheden niet onnodig verwijderen; nooit stilzwijgend gebruikersdata wissen.
+- **Niet gekozen:** automatische cleanup tijdens migratie of brede verwijdering op basis van prefix.
