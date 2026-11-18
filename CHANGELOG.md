@@ -1,13 +1,16 @@
 # Changelog – Crypto Portfolio
 
-Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.\n\n## Unreleased\n- Beveilig de apparaatkoppeling met PWA-Core v1.3.0: gedeelde apparaatkoppeling draagt uitsluitend owner/repo/branch/path/token over; kluiswachtwoord en CoinGecko-sleutel blijven buiten de koppelcode.ns, rejection sampling, drie minuten geldigheid en expliciete afwijzing van oude CPK1-codes. Bestaande kluizen, passkeys en opgeslagen synchronisatie-instellingen blijven onaangeraakt. Alle apparaten die nog gekoppeld moeten worden, moeten een nieuwe code krijgen.
+Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
+
+## Unreleased
+- Integreer PWA-Core v1.3.0 apparaatkoppeling. De code bevat alleen owner/repo/branch/path/token; kluiswachtwoord en CoinGecko-sleutel worden niet overgedragen.
 
 **Versienummers** hebben de vorm `MAJOR.MINOR.PATCH`:
 - **MAJOR** omhoog bij een wijziging waarbij je iets moet doen, zoals opnieuw koppelen of alle apparaten tegelijk bijwerken.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.5-core1.2.2`) en de naam van het zip-bestand (`crypto-tracker-4.0.5.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.6-core1.3.0`) en de naam van het zip-bestand (`crypto-tracker-4.0.5.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".

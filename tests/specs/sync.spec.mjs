@@ -38,8 +38,10 @@ test('nieuw apparaat koppelen met koppelcode en pincode',async({browser})=>{
   await A.evaluate(()=>syncNow(false));await A.waitForFunction(()=>syncState.s==='ok');
   await A.evaluate(()=>openSettings());await A.locator('[data-act=pairout]').click();
   const code=await A.locator('#pair_out').inputValue(),pin=await A.locator('.pair-pin').textContent();
-  expect(code).toMatch(/^CPK2\./);expect(code).not.toContain('geheim123');
-  expect(pin.replace(/-/g,'')).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{16}$/);\n  const syncFields=await A.evaluate(async({code,pin})=>Object.keys((await readPairCode(code,pin)).syncConfig).sort(),{code,pin});\n  expect(syncFields).toEqual(['branch','owner','path','repo','token']);
+  expect(code).toMatch(/^PWA-CORE-PAIR-2:/);expect(code).not.toContain('geheim123');
+  expect(pin.replace(/-/g,'')).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{16}$/);
+  const syncFields=await A.evaluate(async({code,pin})=>Object.keys((await readPairCode(code,pin)).syncConfig).sort(),{code,pin});
+  expect(syncFields).toEqual(['branch','owner','path','repo','token']);
   const expiry=await A.evaluate(async({code,pin})=>{try{await readPairCode(code,pin,Date.now()+180000);return false}catch(e){return /verlopen/.test(e.message)}},{code,pin});
   expect(expiry).toBe(true);
   const legacy=await A.evaluate(async pin=>{try{await readPairCode('CPK1.legacy',pin);return false}catch(e){return /oude koppelcode wordt niet meer geaccepteerd/.test(e.message)}},pin);
