@@ -30,6 +30,10 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   await page.locator('[data-core-action=confirm-migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   expect(await page.evaluate(()=>window.PWACoreV1.runtime.isLegacyMigrationVerified())).toBe(true);
+  await page.evaluate(()=>{location.hash='#instellingen';showSetSec('sec')});
+  await expect(page.locator('[data-act=corecleanup]')).toBeVisible();
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('[data-act=corecleanup]').click();
   const result=await page.evaluate(()=>window.PWACoreV1.runtime.cleanupLegacyStorage());
   expect(result.removed).toBe(4);
   const keys=await page.evaluate(()=>Object.fromEntries([
@@ -53,11 +57,12 @@ test('legacy-migratie faalt gesloten als Core-device-settings niet correct kunne
   await page.goto('/index.html');
   const error=await page.evaluate(async()=>{
     const {createLegacyStorageAdapter}=await import('/js/core/legacy-adapter.js');
+    let storedData=null;
     const vault={
-      async create(){},
+      async create(password,payload){storedData=structuredClone(payload)},
       async setDeviceSettings(){},
       async flush(){},
-      getData(){return {txs:[],deleted:[],schema:1,__pwaSync:{devices:{},deletions:{}}}},
+      getData(){return storedData},
       async getDeviceSettings(){return {github:{owner:'wrong'}}},
       getStorageStatus(){return {pending:false,requestedRevision:1,persistedRevision:1}},
     };
