@@ -2660,20 +2660,40 @@ const enc=new TextEncoder(),dec=new TextDecoder();
 const bufToB64=b=>{let s='';new Uint8Array(b).forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
 const b64ToBuf=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 /* ---------- koppelcode: een nieuw apparaat koppelen zonder alles over te typen ---------- */
-// De code bevat repository, token, bestand, branch, versleutelwachtwoord en CoinGecko-sleutel, versleuteld met een
-// willekeurige koppel-pincode die apart wordt getoond. Zonder die pincode is de code onbruikbaar.
-const PAIR_PRE='CPK1.';
-const PIN_CH='23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // zonder 0/O en 1/I/L: makkelijk over te typen
-function newPin(){const r=crypto.getRandomValues(new Uint8Array(8));const s=[...r].map(x=>PIN_CH[x%PIN_CH.length]).join('');return s.slice(0,4)+'-'+s.slice(4)}
+// CPK2 bevat synchronisatie-instellingen en geheimen, versleuteld met een aparte PIN.
+// De PIN is 16 tekens; codes verlopen na drie minuten. CPK1 wordt niet meer geaccepteerd.
+const PAIR_PRE='CPK2.', LEGACY_PAIR_PRE='CPK1.';
+const PIN_CH='23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+const PIN_LENGTH=16, PAIR_TTL_MS=3*60*1000, PAIR_MAX_CODE=16000;
+function newPin(){
+  const limit=Math.floor(256/PIN_CH.length)*PIN_CH.length;let s='';
+  while(s.length<PIN_LENGTH){for(const x of crypto.getRandomValues(new Uint8Array(32))){if(x>=limit)continue;s+=PIN_CH[x%PIN_CH.length];if(s.length===PIN_LENGTH)break}}
+  return s.match(/.{4}/g).join('-');
+}
 const normPin=p=>String(p||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
-async function makePairCode(pin){const g=settings.gh;
-  const o=await encryptObj({repo:g.repo,token:g.token,path:g.path,branch:g.branch,pass:g.pass,cgKey:data.cfg?.cgKey||'',made:Date.now()},normPin(pin));
-  return PAIR_PRE+utf8ToB64(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
-async function readPairCode(code,pin){
-  let s=String(code||'').trim().replace(/\s+/g,'');if(!s.startsWith(PAIR_PRE))throw new Error('Dit is geen koppelcode van Crypto Portfolio');
-  s=s.slice(PAIR_PRE.length).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
-  let o;try{o=JSON.parse(dec.decode(b64ToBuf(s)))}catch(e){throw new Error('De koppelcode is niet compleet; kopieer hem opnieuw')}
-  try{return await decryptObj(o,normPin(pin))}catch(e){throw new Error('De pincode klopt niet bij deze koppelcode')}}
+function validPairPin(pin){const p=normPin(pin);if(p.length!==PIN_LENGTH||[...p].some(x=>!PIN_CH.includes(x)))throw new Error('De pincode moet 16 tekens bevatten, bijvoorbeeld AB3D-7KMP-9Q2R-5TUV');return p}
+async function makePairCode(pin){
+  const g=settings.gh,issuedAt=Date.now(),expiresAt=issuedAt+PAIR_TTL_MS;
+  const payload={pairVersion:2,app:'cryptotracker',issuedAt,expiresAt,repo:g.repo,token:g.token,path:g.path,branch:g.branch,pass:g.pass,cgKey:data.cfg?.cgKey||''};
+  const o=await encryptObj(payload,validPairPin(pin));
+  return PAIR_PRE+utf8ToB64(JSON.stringify(o)).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+}
+async function readPairCode(code,pin,now=Date.now()){
+  const text=String(code||'').trim().replace(/\\s+/g,'');
+  if(text.startsWith(LEGACY_PAIR_PRE))throw new Error('Deze oude CPK1-koppelcode is niet meer veilig genoeg. Maak op het andere apparaat een nieuwe koppelcode.');
+  if(!text.startsWith(PAIR_PRE)||text.length>PAIR_MAX_CODE)throw new Error('Dit is geen geldige CPK2-koppelcode van Crypto Portfolio');
+  const normalized=validPairPin(pin);
+  let encoded=text.slice(PAIR_PRE.length).replace(/-/g,'+').replace(/_/g,'/');
+  while(encoded.length%4)encoded+='=';
+  let o;try{o=JSON.parse(dec.decode(b64ToBuf(encoded)))}catch{throw new Error('De koppelcode is niet compleet of beschadigd; kopieer hem opnieuw')}
+  let payload;try{payload=await decryptObj(o,normalized)}catch{throw new Error('De pincode klopt niet bij deze koppelcode, of de code is beschadigd')}
+  if(payload?.pairVersion!==2||payload.app!=='cryptotracker'||!Number.isSafeInteger(payload.issuedAt)||!Number.isSafeInteger(payload.expiresAt)||
+     payload.expiresAt-payload.issuedAt!==PAIR_TTL_MS||payload.issuedAt>now+30000||payload.expiresAt<=now||now-payload.issuedAt>PAIR_TTL_MS)
+    throw new Error('Deze koppelcode is verlopen of ongeldig. Maak op het andere apparaat een nieuwe code.');
+  if(typeof payload.repo!=='string'||!payload.repo||typeof payload.token!=='string'||!payload.token||typeof payload.pass!=='string'||!payload.pass)
+    throw new Error('De koppelcode bevat onvolledige synchronisatiegegevens.');
+  return payload;
+}
 async function openPairOut(){
   const pin=newPin();openSheet(`<h2 class="h3">Ander apparaat koppelen</h2><p class="mt-0 hint">Koppelcode maken…</p>`);
   const code=await makePairCode(pin);
@@ -2684,19 +2704,19 @@ async function openPairOut(){
   <div class="field"><label for="pair_out">Koppelcode</label><textarea id="pair_out" rows="4" readonly spellcheck="false" class="pair-code">${esc(code)}</textarea></div>
   <button type="button" class="btn sec" data-act="paircopy">Kopiëren</button>
   <p class="pair-pin-l label">Pincode</p><p class="pair-pin m" aria-label="Pincode ${pin.split('').join(' ')}">${pin}</p>
-  <p class="hint">De code bevat je GitHub-token en versleutelwachtwoord, versleuteld met deze pincode. Maak je een nieuwe koppelcode, dan blijven oude codes werken zolang je token en wachtwoord niet veranderen.</p>
+  <p class="hint">De code bevat je GitHub-token en versleutelwachtwoord, versleuteld met deze pincode. De koppelcode verloopt na drie minuten. Maak daarna een nieuwe code; bestaande synchronisatie op gekoppelde apparaten blijft ongewijzigd.</p>
   <button type="button" class="btn" data-act="settings">Klaar</button>`);
 }
 function openPairIn(){
   openSheet(`<h2 class="h3">Koppelcode invoeren</h2><p class="mt-0 hint">Op je andere apparaat vind je de code bij <b>Instellingen › Synchronisatie › Ander apparaat koppelen</b>.</p>
-  <form class="js-form" novalidate><div class="field"><label for="pair_in">Koppelcode</label><textarea id="pair_in" rows="4" spellcheck="false" autocapitalize="off" autocorrect="off" class="pair-code" placeholder="CPK1.…"></textarea></div>
-  <div class="field"><label for="pair_pin">Pincode</label><input type="text" id="pair_pin" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" placeholder="XXXX-XXXX" maxlength="12"></div>
+  <form class="js-form" novalidate><div class="field"><label for="pair_in">Koppelcode</label><textarea id="pair_in" rows="4" spellcheck="false" autocapitalize="off" autocorrect="off" class="pair-code" placeholder="CPK2.…"></textarea></div>
+  <div class="field"><label for="pair_pin">Pincode</label><input type="text" id="pair_pin" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19"></div>
   <button type="submit" class="btn" data-act="pairin">Koppelen en synchroniseren</button></form>`);
   $('#pair_in').focus();
 }
 async function doPairIn(btn){
   const code=$('#pair_in').value,pin=$('#pair_pin').value;
-  if(!code.trim())return fieldErr('pair_in','Plak de koppelcode');if(normPin(pin).length!==8)return fieldErr('pair_pin','De pincode heeft 8 tekens, bijvoorbeeld AB3D-7KMP');
+  if(!code.trim())return fieldErr('pair_in','Plak de koppelcode');if(normPin(pin).length!==16)return fieldErr('pair_pin','De pincode heeft 16 tekens, bijvoorbeeld AB3D-7KMP-9Q2R-5TUV');
   btn.disabled=true;
   try{const c=await readPairCode(code,pin);
     settings.gh={...settings.gh,repo:c.repo,token:c.token,path:c.path||settings.gh.path,branch:c.branch||'main',pass:c.pass};saveSettings();
