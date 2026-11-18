@@ -7,7 +7,7 @@ Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.5-core1`) en de naam van het zip-bestand (`crypto-tracker-4.0.5.zip`).
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.5-core1.2.2`) en de naam van het zip-bestand (`crypto-tracker-4.0.5.zip`).
 Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
@@ -17,6 +17,7 @@ Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens 
 
 ## 4.0.5 – 18 november 2026 (kandidaat)
 Migratiecontrole en opruimen van oude lokale opslag veiliger gemaakt.
+De gedeelde PWA-Core is bijgewerkt naar v1.2.2. Deze versie herstelt vaste-ID-records na een verwijdering alleen wanneer de nieuwe wijziging aantoonbaar nieuwer is dan de verwijdermarkering.
 
 ### Beveiliging
 - Na een legacy-migratie worden zowel de Core-gegevens als de versleutelde apparaatinstellingen teruggelezen en vergeleken; een afwijking blokkeert de afronding.
