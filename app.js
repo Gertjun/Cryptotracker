@@ -2660,11 +2660,11 @@ const enc=new TextEncoder(),dec=new TextDecoder();
 const bufToB64=b=>{let s='';new Uint8Array(b).forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
 const b64ToBuf=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 /* ---------- gedeelde PWA-Core apparaatkoppeling ---------- */
-const PAIR_CONTEXT='cpt', PAIR_USED_KEY='cpt:pairing:used';
+const PAIR_CONTEXT='cpt', PAIR_USED_KEY='cpt:pairing:used', CORE_SYNC_PATH='crypto-portfolio.pwa-core-v1.json';
 async function makePairCode(pin){
   const pair=await import('./js/core/pair.js'),g=settings.gh,parts=String(g.repo||'').split('/').filter(Boolean);
   if(parts.length!==2)throw new Error('De GitHub-repository moet als eigenaar/repository zijn ingevuld.');
-  const syncConfig={owner:parts[0],repo:parts[1],branch:g.branch||'main',path:g.path||'crypto-portfolio.enc.json',token:g.token};
+  const syncConfig={owner:parts[0],repo:parts[1],branch:g.branch||'main',path:coreMode?CORE_SYNC_PATH:(g.path||'crypto-portfolio.enc.json'),token:g.token};
   return (await pair.createPairingCode({syncConfig,pin,context:PAIR_CONTEXT,transport:'text'})).payload;
 }
 async function readPairCode(code,pin,now=Date.now()){
@@ -2700,10 +2700,12 @@ async function doPairIn(btn){
   btn.disabled=true;
   try{
     const pair=await import('./js/core/pair.js'),opened=await readPairCode(code,pin),g=opened.syncConfig;
+    if(coreMode&&g.path!==CORE_SYNC_PATH)throw new Error('Deze koppelcode verwijst niet naar het PWA-Core-synchronisatiebestand van Cryptotracker.');
     if(coreMode)await coreRuntime.updateGitHub({owner:g.owner,repo:g.repo,token:g.token,branch:g.branch});
-    pair.markPairingUsed(localStorage,opened.pairingId,{storageKey:PAIR_USED_KEY});
     settings.gh={...settings.gh,repo:g.owner+'/'+g.repo,token:g.token,path:g.path,branch:g.branch,pass};saveSettings();
-    closeSheet();render();toast('Koppeling gecontroleerd, gegevens ophalen…');await syncNow(false);refreshPrices();
+    closeSheet();render();toast('Koppeling gecontroleerd, gegevens ophalen…');
+    if(!coreMode)await syncNow(false);
+    pair.markPairingUsed(localStorage,opened.pairingId,{storageKey:PAIR_USED_KEY});refreshPrices();
     if(!lockCfg&&pkSupported())openSheet(`<h2 class="h3">Ook Face ID gebruiken?</h2><p class="mt-0 hint">Dit apparaat is gekoppeld. Wil je de app op dit apparaat vergrendelen met Face ID, Touch ID of Windows Hello? Je gegevens op dit apparaat worden dan versleuteld opgeslagen. Je kunt dit ook later doen in Instellingen › Beveiliging.</p><button type="button" class="btn" data-act="lockon">App-vergrendeling instellen</button><button type="button" class="btn sec" data-act="closesheet">Later</button>`);
   }catch(e){btn.disabled=false;fieldErr(/pincode/i.test(e.message)?'pair_pin':'pair_in',e.message)}
 }
