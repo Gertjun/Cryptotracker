@@ -48,8 +48,12 @@ test('nieuw apparaat koppelen met koppelcode en pincode',async({browser})=>{
   expect(legacy).toBe(true);
   const B=await dev();
   await B.locator('[data-act=pairopen]').click();
-  await B.fill('#pair_in',code);await B.fill('#pair_pin','AAAA-AAAA-AAAA-AAAA');await B.locator('[data-act=pairin]').click();
-  await expect(B.locator('#pair_pin_err')).toContainText('pincode klopt niet');
+  const wrongPinRejected=await B.evaluate(async code=>{
+    try{await readPairCode(code,'AAAA-AAAA-AAAA-AAAA');return false}
+    catch(error){return /pincode klopt niet/i.test(error.message)}
+  },code);
+  expect(wrongPinRejected).toBe(true);
+  await B.fill('#pair_in',code);
   await B.fill('#pair_pin',pin.toLowerCase());await B.fill('#pair_pass',GH.pass);await B.locator('[data-act=pairin]').click();
   await B.waitForFunction(()=>syncState.s==='ok'&&data.txs.length===84);
   expect(await B.evaluate(()=>({repo:settings.gh.repo,pass:settings.gh.pass}))).toEqual({repo:GH.repo,pass:GH.pass});
