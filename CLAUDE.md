@@ -11,7 +11,7 @@
 - Volg de werkwijze in NOTES §1. Kort samengevat:
   - **Taal en uitleg:** Nederlands, en eenvoudige uitleg zonder vakjargon.
   - **"Hoe zou je…" of "nog niet bouwen":** eerst uitleggen en wachten.
-  - **Elke wijziging is een eigen versie:** tests, `tools/release.py`, daarna rechtstreeks naar `main` pushen (D35).
+  - **Elke wijziging is een eigen versie:** tests draaien, wijzigingen op een featurebranch aanbieden als PR; merge, release of deployment alleen na afzonderlijk expliciet akkoord.
 - Ga je in tegen een besluit uit `DECISIONS.md`? Zeg dat en vraag het eerst.
 - Draai vóór elke release de tests (`tests/README.md`).
 
