@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (featurebranch `fix/legacy-migration-verification-cleanup`; PWA-Core v1.2.1 vastgepind; CI-validatie en praktijktest nog open)
+Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (featurebranch `fix/legacy-migration-verification-cleanup`; PWA-Core v1.2.2 vastgepind; Core-pin- en volledige testvalidatie nog uit te voeren; praktijktest blijft apart open)
 
 ---
 
