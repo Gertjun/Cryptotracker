@@ -317,8 +317,8 @@ test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',as
 });
 
 
-test('mislukte Core-bootstrap start legacy zonder legacy-GitHub-sync',async({page})=>{
-  const githubCalls=[];
+test('mislukte Core-bootstrap blokkeert legacy-start volledig',async({page})=>{
+  const externalCalls=[];
   await page.addInitScript(()=>{
     localStorage.setItem('cpt.data',JSON.stringify({v:1,updated:1,deleted:[],txs:[]}));
     localStorage.setItem('cpt.settings',JSON.stringify({
@@ -329,22 +329,33 @@ test('mislukte Core-bootstrap start legacy zonder legacy-GitHub-sync',async({pag
   });
   await page.route('**/js/config.js',route=>route.abort());
   await page.route('https://api.github.com/**',async route=>{
-    githubCalls.push({method:route.request().method(),url:route.request().url()});
+    externalCalls.push(route.request().url());
     return route.fulfill({status:404,json:{message:'Not Found'}});
   });
-  await page.route('https://api.coingecko.com/**',route=>route.fulfill({json:{}}));
-  await page.route('https://api.alternative.me/**',route=>route.fulfill({json:{data:[]}}));
+  await page.route('https://api.coingecko.com/**',route=>{
+    externalCalls.push(route.request().url());
+    return route.fulfill({json:{}});
+  });
+  await page.route('https://api.alternative.me/**',route=>{
+    externalCalls.push(route.request().url());
+    return route.fulfill({json:{data:[]}});
+  });
   await page.goto('/index.html');
-  await page.waitForFunction(()=>window.__coreBootstrapFailed===true&&!!window.CryptoPortfolioLegacy);
-  await page.waitForTimeout(150);
-  expect(githubCalls).toEqual([]);
+  await page.waitForFunction(()=>window.__coreBootstrapFailed===true);
+  await expect(page.locator('#core-bootstrap-error')).toBeVisible();
+  await expect(page.locator('#core-bootstrap-error')).toContainText('kan niet veilig starten');
+  await expect(page.locator('#core-bootstrap-error')).toContainText('oude opslag wordt uit veiligheid niet automatisch geopend');
+  await expect(page.locator('#app .top')).not.toBeVisible();
+  expect(await page.evaluate(()=>document.body.classList.contains('locked'))).toBe(true);
+  expect(externalCalls).toEqual([]);
   const state=await page.evaluate(()=>({
     legacyBridge:!!window.CryptoPortfolioLegacy,
     legacyData:localStorage.getItem('cpt.data'),
+    legacySettings:localStorage.getItem('cpt.settings'),
   }));
   expect(state.legacyBridge).toBe(true);
   expect(state.legacyData).toContain('"txs":[]');
-  await expect(page.locator('#app .top')).toBeVisible();
+  expect(state.legacySettings).toContain('test-token');
 });
 
 
