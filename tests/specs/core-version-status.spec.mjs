@@ -17,6 +17,9 @@ test('Core-versie is zichtbaar en synchronisatiestatus is niet afhankelijk van h
   await openApp(page);
   await page.evaluate(({version,commit})=>{
     CryptoPortfolioLegacy.setRuntime({
+      // showSetSec() slaat de instellingen op; de fake runtime moet daarom
+      // hetzelfde save-contract aanbieden als de echte Core-runtime.
+      save:async()=>{},
       getInfo:()=>({coreVersion:version,coreCommit:commit}),
       getSyncInfo:()=>({enabled:true,configured:true,lastSyncAt:null}),
       syncNow:async()=>{},
