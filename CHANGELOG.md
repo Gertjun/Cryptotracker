@@ -1,6 +1,6 @@
 # Changelog – Crypto Portfolio
 
-Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.\n\n## Unreleased\n- Beveilig de apparaatkoppeling met CPK2: 16 willekeurige tekens, rejection sampling, drie minuten geldigheid en expliciete afwijzing van oude CPK1-codes. Bestaande kluizen, passkeys en opgeslagen synchronisatie-instellingen blijven onaangeraakt. Alle apparaten die nog gekoppeld moeten worden, moeten een nieuwe code krijgen.
+Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.\n\n## Unreleased\n- Beveilig de apparaatkoppeling met PWA-Core v1.3.0: gedeelde apparaatkoppeling draagt uitsluitend owner/repo/branch/path/token over; kluiswachtwoord en CoinGecko-sleutel blijven buiten de koppelcode.ns, rejection sampling, drie minuten geldigheid en expliciete afwijzing van oude CPK1-codes. Bestaande kluizen, passkeys en opgeslagen synchronisatie-instellingen blijven onaangeraakt. Alle apparaten die nog gekoppeld moeten worden, moeten een nieuwe code krijgen.
 
 **Versienummers** hebben de vorm `MAJOR.MINOR.PATCH`:
 - **MAJOR** omhoog bij een wijziging waarbij je iets moet doen, zoals opnieuw koppelen of alle apparaten tegelijk bijwerken.
