@@ -39,6 +39,10 @@ test('nieuw apparaat koppelen met koppelcode en pincode',async({browser})=>{
   await A.evaluate(()=>openSettings());await A.locator('[data-act=pairout]').click();
   const code=await A.locator('#pair_out').inputValue(),pin=await A.locator('.pair-pin').textContent();
   expect(code).toMatch(/^CPK2\./);expect(code).not.toContain('geheim123');\n  expect(pin.replace(/-/g,'')).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{16}$/);
+  const expiry=await A.evaluate(async({code,pin})=>{try{await readPairCode(code,pin,Date.now()+180000);return false}catch(e){return /verlopen/.test(e.message)}},{code,pin});
+  expect(expiry).toBe(true);
+  const legacy=await A.evaluate(async pin=>{try{await readPairCode('CPK1.legacy',pin);return false}catch(e){return /CPK1.*niet meer veilig/.test(e.message)}},pin);
+  expect(legacy).toBe(true);
   const B=await dev();
   await B.locator('[data-act=pairopen]').click();
   await B.fill('#pair_in',code);await B.fill('#pair_pin','AAAA-AAAA-AAAA-AAAA');await B.locator('[data-act=pairin]').click();
