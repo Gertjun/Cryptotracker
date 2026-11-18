@@ -2,9 +2,17 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (PR #47 en #48 gemerged; PWA-Core v1.2.2 vastgepind; post-merge tests, Core-validatie en Pages-deployment geslaagd; praktijktest op echte apparaten en release nog open)
+Laatst bijgewerkt: 18 november 2026 · versie **4.0.5** (PR #47–#50 gemerged; PWA-Core v1.2.2 vastgepind; CI/Core-validatie/Pages-deployment geslaagd; gebruiker heeft de praktijktest bevestigd; officiële app-release nog niet gepubliceerd)
 
 ---
+
+## Actuele stand – 18 november 2026
+
+- `main` bevat appversie **4.0.5** en de officiële PWA-Core **v1.2.2**. PR #47–#50 zijn gemerged.
+- De post-merge testworkflow, Core-validatie en Pages-deployment zijn op de toen gecontroleerde mergecommit geslaagd.
+- De gebruiker heeft op 18 november bevestigd: **“Alles werkt!”** De praktijktest is daarmee door de gebruiker als geslaagd gemeld. De precieze testdekking wordt niet ruimer voorgesteld dan de bevestiging ondersteunt.
+- De officiële Cryptotracker-release 4.0.5 is nog niet gepubliceerd. Een release is een afzonderlijke stap en volgt niet automatisch uit een geslaagde praktijktest.
+- Geen productiegegevens, SyncData-bestand of tokens benaderd of gewijzigd.
 
 ## 1. Werkwijze met Geert (belangrijk)
 
