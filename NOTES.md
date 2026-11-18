@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 17 november 2026 · kandidaatversie **4.0.4** (featurebranch `feature/pwa-core-v1.2.1`; PWA-Core v1.2.1 vastgepind; CI-validatie en praktijktest nog open)
+Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (featurebranch `fix/legacy-migration-verification-cleanup`; PWA-Core v1.2.1 vastgepind; CI-validatie en praktijktest nog open)
 
 ---
 
@@ -11,12 +11,11 @@ Laatst bijgewerkt: 17 november 2026 · kandidaatversie **4.0.4** (featurebranch 
 - **Antwoord:** in het Nederlands, kort en zonder vakjargon, want hij heeft geen IT-achtergrond.
 - **Vraagt hij "hoe zou je …" of "implementeer het nog niet":** leg het uit en **wacht op akkoord**. Bouw pas als hij "bouw het in" of iets dergelijks zegt.
 - **Elke wijziging is een eigen versie:**
-  1. code aanpassen;
-  2. tests draaien;
-  3. `python3 tools/release.py <major|minor|patch> tekst.md`;
-  4. committen en **rechtstreeks naar `main` pushen** (D35); geen zip en geen voorstel meer nodig;
-  5. kort samenvatten.
-  Pas als de tests lokaal groen zijn, push je. Na de push draaien de tests nog eens op GitHub; zijn die rood, los het dan direct op met een nieuwe versie.
+  1. code aanpassen en tests draaien;
+  2. wijzigingen op een eigen featurebranch vastleggen en als PR aanbieden;
+  3. GitHub Actions op de actuele PR-head controleren;
+  4. **niet mergen, releasen of deployen zonder afzonderlijk expliciet akkoord**;
+  5. na akkoord de afgesproken versie-/releaseprocedure volgen.
 - **Code lezen en schrijven:** koppel aan het begin van een sessie de repository `Gertjun/Cryptotracker` met schrijfrechten (`add_repo` met `access: push`; de Claude GitHub-app is geïnstalleerd). Haal vóór het pushen eerst `git fetch origin main` en zet je werk erbovenop.
 - **Bij een nieuw bestand of een nieuwe map:** noem het in de samenvatting.
 - **Screenshots:** hij stuurt er vaak een. Controleer het versienummer in Instellingen, want een oude versie uit de cache was eerder de oorzaak van een "bug".
@@ -47,6 +46,8 @@ Laatst bijgewerkt: 17 november 2026 · kandidaatversie **4.0.4** (featurebranch 
 - **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
 - **PWA-template:** de app draait bewust niet op Geerts PWA-template (D36). Ombouwen kan later, maar alleen met een goedgekeurd plan.
 - **Native iPhone-app in SwiftUI:** genoemd door Geert (in een andere sessie); geen code in deze repository. Hij heeft geen Mac.
+
+- **18 nov 2026 – 4.0.5 (kandidaat):** F08 migratie-readback uitgebreid met controle van versleutelde Core-device-settings en opslagstatus. Expliciete, apparaatgebonden cleanup toegevoegd voor uitsluitend `cpt.data`, `cpt.settings`, `cpt.prices`, `cpt.charts`; oude versleutelde herstelbestanden en Core-keys blijven behouden. Synthetische regressietests toegevoegd. PR/CI en praktische controle nog open; geen echte lokale data verwijderd.
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
