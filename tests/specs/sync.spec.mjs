@@ -38,10 +38,10 @@ test('nieuw apparaat koppelen met koppelcode en pincode',async({browser})=>{
   await A.evaluate(()=>syncNow(false));await A.waitForFunction(()=>syncState.s==='ok');
   await A.evaluate(()=>openSettings());await A.locator('[data-act=pairout]').click();
   const code=await A.locator('#pair_out').inputValue(),pin=await A.locator('.pair-pin').textContent();
-  expect(code).toMatch(/^CPK1\./);expect(code).not.toContain('geheim123');
+  expect(code).toMatch(/^CPK2\./);expect(code).not.toContain('geheim123');\n  expect(pin.replace(/-/g,'')).toMatch(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{16}$/);
   const B=await dev();
   await B.locator('[data-act=pairopen]').click();
-  await B.fill('#pair_in',code);await B.fill('#pair_pin','AAAA-AAAA');await B.locator('[data-act=pairin]').click();
+  await B.fill('#pair_in',code);await B.fill('#pair_pin','AAAA-AAAA-AAAA-AAAA');await B.locator('[data-act=pairin]').click();
   await expect(B.locator('#pair_pin_err')).toContainText('pincode klopt niet');
   await B.fill('#pair_pin',pin.toLowerCase());await B.locator('[data-act=pairin]').click();
   await B.waitForFunction(()=>syncState.s==='ok'&&data.txs.length===84);
