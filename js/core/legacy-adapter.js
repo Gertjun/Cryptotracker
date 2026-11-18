@@ -181,6 +181,18 @@ export function createLegacyStorageAdapter(vault) {
         if (JSON.stringify(stored) !== JSON.stringify(payload)) {
           throw new Error('Controle na opslaan mislukt: Core-data wijken af van de aangeboden gegevens.');
         }
+        if (typeof vault.getDeviceSettings !== 'function') {
+          throw new Error('Controle na opslaan mislukt: Core-apparaatinstellingen kunnen niet worden teruggelezen.');
+        }
+        const storedDeviceSettings = await vault.getDeviceSettings();
+        if (JSON.stringify(storedDeviceSettings) !== JSON.stringify(deviceSettings)) {
+          throw new Error('Controle na opslaan mislukt: Core-apparaatinstellingen wijken af van de aangeboden instellingen.');
+        }
+        const status = vault.getStorageStatus?.();
+        if (status?.pending === true || (Number.isInteger(status?.requestedRevision) &&
+            Number.isInteger(status?.persistedRevision) && status.persistedRevision < status.requestedRevision)) {
+          throw new Error('Controle na opslaan mislukt: de Core-opslag is nog niet volledig bevestigd.');
+        }
         return stored;
       });
     },

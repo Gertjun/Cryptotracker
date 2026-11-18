@@ -11,7 +11,7 @@
 - Volg de werkwijze in NOTES §1. Kort samengevat:
   - **Taal en uitleg:** Nederlands, en eenvoudige uitleg zonder vakjargon.
   - **"Hoe zou je…" of "nog niet bouwen":** eerst uitleggen en wachten.
-  - **Elke wijziging is een eigen versie:** tests, `tools/release.py`, daarna rechtstreeks naar `main` pushen (D35).
+  - **Elke wijziging is een eigen versie:** tests draaien, wijzigingen op een featurebranch aanbieden als PR; merge, release of deployment alleen na afzonderlijk expliciet akkoord.
 - Ga je in tegen een besluit uit `DECISIONS.md`? Zeg dat en vraag het eerst.
 - Draai vóór elke release de tests (`tests/README.md`).
 
@@ -22,4 +22,4 @@
    - §4 sessielog: één of twee regels, bovenaan.
 2. **`DECISIONS.md`**: een nieuw `D<n>`-besluit voor elke keuze die een volgende sessie moet kennen. Oude besluiten pas je niet aan; een nieuw besluit vervangt een oud ("vervangt D8").
 3. **`ARCHITECTUUR.md`**: alleen als de structuur, conventies of stijl veranderden, bijvoorbeeld bij nieuwe functies, opslag, breakpoints of kleuren.
-4. Push ze naar `main`, en zet ze ook in het claude.ai-project: Projects-tool, `project_write` met `local_path`, paden `claude/NOTES.md`, `claude/DECISIONS.md` en `claude/ARCHITECTUUR.md`. Bestaande bestanden worden dan vervangen.
+4. Neem de bijgewerkte documenten op in de featurebranch en PR. **Merge niet zonder afzonderlijk expliciet akkoord.** Werk daarna ook het claude.ai-project bij via Projects-tool, `project_write` met `local_path`, paden `claude/NOTES.md`, `claude/DECISIONS.md` en `claude/ARCHITECTUUR.md`.
