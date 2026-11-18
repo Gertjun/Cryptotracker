@@ -2676,10 +2676,10 @@ async function makePairCode(pin){
   const g=settings.gh,issuedAt=Date.now(),expiresAt=issuedAt+PAIR_TTL_MS;
   const payload={pairVersion:2,app:'cryptotracker',issuedAt,expiresAt,repo:g.repo,token:g.token,path:g.path,branch:g.branch,pass:g.pass,cgKey:data.cfg?.cgKey||''};
   const o=await encryptObj(payload,validPairPin(pin));
-  return PAIR_PRE+utf8ToB64(JSON.stringify(o)).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+  return PAIR_PRE+utf8ToB64(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 async function readPairCode(code,pin,now=Date.now()){
-  const text=String(code||'').trim().replace(/\\s+/g,'');
+  const text=String(code||'').trim().replace(/\s+/g,'');
   if(text.startsWith(LEGACY_PAIR_PRE))throw new Error('Deze oude CPK1-koppelcode is niet meer veilig genoeg. Maak op het andere apparaat een nieuwe koppelcode.');
   if(!text.startsWith(PAIR_PRE)||text.length>PAIR_MAX_CODE)throw new Error('Dit is geen geldige CPK2-koppelcode van Crypto Portfolio');
   const normalized=validPairPin(pin);
