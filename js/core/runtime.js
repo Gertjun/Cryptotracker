@@ -201,11 +201,22 @@ async function confirmLegacyMigration() {
       token: pending.token,
       branch: pending.branch,
     } },
-    coreDeviceSettings: { autoLockMinutes: 5, syncEnabled: false },
+    coreDeviceSettings: { autoLockMinutes: 5, syncEnabled: false, legacyMigrationVerified: true },
   };
   const migrationAdapter = createLegacyStorageAdapter(vault);
   await migrationAdapter.create(pending.pw, migrationSnapshot);
-  await installAppSettings(await vault.getDeviceSettings());
+  // De adapter heeft data én versleutelde apparaatinstellingen teruggelezen en vergeleken.
+  await vault.flush();
+  const storedSettings = await vault.getDeviceSettings();
+  const storageStatus = vault.getStorageStatus?.();
+  if (!vault.isUnlocked() || !vault.getData() ||
+      storedSettings?.legacyMigrationVerified !== true ||
+      storageStatus?.pending === true ||
+      (Number.isInteger(storageStatus?.requestedRevision) && Number.isInteger(storageStatus?.persistedRevision) &&
+       storageStatus.persistedRevision < storageStatus.requestedRevision)) {
+    throw new Error('De controle van de nieuwe Core-kluis is niet geslaagd. De oude gegevens blijven behouden; probeer het later opnieuw.');
+  }
+  await installAppSettings(storedSettings);
   await activate();
   pendingMigration = null;
 }
@@ -437,6 +448,31 @@ function syncNow(silent = true) {
   return syncPromise;
 }
 
+async function cleanupLegacyStorage() {
+  if (!active || !adapter || deviceSettings.legacyMigrationVerified !== true) {
+    throw new Error('Opruimen is alleen beschikbaar na een gecontroleerde migratie op dit apparaat.');
+  }
+  await adapter.flush();
+  await vault.flush();
+  const status = vault.getStorageStatus?.();
+  const storedSettings = await vault.getDeviceSettings();
+  if (!vault.isUnlocked() || !vault.getData() || !storedSettings ||
+      storedSettings.legacyMigrationVerified !== true || status?.pending === true ||
+      (Number.isInteger(status?.requestedRevision) && Number.isInteger(status?.persistedRevision) &&
+       status.persistedRevision < status.requestedRevision)) {
+    throw new Error('De Core-opslag is niet volledig bevestigd. De oude opslag is niet opgeruimd.');
+  }
+  const keys = ['cpt.data', 'cpt.settings', 'cpt.prices', 'cpt.charts'];
+  let removed = 0;
+  for (const key of keys) {
+    if (localStorage.getItem(key) !== null) {
+      localStorage.removeItem(key);
+      removed++;
+    }
+  }
+  return { removed, keys };
+}
+
 async function save(snapshot) {
   if (!active || !adapter) return;
   try {
@@ -445,6 +481,7 @@ async function save(snapshot) {
       coreDeviceSettings: {
         autoLockMinutes: deviceSettings.autoLockMinutes ?? 5,
         syncEnabled: deviceSettings.syncEnabled,
+        legacyMigrationVerified: deviceSettings.legacyMigrationVerified === true,
       },
       settings: { ...snapshot.settings, gh: {
         repo: `${deviceSettings.github?.owner || ''}/${deviceSettings.github?.repo || ''}`,
@@ -498,6 +535,8 @@ async function lock() {
 
 const runtime = Object.freeze({
   save,
+  cleanupLegacyStorage,
+  isLegacyMigrationVerified: () => active && deviceSettings.legacyMigrationVerified === true,
   syncNow,
   updateGitHub,
   enrollExistingPasskey,
