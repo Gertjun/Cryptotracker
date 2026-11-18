@@ -2564,6 +2564,7 @@ function renderSettings(){
   ${pkSupported()?'<button type="button" class="btn sec" data-act="corepasskey">Bestaande passkey koppelen</button><button type="button" class="btn sec" data-act="corepasskeynew">Nieuwe passkey maken</button>':'<p class="hint">Passkeys met PRF worden niet door deze browser ondersteund.</p>'}
   <p class="hint">Een bestaande passkey kan opnieuw worden gekoppeld na herinstallatie. Een nieuwe passkey maakt een aparte credential voor deze app.</p>
   <button type="button" class="btn sec" data-act="corechpw">Core-wachtwoord wijzigen</button>
+  ${coreRuntime?.isLegacyMigrationVerified?.()?'<p class="hint">De oude, onversleutelde gegevens blijven als herstelkopie op dit apparaat staan. Na controle kun je deze afzonderlijk opruimen.</p><button type="button" class="btn danger" data-act="corecleanup">Oude lokale opslag opruimen</button>':''}
   <button type="button" class="btn danger" data-act="corelock">Kluis nu vergrendelen</button>`
   :lockCfg?`
   ${pks.length?`<div class="pk-list">${pks.map(k=>`<div class="pk-row">${ICONS.key}<div><b>${esc(k.name)}</b><div class="note-sm label">toegevoegd ${new Date(k.created).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})}</div></div><button type="button" data-act="rmpk" data-id="${esc(k.id)}">Verwijder</button></div>`).join('')}</div>`:'<p class="mt-0 hint">Nog geen passkey op dit apparaat; ontgrendelen gaat nu alleen met je herstelwachtwoord.</p>'}
@@ -2995,6 +2996,13 @@ async function securityAction(act,el){
         if(next.length<12)return toast('Kies een wachtwoord van minimaal 12 tekens.');
         if(next!==confirmPw)return toast('De nieuwe wachtwoorden zijn niet gelijk.');
         el.disabled=true;try{await coreRuntime.changePassword(current,next);closeSheet();toast('Core-wachtwoord gewijzigd en gesynchroniseerd')}finally{el.disabled=false}return;
+      }
+      if(act==='corecleanup'){
+        if(!confirm('Oude lokale gegevens en instellingen opruimen? Dit verwijdert alleen cpt.data, cpt.settings, cpt.prices en cpt.charts. De Core-kluis, oude versleutelde back-up (cpt.vault), herstel-/passkeygegevens (cpt.lock) en versleutelde grafiekcache (cpt.vcharts) blijven behouden. Dit kan niet ongedaan worden gemaakt.'))return;
+        el.disabled=true;
+        const result=await coreRuntime.cleanupLegacyStorage();
+        toast(result.removed+' oude opslagonderdelen opgeruimd');
+        return openSettings();
       }
       if(act==='corelock'){await coreRuntime.lock();return}
       if(['lockon','lockon2','addpk','usepk','rmpk','chpw','chpw2','lockoff'].includes(act))return toast('Gebruik de Core-beveiligingsinstellingen.');
