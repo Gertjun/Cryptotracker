@@ -2,11 +2,11 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 18 november 2026 · versie **4.0.5** (PR #47–#50 gemerged; PWA-Core v1.2.2 vastgepind; CI/Core-validatie/Pages-deployment geslaagd; gebruiker heeft de praktijktest bevestigd; officiële app-release nog niet gepubliceerd)
+Laatst bijgewerkt: 18 november 2026 · versie **4.0.5** op main; CPK2-verbetering in PR (nog niet gemerged).
 
 ---
 
-## Actuele stand – 18 november 2026
+## Actuele stand – 18 november 2026\n\n- In featurebranch `feature/cpk2-pairing-hardening` wordt de eigen CPK1-koppeling vervangen door CPK2: 16 willekeurige tekens, rejection sampling, drie minuten geldigheid en weigering van oude CPK1-codes. De bestaande PBKDF2-SHA-256 (600.000) en AES-GCM-encryptie blijven behouden.\n- De PR is nog niet gemerged; de wijziging is nog niet uitgerold of op echte apparaten getest. Oude koppelcodes moeten opnieuw worden aangemaakt; bestaande synchronisatieconfiguratie en kluisdata worden niet gewijzigd.
 
 - `main` bevat appversie **4.0.5** en de officiële PWA-Core **v1.2.2**. PR #47–#50 zijn gemerged.
 - De post-merge testworkflow, Core-validatie en Pages-deployment zijn op de toen gecontroleerde mergecommit geslaagd.
@@ -44,7 +44,7 @@ Laatst bijgewerkt: 18 november 2026 · versie **4.0.5** (PR #47–#50 gemerged; 
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
 - **Wishlist open (33):** W4–W8, W10, W11, W15, W16, W18–W23, W25, W26, W28–W33, W35–W43, W46. W17, W27, W34, W44 en W45 ingebouwd in 3.25.0. Advies aan Geert: daarna W39 (jaarrendement) en W40 (hoe gingen je verkopen). W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
-- **Synchronisatie en beveiliging:** fase 2 (4.0.2) is onderdeel van `main`. De gebruiker heeft de praktijktest van de huidige 4.0.5 op 18 november als geslaagd bevestigd; zie de actuele stand bovenaan.
+- **Koppelcode CPK2:** PR in voorbereiding; oude CPK1-codes worden na uitrol niet meer geaccepteerd. Na merge moet de appversie worden verhoogd en alle apparaten die opnieuw gekoppeld moeten worden, gebruiken een nieuwe CPK2-code. Nog niet op echte apparaten getest.\n- **Synchronisatie en beveiliging:** fase 2 (4.0.2) is onderdeel van `main`. De gebruiker heeft de praktijktest van de huidige 4.0.5 op 18 november als geslaagd bevestigd; zie de actuele stand bovenaan.
 - **PWA-Core:** de migratie is afgerond; PR #48 heeft de app naar v1.2.2 gebracht en PR #50 heeft de zichtbare Core-versie en synchronisatiestatus gecorrigeerd. De gebruiker heeft de praktijktest op 18 november bevestigd. De afzonderlijke app-release 4.0.5 is nog niet gepubliceerd.
 - **Passkey hergebruiken (3.26.0, D55)** nog niet op een echte iPhone bevestigd: vergrendeling uit en weer aan, dan "Bestaande passkey gebruiken". `inzicht.spec.mjs` › meebewegen met bitcoin faalde één keer bij de volle testrun op de telefoon (los steeds groen); in de gaten houden.
 - **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
