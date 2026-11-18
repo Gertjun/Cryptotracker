@@ -8,7 +8,7 @@ import {openApp} from './helpers.mjs';
 const lock=JSON.parse(readFileSync(new URL('../../pwa-core.lock.json',import.meta.url),'utf8'));
 
 test('app-configuratie volgt exact de vastgepinde PWA-Core-release',()=>{
-  expect(configValue('version')).toBe('4.0.5');
+  expect(configValue('version')).toBe('4.0.6');
   expect(configValue('coreVersion')).toBe(lock.version);
   expect(configValue('coreCommit')).toBe(lock.commit);
 });
@@ -33,8 +33,8 @@ test('Core-versie is zichtbaar en synchronisatiestatus is niet afhankelijk van h
   // #st_about is alleen de kop; de Core-versieregel staat in de volledige pane-inhoud eromheen.
   const aboutPane=page.locator('.set-pane[data-pane="about"]');
   await expect(aboutPane).toContainText('PWA-Core');
-  await expect(aboutPane).toContainText('1.2.2');
-  await expect(aboutPane).toContainText('14dc3ad');
+  await expect(aboutPane).toContainText(lock.version);
+  await expect(aboutPane).toContainText(lock.commit.slice(0,7));
 
   await page.evaluate(()=>showSetSec('sync'));
   await expect(page.locator('#setNav')).toContainText('Nog niet gesynchroniseerd');
