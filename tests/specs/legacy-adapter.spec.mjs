@@ -92,12 +92,14 @@ test('legacy-adapter schrijft serieel, flushes en laat opslagfouten door',async(
   const result=await page.evaluate(async()=>{
     const {createLegacyStorageAdapter}=await import('/js/core/legacy-adapter.js');
     const calls=[];
-    let current=null;
+    let current=null, currentDeviceSettings=null;
     const fake={
       async create(password,payload){calls.push('create');current=payload},
       async setData(payload){calls.push('setData');current=payload},
-      async setDeviceSettings(){calls.push('deviceSettings')},
+      async setDeviceSettings(settings){calls.push('deviceSettings');currentDeviceSettings=settings},
+      async getDeviceSettings(){return structuredClone(currentDeviceSettings)},
       async flush(){calls.push('flush')},
+      getStorageStatus(){return {pending:false,requestedRevision:1,persistedRevision:1}},
       getData(){return structuredClone(current)},
       lock(){calls.push('lock')},
     };
