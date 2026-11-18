@@ -29,7 +29,8 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   await page.locator('[data-core-action=confirm-migrate]').click();
   await page.waitForFunction(()=>window.PWACoreV1?.runtime?.isActive()===true);
   expect(await page.evaluate(()=>window.PWACoreV1.runtime.isLegacyMigrationVerified())).toBe(true);
-  await page.evaluate(()=>{localStorage.setItem('cpt:device','synthetic-core-device-settings');localStorage.setItem('cpt:sync','synthetic-core-sync-state');localStorage.setItem('cpt:device-id','synthetic-core-device-id');location.hash='#instellingen';showSetSec('sec')});
+  await page.evaluate(()=>{localStorage.setItem('cpt:device','synthetic-core-device-settings');localStorage.setItem('cpt:sync','synthetic-core-sync-state');localStorage.setItem('cpt:device-id','synthetic-core-device-id');openSettings()});
+  await page.evaluate(()=>showSetSec('sec'));
   await expect(page.locator('[data-act=corecleanup]')).toBeVisible();
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('[data-act=corecleanup]').click();
