@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (featurebranch `fix/legacy-migration-verification-cleanup`; PWA-Core v1.2.1 vastgepind; CI-validatie en praktijktest nog open)
+Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (PR #47 gemerged; PR #48 op `main`, PWA-Core v1.2.2 vastgepind; synthetische tests en Core-pinvalidatie geslaagd; praktijktest op echte apparaten en release nog open)
 
 ---
 
@@ -47,9 +47,11 @@ Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (featurebranch 
 - **PWA-template:** de app draait bewust niet op Geerts PWA-template (D36). Ombouwen kan later, maar alleen met een goedgekeurd plan.
 - **Native iPhone-app in SwiftUI:** genoemd door Geert (in een andere sessie); geen code in deze repository. Hij heeft geen Mac.
 
-- **18 nov 2026 – 4.0.5 (kandidaat):** F08 migratie-readback uitgebreid met controle van versleutelde Core-device-settings en opslagstatus. Expliciete, apparaatgebonden cleanup toegevoegd voor uitsluitend `cpt.data`, `cpt.settings`, `cpt.prices`, `cpt.charts`; oude versleutelde herstelbestanden en Core-keys blijven behouden. Synthetische regressietests toegevoegd. PR/CI en praktische controle nog open; geen echte lokale data verwijderd.
+- **18 nov 2026 – 4.0.5 (kandidaat):** F08 migratie-readback uitgebreid met controle van versleutelde Core-device-settings en opslagstatus. Expliciete, apparaatgebonden cleanup toegevoegd voor uitsluitend `cpt.data`, `cpt.settings`, `cpt.prices`, `cpt.charts`; oude versleutelde herstelbestanden en Core-keys blijven behouden. Synthetische regressietests toegevoegd. PR #47 gemerged; alle post-merge-checks (build, tests, Core-pin en Pages-deployment) geslaagd. PR #48 bevat de Core v1.2.2-upgrade; de volledige PR-testset en Core-validatie waren op de eerdere PR-head geslaagd (150 passed, 34 skipped, 0 failed). Na retarget naar `main` volgt een nieuwe CI-run. Praktische controle op echte apparaten blijft open; geen echte lokale data verwijderd.
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
+
+- **18 nov 2026 – PR #47 en Core v1.2.2:** PR #47 gemerged in `main` (`27c211a3519b2377d8fc0f265ce973d6c5f4091f`); post-merge build, tests, Core-pinvalidatie en Pages-deployment zijn allemaal geslaagd. PR #48 is daarna rechtstreeks op `main` gezet. De eerdere PR-head had 150 tests geslaagd, 34 overgeslagen en 0 fouten; na retarget moet CI opnieuw worden gecontroleerd. Geen merge van PR #48, release of handmatige productieactie uitgevoerd.
 
 - **17 nov 2026 – PWA-Core v1.2.1 (4.0.4, featurebranch):** Core-releasepin, manifest, nieuwe Core WebAuthn-factory en device-pairing-module bijgewerkt; de device-pairing-module wordt alleen meegeleverd en de bestaande handmatige koppelcode blijft behouden (D13). Bestaande `cpt:`-passkeys blijven expliciet compatibel; PRF-invoer, HKDF-context en verpakte sleutel blijven ongewijzigd. Appversiecorrectie 4.0.2 → 4.0.4 en regressietest voor compacte handles, scope-isolatie en legacycompatibiliteit toegevoegd. CI en praktijktest nog af te wachten. Geen productiegegevens, SyncData-bestand, token of echte passkey benaderd.
 
