@@ -60,6 +60,7 @@ test('legacy-migratie faalt gesloten als Core-device-settings niet correct kunne
     let storedData=null;
     const vault={
       async create(password,payload){storedData=structuredClone(payload)},
+      async setData(payload){storedData=structuredClone(payload)},
       async setDeviceSettings(){},
       async flush(){},
       getData(){return storedData},
