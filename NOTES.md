@@ -2,9 +2,17 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (PR #47 en #48 gemerged; PWA-Core v1.2.2 vastgepind; post-merge tests, Core-validatie en Pages-deployment geslaagd; praktijktest op echte apparaten en release nog open)
+Laatst bijgewerkt: 18 november 2026 · versie **4.0.5** (PR #47–#50 gemerged; PWA-Core v1.2.2 vastgepind; CI/Core-validatie/Pages-deployment geslaagd; gebruiker heeft de praktijktest bevestigd; officiële app-release nog niet gepubliceerd)
 
 ---
+
+## Actuele stand – 18 november 2026
+
+- `main` bevat appversie **4.0.5** en de officiële PWA-Core **v1.2.2**. PR #47–#50 zijn gemerged.
+- De post-merge testworkflow, Core-validatie en Pages-deployment zijn op de toen gecontroleerde mergecommit geslaagd.
+- De gebruiker heeft op 18 november bevestigd: **“Alles werkt!”** De praktijktest is daarmee door de gebruiker als geslaagd gemeld. De precieze testdekking wordt niet ruimer voorgesteld dan de bevestiging ondersteunt.
+- De officiële Cryptotracker-release 4.0.5 is nog niet gepubliceerd. Een release is een afzonderlijke stap en volgt niet automatisch uit een geslaagde praktijktest.
+- Geen productiegegevens, SyncData-bestand of tokens benaderd of gewijzigd.
 
 ## 1. Werkwijze met Geert (belangrijk)
 
@@ -36,11 +44,8 @@ Laatst bijgewerkt: 18 november 2026 · kandidaatversie **4.0.5** (PR #47 en #48 
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
 - **Wishlist open (33):** W4–W8, W10, W11, W15, W16, W18–W23, W25, W26, W28–W33, W35–W43, W46. W17, W27, W34, W44 en W45 ingebouwd in 3.25.0. Advies aan Geert: daarna W39 (jaarrendement) en W40 (hoe gingen je verkopen). W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
-- **Synchronisatie en beveiliging (fase 2):** wijzigingen voor 4.0.2 staan in PR #39. De volledige GitHub Actions-testset is op de actuele commit geslaagd (12 nov 2026). Na samenvoeging is fase 2 onderdeel van `main`; de app is daarmee nog niet automatisch op een echte iPhone gecontroleerd.
-- **PWA-Core-migratie (PR #40):** PR #40 is op 15 november 2026 gemerged; de migratiecode staat op `main` (`fbfbdeda3c4aab5ccb3054ce7e1f2f4b52e759e0`). De GitHub Actions-testworkflow (#43750271183), Core-validatie (#43750271224) en Pages-deployment (#43750266839) zijn succesvol. De legacy-opslag blijft behouden; `crypto-portfolio.enc.json` is uitsluitend bedoeld als read-only importbron en de nieuwe Core-file is `crypto-portfolio.pwa-core-v1.json`. Core-sync blijft opt-in. Er zijn geen echte gebruikersgegevens opgehaald, ontsleuteld of gemigreerd en er is geen echte Core-file aangemaakt. De live pagina is niet handmatig/functioneel gecontroleerd. iPhone/Safari, Windows/Hello en synchronisatie tussen echte apparaten moeten nog praktisch worden geaccepteerd. B07 (één Web Lock tussen geïnstalleerde PWA en Safari-tab) is op 16 november als migratiegate vervallen; de vervangende S01–S07 sync-/concurrencytests staan in de acceptatierepository.
-- De statische review van migratiebevestiging, read-only legacy-import, opt-in-sync, opslag-/flush-/lockpad, versieherstel en rollbackgrenzen is afgerond. Geen aanvullende codewijziging nodig bevonden; fysieke acceptatie blijft open.
-- **PWA-Core v1.1.0 en Cryptotracker 4.0.3 (PR #44):** PR #44 is op 16 november 2026 gemerged. De actuele `main`-head is `0ee20806e103d19f8d41f3ced36619e906ed7c9e`; tests, Core-validatie en Pages-deployment zijn geslaagd. De productie-SyncData-file is niet benaderd. De praktische acceptatie op echte apparaten blijft open.
-- **B07 vervangen (PWA-Core-Storage-Acceptance PR #3):** de eis dat Safari-tab en geïnstalleerde iOS-PWA één Web Lock delen is vervallen. De eerdere gedeeltelijke iPhone-waarneming blijft als historisch resultaat bewaard; B07 is niet als PASS geregistreerd. S01–S07 zijn de nieuwe veiligheidsvoorwaarden.
+- **Synchronisatie en beveiliging:** fase 2 (4.0.2) is onderdeel van `main`. De gebruiker heeft de praktijktest van de huidige 4.0.5 op 18 november als geslaagd bevestigd; zie de actuele stand bovenaan.
+- **PWA-Core:** de migratie is afgerond; PR #48 heeft de app naar v1.2.2 gebracht en PR #50 heeft de zichtbare Core-versie en synchronisatiestatus gecorrigeerd. De gebruiker heeft de praktijktest op 18 november bevestigd. De afzonderlijke app-release 4.0.5 is nog niet gepubliceerd.
 - **Passkey hergebruiken (3.26.0, D55)** nog niet op een echte iPhone bevestigd: vergrendeling uit en weer aan, dan "Bestaande passkey gebruiken". `inzicht.spec.mjs` › meebewegen met bitcoin faalde één keer bij de volle testrun op de telefoon (los steeds groen); in de gaten houden.
 - **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
 - **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
