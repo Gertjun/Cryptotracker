@@ -493,6 +493,16 @@ async function cleanupLegacyStorage() {
   return { removed, keys };
 }
 
+async function saveChartCache(chartCache) {
+  if (!active || !adapter) return;
+  try {
+    await adapter.saveChartCache(chartCache);
+  } catch (error) {
+    window.CryptoPortfolioLegacy.setSyncError(error?.message || 'Grafiekcache opslaan in Core mislukt');
+    throw error;
+  }
+}
+
 async function save(snapshot) {
   if (!active || !adapter) return;
   try {
@@ -555,6 +565,7 @@ async function lock() {
 
 const runtime = Object.freeze({
   save,
+  saveChartCache,
   cleanupLegacyStorage,
   isLegacyMigrationVerified: () => active && deviceSettings.legacyMigrationVerified === true,
   getInfo,
