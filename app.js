@@ -107,7 +107,7 @@ function priceR(v){const a=Math.abs(v),d=(plainNum(v).split(',')[1]||'').length;
 function priceF(v){if(v==null||!isFinite(v))return '–';if(unitNow()!=='EUR')return money(v);const o=priceR(v);return (o.r?'≈ ':'')+o.s}
 function priceH(v){if(v==null||!isFinite(v))return '–';if(unitNow()!=='EUR')return money(v);const o=priceR(v);return o.r?`<span class="approx" title="Exacte koers: € ${plainNum(v)}"><span class="muted">≈ </span>${o.s}</span>`:`<span class="nowrap">${o.s}</span>`}
 const cls=v=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'flat':v>0?'up':'down';
-function fmtDate(s){const d=new Date(s);if(isNaN(d))return s;return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
+function fmtDate(s){const d=new Date(s);if(isNaN(d))return esc(s);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
 function nowLocal(){const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
 function toast(msg){const t=$('#toast'),host=[...document.querySelectorAll('dialog[open]')].pop()||document.body;if(t.parentNode!==host)host.appendChild(t);t.textContent='';setTimeout(()=>{t.textContent=msg},40);   // even leegmaken, zodat een schermlezer ook een herhaalde melding voorleest
   t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
@@ -646,21 +646,21 @@ function fillTxsInner(){
     if(mk!==cur){flush();cur=mk}
     if(isCash(t.type)){const sg=t.type==='deposit'?1:-1;
       items+=`<li class="row" data-tx="${esc(t.id)}"><div class="coin-ph cash-ic">€</div>
-      <div class="grow"><div class="name"><button type="button" class="rowlink">Cash<span class="sr-only"> – transactie bewerken</span></button> <span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></div>
+      <div class="grow"><div class="name"><button type="button" class="rowlink">Cash<span class="sr-only"> – transactie bewerken</span></button> <span class="tx-type ${esc(t.type)}">${TYPE_L[t.type]}</span></div>
       <div class="meta">${isNaN(d)?esc(t.date):tm(d,d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}))}${t.acct?' · '+esc(t.acct):''}${t.note?' · '+esc(t.note):''}</div></div>
       <div class="right"><div class="v m ${sg>0?'up':''}">${sg>0?'+':'−'}${money(atT(t.amount,t),2)}</div>${t.fee?`<div class="note-xs label">kosten <span class="m">${money(atT(t.fee,t),2)}</span></div>`:''}</div></li>`;continue}
     const right=o.sold?'<div class="note-sm label">volledig verkocht</div>':o.pl==null?'':`<div class="chg ${cls(o.pl)}"><span class="m">${signed(o.pl)}</span>${o.pp==null?'':' '+pct(o.pp)}</div>${o.realized?'<div class="note-xs label">gerealiseerd</div>':o.transfer?'<div class="note-xs label">netwerkkosten</div>':''}`;
     items+=`<li class="row" data-tx="${esc(t.id)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image})}
-      <div class="grow"><div class="name nt"><button type="button" class="rowlink nm">${esc(t.name)}<span class="sr-only"> – transactie bewerken</span></button><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></div>
+      <div class="grow"><div class="name nt"><button type="button" class="rowlink nm">${esc(t.name)}<span class="sr-only"> – transactie bewerken</span></button><span class="tx-type ${esc(t.type)}">${TYPE_L[t.type]}</span></div>
       <div class="meta">${isNaN(d)?esc(t.date):tm(d,d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'}))}${t.acct&&t.type!=='transfer'?' · '+esc(t.acct):''} · ${txWhat(t,sym)}</div></div>
       <div class="right"><div class="v m">${totalF(t)}</div>${right}</div></li>`;
   }
   flush();
   const tbl=`<div class="tbl-wrap only-d"><table class="tbl"><caption class="sr-only">Transacties</caption><thead><tr><th scope="col" class="l">Datum</th><th scope="col" class="l">Munt</th><th scope="col" class="l">Type</th>${TXH}</tr></thead><tbody>${list.map(t=>{
-    if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell"><div class="ph-sm coin-ph cash-ic">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(atT(t.amount,t),2)}</td><td class="m">${t.fee?money(atT(t.fee,t),2):'–'}</td><td class="l note-cell">${esc([t.acct,t.note].filter(Boolean).join(' · '))}</td><td>–</td><td>–</td><td>–</td></tr>`;
+    if(isCash(t.type))return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell"><div class="ph-sm coin-ph cash-ic">€</div><span>Cash</span></div></td><td class="l"><span class="tx-type ${esc(t.type)}">${TYPE_L[t.type]}</span></td><td>–</td><td>–</td><td class="m ${t.type==='deposit'?'up':''}">${t.type==='deposit'?'+':'−'}${money(atT(t.amount,t),2)}</td><td class="m">${t.fee?money(atT(t.fee,t),2):'–'}</td><td class="l note-cell">${esc([t.acct,t.note].filter(Boolean).join(' · '))}</td><td>–</td><td>–</td><td>–</td></tr>`;
     const o=txOutcome(t,cm[t.coinId]),sym=esc((t.symbol||'').toUpperCase());
     const val=o.sold?'<span class="label">verkocht</span>':o.realized?'<span class="label">gerealiseerd</span>':o.transfer?'<span class="label">overboeking</span>':o.val!=null?money(o.val,2)+(o.partial?`<div class="note-xs label">nog ${qtyf(o.rem)}</div>`:''):'–';
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell" title="${esc(t.name)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${sym||esc(t.name)}<span class="sr-only"> ${esc(t.name)}</span></span></div></td><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,'')}</td>${noteCell(t)}<td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><button type="button" class="rowlink">${tm(t.date,new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}))}<span class="sr-only"> – transactie bewerken</span></button></td><td class="l"><div class="coin-cell" title="${esc(t.name)}">${coinIcon({coinId:t.coinId,symbol:t.symbol,image:t.image},28)}<span>${sym||esc(t.name)}<span class="sr-only"> ${esc(t.name)}</span></span></div></td><td class="l"><span class="tx-type ${esc(t.type)}">${TYPE_L[t.type]}</span></td><td class="m">${qtyf(t.qty)}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,'')}</td>${noteCell(t)}<td class="m">${val}</td><td class="m ${cls(o.pl)}"><b>${o.pl==null?'–':signed(o.pl)}</b></td><td class="${cls(o.pp)}"><b>${pct(o.pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
   out.innerHTML=sum+`<div class="only-m">${mob}</div>`+tbl+(all>list.length?`<button type="button" class="mt-14 btn sec" data-act="txmore">Toon meer (${list.length} van ${all})</button>`:'');
 }
 // Kolomkoppen van de transactietabellen. data-p: past de tabel niet op het scherm, dan verdwijnen eerst de kolommen
@@ -765,7 +765,7 @@ function txTable(txs,c){
       else if(l&&c.price!=null){val=money(l.remaining*c.price,2)+(l.remaining<t.qty-1e-12?`<div class="note-xs label">nog ${qtyf(l.remaining)}</div>`:'');pl=l.remaining*(c.price-l.unit);pp=l.unit>0?(c.price/l.unit-1)*100:null}}
     else if(t.type==='transfer'){const s=c.sellInfo[t.id]||{};pl=s.pl??null;val='<span class="label">overboeking</span>'}
     else{const s=c.sellInfo[t.id]||{};pl=s.pl;pp=s.pct;val='<span class="label">gerealiseerd</span>'}
-    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span></td><td class="l"><button type="button" class="rowlink">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></td><td class="m">${qtyf(t.qty)}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,'')}</td>${noteCell(t)}<td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pp==null?(t.type==='receive'?'<span class="w-normal label">gratis</span>':'–'):pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr data-tx="${esc(t.id)}"><td class="l"><span class="tx-type ${esc(t.type)}">${TYPE_L[t.type]}</span></td><td class="l"><button type="button" class="rowlink">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></td><td class="m">${qtyf(t.qty)}</td><td>${isOther(t.type)?'–':priceH(atT(t.price,t))}</td><td class="m">${totalF(t)}</td><td class="m">${feeTxt(t,'')}</td>${noteCell(t)}<td class="m">${val}</td><td class="m ${cls(pl)}"><b>${pl==null?'–':signed(pl)}</b></td><td class="${cls(pp)}"><b>${pp==null?(t.type==='receive'?'<span class="w-normal label">gratis</span>':'–'):pct(pp)}</b></td></tr>`}).join('')}</tbody></table></div>`;
 }
 // kolom Broker · notitie: te lange tekst wordt afgekapt (…), de volledige tekst staat in de tooltip
 function noteCell(t){const x=esc([t.type==='transfer'?`${t.acct||'?'} → ${t.to||'?'}`:t.acct,t.note].filter(Boolean).join(' · '));return `<td class="l note-cell"${x?` title="${x}"`:''}>${x}</td>`}
@@ -2294,7 +2294,7 @@ function txRow(t,c){
     right=`<div class="note-xs label">Gerealiseerd</div><div class="chg ${cls(s.pl)}"><span class="m">${signed(s.pl)}</span> ${pct(s.pct)}</div>${s.oversold?'<div class="oversold label">meer verkocht dan gekocht</div>':''}`;
   }
   return `<li class="row" data-tx="${esc(t.id)}"><div class="grow">
-    <div class="tx-head"><span class="tx-type ${t.type}">${TYPE_L[t.type]}</span><button type="button" class="rowlink meta">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></div>
+    <div class="tx-head"><span class="tx-type ${esc(t.type)}">${TYPE_L[t.type]}</span><button type="button" class="rowlink meta">${tm(t.date,fmtDate(t.date),t.date.length>10)}<span class="sr-only"> – transactie bewerken</span></button></div>
     <div class="tx-what">${txWhat(t,esc(sym))}</div>
     <div class="meta">${[isOther(t.type)?'':`Totaal <span class="m">${totalF(t)}</span>`,(t.type==='transfer'?t.feeQty:t.fee)?`kosten <span class="m">${feeTxt(t,esc(sym))}</span>`:'',t.acct&&t.type!=='transfer'?esc(t.acct):'',t.note?esc(t.note):''].filter(Boolean).join(' · ')}</div>
   </div><div class="right">${right}</div></li>`;
@@ -2647,9 +2647,33 @@ function exportData(){
   const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
   download('crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json',blob,'application/json');
 }
+// Gebruik een expliciete import-allowlist; TYPE_L is presentatiedata en mag
+// nooit de beveiligingsgrens voor geïmporteerde transacties bepalen.
+const BACKUP_TX_TYPES=Object.freeze(['buy','sell','deposit','withdraw','receive','transfer']);
+// Date.parse() is bewust niet voldoende: browsers accepteren ook niet-datums zoals
+// "<img src=x onerror=...>" als een datum (bijvoorbeeld als januari 2001).
+function isValidBackupDate(value){
+  if(typeof value!=='string')return false;
+  const m=/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|[+-]\d{2}:\d{2})?)?$/.exec(value);
+  if(!m)return false;
+  const [,year,month,day,hour='00',minute='00',second='00',fraction='',zone]=m;
+  const y=+year,mo=+month,d=+day,h=+hour,mi=+minute,s=+second;
+  if(mo<1||mo>12||d<1||d>new Date(Date.UTC(y,mo,0)).getUTCDate()||h>23||mi>59||s>59)return false;
+  if(zone&&zone!=='Z'){
+    const [,zh,zm]=/^[+-](\d{2}):(\d{2})$/.exec(zone)||[];
+    if(+zh>23||+zm>59)return false;
+  }
+  return Number.isFinite(Date.parse(value));
+}
+function isValidBackupTransaction(t){
+  return !!t&&typeof t==='object'&&!Array.isArray(t)&&
+    typeof t.id==='string'&&t.id.trim()!==''&&
+    typeof t.type==='string'&&BACKUP_TX_TYPES.includes(t.type)&&
+    isValidBackupDate(t.date);
+}
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
-  try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs))throw 0;
+  try{const j=JSON.parse(await file.text());if(!Array.isArray(j.txs)||j.txs.some(t=>!isValidBackupTransaction(t)))throw 0;
     if(isTooNew(j)){toast('Deze back-up is gemaakt met een nieuwere versie van de app. Vernieuw de app eerst.');return}
     data=merge(data,{txs:j.txs,deleted:j.deleted||[],cfg:j.cfg,hist:j.hist,watch:j.watch,alerts:j.alerts,goals:j.goals,plans:j.plans,portfolios:j.portfolios,allocs:j.allocs});saveData();closeSheet();refreshPrices();render();toast(j.txs.length+' transacties geïmporteerd');
   }catch(err){toast('Ongeldig back-upbestand')}

@@ -90,6 +90,40 @@ test('samenvoegen bewaart onbekende onderdelen en de gegevensversie',async({page
   expect(await page.evaluate(()=>{const m=merge({v:1,txs:[],deleted:[]},{txs:[],deleted:[],nieuweLijst:[1]});return [m.v,m.nieuweLijst]})).toEqual([1,[1]]);
 });
 
+test('back-upimport weigert ongeldige transactie types en HTML-uitvoer escapt type',async({page})=>{
+  await openApp(page);
+  const malicious={id:'xss',type:'buy" onmouseover="window.__xss=1',date:'2026-10-26',coinId:'bitcoin',name:'Bitcoin',symbol:'BTC',qty:1,price:1,fee:0};
+  const maliciousDate={...malicious,id:'xss-date',type:'buy',date:'<img src=x onerror="window.__xss=1">'};
+  // Date.parse accepteert deze HTML-string verrassend genoeg als 1 januari 2001.
+  // De backup-validator moet het formaat zelf strikt controleren.
+  expect(await page.evaluate(date=>({
+    permissiveParserAccepts:Number.isFinite(Date.parse(date)),
+    strictValidatorAccepts:isValidBackupDate(date),
+    validIsoDate:isValidBackupDate('2024-02-29T12:30:00.000Z'),
+    invalidCalendarDate:isValidBackupDate('2025-02-29')
+  }),maliciousDate.date)).toEqual({
+    permissiveParserAccepts:true,strictValidatorAccepts:false,
+    validIsoDate:true,invalidCalendarDate:false
+  });
+  await page.evaluate(()=>openSettings());
+  for(const tx of [malicious,maliciousDate]){
+    const backup={app:'crypto-portfolio',exported:'2026-10-26T12:00:00.000Z',txs:[tx]};
+    await page.locator('#s_file').setInputFiles({name:'malicious.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))});
+    // importFile leest het bestand asynchroon; wacht op de expliciete afwijzing voordat
+    // we controleren dat de transactie niet in het model is opgenomen.
+    await expect(page.locator('#toast')).toHaveText('Ongeldig back-upbestand');
+    expect(await page.evaluate(id=>data.txs.some(t=>t.id===id),tx.id)).toBe(false);
+  }
+
+  // Defense in depth: zelfs als ongeldige data via een andere route in het model komt,
+  // mogen type en datum geen HTML-attributen injecteren.
+  await page.evaluate(tx=>{data=merge(data,{txs:[tx],deleted:[]});location.hash='#transacties';render()},malicious);
+  await page.evaluate(tx=>{data=merge(data,{txs:[tx],deleted:[]});render()},maliciousDate);
+  await expect(page.locator('[onmouseover]')).toHaveCount(0);
+  await expect(page.locator('[onerror]')).toHaveCount(0);
+  expect(await page.evaluate(()=>window.__xss)).toBeUndefined();
+});
+
 test('back-up downloaden op de laptop, en inhoud verborgen in de app-wisselaar',async({page})=>{
   await openApp(page);
   const dl=page.waitForEvent('download');await page.evaluate(()=>exportData());
