@@ -3042,7 +3042,7 @@ async function securityAction(act,el){
         el.disabled=true;try{await coreRuntime.changePassword(current,next);closeSheet();toast('Core-wachtwoord gewijzigd en gesynchroniseerd')}finally{el.disabled=false}return;
       }
       if(act==='corecleanup'){
-        if(!confirm('Oude lokale gegevens en instellingen opruimen? Dit verwijdert alleen cpt.data, cpt.settings, cpt.prices en cpt.charts. De Core-kluis, oude versleutelde back-up (cpt.vault), herstel-/passkeygegevens (cpt.lock) en versleutelde grafiekcache (cpt.vcharts) blijven behouden. Dit kan niet ongedaan worden gemaakt.'))return;
+        if(!confirm('Oude lokale gegevens en instellingen opruimen? Dit verwijdert alleen cpt.data, cpt.settings, cpt.prices en cpt.charts. De Core-kluis, Core-grafiekcache (cpt:charts), oude versleutelde back-up (cpt.vault), herstel-/passkeygegevens (cpt.lock) en versleutelde grafiekcache (cpt.vcharts) blijven behouden. Dit kan niet ongedaan worden gemaakt.'))return;
         el.disabled=true;
         const result=await coreRuntime.cleanupLegacyStorage();
         toast(result.removed+' oude opslagonderdelen opgeruimd');
