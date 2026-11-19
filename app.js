@@ -448,7 +448,7 @@ let chartSaveT=null;
 function saveCharts(){clearTimeout(chartSaveT);chartSaveT=setTimeout(()=>{
   const now=Date.now();let pruned=false;for(const k in chartCache)if(now-chartCache[k].ts>7*864e5){delete chartCache[k];pruned=true}if(pruned)invalidateEstPts();
   try{
-    if(coreMode){persist();return}
+    if(coreMode){coreRuntime?.saveChartCache(structuredClone(chartCache)).catch(e=>setSync('err',e.message||'Grafiekcache opslaan in Core mislukt'));return}
     if(lockCfg){if(!DEK)return;const k=DEK,snap=enc.encode(JSON.stringify(chartCache));
       vaultQ=vaultQ.then(()=>aesEnc(k,snap)).then(o=>localStorage.setItem(LS_VCHARTS,JSON.stringify(o))).catch(()=>{})}
     else localStorage.setItem(LS_CHARTS,JSON.stringify(chartCache));
@@ -3270,7 +3270,7 @@ window.CryptoPortfolioLegacy=Object.freeze({
   hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
   legacyLocked:()=>!!lockCfg&&locked,
   startLegacy:({allowSync=true,coreHandoff=false}={})=>{coreGateActive=!allowSync;coreHandoffPending=!!coreHandoff;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
-  activateCore:(payload,box)=>{coreMode=true;const app=box?.app||{};chartCache=structuredClone(app.chartCache||load(LS_CORE_CHARTS,{}));locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start();persist()},
+  activateCore:(payload,box)=>{coreMode=true;const app=box?.app||{};chartCache=structuredClone(app.chartCache||load(LS_CORE_CHARTS,{}));locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start();coreRuntime?.saveChartCache(structuredClone(chartCache)).catch(e=>setSync('err',e.message||'Grafiekcache opslaan in Core mislukt'))},
   getCoreChartCache:()=>structuredClone(chartCache),
   applyCoreData:(payload)=>{data=structuredClone(payload||{});invalidateEstPts();render()},
   lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},
