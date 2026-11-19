@@ -107,7 +107,7 @@ function priceR(v){const a=Math.abs(v),d=(plainNum(v).split(',')[1]||'').length;
 function priceF(v){if(v==null||!isFinite(v))return '–';if(unitNow()!=='EUR')return money(v);const o=priceR(v);return (o.r?'≈ ':'')+o.s}
 function priceH(v){if(v==null||!isFinite(v))return '–';if(unitNow()!=='EUR')return money(v);const o=priceR(v);return o.r?`<span class="approx" title="Exacte koers: € ${plainNum(v)}"><span class="muted">≈ </span>${o.s}</span>`:`<span class="nowrap">${o.s}</span>`}
 const cls=v=>v==null||!isFinite(v)||Math.abs(v)<1e-9?'flat':v>0?'up':'down';
-function fmtDate(s){const d=new Date(s);if(isNaN(d))return s;return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
+function fmtDate(s){const d=new Date(s);if(isNaN(d))return esc(s);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'})+(s.length>10?' · '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'')}
 function nowLocal(){const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
 function toast(msg){const t=$('#toast'),host=[...document.querySelectorAll('dialog[open]')].pop()||document.body;if(t.parentNode!==host)host.appendChild(t);t.textContent='';setTimeout(()=>{t.textContent=msg},40);   // even leegmaken, zodat een schermlezer ook een herhaalde melding voorleest
   t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
@@ -2650,7 +2650,8 @@ function exportData(){
 function isValidBackupTransaction(t){
   return !!t&&typeof t==='object'&&!Array.isArray(t)&&
     typeof t.id==='string'&&t.id.trim()!==''&&
-    Object.prototype.hasOwnProperty.call(TYPE_L,t.type);
+    typeof t.type==='string'&&Object.prototype.hasOwnProperty.call(TYPE_L,t.type)&&
+    typeof t.date==='string'&&Number.isFinite(Date.parse(t.date));
 }
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
