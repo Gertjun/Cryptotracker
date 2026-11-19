@@ -2647,10 +2647,13 @@ function exportData(){
   const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
   download('crypto-portfolio-'+new Date().toISOString().slice(0,10)+'.json',blob,'application/json');
 }
+// Gebruik een expliciete import-allowlist; TYPE_L is presentatiedata en mag
+// nooit de beveiligingsgrens voor geïmporteerde transacties bepalen.
+const BACKUP_TX_TYPES=Object.freeze(['buy','sell','deposit','withdraw','receive','transfer']);
 function isValidBackupTransaction(t){
   return !!t&&typeof t==='object'&&!Array.isArray(t)&&
     typeof t.id==='string'&&t.id.trim()!==''&&
-    typeof t.type==='string'&&Object.prototype.hasOwnProperty.call(TYPE_L,t.type)&&
+    typeof t.type==='string'&&BACKUP_TX_TYPES.includes(t.type)&&
     typeof t.date==='string'&&Number.isFinite(Date.parse(t.date));
 }
 async function importFile(e){
