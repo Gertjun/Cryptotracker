@@ -94,6 +94,17 @@ test('back-upimport weigert ongeldige transactie types en HTML-uitvoer escapt ty
   await openApp(page);
   const malicious={id:'xss',type:'buy" onmouseover="window.__xss=1',date:'2026-10-26',coinId:'bitcoin',name:'Bitcoin',symbol:'BTC',qty:1,price:1,fee:0};
   const maliciousDate={...malicious,id:'xss-date',type:'buy',date:'<img src=x onerror="window.__xss=1">'};
+  // Date.parse accepteert deze HTML-string verrassend genoeg als 1 januari 2001.
+  // De backup-validator moet het formaat zelf strikt controleren.
+  expect(await page.evaluate(date=>({
+    permissiveParserAccepts:Number.isFinite(Date.parse(date)),
+    strictValidatorAccepts:isValidBackupDate(date),
+    validIsoDate:isValidBackupDate('2024-02-29T12:30:00.000Z'),
+    invalidCalendarDate:isValidBackupDate('2025-02-29')
+  }),maliciousDate.date)).toEqual({
+    permissiveParserAccepts:true,strictValidatorAccepts:false,
+    validIsoDate:true,invalidCalendarDate:false
+  });
   await page.evaluate(()=>openSettings());
   for(const tx of [malicious,maliciousDate]){
     const backup={app:'crypto-portfolio',exported:'2026-10-26T12:00:00.000Z',txs:[tx]};
