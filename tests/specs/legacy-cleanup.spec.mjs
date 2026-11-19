@@ -34,8 +34,7 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   await expect(page.locator('[data-act=corecleanup]')).toBeVisible();
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('[data-act=corecleanup]').click();
-  const result=await page.evaluate(()=>window.PWACoreV1.runtime.cleanupLegacyStorage());
-  expect(result.removed).toBe(4);
+  await expect(page.locator('#toast')).toHaveText('4 oude opslagonderdelen opgeruimd');
   const keys=await page.evaluate(()=>Object.fromEntries([
     'cpt.data','cpt.settings','cpt.prices','cpt.charts','cpt.vault','cpt.lock','cpt.vcharts',
     'cpt:charts','cpt:vault','cpt:device','cpt:sync','cpt:device-id',
