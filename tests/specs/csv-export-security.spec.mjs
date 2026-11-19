@@ -13,7 +13,7 @@ test('CSV-export neutraliseert spreadsheet-formules in tekstvelden',async({page}
   });
   await expect(page.locator('#txOut')).toBeVisible();
   const downloadPromise=page.waitForEvent('download');
-  await page.locator('[data-act=csvall]').click();
+  await page.locator('[data-act=csvfiltered]').click();
   const download=await downloadPromise;
   const csv=await readFile(await download.path(),'utf8');
   expect(csv).toContain("'@SUM(1,1)");
