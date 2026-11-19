@@ -244,3 +244,29 @@ test('Core deletion ledger retains tombstones for offline devices and rejects st
   expect(result.after).toBe(true);
   expect(result.cleanedTxs).toEqual([]);
 });
+
+
+test('legacy-adapter bewaart grafiekcache uitsluitend in versleutelde Core-device-settings',async({page})=>{
+  await page.goto('/');
+  const result=await page.evaluate(async()=>{
+    const {createLegacyStorageAdapter}=await import('/js/core/legacy-adapter.js');
+    let settings={autoLockMinutes:5,app:{settings:{theme:'dark'},prices:{bitcoin:{price:1}}}};
+    const calls=[];
+    const vault={
+      async setDeviceSettings(value){settings=structuredClone(value);calls.push('write')},
+      async getDeviceSettings(){return structuredClone(settings)},
+      async flush(){calls.push('flush')},
+      getStorageStatus(){return {pending:false,requestedRevision:2,persistedRevision:2}},
+      getData(){return {txs:[]}},
+      async setData(){},
+    };
+    const adapter=createLegacyStorageAdapter(vault);
+    const chartCache={bitcoin:{ts:1700000000000,pts:[[1,2]]}};
+    const stored=await adapter.saveChartCache(chartCache);
+    return {stored,settings,calls};
+  });
+  expect(result.stored).toEqual({bitcoin:{ts:1700000000000,pts:[[1,2]]}});
+  expect(result.settings.app.chartCache).toEqual(result.stored);
+  expect(result.settings.app.settings).toEqual({theme:'dark'});
+  expect(result.calls).toEqual(['write','flush']);
+});
