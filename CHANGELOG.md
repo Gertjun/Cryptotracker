@@ -3,7 +3,22 @@
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
 ## Unreleased
-- Integreer PWA-Core v1.3.0 apparaatkoppeling. De code bevat alleen owner/repo/branch/path/token; kluiswachtwoord en CoinGecko-sleutel worden niet overgedragen.
+- Nog geen wijzigingen na de 4.0.6-kandidaat.
+
+## 4.0.6 – 19 november 2026 (in voorbereiding)
+PWA-Core v1.3.0-integratie en beveiligingscorrecties.
+
+### Nieuw
+- Gedeelde apparaatkoppeling via PWA-CORE-PAIR-2. De koppelcode bevat uitsluitend owner, repo, branch, path en token; het kluiswachtwoord wordt apart ingevoerd.
+
+### Beveiliging
+- Valideer geïmporteerde back-uptransacties op string-ID, toegestaan transactietype en geldige datum.
+- Escape transactietypen in HTML-class-attributen en ongeldige datum-fallbacks.
+- Behoud de Core-grafiekcache cpt:charts bij legacy-opruiming; verwijder alleen de vier expliciet toegestane legacy-sleutels na geverifieerde migratie.
+
+### Tests
+- Synthetische regressietests voor ongeldige back-uptransacties, veilige rendering en behoud van Core-/herstelopslag bij legacy-opruiming.
+- Fysieke acceptatie van 4.0.6 en officiële publicatie zijn nog niet bevestigd.
 
 **Versienummers** hebben de vorm `MAJOR.MINOR.PATCH`:
 - **MAJOR** omhoog bij een wijziging waarbij je iets moet doen, zoals opnieuw koppelen of alle apparaten tegelijk bijwerken.
