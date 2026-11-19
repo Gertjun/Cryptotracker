@@ -130,6 +130,7 @@ export function splitLegacySnapshot(snapshot) {
       settings,
       prices: clone(snapshot.prices),
       visit: snapshot.visit ?? null,
+      chartCache: clone(snapshot.chartCache),
     },
   };
   return {
@@ -205,7 +206,42 @@ export function createLegacyStorageAdapter(vault) {
           await vault.setDeviceSettings(deviceSettings);
         }
         await vault.flush();
-        return vault.getData();
+        const stored = vault.getData();
+        if (JSON.stringify(stored) !== JSON.stringify(payload)) {
+          throw new Error('Controle na opslaan mislukt: Core-data wijken af van de aangeboden gegevens.');
+        }
+        if (typeof vault.getDeviceSettings === 'function') {
+          const storedDeviceSettings = await vault.getDeviceSettings();
+          if (JSON.stringify(storedDeviceSettings) !== JSON.stringify(deviceSettings)) {
+            throw new Error('Controle na opslaan mislukt: Core-apparaatinstellingen wijken af van de aangeboden instellingen.');
+          }
+        }
+        const status = vault.getStorageStatus?.();
+        if (status?.pending === true || (Number.isInteger(status?.requestedRevision) && Number.isInteger(status?.persistedRevision) && status.persistedRevision < status.requestedRevision)) {
+          throw new Error('Controle na opslaan mislukt: de Core-opslag is nog niet volledig bevestigd.');
+        }
+        return stored;
+      });
+    },
+
+    saveChartCache(chartCache) {
+      return enqueue(async () => {
+        if (typeof vault.getDeviceSettings !== 'function' || typeof vault.setDeviceSettings !== 'function') {
+          throw new Error('Core-apparaatinstellingen kunnen niet worden opgeslagen.');
+        }
+        const current = await vault.getDeviceSettings() || {};
+        const next = { ...current, app: { ...(current.app || {}), chartCache: clone(chartCache) } };
+        await vault.setDeviceSettings(next);
+        await vault.flush();
+        const stored = await vault.getDeviceSettings();
+        if (JSON.stringify(stored) !== JSON.stringify(next)) {
+          throw new Error('Controle na opslaan mislukt: de versleutelde grafiekcache wijkt af.');
+        }
+        const status = vault.getStorageStatus?.();
+        if (status?.pending === true || (Number.isInteger(status?.requestedRevision) && Number.isInteger(status?.persistedRevision) && status.persistedRevision < status.requestedRevision)) {
+          throw new Error('Controle na opslaan mislukt: de Core-opslag is nog niet volledig bevestigd.');
+        }
+        return stored.app.chartCache;
       });
     },
 

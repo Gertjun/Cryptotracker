@@ -18,6 +18,7 @@ test('Core-versie is zichtbaar en synchronisatiestatus is niet afhankelijk van h
   await page.evaluate(({version,commit})=>{
     CryptoPortfolioLegacy.setRuntime({
       save:async()=>{},
+      saveChartCache:async()=>{},
       getInfo:()=>({coreVersion:version,coreCommit:commit}),
       getSyncInfo:()=>({enabled:true,configured:true,lastSyncAt:null}),
       syncNow:async()=>{},
