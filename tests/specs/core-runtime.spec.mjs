@@ -179,11 +179,11 @@ test('migratie voegt legacy GitHub-data read-only samen en laat oud remote besta
   await page.waitForTimeout(1700);
   const isolation=await page.evaluate(async()=>{
     const vault=await import('/js/core/vault.js');
-    return {ids:vault.getData().txs.map(tx=>tx.id),legacyCharts:localStorage.getItem('cpt.charts'),coreCharts:localStorage.getItem('cpt:charts')};
+    return {ids:vault.getData().txs.map(tx=>tx.id),legacyCharts:localStorage.getItem('cpt.charts'),coreCharts:(await vault.getDeviceSettings()).app.chartCache};
   });
   expect(isolation.ids).not.toContain('legacy-other-tab-tx');
   expect(isolation.legacyCharts).toBe(result.legacyCharts);
-  expect(isolation.coreCharts).toContain('coreModeProbe');
+  expect(isolation.coreCharts).toHaveProperty('coreModeProbe');
   expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.pwa-core-v1.json'))).toBe(true);
   await page.evaluate(()=>{
     data.txs.push({id:'core-only-tx',type:'buy',coinId:'ethereum',qty:1,price:1000,fee:0,date:'2025-02-01',mod:Date.now()});

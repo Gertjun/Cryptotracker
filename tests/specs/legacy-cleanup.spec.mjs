@@ -9,7 +9,7 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
     localStorage.setItem('cpt.vault','synthetic-encrypted-legacy-vault');
     localStorage.setItem('cpt.lock','synthetic-legacy-lock-wrapper');
     localStorage.setItem('cpt.vcharts','synthetic-encrypted-legacy-charts');
-    localStorage.setItem('cpt:charts','synthetic-core-charts');
+    localStorage.setItem('cpt:charts',JSON.stringify({bitcoin:{ts:1700000000000,pts:[[1,2]]}}));
     localStorage.setItem('cpt:device','synthetic-core-device-settings');
     localStorage.setItem('cpt:sync','synthetic-core-sync-state');
     localStorage.setItem('cpt:device-id','synthetic-core-device-id');
@@ -35,7 +35,7 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('[data-act=corecleanup]').click();
   const result=await page.evaluate(()=>window.PWACoreV1.runtime.cleanupLegacyStorage());
-  expect(result.removed).toBe(4);
+  expect(result.removed).toBe(5);
   const keys=await page.evaluate(()=>Object.fromEntries([
     'cpt.data','cpt.settings','cpt.prices','cpt.charts','cpt.vault','cpt.lock','cpt.vcharts',
     'cpt:charts','cpt:vault','cpt:device','cpt:sync','cpt:device-id',
@@ -44,7 +44,10 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   expect(keys['cpt.vault']).toBe('synthetic-encrypted-legacy-vault');
   expect(keys['cpt.lock']).toBe('synthetic-legacy-lock-wrapper');
   expect(keys['cpt.vcharts']).toBe('synthetic-encrypted-legacy-charts');
-  expect(keys['cpt:charts']).toBe('synthetic-core-charts');
+  expect(keys['cpt:charts']).toBeNull();
+  const encryptedSettings=await page.evaluate(()=>window.PWACoreV1.vault.getDeviceSettings());
+  expect(encryptedSettings.app.chartCache).toMatchObject({legacy:{pts:[]},bitcoin:{ts:1700000000000,pts:[[1,2]]},'bitcoin|30':{pts:[]}});
+  expect(encryptedSettings.app.chartCache['bitcoin|30'].ts).toEqual(expect.any(Number));
   expect(keys['cpt:vault']).not.toBeNull();
   expect(keys['cpt:device']).not.toBeNull();
   expect(keys['cpt:sync']).not.toBeNull();
