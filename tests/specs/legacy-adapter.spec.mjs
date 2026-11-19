@@ -34,6 +34,7 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
       settings:{theme:'dark',gh:{token:'secret-token',repo:'Gertjun/SyncData',path:'old.enc.json',branch:'main',pass:'legacy-secret'}},
       prices:{bitcoin:{price:123}},
       visit:{last:'overview'},
+      chartCache:{bitcoin:{ts:1700000000000,pts:[[1,2]]}},
       coreDeviceSettings:{autoLockMinutes:15},
     });
     return {
@@ -75,6 +76,8 @@ test('legacy-adapter behoudt onbekende data en zet verwijderingen om',async({pag
   expect(result.settings).toEqual({theme:'dark'});
   expect(result.deviceSettings.app.prices.bitcoin.price).toBe(123);
   expect(result.deviceSettings.app.visit).toEqual({last:'overview'});
+  expect(result.deviceSettings.app.chartCache).toEqual({bitcoin:{ts:1700000000000,pts:[[1,2]]}});
+  expect(JSON.stringify(result.payload)).not.toContain('chartCache');
   expect(result.payload.schema).toBe(1);
   expect(result.payload.v).toBe(1);
   expect(result.deviceSettings.autoLockMinutes).toBe(15);
