@@ -44,7 +44,7 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   expect(keys['cpt.vault']).toBe('synthetic-encrypted-legacy-vault');
   expect(keys['cpt.lock']).toBe('synthetic-legacy-lock-wrapper');
   expect(keys['cpt.vcharts']).toBe('synthetic-encrypted-legacy-charts');
-  expect(keys['cpt:charts']).toBeNull();
+  expect(keys['cpt:charts']).toBe(JSON.stringify({bitcoin:{ts:1700000000000,pts:[[1,2]]}}));
   const encryptedSettings=await page.evaluate(()=>window.PWACoreV1.vault.getDeviceSettings());
   expect(encryptedSettings.app.chartCache).toMatchObject({legacy:{pts:[]},bitcoin:{ts:1700000000000,pts:[[1,2]]},'bitcoin|30':{pts:[]}});
   expect(encryptedSettings.app.chartCache['bitcoin|30'].ts).toEqual(expect.any(Number));
