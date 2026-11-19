@@ -20,5 +20,5 @@ test('CSV-export neutraliseert spreadsheet-formules in tekstvelden',async({page}
   expect(csv).toContain("'=HYPERLINK");
   expect(csv).toContain("'-cmd|/C calc");
   expect(csv).toContain("'+SUM(1,1)");
-  expect(csv).not.toContain('=HYPERLINK');
+  expect(csv).not.toContain(';=HYPERLINK');
 });
