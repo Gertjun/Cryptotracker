@@ -224,6 +224,27 @@ export function createLegacyStorageAdapter(vault) {
       });
     },
 
+    saveChartCache(chartCache) {
+      return enqueue(async () => {
+        if (typeof vault.getDeviceSettings !== 'function' || typeof vault.setDeviceSettings !== 'function') {
+          throw new Error('Core-apparaatinstellingen kunnen niet worden opgeslagen.');
+        }
+        const current = await vault.getDeviceSettings() || {};
+        const next = { ...current, app: { ...(current.app || {}), chartCache: clone(chartCache) } };
+        await vault.setDeviceSettings(next);
+        await vault.flush();
+        const stored = await vault.getDeviceSettings();
+        if (JSON.stringify(stored) !== JSON.stringify(next)) {
+          throw new Error('Controle na opslaan mislukt: de versleutelde grafiekcache wijkt af.');
+        }
+        const status = vault.getStorageStatus?.();
+        if (status?.pending === true || (Number.isInteger(status?.requestedRevision) && Number.isInteger(status?.persistedRevision) && status.persistedRevision < status.requestedRevision)) {
+          throw new Error('Controle na opslaan mislukt: de Core-opslag is nog niet volledig bevestigd.');
+        }
+        return stored.app.chartCache;
+      });
+    },
+
     load() {
       return clone(vault.getData());
     },
