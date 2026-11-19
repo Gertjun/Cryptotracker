@@ -38,7 +38,7 @@ let coreMode=false,coreGateActive=true,coreHandoffPending=false,coreRuntime=null
 // Met vergrendeling aan staan transacties, koersen en GitHub-gegevens alleen versleuteld in de 'vault'.
 function persist(){
   if(coreMode){
-    const snapshot={data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null};
+    const snapshot={data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null,chartCache:structuredClone(chartCache)};
     coreRuntime?.save(snapshot).catch(e=>setSync('err',e.message||'Opslaan in Core mislukt'));
     return;
   }
@@ -448,7 +448,7 @@ let chartSaveT=null;
 function saveCharts(){clearTimeout(chartSaveT);chartSaveT=setTimeout(()=>{
   const now=Date.now();let pruned=false;for(const k in chartCache)if(now-chartCache[k].ts>7*864e5){delete chartCache[k];pruned=true}if(pruned)invalidateEstPts();
   try{
-    if(coreMode){localStorage.setItem(LS_CORE_CHARTS,JSON.stringify(chartCache));return}
+    if(coreMode){persist();return}
     if(lockCfg){if(!DEK)return;const k=DEK,snap=enc.encode(JSON.stringify(chartCache));
       vaultQ=vaultQ.then(()=>aesEnc(k,snap)).then(o=>localStorage.setItem(LS_VCHARTS,JSON.stringify(o))).catch(()=>{})}
     else localStorage.setItem(LS_CHARTS,JSON.stringify(chartCache));
@@ -3236,7 +3236,7 @@ function start(){if(coreHandoffPending&&!coreMode)return;document.body.classList
   if(settings.gh.cgKey){if(!data.cfg?.cgKey){data.cfg={cgKey:settings.gh.cgKey,mod:Date.now()};saveData()}settings.gh.cgKey='';saveSettings()}
   render();refreshPrices();refreshFng();syncNow(true)}
 window.CryptoPortfolioLegacy=Object.freeze({
-  snapshot:()=>({data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null}),
+  snapshot:()=>({data:structuredClone(data),settings:structuredClone(settings),prices:structuredClone(prices),visit:settings.visit??null,chartCache:structuredClone(chartCache)}),
   // Eenmalige legacy-import: uitsluitend GET; de oude remote wordt nooit aangepast.
   readLegacyRemote:async()=>{
     const g=settings.gh||{};
@@ -3270,7 +3270,7 @@ window.CryptoPortfolioLegacy=Object.freeze({
   hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
   legacyLocked:()=>!!lockCfg&&locked,
   startLegacy:({allowSync=true,coreHandoff=false}={})=>{coreGateActive=!allowSync;coreHandoffPending=!!coreHandoff;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
-  activateCore:(payload,box)=>{coreMode=true;chartCache=load(LS_CORE_CHARTS,{});locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});const app=box?.app||{};settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start()},
+  activateCore:(payload,box)=>{coreMode=true;const app=box?.app||{};chartCache=structuredClone(app.chartCache||load(LS_CORE_CHARTS,{}));locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start()},
   applyCoreData:(payload)=>{data=structuredClone(payload||{});invalidateEstPts();render()},
   lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},
   setRuntime:(runtime)=>{coreRuntime=runtime},
