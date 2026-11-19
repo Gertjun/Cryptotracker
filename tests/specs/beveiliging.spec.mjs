@@ -93,15 +93,20 @@ test('samenvoegen bewaart onbekende onderdelen en de gegevensversie',async({page
 test('back-upimport weigert ongeldige transactie types en HTML-uitvoer escapt type',async({page})=>{
   await openApp(page);
   const malicious={id:'xss',type:'buy" onmouseover="window.__xss=1',date:'2026-10-26',coinId:'bitcoin',name:'Bitcoin',symbol:'BTC',qty:1,price:1,fee:0};
-  const backup={app:'crypto-portfolio',exported:'2026-10-26T12:00:00.000Z',txs:[malicious]};
+  const maliciousDate={...malicious,id:'xss-date',type:'buy',date:'<img src=x onerror="window.__xss=1">'};
   await page.evaluate(()=>openSettings());
-  await page.locator('#s_file').setInputFiles({name:'malicious.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))});
-  expect(await page.evaluate(()=>data.txs.some(t=>t.id==='xss'))).toBe(false);
+  for(const tx of [malicious,maliciousDate]){
+    const backup={app:'crypto-portfolio',exported:'2026-10-26T12:00:00.000Z',txs:[tx]};
+    await page.locator('#s_file').setInputFiles({name:'malicious.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))});
+    expect(await page.evaluate(id=>data.txs.some(t=>t.id===id),tx.id)).toBe(false);
+  }
 
   // Defense in depth: zelfs als ongeldige data via een andere route in het model komt,
-  // mag het type geen HTML-attribuut kunnen injecteren.
+  // mogen type en datum geen HTML-attributen injecteren.
   await page.evaluate(tx=>{data=merge(data,{txs:[tx],deleted:[]});location.hash='#transacties';render()},malicious);
+  await page.evaluate(tx=>{data=merge(data,{txs:[tx],deleted:[]});render()},maliciousDate);
   await expect(page.locator('[onmouseover]')).toHaveCount(0);
+  await expect(page.locator('[onerror]')).toHaveCount(0);
   expect(await page.evaluate(()=>window.__xss)).toBeUndefined();
 });
 
