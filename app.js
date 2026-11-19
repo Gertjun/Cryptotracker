@@ -2673,17 +2673,21 @@ async function readPairCode(code,pin,now=Date.now()){
 }
 async function openPairOut(){
   const pair=await import('./js/core/pair.js'),pin=pair.newPin();
-  openSheet(`<h2 class="h3">Ander apparaat koppelen</h2><p class="mt-0 hint">Koppelcode maken…</p>`);
+  openSheet('<h2 class="h3">Ander apparaat koppelen</h2><p class="mt-0 hint">Koppelcode maken…</p>');
   const code=await makePairCode(pin);
-  openSheet(`<h2 class="h3">Ander apparaat koppelen</h2>
-  <ol class="pair-steps hint"><li>Zet de koppelcode op je andere apparaat, bijvoorbeeld via AirDrop, Notities of een bericht aan jezelf.</li>
-  <li>Open daar de app en kies <b>Instellingen › Synchronisatie › Koppelcode invoeren</b>.</li>
-  <li>Typ de pincode apart over. Stuur de pincode niet samen met de code mee.</li></ol>
-  <div class="field"><label for="pair_out">Koppelcode</label><textarea id="pair_out" rows="4" readonly spellcheck="false" class="pair-code">${esc(code)}</textarea></div>
-  <button type="button" class="btn sec" data-act="paircopy">Kopiëren</button>
-  <p class="pair-pin-l label">Pincode</p><p class="pair-pin m" aria-label="Pincode ${pin.split('').join(' ')}">${pin}</p>
-  <p class="hint">De code bevat uitsluitend je GitHub Sync-instellingen en verloopt na drie minuten. Je kluiswachtwoord en CoinGecko-sleutel worden niet overgedragen. Vul het kluiswachtwoord op het nieuwe apparaat zelf in; de gegevens worden daarna via GitHub opgehaald.</p>
-  <button type="button" class="btn" data-act="settings">Klaar</button>`);
+  openSheet('<h2 class="h3">Ander apparaat koppelen</h2>'+
+  '<ol class="pair-steps hint"><li>Kopieer de koppelcode en stuur deze naar je andere apparaat.</li>'+
+  '<li>Open daar de app en kies <b>Instellingen › Synchronisatie › Koppelcode invoeren</b>.</li>'+
+  '<li>Toon daarna de pincode en deel deze via een ander kanaal.</li></ol>'+
+  '<div id="pair-code-panel"><div class="field"><label for="pair_out">Koppelcode</label><textarea id="pair_out" rows="4" readonly spellcheck="false" class="pair-code">'+esc(code)+'</textarea></div>'+
+  '<button type="button" class="btn sec" data-act="paircopy">Koppelcode kopiëren</button>'+
+  '<button type="button" class="btn" data-act="pairpin">Pincode tonen (koppelcode verbergen)</button></div>'+
+  '<div id="pair-pin-panel" hidden><p class="pair-pin-l label">Pincode</p><p class="pair-pin m" aria-label="Pincode '+pin.split('').join(' ')+'">'+pin+'</p>'+
+  '<p class="hint">De koppelcode is verborgen. Deel deze pincode via een ander kanaal dan de koppelcode.</p>'+
+  '<button type="button" class="btn sec" data-act="pairpincopy">Pincode kopiëren</button>'+
+  '<button type="button" class="btn" data-act="paircode">Terug naar koppelcode</button></div>'+
+  '<p class="hint">De code bevat uitsluitend je GitHub Sync-instellingen en verloopt na drie minuten. Je kluiswachtwoord en CoinGecko-sleutel worden niet overgedragen. Vul het kluiswachtwoord op het nieuwe apparaat zelf in; de gegevens worden daarna via GitHub opgehaald.</p>'+
+  '<button type="button" class="btn" data-act="settings">Klaar</button>');
 }
 function openPairIn(){
   openSheet(`<h2 class="h3">Koppelcode invoeren</h2><p class="mt-0 hint">Op je andere apparaat vind je de code bij <b>Instellingen › Synchronisatie › Ander apparaat koppelen</b>.</p>
@@ -3168,6 +3172,9 @@ document.addEventListener('click',e=>{
     case 'pweye':pwEye(a);break;
     case 'pairin':doPairIn(a);break;
     case 'paircopy':{const t=$('#pair_out');t.select();(navigator.clipboard?.writeText(t.value)||Promise.reject()).then(()=>toast('Koppelcode gekopieerd'),()=>{document.execCommand?.('copy');toast('Koppelcode geselecteerd: kopieer hem')});break}
+    case 'pairpin':$('#pair-code-panel').hidden=true;$('#pair-pin-panel').hidden=false;break;
+    case 'paircode':$('#pair-pin-panel').hidden=true;$('#pair-code-panel').hidden=false;break;
+    case 'pairpincopy':{const pin=$('#pair-pin-panel .pair-pin').textContent.trim();(navigator.clipboard?.writeText(pin)||Promise.reject()).then(()=>toast('Pincode gekopieerd'),()=>toast('Kopiëren lukte niet. Selecteer de pincode en kopieer hem zelf.'));break}
     case 'savesync':saveSyncForm(a);break;
     case 'wipe':
       if(!confirm('Alle transacties wissen? Dit wordt ook naar je andere apparaten gesynchroniseerd.'))return;
