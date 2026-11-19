@@ -183,7 +183,7 @@ test('migratie voegt legacy GitHub-data read-only samen en laat oud remote besta
   });
   expect(isolation.ids).not.toContain('legacy-other-tab-tx');
   expect(isolation.legacyCharts).toBe(result.legacyCharts);
-  expect(isolation.coreCharts).toContain('coreModeProbe');
+  expect(isolation.coreCharts).toHaveProperty('coreModeProbe');
   expect(githubCalls.some(call=>call.path.endsWith('/contents/crypto-portfolio.pwa-core-v1.json'))).toBe(true);
   await page.evaluate(()=>{
     data.txs.push({id:'core-only-tx',type:'buy',coinId:'ethereum',qty:1,price:1000,fee:0,date:'2025-02-01',mod:Date.now()});
