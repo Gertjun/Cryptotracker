@@ -98,6 +98,9 @@ test('back-upimport weigert ongeldige transactie types en HTML-uitvoer escapt ty
   for(const tx of [malicious,maliciousDate]){
     const backup={app:'crypto-portfolio',exported:'2026-10-26T12:00:00.000Z',txs:[tx]};
     await page.locator('#s_file').setInputFiles({name:'malicious.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))});
+    // importFile leest het bestand asynchroon; wacht op de expliciete afwijzing voordat
+    // we controleren dat de transactie niet in het model is opgenomen.
+    await expect(page.locator('#toast')).toHaveText('Ongeldig back-upbestand');
     expect(await page.evaluate(id=>data.txs.some(t=>t.id===id),tx.id)).toBe(false);
   }
 
