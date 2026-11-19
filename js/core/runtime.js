@@ -477,7 +477,12 @@ async function cleanupLegacyStorage() {
        status.persistedRevision < status.requestedRevision)) {
     throw new Error('De Core-opslag is niet volledig bevestigd. De oude opslag is niet opgeruimd.');
   }
-  const keys = ['cpt.data', 'cpt.settings', 'cpt.prices', 'cpt.charts'];
+  const legacyChartCache = localStorage.getItem('cpt:charts');
+  const expectedChartCache = window.CryptoPortfolioLegacy.getCoreChartCache?.();
+  if (legacyChartCache !== null && (!storedSettings.app?.chartCache || JSON.stringify(storedSettings.app.chartCache) !== JSON.stringify(expectedChartCache))) {
+    throw new Error('De lokale grafiekcache is niet bevestigd in de versleutelde Core-opslag. De oude opslag is niet opgeruimd.');
+  }
+  const keys = ['cpt.data', 'cpt.settings', 'cpt.prices', 'cpt.charts', 'cpt:charts'];
   let removed = 0;
   for (const key of keys) {
     if (localStorage.getItem(key) !== null) {
@@ -486,6 +491,16 @@ async function cleanupLegacyStorage() {
     }
   }
   return { removed, keys };
+}
+
+async function saveChartCache(chartCache) {
+  if (!active || !adapter) return;
+  try {
+    await adapter.saveChartCache(chartCache);
+  } catch (error) {
+    window.CryptoPortfolioLegacy.setSyncError(error?.message || 'Grafiekcache opslaan in Core mislukt');
+    throw error;
+  }
 }
 
 async function save(snapshot) {
@@ -550,6 +565,7 @@ async function lock() {
 
 const runtime = Object.freeze({
   save,
+  saveChartCache,
   cleanupLegacyStorage,
   isLegacyMigrationVerified: () => active && deviceSettings.legacyMigrationVerified === true,
   getInfo,
