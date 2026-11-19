@@ -2650,11 +2650,26 @@ function exportData(){
 // Gebruik een expliciete import-allowlist; TYPE_L is presentatiedata en mag
 // nooit de beveiligingsgrens voor geïmporteerde transacties bepalen.
 const BACKUP_TX_TYPES=Object.freeze(['buy','sell','deposit','withdraw','receive','transfer']);
+// Date.parse() is bewust niet voldoende: browsers accepteren ook niet-datums zoals
+// "<img src=x onerror=...>" als een datum (bijvoorbeeld als januari 2001).
+function isValidBackupDate(value){
+  if(typeof value!=='string')return false;
+  const m=/^(\\d{4})-(\\d{2})-(\\d{2})(?:T(\\d{2}):(\\d{2})(?::(\\d{2})(?:\\.(\\d{1,3}))?)?(Z|[+-]\\d{2}:\\d{2})?)?$/.exec(value);
+  if(!m)return false;
+  const [,year,month,day,hour='00',minute='00',second='00',fraction='',zone]=m;
+  const y=+year,mo=+month,d=+day,h=+hour,mi=+minute,s=+second;
+  if(mo<1||mo>12||d<1||d>new Date(Date.UTC(y,mo,0)).getUTCDate()||h>23||mi>59||s>59)return false;
+  if(zone&&zone!=='Z'){
+    const [,zh,zm]=/^[+-](\\d{2}):(\\d{2})$/.exec(zone)||[];
+    if(+zh>23||+zm>59)return false;
+  }
+  return Number.isFinite(Date.parse(value));
+}
 function isValidBackupTransaction(t){
   return !!t&&typeof t==='object'&&!Array.isArray(t)&&
     typeof t.id==='string'&&t.id.trim()!==''&&
     typeof t.type==='string'&&BACKUP_TX_TYPES.includes(t.type)&&
-    typeof t.date==='string'&&Number.isFinite(Date.parse(t.date));
+    isValidBackupDate(t.date);
 }
 async function importFile(e){
   const file=e.target.files[0];if(!file)return;
