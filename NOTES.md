@@ -2,21 +2,20 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 18 november 2026 · versie **4.0.6** in voorbereiding; PWA-Core v1.3.0-integratie in PR #52.
+Laatst bijgewerkt: 19 november 2026 · versie **4.0.6** in voorbereiding; PWA-Core **v1.3.0** op main.
 
 ---
 
-## Actuele stand – 18 november 2026
+## Actuele stand – 19 november 2026
 
-- PR #52 integreert PWA-Core v1.3.0 en vervangt de eigen koppelcode door `PWA-CORE-PAIR-2`. De code draagt uitsluitend owner/repo/branch/path/token over; het kluiswachtwoord wordt op het nieuwe apparaat apart ingevoerd. CoinGecko-instellingen en appgegevens komen via de bestaande versleutelde sync.
-- De wijziging is nog niet gemerged, uitgerold of fysiek getest. Oude koppelcodes moeten opnieuw worden aangemaakt.
-
-- `main` bevat appversie **4.0.5** en de officiële PWA-Core **v1.2.2**. PR #47–#50 zijn gemerged.
-- De post-merge testworkflow, Core-validatie en Pages-deployment zijn op de toen gecontroleerde mergecommit geslaagd.
-- De gebruiker heeft op 18 november bevestigd: **“Alles werkt!”** De praktijktest is daarmee door de gebruiker als geslaagd gemeld. De precieze testdekking wordt niet ruimer voorgesteld dan de bevestiging ondersteunt.
-- De officiële Cryptotracker-release 4.0.5 is nog niet gepubliceerd. Een release is een afzonderlijke stap en volgt niet automatisch uit een geslaagde praktijktest.
-- Geen productiegegevens, SyncData-bestand of tokens benaderd of gewijzigd.
-
+- Main gebruikt Cryptotracker **4.0.6** en PWA-Core **v1.3.0** (pwa-core.lock.json); de service-worker-cache is crypto-portfolio-4.0.6-core1.3.0.
+- PR #52 is op 18 november gemerged. De app gebruikt nu het gedeelde pairing-protocol PWA-CORE-PAIR-2; alleen owner/repo/branch/path/token worden overgedragen. Het kluiswachtwoord wordt op het nieuwe apparaat apart ingevoerd. Oude CPK1/CPK2-koppelcodes worden geweigerd.
+- PR #57 is op 19 november gemerged: back-uptransacties worden gevalideerd op ID, type en datum; dynamische transactietypen en ongeldige datum-fallbacks worden veilig ge-escaped.
+- PR #58 is op 19 november gemerged: de Core-grafiekcache cpt:charts blijft behouden bij handmatige legacy-opruiming. Alleen cpt.data, cpt.settings, cpt.prices en cpt.charts mogen na geverifieerde migratie worden verwijderd. Versleutelde herstel- en Core-opslag blijven behouden.
+- PR #59 staat open voor een testcorrectie: de opruimtest voert de echte gebruikersactie nog maar één keer uit en controleert daarna de bevestiging, opslagstatus en idempotentie. Tests-run #735 is nog bezig; PWA-Core-validatie #583 is geslaagd.
+- De gebruiker bevestigde op 18 november dat **4.0.5** functioneel was (“Alles werkt!”). De huidige 4.0.6-wijzigingen, inclusief PR #57, zijn nog niet afzonderlijk fysiek geaccepteerd. Een officiële release van 4.0.6 is niet bevestigd.
+- De fysieke controle van migratie en eventuele legacy-opruiming op echte apparaten blijft open. Opruiming is uitsluitend een afzonderlijke, expliciet bevestigde gebruikershandeling per apparaat nadat de Core-payload, versleutelde apparaatinstellingen en opslagwachtrij aantoonbaar zijn geverifieerd. Er is in deze audit geen echte lokale opslag benaderd of verwijderd.
+- Geen productiekluis, SyncData-bestand, persoonlijke token of bestaande gebruikersgegevens benaderd of gewijzigd.
 ## 1. Werkwijze met Geert (belangrijk)
 
 - **Antwoord:** in het Nederlands, kort en zonder vakjargon, want hij heeft geen IT-achtergrond.
