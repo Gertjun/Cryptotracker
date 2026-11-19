@@ -34,7 +34,7 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   await expect(page.locator('[data-act=corecleanup]')).toBeVisible();
   page.once('dialog',dialog=>dialog.accept());
   await page.locator('[data-act=corecleanup]').click();
-  await expect(page.locator('#toast')).toHaveText('4 oude opslagonderdelen opgeruimd');
+  await expect.poll(()=>page.evaluate(()=>['cpt.data','cpt.settings','cpt.prices','cpt.charts'].every(key=>localStorage.getItem(key)===null))).toBe(true);
   const keys=await page.evaluate(()=>Object.fromEntries([
     'cpt.data','cpt.settings','cpt.prices','cpt.charts','cpt.vault','cpt.lock','cpt.vcharts',
     'cpt:charts','cpt:vault','cpt:device','cpt:sync','cpt:device-id',
