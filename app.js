@@ -1482,7 +1482,7 @@ async function download(name,text,mime){const b=text instanceof Blob?text:new Bl
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 // CSV voor Nederlandse Excel: puntkomma als scheidingsteken, komma als decimaalteken, UTF-8 met BOM
 function exportCSV(list,name){
-  const n=v=>v==null||v===''?'':String(+(+v).toPrecision(15)).replace('.',','),q=v=>{v=String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const n=v=>v==null||v===''?'':String(+(+v).toPrecision(15)).replace('.',','),q=v=>{v=String(v??'');const trimmed=v.trim();if(/^[\t\r\n ]*[=+\-@]/.test(v)&&! /^[+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?$/.test(trimmed))v="'"+v;return /[;"\n\r\t]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
   const rows=[['Datum','Tijd','Type','Munt','Symbool','Aantal','Koers (EUR)','Totaal (EUR)','Kosten (EUR)','Netwerkkosten (munt)','Broker/wallet','Naar','Notitie','ID']];
   for(const t of [...list].sort((a,b)=>a.date.localeCompare(b.date))){
     const cash=isCash(t.type);
