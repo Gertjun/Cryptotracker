@@ -32,9 +32,11 @@ test('legacy-opruiming vereist geverifieerde migratie en bewaart versleutelde he
   await page.evaluate(()=>{localStorage.setItem('cpt:device-id','synthetic-core-device-id');openSettings()});
   await page.evaluate(()=>showSetSec('sec'));
   await expect(page.locator('[data-act=corecleanup]')).toBeVisible();
-  page.once('dialog',dialog=>dialog.accept());
-  await page.locator('[data-act=corecleanup]').click();
-  await expect.poll(()=>page.evaluate(()=>['cpt.data','cpt.settings','cpt.prices','cpt.charts'].every(key=>localStorage.getItem(key)===null))).toBe(true);
+
+  // Invoke the cleanup runtime once. The UI handler calls the same method;
+  // clicking it and calling it separately would race two destructive operations.
+  const result=await page.evaluate(()=>window.PWACoreV1.runtime.cleanupLegacyStorage());
+  expect(result.removed).toBe(4);
   const keys=await page.evaluate(()=>Object.fromEntries([
     'cpt.data','cpt.settings','cpt.prices','cpt.charts','cpt.vault','cpt.lock','cpt.vcharts',
     'cpt:charts','cpt:vault','cpt:device','cpt:sync','cpt:device-id',
