@@ -2,10 +2,7 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
-## Unreleased
-- Nog geen wijzigingen na de 4.0.6-kandidaat.
-
-## 4.0.6 – 19 november 2026 (in voorbereiding)
+## 4.0.6 – 20 november 2026
 PWA-Core v1.3.0-integratie en beveiligingscorrecties.
 
 ### Nieuw
@@ -19,15 +16,15 @@ PWA-Core v1.3.0-integratie en beveiligingscorrecties.
 ### Tests
 - Synthetische regressietests voor ongeldige back-uptransacties, veilige rendering en behoud van Core-/herstelopslag bij legacy-opruiming.
 - Praktijkacceptatie op echte apparaten is op 20 november 2026 geslaagd: passkeys op iPhone (Face ID) en Windows 11 (Windows Hello), wachtwoordfallback/annuleren, koppeling en synchronisatie in beide richtingen, offline wijziging en herstel, PWA-installatie/offline, legacy-cleanup en gegevensintegriteit na herstart.
-- Automatische tests, PWA-Core-validatie en GitHub Pages-deployment zijn geslaagd op de releasekandidaat-commit `c20cf094`. Officiële publicatie volgt na de laatste releasevoorbereiding en expliciete goedkeuring.
+- Automatische tests, PWA-Core-validatie en GitHub Pages-deployment zijn geslaagd op de releasekandidaat-commit `c20cf094`. Officieel uitgebracht op 20 november 2026 (tag `v4.0.6`, wens W47).
 
 **Versienummers** hebben de vorm `MAJOR.MINOR.PATCH`:
 - **MAJOR** omhoog bij een wijziging waarbij je iets moet doen, zoals opnieuw koppelen of alle apparaten tegelijk bijwerken.
 - **MINOR** omhoog bij een nieuwe functie.
 - **PATCH** omhoog bij een kleine verbetering of foutoplossing.
 
-Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.6-core1.3.0`) en de naam van het zip-bestand (`crypto-tracker-4.0.5.zip`).
-Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89"), zodat je oude zip-bestanden terugvindt.
+Het versienummer staat in de app onder Instellingen en komt overeen met de cache-naam in `sw.js` (`crypto-portfolio-4.0.6-core1.3.0`).
+Tot en met v89 waren de versies gewoon doorgenummerd. Die zijn met terugwerkende kracht omgezet; het oude nummer staat er nog bij ("voorheen v89").
 
 Nog niet ingebouwde functies staan in de [wishlist](WISHLIST.md). Komt een wens in een versie terecht, dan staat het wensnummer erbij, bijvoorbeeld "(wens W3)".
 
