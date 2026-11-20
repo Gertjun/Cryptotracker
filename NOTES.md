@@ -2,7 +2,7 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 19 november 2026 · versie **4.0.6** in voorbereiding; PWA-Core **v1.3.0** op main.
+Laatst bijgewerkt: 20 november 2026 · versie **4.0.6** in voorbereiding; PWA-Core **v1.3.0** op main.
 
 ---
 
@@ -12,7 +12,7 @@ Laatst bijgewerkt: 19 november 2026 · versie **4.0.6** in voorbereiding; PWA-Co
 - PR #52 is op 18 november gemerged. De app gebruikt nu het gedeelde pairing-protocol PWA-CORE-PAIR-2; alleen owner/repo/branch/path/token worden overgedragen. Het kluiswachtwoord wordt op het nieuwe apparaat apart ingevoerd. Oude CPK1/CPK2-koppelcodes worden geweigerd.
 - PR #57 is op 19 november gemerged: back-uptransacties worden gevalideerd op ID, type en datum; dynamische transactietypen en ongeldige datum-fallbacks worden veilig ge-escaped.
 - PR #58 is op 19 november gemerged: de Core-grafiekcache cpt:charts blijft behouden bij handmatige legacy-opruiming. Alleen cpt.data, cpt.settings, cpt.prices en cpt.charts mogen na geverifieerde migratie worden verwijderd. Versleutelde herstel- en Core-opslag blijven behouden.
-- PR #59 staat open voor een testcorrectie: de opruimtest voert de echte gebruikersactie nog maar één keer uit en controleert daarna de bevestiging, opslagstatus en idempotentie. Tests-run #735 is nog bezig; PWA-Core-validatie #583 is geslaagd.
+- PR #59 is op 19 november gemerged (`206b59ad`). De opruimtest voert de gebruikersactie één keer uit en controleert daarna bevestiging, opslagstatus en idempotentie. De post-merge Tests-run #747, PWA-Core-validatie #595 en Pages-deployment #127 zijn alle geslaagd.
 - De gebruiker bevestigde op 18 november dat **4.0.5** functioneel was (“Alles werkt!”). De huidige 4.0.6-wijzigingen, inclusief PR #57, zijn nog niet afzonderlijk fysiek geaccepteerd. Een officiële release van 4.0.6 is niet bevestigd.
 - De fysieke controle van migratie en eventuele legacy-opruiming op echte apparaten blijft open. Opruiming is uitsluitend een afzonderlijke, expliciet bevestigde gebruikershandeling per apparaat nadat de Core-payload, versleutelde apparaatinstellingen en opslagwachtrij aantoonbaar zijn geverifieerd. Er is in deze audit geen echte lokale opslag benaderd of verwijderd.
 - Geen productiekluis, SyncData-bestand, persoonlijke token of bestaande gebruikersgegevens benaderd of gewijzigd.
@@ -57,6 +57,8 @@ Laatst bijgewerkt: 19 november 2026 · versie **4.0.6** in voorbereiding; PWA-Co
 - **18 nov 2026 – 4.0.5 (kandidaat):** F08 migratie-readback uitgebreid met controle van versleutelde Core-device-settings en opslagstatus. Expliciete, apparaatgebonden cleanup toegevoegd voor uitsluitend `cpt.data`, `cpt.settings`, `cpt.prices`, `cpt.charts`; oude versleutelde herstelbestanden en Core-keys blijven behouden. Synthetische regressietests toegevoegd. PR #47 en PR #48 zijn gemerged. PR #48 pint PWA-Core v1.2.2 en bevat de tombstone-herlevingsfix. Op mergecommit `666b6af75156ff59a2392beb0b164499257091d7` zijn de volledige testworkflow, Core-validatie en Pages-deployment allemaal geslaagd. Praktische controle op echte apparaten blijft open; geen echte lokale data verwijderd.
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
+
+- **20 nov 2026 – audit na PR #59:** post-merge Tests #747, Core-validatie #595 en Pages-deployment #127 zijn geslaagd op `206b59ad`. Synthetische tests omvatten berekeningen, UI/responsiviteit, toegankelijkheid, beveiliging, passkeys, Core-runtime, pairing, sync, herstel, verwijderingsgedrag, legacy-cleanup en updategedrag. Fysieke acceptatie van Cryptotracker 4.0.6 blijft open; release niet bevestigd.
 
 - **18 nov 2026 – PR #47 en #48, Core v1.2.2:** PR #47 gemerged in `main` (`27c211a3519b2377d8fc0f265ce973d6c5f4091f`). Daarna is PR #48 gemerged; `main` staat op mergecommit `666b6af75156ff59a2392beb0b164499257091d7`. De post-merge testworkflow, Core-validatie en Pages-deployment zijn alle drie succesvol afgerond. De synthetische tests en Core-pin zijn daarmee op de gemergede commit gecontroleerd. De praktijktest op echte apparaten en de release van Cryptotracker 4.0.5 blijven open. Geen echte lokale data gemigreerd of verwijderd.
 
