@@ -106,9 +106,9 @@ Leg bij een aankoop of verkoop vast waaróm je het deed ("dip gekocht na nieuws"
 Op basis van je waarde op 1 januari (uit het jaaroverzicht) een schatting van de box 3-belasting. Het tarief, het vrije bedrag en een eventuele fiscale partner stel je zelf in, omdat de regels vaak veranderen. Duidelijk gemarkeerd als schatting.
 
 ### W32 – Aankopen in dollar of stablecoin
-Een aankoop of verkoop in dollar, USDT of USDC invoeren. De app rekent die om naar euro tegen de koers van die dag. Handig samen met W15.
+Een aankoop of verkoop in dollar, USDT of USDC invoeren. De app rekent die om naar euro tegen de koers van die dag.
 
-### W35 – Importherinnering
+### W35 – Transactieherinnering
 Een melding op het overzicht als je laatste transactie lang geleden is, bijvoorbeeld "Je hebt 3 weken geen transactie ingevoerd". Het aantal weken stel je zelf in.
 
 ## Grafieken
