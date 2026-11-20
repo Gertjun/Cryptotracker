@@ -5,7 +5,9 @@
     "date": "2025-09-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000000,
+    "mod": 1793016000000
   },
   {
     "id": "test-0002",
@@ -18,7 +20,9 @@
     "price": 83018.45964345755,
     "fee": 0.125,
     "date": "2025-09-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000001,
+    "mod": 1793016000000
   },
   {
     "id": "test-0003",
@@ -31,7 +35,9 @@
     "price": 3041.3501663722714,
     "fee": 0.075,
     "date": "2025-09-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000002,
+    "mod": 1793016000000
   },
   {
     "id": "test-0004",
@@ -44,7 +50,9 @@
     "price": 0.30634825090925283,
     "fee": 0.0375,
     "date": "2025-09-04T09:33:20",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000003,
+    "mod": 1793016000000
   },
   {
     "id": "test-0005",
@@ -58,7 +66,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-09-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000004,
+    "mod": 1793016000000
   },
   {
     "id": "test-0006",
@@ -72,7 +82,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-09-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000005,
+    "mod": 1793016000000
   },
   {
     "id": "test-0007",
@@ -80,7 +92,9 @@
     "date": "2025-10-04T08:30:00",
     "amount": 150,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000006,
+    "mod": 1793016000000
   },
   {
     "id": "test-0008",
@@ -93,7 +107,9 @@
     "price": 84172.95326818895,
     "fee": 0.125,
     "date": "2025-10-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000007,
+    "mod": 1793016000000
   },
   {
     "id": "test-0009",
@@ -106,7 +122,9 @@
     "price": 2425.0935798433193,
     "fee": 0.075,
     "date": "2025-10-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000008,
+    "mod": 1793016000000
   },
   {
     "id": "test-0010",
@@ -120,7 +138,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-10-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000009,
+    "mod": 1793016000000
   },
   {
     "id": "test-0011",
@@ -134,7 +154,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-10-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000010,
+    "mod": 1793016000000
   },
   {
     "id": "test-0012",
@@ -142,7 +164,9 @@
     "date": "2025-11-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000011,
+    "mod": 1793016000000
   },
   {
     "id": "test-0013",
@@ -155,7 +179,9 @@
     "price": 79972.74112082097,
     "fee": 0.125,
     "date": "2025-11-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000012,
+    "mod": 1793016000000
   },
   {
     "id": "test-0014",
@@ -168,7 +194,9 @@
     "price": 2116.372555121162,
     "fee": 0.075,
     "date": "2025-11-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000013,
+    "mod": 1793016000000
   },
   {
     "id": "test-0015",
@@ -181,7 +209,9 @@
     "price": 0.32748597955260017,
     "fee": 0.0375,
     "date": "2025-11-04T09:33:20",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000014,
+    "mod": 1793016000000
   },
   {
     "id": "test-0016",
@@ -195,7 +225,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-11-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000015,
+    "mod": 1793016000000
   },
   {
     "id": "test-0017",
@@ -209,7 +241,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-11-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000016,
+    "mod": 1793016000000
   },
   {
     "id": "test-0018",
@@ -217,7 +251,9 @@
     "date": "2025-12-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000017,
+    "mod": 1793016000000
   },
   {
     "id": "test-0019",
@@ -230,7 +266,9 @@
     "price": 64850.21064128569,
     "fee": 0.125,
     "date": "2025-12-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000018,
+    "mod": 1793016000000
   },
   {
     "id": "test-0020",
@@ -243,7 +281,9 @@
     "price": 1798.405503932153,
     "fee": 0.075,
     "date": "2025-12-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000019,
+    "mod": 1793016000000
   },
   {
     "id": "test-0021",
@@ -257,7 +297,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-12-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000020,
+    "mod": 1793016000000
   },
   {
     "id": "test-0022",
@@ -271,7 +313,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2025-12-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000021,
+    "mod": 1793016000000
   },
   {
     "id": "test-0023",
@@ -279,7 +323,9 @@
     "date": "2026-01-04T08:30:00",
     "amount": 150,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000022,
+    "mod": 1793016000000
   },
   {
     "id": "test-0024",
@@ -292,7 +338,9 @@
     "price": 60497.076732733316,
     "fee": 0.125,
     "date": "2026-01-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000023,
+    "mod": 1793016000000
   },
   {
     "id": "test-0025",
@@ -305,7 +353,9 @@
     "price": 1894.1252053155767,
     "fee": 0.075,
     "date": "2026-01-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000024,
+    "mod": 1793016000000
   },
   {
     "id": "test-0026",
@@ -318,7 +368,9 @@
     "price": 0.5401538262575242,
     "fee": 0.0375,
     "date": "2026-01-04T09:33:20",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000025,
+    "mod": 1793016000000
   },
   {
     "id": "test-0027",
@@ -332,7 +384,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-01-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000026,
+    "mod": 1793016000000
   },
   {
     "id": "test-0028",
@@ -346,7 +400,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-01-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000027,
+    "mod": 1793016000000
   },
   {
     "id": "test-0029",
@@ -354,7 +410,9 @@
     "date": "2026-02-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000028,
+    "mod": 1793016000000
   },
   {
     "id": "test-0030",
@@ -367,7 +425,9 @@
     "price": 58481.76072605326,
     "fee": 0.125,
     "date": "2026-02-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000029,
+    "mod": 1793016000000
   },
   {
     "id": "test-0031",
@@ -380,7 +440,9 @@
     "price": 2561.883285990929,
     "fee": 0.075,
     "date": "2026-02-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000030,
+    "mod": 1793016000000
   },
   {
     "id": "test-0032",
@@ -394,7 +456,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-02-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000031,
+    "mod": 1793016000000
   },
   {
     "id": "test-0033",
@@ -408,7 +472,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-02-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000032,
+    "mod": 1793016000000
   },
   {
     "id": "test-0034",
@@ -416,7 +482,9 @@
     "date": "2026-03-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000033,
+    "mod": 1793016000000
   },
   {
     "id": "test-0035",
@@ -429,7 +497,9 @@
     "price": 72970.00731528895,
     "fee": 0.125,
     "date": "2026-03-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000034,
+    "mod": 1793016000000
   },
   {
     "id": "test-0036",
@@ -442,7 +512,9 @@
     "price": 2891.092055076149,
     "fee": 0.075,
     "date": "2026-03-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000035,
+    "mod": 1793016000000
   },
   {
     "id": "test-0037",
@@ -455,7 +527,9 @@
     "price": 0.5277443264197641,
     "fee": 0.0375,
     "date": "2026-03-04T09:33:20",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000036,
+    "mod": 1793016000000
   },
   {
     "id": "test-0038",
@@ -469,7 +543,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-03-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000037,
+    "mod": 1793016000000
   },
   {
     "id": "test-0039",
@@ -483,7 +559,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-03-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000038,
+    "mod": 1793016000000
   },
   {
     "id": "test-0040",
@@ -491,7 +569,9 @@
     "date": "2026-04-04T08:30:00",
     "amount": 150,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000039,
+    "mod": 1793016000000
   },
   {
     "id": "test-0041",
@@ -504,7 +584,9 @@
     "price": 82868.10886252618,
     "fee": 0.125,
     "date": "2026-04-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000040,
+    "mod": 1793016000000
   },
   {
     "id": "test-0042",
@@ -517,7 +599,9 @@
     "price": 3344.10599223564,
     "fee": 0.075,
     "date": "2026-04-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000041,
+    "mod": 1793016000000
   },
   {
     "id": "test-0043",
@@ -531,7 +615,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-04-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000042,
+    "mod": 1793016000000
   },
   {
     "id": "test-0044",
@@ -545,7 +631,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-04-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000043,
+    "mod": 1793016000000
   },
   {
     "id": "test-0045",
@@ -553,7 +641,9 @@
     "date": "2026-05-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000044,
+    "mod": 1793016000000
   },
   {
     "id": "test-0046",
@@ -566,7 +656,9 @@
     "price": 97400.69523102761,
     "fee": 0.125,
     "date": "2026-05-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000045,
+    "mod": 1793016000000
   },
   {
     "id": "test-0047",
@@ -579,7 +671,9 @@
     "price": 3026.095714623753,
     "fee": 0.075,
     "date": "2026-05-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000046,
+    "mod": 1793016000000
   },
   {
     "id": "test-0048",
@@ -592,7 +686,9 @@
     "price": 0.3275672765559382,
     "fee": 0.0375,
     "date": "2026-05-04T09:33:20",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000047,
+    "mod": 1793016000000
   },
   {
     "id": "test-0049",
@@ -606,7 +702,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-05-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000048,
+    "mod": 1793016000000
   },
   {
     "id": "test-0050",
@@ -620,7 +718,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-05-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000049,
+    "mod": 1793016000000
   },
   {
     "id": "test-0051",
@@ -628,7 +728,9 @@
     "date": "2026-06-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000050,
+    "mod": 1793016000000
   },
   {
     "id": "test-0052",
@@ -641,7 +743,9 @@
     "price": 93546.02745892416,
     "fee": 0.125,
     "date": "2026-06-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000051,
+    "mod": 1793016000000
   },
   {
     "id": "test-0053",
@@ -654,7 +758,9 @@
     "price": 2690.1294498381876,
     "fee": 0.075,
     "date": "2026-06-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000052,
+    "mod": 1793016000000
   },
   {
     "id": "test-0054",
@@ -668,7 +774,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-06-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000053,
+    "mod": 1793016000000
   },
   {
     "id": "test-0055",
@@ -682,7 +790,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-06-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000054,
+    "mod": 1793016000000
   },
   {
     "id": "test-0056",
@@ -690,7 +800,9 @@
     "date": "2026-07-04T08:30:00",
     "amount": 150,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000055,
+    "mod": 1793016000000
   },
   {
     "id": "test-0057",
@@ -703,7 +815,9 @@
     "price": 82978.40481815458,
     "fee": 0.125,
     "date": "2026-07-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000056,
+    "mod": 1793016000000
   },
   {
     "id": "test-0058",
@@ -716,7 +830,9 @@
     "price": 1976.1788724190808,
     "fee": 0.075,
     "date": "2026-07-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000057,
+    "mod": 1793016000000
   },
   {
     "id": "test-0059",
@@ -729,7 +845,9 @@
     "price": 0.32795574513250225,
     "fee": 0.0375,
     "date": "2026-07-04T09:33:20",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000058,
+    "mod": 1793016000000
   },
   {
     "id": "test-0060",
@@ -743,7 +861,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-07-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000059,
+    "mod": 1793016000000
   },
   {
     "id": "test-0061",
@@ -757,7 +877,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-07-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000060,
+    "mod": 1793016000000
   },
   {
     "id": "test-0062",
@@ -765,7 +887,9 @@
     "date": "2026-08-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000061,
+    "mod": 1793016000000
   },
   {
     "id": "test-0063",
@@ -778,7 +902,9 @@
     "price": 73939.2771370119,
     "fee": 0.125,
     "date": "2026-08-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000062,
+    "mod": 1793016000000
   },
   {
     "id": "test-0064",
@@ -791,7 +917,9 @@
     "price": 1924.5041306900691,
     "fee": 0.075,
     "date": "2026-08-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000063,
+    "mod": 1793016000000
   },
   {
     "id": "test-0065",
@@ -805,7 +933,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-08-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000064,
+    "mod": 1793016000000
   },
   {
     "id": "test-0066",
@@ -819,7 +949,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-08-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000065,
+    "mod": 1793016000000
   },
   {
     "id": "test-0067",
@@ -827,7 +959,9 @@
     "date": "2026-09-04T08:30:00",
     "amount": 100,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000066,
+    "mod": 1793016000000
   },
   {
     "id": "test-0068",
@@ -840,7 +974,9 @@
     "price": 61778.47693603527,
     "fee": 0.125,
     "date": "2026-09-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000067,
+    "mod": 1793016000000
   },
   {
     "id": "test-0069",
@@ -853,7 +989,9 @@
     "price": 2149.759772876174,
     "fee": 0.075,
     "date": "2026-09-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000068,
+    "mod": 1793016000000
   },
   {
     "id": "test-0070",
@@ -866,7 +1004,9 @@
     "price": 0.5208138086168337,
     "fee": 0.0375,
     "date": "2026-09-04T09:33:20",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000069,
+    "mod": 1793016000000
   },
   {
     "id": "test-0071",
@@ -880,7 +1020,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-09-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000070,
+    "mod": 1793016000000
   },
   {
     "id": "test-0072",
@@ -894,7 +1036,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-09-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000071,
+    "mod": 1793016000000
   },
   {
     "id": "test-0073",
@@ -902,7 +1046,9 @@
     "date": "2026-10-04T08:30:00",
     "amount": 150,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000072,
+    "mod": 1793016000000
   },
   {
     "id": "test-0074",
@@ -915,7 +1061,9 @@
     "price": 71028.79603520465,
     "fee": 0.125,
     "date": "2026-10-04T09:30:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000073,
+    "mod": 1793016000000
   },
   {
     "id": "test-0075",
@@ -928,7 +1076,9 @@
     "price": 2604.8671191344793,
     "fee": 0.075,
     "date": "2026-10-04T09:31:40",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000074,
+    "mod": 1793016000000
   },
   {
     "id": "test-0076",
@@ -942,7 +1092,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-10-15T10:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000075,
+    "mod": 1793016000000
   },
   {
     "id": "test-0077",
@@ -956,7 +1108,9 @@
     "fee": 0,
     "note": "Staking",
     "date": "2026-10-15T10:01:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000076,
+    "mod": 1793016000000
   },
   {
     "id": "test-0078",
@@ -969,7 +1123,9 @@
     "price": 77417.1016123712,
     "fee": 0.1,
     "date": "2026-10-21T07:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000077,
+    "mod": 1793016000000
   },
   {
     "id": "test-0079",
@@ -982,7 +1138,9 @@
     "price": 3050.15090220253,
     "fee": 0.075,
     "date": "2026-10-21T07:02:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000078,
+    "mod": 1793016000000
   },
   {
     "id": "test-0080",
@@ -995,7 +1153,9 @@
     "price": 0.0031263013379653486,
     "fee": 0.0458,
     "date": "2026-10-21T08:05:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000079,
+    "mod": 1793016000000
   },
   {
     "id": "test-0081",
@@ -1008,7 +1168,9 @@
     "price": 0.5089028346680936,
     "fee": 0.021925,
     "date": "2026-10-21T08:06:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000080,
+    "mod": 1793016000000
   },
   {
     "id": "test-0082",
@@ -1021,7 +1183,9 @@
     "price": 3247.3182561999997,
     "fee": 0.40591281,
     "date": "2026-03-18T14:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000081,
+    "mod": 1793016000000
   },
   {
     "id": "test-0083",
@@ -1036,7 +1200,9 @@
     "price": 0,
     "fee": 0,
     "date": "2026-06-10T12:00:00",
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000082,
+    "mod": 1793016000000
   },
   {
     "id": "test-0084",
@@ -1044,6 +1210,8 @@
     "date": "2026-08-20T09:00:00",
     "amount": 50,
     "fee": 0,
-    "acct": "Testbroker"
+    "acct": "Testbroker",
+    "created": 1793016000083,
+    "mod": 1793016000000
   }
 ]
