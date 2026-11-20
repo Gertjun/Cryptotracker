@@ -291,7 +291,7 @@ function acctSummary(){
 }
 // eenmalig: als je de broker als notitie had ingevuld, wordt dat de broker/wallet van de transactie
 function migrateAccounts(){
-  const known=['Bitvavo','eToro','Coinbase','Binance','Kraken','Bybit','Bitpanda','Bitstamp','Crypto.com','OKX','Ledger','Trezor','MetaMask'];let ch=false;
+  const known=['eToro','Coinbase','Binance','Kraken','Bybit','Bitpanda','Bitstamp','Crypto.com','OKX','Ledger','Trezor','MetaMask'];let ch=false;
   for(const t of data.txs){if(t.acct)continue;const k=known.find(n=>n.toLowerCase()===(t.note||'').trim().toLowerCase());if(k){t.acct=k;t.note='';t.mod=Date.now();ch=true}}
   if(ch)saveData();
 }
@@ -2288,8 +2288,8 @@ function renderTxSheet(){
   const f=form,cash=isCash(f.type),sym=esc(((f.coin||{}).symbol||'').toUpperCase());
   const seg=`<fieldset class="seg seg4"><legend class="sr-only">Soort transactie</legend>${['buy','sell','deposit','withdraw','receive','transfer'].map(k=>`<button type="button" data-type="${k}" class="${k} ${f.type===k?'on':''}">${TYPE_L[k]}</button>`).join('')}</fieldset>`;
   const accts=accounts();
-  const dl=`<datalist id="acctList">${[...new Set([...accts,'Bitvavo','eToro','Ledger','Eigen wallet'])].map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
-  const acctF=(id,label,val)=>`<div class="field"><label for="${id}">${label}</label><input type="text" id="${id}" list="acctList" value="${esc(val)}" placeholder="bijv. Bitvavo" autocomplete="off"></div>`;
+  const dl=`<datalist id="acctList">${[...new Set([...accts,'eToro','Ledger','Eigen wallet'])].map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
+  const acctF=(id,label,val)=>`<div class="field"><label for="${id}">${label}</label><input type="text" id="${id}" list="acctList" value="${esc(val)}" placeholder="bijv. broker of wallet" autocomplete="off"></div>`;
   const coinPick=f.coin?`<div class="chosen">${coinIcon({coinId:f.coin.id,symbol:f.coin.symbol,image:f.coin.image},28)}<div><b>${esc(f.coin.name)}</b> <span class="muted">${sym}</span></div>${f.id?'':'<button type="button" data-act="changecoin">Wijzig</button>'}</div>`
     :`<div class="field"><label for="f_search">Munt zoeken</label><input type="text" id="f_search" enterkeyhint="search" placeholder="bijv. Bitcoin, ETH, Solana" autocomplete="off"></div><ul class="results" id="f_results"></ul>`;
   const dateF=`<div class="field"><label for="f_date">Datum en tijd</label><input id="f_date" type="datetime-local" step="60" value="${esc((f.date||'').slice(0,16))}"></div>`;
