@@ -1,9 +1,9 @@
 // Indeling (3.14.0): Analyse (voorheen Rapporten), filters op de telefoon, volgorde op de munt-pagina, zijbalk en kolomkoppen.
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv,isPhone} from './helpers.mjs';
+import {openApp,seedTransactions,isPhone} from './helpers.mjs';
 
 test('oude adressen van Rapporten openen het juiste tabblad van Analyse',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#rapporten/analyse'});
   await expect(page).toHaveURL(/#analyse\/vergelijken$/);
   await expect(page.locator('.rep-tabs [aria-current="page"]')).toHaveText('Vergelijken');
@@ -17,7 +17,7 @@ test('oude adressen van Rapporten openen het juiste tabblad van Analyse',async({
 
 test('telefoon: filters en totalen staan achter de knop Filter',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#transacties'});
   const btn=page.locator('.filt-btn');
   await expect(btn).toHaveAttribute('aria-expanded','false');
@@ -33,7 +33,7 @@ test('telefoon: filters en totalen staan achter de knop Filter',async({page},tes
 
 test('telefoon: transacties van een munt staan vóór de rekenhulpen',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#coin/bitcoin'});
   const txY=(await page.locator('.coin-txs').boundingBox()).y,toolsY=(await page.locator('.coin-tools').boundingBox()).y;
   expect(txY).toBeLessThan(toolsY);
@@ -41,7 +41,7 @@ test('telefoon: transacties van een munt staan vóór de rekenhulpen',async({pag
 
 test('laptop: zijbalk zonder dubbele muntenlijst op het Overzicht; kolomkoppen blijven staan',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen op de laptop');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await expect(page.locator('#side .side-coin')).toHaveCount(0);
   await page.evaluate(()=>{location.hash='#coin/bitcoin'});
   await expect(page.locator('#side .side-coin').first()).toBeVisible();
@@ -53,7 +53,7 @@ test('laptop: zijbalk zonder dubbele muntenlijst op het Overzicht; kolomkoppen b
 
 test('laptop: zijbalk in- en uitklappen, onthouden na herladen',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen op de laptop');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#coin/bitcoin'});
   const side=page.locator('#side'),tog=page.locator('#side [data-act=sidetog]');
   await expect(tog).toHaveAttribute('aria-expanded','true');
@@ -73,7 +73,7 @@ test('laptop: zijbalk in- en uitklappen, onthouden na herladen',async({page},tes
 
 test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug brengt je terug, velden blijven staan',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#transacties'});await expect(page.locator('#txOut')).toBeVisible();
   await page.locator('[data-act=settings]:visible').first().click();
   await expect(page).toHaveURL(/#instellingen$/);
@@ -97,7 +97,7 @@ test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug bren
 
 test('laptop: + Transactie in de zijbalk, overige knoppen rechtsboven, Instellingen als vierde knop met onderdelen (3.24.1)',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen op de laptop');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   const side=page.locator('#side');
   // + Transactie staat in de zijbalk; synchronisatie en het oogje staan rechtsboven
   await expect(side.locator('[data-act=add]')).toBeVisible();await expect(page.locator('.d-top [data-act=add]')).toBeHidden();
@@ -133,7 +133,7 @@ test('laptop: + Transactie in de zijbalk, overige knoppen rechtsboven, Instellin
 
 test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#transacties'});
   await page.waitForTimeout(300);
   await page.evaluate(()=>window.scrollTo(0,1500));
@@ -148,7 +148,7 @@ test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',a
 
 test('iPad rechtop: tabbladen bovenaan zonder zijbalk; laptop zijbalk; liggende telefoon tabbalk (3.23.1)',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen met een instelbaar venster');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   const nav=page.locator('#side nav'),tab=page.locator('.tabbar');
   for(const [w,h,mode] of [[820,1180,'tabs'],[744,1133,'tabs'],[932,430,'phone'],[1440,900,'side']]){
     await page.setViewportSize({width:w,height:h});
