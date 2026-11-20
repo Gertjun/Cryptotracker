@@ -575,7 +575,7 @@ function topbarHTML(c,pageTitle){
 let txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};
 function renderTxs(){
   $('#topbar').innerHTML=topbarHTML(null,'Transacties');
-  if(!TX().length){$('#view').innerHTML=`<div class="empty"><b>Nog geen transacties</b>Tik op + om je eerste aankoop toe te voegen,<br>tik op + om een transactie toe te voegen.</div>`;return}
+  if(!TX().length){$('#view').innerHTML=`<div class="empty"><b>Nog geen transacties</b>Tik op + om je eerste transactie toe te voegen.</div>`;return}
   const coins=coinIds().map(computeCoin).sort((a,b)=>(a.meta.name||'').localeCompare(b.meta.name||''));
   const years=[...new Set(TX().map(t=>t.date.slice(0,4)))].sort().reverse();
   if(txf.coin!=='all'&&!coins.some(c=>c.coinId===txf.coin))txf.coin='all';
