@@ -13,16 +13,12 @@ Bijgewerkt: 20 november 2026 · versie 4.0.6
 
 ## Open punten en praktijktests
 
-### W47 – 4.0.6 fysiek testen en uitbrengen
-De wijzigingen van 4.0.6, waaronder de strengere controle van back-uptransacties (PR #57), zijn nog niet op echte apparaten getest; 4.0.5 is op 18 november door Geert goedgekeurd. Een officiële release van 4.0.5 en 4.0.6 is niet bevestigd.
-
-### W48 – Migratie en legacy-opruiming op de apparaten
-Op echte apparaten controleren of de migratie naar PWA-Core klopt. De oude onversleutelde opslag (`cpt.data`, `cpt.settings`, `cpt.prices`, `cpt.charts`) alleen opruimen als afzonderlijke, bevestigde handeling per apparaat, nadat de Core-gegevens, versleutelde apparaatinstellingen en opslagwachtrij aantoonbaar kloppen. De grafiekcache `cpt:charts` blijft (D59).
+### W47 – 4.0.6 officieel uitbrengen
+De praktijktest is op 20 november geslaagd. Nog de laatste releasevoorbereiding (`tools/release.py`) en publicatie, na expliciet akkoord van Geert.
 
 ### W49 – Nog te bevestigen op een echte iPhone
 - Vervaging bovenin bij de app op het beginscherm (iOS 26/27): sinds 3.20.3 14 px ruimte in de vaste bovenbalk (D39).
 - Back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan (3.19.1). iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
-- Bestaande passkey hergebruiken (3.26.0, D55): vergrendeling uit en weer aan, dan "Bestaande passkey gebruiken".
 
 ### W50 – Koersen sneller zonder sleutel
 Zonder CoinGecko-sleutel duurt de eerste keer laden met veel munten 10–15 s. Advies: een gratis Demo-sleutel. Is het daarna nog te traag, dan kan een GitHub-taak elk uur koersen ophalen (D45, nog niet gekozen).

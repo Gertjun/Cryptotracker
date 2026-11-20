@@ -58,7 +58,8 @@ Bijgewerkt: 20 november 2026 · `main` **4.0.6** met PWA-Core v1.3.0 (cache `cry
 
 - Apparaatkoppeling via het gedeelde protocol PWA-CORE-PAIR-2 (PR #52): alleen owner, repo, branch, pad en token gaan over; het kluiswachtwoord vul je op het nieuwe apparaat apart in. Oude CPK1/CPK2-koppelcodes worden geweigerd.
 - Strengere controle van back-uptransacties (PR #57) en behoud van de grafiekcache bij legacy-opruiming (PR #58, #59) zijn op 19 november gemerged. Na PR #59 slaagden de tests, de PWA-Core-controle en de publicatie op GitHub Pages.
-- Geert heeft 4.0.5 op 18 november goedgekeurd ("Alles werkt!"). 4.0.6 is nog niet op echte apparaten getest en niet officieel uitgebracht (ROADMAP W47); de migratie en opruiming op de apparaten staan open (W48).
+- Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten: passkeys (iPhone met Face ID, Windows Hello), hergebruik, annuleren en wachtwoord als terugval, koppelen en synchroniseren in beide richtingen, offline wijzigen en herstel, installeren en offline werken, opruimen van de oude opslag en gegevens behouden na herstart. Op `c20cf094` slaagden ook de automatische tests, de PWA-Core-controle en de publicatie op GitHub Pages.
+- 4.0.6 is nog niet officieel uitgebracht (ROADMAP W47).
 
 **Goed om te weten**
 - GitHub Pages cachet 10 minuten. De service worker vangt dat op sinds 3.3.2; een apparaat met een heel oude versie heeft het één keer.
