@@ -9,7 +9,7 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 ### D1 – Eén statische web-app op GitHub Pages, zonder server of build-stap (okt 2026, v1)
 - **Besluit:** HTML, CSS en JS als losse bestanden, zonder framework of bundler. GitHub Pages host de app.
 - **Waarom:** gratis, Geert kan zelf uploaden, en er is niets te onderhouden.
-- **Niet gekozen:** Vercel. In een andere sessie overwogen om de app openbaar te maken, maar Geert blijft voorlopig bij GitHub Pages. Gevolg: functies die een server nodig hebben, staan onder "Bewust niet op de lijst" in de wishlist: meldingen als de app dicht is, en automatisch ophalen bij Bitvavo.
+- **Niet gekozen:** Vercel. De app blijft voorlopig bij GitHub Pages. Server-afhankelijke functies, zoals meldingen wanneer de app gesloten is, staan daarom onder "Bewust niet op de lijst" in de wishlist.
 
 ### D2 – Versleutelde synchronisatie via één bestand in een privé-GitHub-repository (okt 2026, v1)
 - **Besluit:** alle gegevens in één JSON-bestand, versleuteld met AES-256-GCM. De sleutel komt via PBKDF2 (250.000 rondes) uit een wachtwoord dat alleen de gebruiker kent. Samenvoegen gebeurt per item: de nieuwste `mod` wint, en verwijderingen worden als grafsteen bewaard.
