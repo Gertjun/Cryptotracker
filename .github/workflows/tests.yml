@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
+
 jobs:
   tests:
     # vast op 24.04: Playwright ondersteunt ubuntu-latest (26.04) nog niet
