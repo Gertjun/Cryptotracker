@@ -13,9 +13,6 @@ Bijgewerkt: 20 november 2026 · versie 4.0.6
 
 ## Open punten en praktijktests
 
-### W47 – 4.0.6 officieel uitbrengen
-De praktijktest is op 20 november geslaagd. Nog de laatste releasevoorbereiding (`tools/release.py`) en publicatie, na expliciet akkoord van Geert.
-
 ### W49 – Nog te bevestigen op een echte iPhone
 - Vervaging bovenin bij de app op het beginscherm (iOS 26/27): sinds 3.20.3 14 px ruimte in de vaste bovenbalk (D39).
 - Back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan (3.19.1). iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
