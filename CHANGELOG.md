@@ -18,7 +18,8 @@ PWA-Core v1.3.0-integratie en beveiligingscorrecties.
 
 ### Tests
 - Synthetische regressietests voor ongeldige back-uptransacties, veilige rendering en behoud van Core-/herstelopslag bij legacy-opruiming.
-- Fysieke acceptatie van 4.0.6 en officiële publicatie zijn nog niet bevestigd.
+- Praktijkacceptatie op echte apparaten is op 20 november 2026 geslaagd: passkeys op iPhone (Face ID) en Windows 11 (Windows Hello), wachtwoordfallback/annuleren, koppeling en synchronisatie in beide richtingen, offline wijziging en herstel, PWA-installatie/offline, legacy-cleanup en gegevensintegriteit na herstart.
+- Automatische tests, PWA-Core-validatie en GitHub Pages-deployment zijn geslaagd op de releasekandidaat-commit `c20cf094`. Officiële publicatie volgt na de laatste releasevoorbereiding en expliciete goedkeuring.
 
 **Versienummers** hebben de vorm `MAJOR.MINOR.PATCH`:
 - **MAJOR** omhoog bij een wijziging waarbij je iets moet doen, zoals opnieuw koppelen of alle apparaten tegelijk bijwerken.
