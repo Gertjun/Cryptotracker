@@ -130,7 +130,7 @@ test('Bitvavo-import slaat ongeldige aantallen, datums en kosten over',async({pa
     'Europe/Amsterdam,2026-10-01,10:01:00.000,buy,BTC,1BTC,EUR,100,EUR,-100,EUR,0.25,Completed,bad-amount,',
     'Europe/Amsterdam,2026-02-30,10:02:00.000,buy,BTC,1,EUR,100,EUR,-100,EUR,0.25,Completed,bad-date,',
     'Europe/Amsterdam,2026-10-01,10:03:00.000,buy,BTC,1,EUR,100,EUR,-100,EUR,fee-error,Completed,bad-fee,'
-  ].join('\\n');
+  ].join('\n');
   await page.setInputFiles('#bvFile',{name:'validation.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
   await expect(page.getByText('Importeren uit Bitvavo')).toBeVisible();
   await expect(page.getByText('Overgeslagen',{exact:false})).toBeVisible();
