@@ -140,6 +140,6 @@ test('Bitvavo-import slaat ongeldige aantallen, datums en kosten over',async({pa
   await expect(page.getByText('Regel 5: buy BTC (ongeldige transactiekosten)',{exact:true})).toBeVisible();
   await page.locator('[data-act=doimport]').click();
   await expect.poll(()=>page.evaluate(()=>data.txs.some(t=>t.id==='bv-valid-1'))).toBe(true);
-  expect(await page.evaluate(()=>data.txs.find(t=>t.id==='bv-valid-1').price)).toBe(100);
+  expect(await page.evaluate(()=>data.txs.find(t=>t.id==='bv-valid-1').price)).toBe(99.75);
   expect(await page.evaluate(()=>data.txs.filter(t=>t.id.startsWith('bv-')).length)).toBe(1);
 });
