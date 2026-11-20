@@ -134,6 +134,7 @@ test('Bitvavo-import slaat ongeldige aantallen, datums en kosten over',async({pa
   await page.setInputFiles('#bvFile',{name:'validation.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
   await expect(page.getByText('Importeren uit Bitvavo')).toBeVisible();
   await expect(page.getByText('Overgeslagen',{exact:false})).toBeVisible();
+  await page.locator('summary').filter({hasText:'Overgeslagen regels bekijken'}).click();
   await expect(page.getByText('Regel 3: buy BTC (ongeldig aantal)',{exact:true})).toBeVisible();
   await expect(page.getByText('Regel 4: buy BTC (ongeldige datum of tijd)',{exact:true})).toBeVisible();
   await expect(page.getByText('Regel 5: buy BTC (ongeldige transactiekosten)',{exact:true})).toBeVisible();
