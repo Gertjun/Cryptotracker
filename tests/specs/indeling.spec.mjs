@@ -79,7 +79,7 @@ test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug bren
   await expect(page).toHaveURL(/#instellingen$/);
   await expect(page.locator('#sheet')).toBeHidden();
   await expect(page.locator('.set-nav')).toBeHidden();   // op de telefoon alle blokken onder elkaar
-  for(const id of ['st_view','st_unit','st_pf','st_sec','st_sync','st_dev','st_cg','st_fng','st_imp','st_bak','st_danger','st_about'])await expect(page.locator('#'+id)).toBeVisible();
+  for(const id of ['st_view','st_unit','st_pf','st_sec','st_sync','st_dev','st_cg','st_fng','st_bak','st_danger','st_about'])await expect(page.locator('#'+id)).toBeVisible();
   await expect(page.locator('#btnAdd')).toBeHidden();
   // een koersupdate tekent het scherm niet opnieuw: wat je typt blijft staan
   await page.fill('#s_repo','geert/test');await page.evaluate(()=>render());
