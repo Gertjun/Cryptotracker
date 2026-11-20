@@ -26,7 +26,7 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 
 Alles draait op twee schermformaten: **telefoon** (iPhone 13) en **laptop** (1440 × 900).
 
-De tests gebruiken **nep-koersen** (`mock.mjs`) en een **vaste datum** (26 oktober 2026). Er gaat dus niets naar CoinGecko of GitHub, en de uitkomsten zijn elke keer gelijk. De test-export `fixtures/dummy-bitvavo-export.csv` bevat 85 verzonnen Bitvavo-regels.
+De tests gebruiken **nep-koersen** (`mock.mjs`) en een **vaste datum** (26 oktober 2026). Er gaat dus niets naar CoinGecko of GitHub, en de uitkomsten zijn elke keer gelijk. De test-export `fixtures/dummy-bitvavo-export.csv` bevat 85 verzonnen Bitvavo-regels. De uitkomsten liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## Zelf draaien
 

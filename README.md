@@ -38,6 +38,35 @@ Een nieuwe versie komt vanzelf binnen. Naast de appnaam (laptop) of bovenin (tel
 
 > Ben je het wachtwoord kwijt, dan kan niemand de gesynchroniseerde gegevens nog openen. Bewaar het goed.
 
+## Waar vind je wat
+
+Elk onderwerp staat op één plek (D62).
+
+| | Vraag | Bestand |
+| --- | --- | --- |
+| Heden | Waar staan we nu, wat doet de app? | dit bestand, `README.md` |
+| Heden | Hoe zit de code in elkaar (opbouw, conventies, stijl)? | [`ARCHITECTUUR.md`](ARCHITECTUUR.md) |
+| Toekomst | Wat moet of kan er nog gebeuren? | [`ROADMAP.md`](ROADMAP.md) |
+| Verleden | Wat is er per versie veranderd? | [`CHANGELOG.md`](CHANGELOG.md) |
+| Verleden | Waarom is iets zo gekozen? | [`DECISIONS.md`](DECISIONS.md) |
+
+Werkafspraken voor Claude: [`CLAUDE.md`](CLAUDE.md). Testen: [`tests/README.md`](tests/README.md). Ontwerp en plan van de overstap naar PWA-Core (momentopnamen): map `docs/`.
+
+## Stand
+
+Bijgewerkt: 20 november 2026 · `main` **4.0.6** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.0.6-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
+
+- Apparaatkoppeling via het gedeelde protocol PWA-CORE-PAIR-2 (PR #52): alleen owner, repo, branch, pad en token gaan over; het kluiswachtwoord vul je op het nieuwe apparaat apart in. Oude CPK1/CPK2-koppelcodes worden geweigerd.
+- Strengere controle van back-uptransacties (PR #57) en behoud van de grafiekcache bij legacy-opruiming (PR #58, #59) zijn op 19 november gemerged. Na PR #59 slaagden de tests, de PWA-Core-controle en de publicatie op GitHub Pages.
+- Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten: passkeys (iPhone met Face ID, Windows Hello), hergebruik, annuleren en wachtwoord als terugval, koppelen en synchroniseren in beide richtingen, offline wijzigen en herstel, installeren en offline werken, opruimen van de oude opslag en gegevens behouden na herstart. Op `c20cf094` slaagden ook de automatische tests, de PWA-Core-controle en de publicatie op GitHub Pages.
+- 4.0.6 is nog niet officieel uitgebracht (ROADMAP W47).
+
+**Goed om te weten**
+- GitHub Pages cachet 10 minuten. De service worker vangt dat op sinds 3.3.2; een apparaat met een heel oude versie heeft het één keer.
+- De bescherming met de gegevensversie (D32) werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
+- De app draait bewust niet op het PWA-template, wel op PWA-Core (D36).
+- Controleer bij een screenshot met een "bug" eerst het versienummer in Instellingen: een oude versie uit de cache was eerder de oorzaak.
+
 ## Koersen
 
 De koersen komen van [CoinGecko](https://www.coingecko.com). Zonder sleutel duurt de eerste keer laden met veel munten 10 tot 15 seconden. Met een gratis **Demo-sleutel** van CoinGecko (in te vullen onder Instellingen) gaat het sneller.
@@ -51,10 +80,10 @@ De koersen komen van [CoinGecko](https://www.coingecko.com). Zonder sleutel duur
 | `sw.js` | Zorgt dat de app offline werkt en updates direct binnenkomen. |
 | `manifest.json`, `icon*` | Naam en iconen voor het beginscherm. |
 | `CHANGELOG.md` | Alle versies en wat er veranderde. |
-| `WISHLIST.md` | Ideeën die nog niet gebouwd zijn. |
+| `ROADMAP.md` | Wat er nog moet gebeuren: open punten, praktijktests en wensen. |
 | `tests/` | Automatische tests (zie [tests/README.md](tests/README.md)). |
 | `tools/` | Hulpscripts om een nieuwe versie uit te brengen. |
-| `ARCHITECTUUR.md`, `NOTES.md`, `DECISIONS.md`, `CLAUDE.md` | Achtergrond en werkafspraken voor verdere ontwikkeling. |
+| `ARCHITECTUUR.md`, `DECISIONS.md`, `CLAUDE.md` | Opbouw van de code, besluiten en werkafspraken voor verdere ontwikkeling. |
 
 De app is gewoon HTML, CSS en JavaScript, zonder framework of bouwstap. GitHub Pages publiceert de bestanden in de hoofdmap.
 

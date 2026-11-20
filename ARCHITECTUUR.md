@@ -1,6 +1,6 @@
 # ARCHITECTUUR – Crypto Portfolio
 
-Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit verandert zelden; werk het bij als de structuur verandert. De actuele stand (versie, open punten, sessielog) staat in `NOTES.md`, de besluiten in `DECISIONS.md`.
+Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit verandert zelden; werk het bij als de structuur verandert. De stand van nu staat in `README.md`, wat er nog moet in `ROADMAP.md`, de besluiten in `DECISIONS.md`.
 
 ---
 
@@ -26,11 +26,11 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 | `manifest.json`, `icon*.png`, `icon.svg` | PWA-manifest en iconen. |
 | `README.md` | Voorpagina van de repository op GitHub: wat de app doet, installeren, gegevens en privacy. Werk bij als er een grote functie bijkomt. |
 | `CHANGELOG.md` | Alle versies, nieuwste bovenaan, in het Nederlands. |
-| `WISHLIST.md` | Nog niet ingebouwde wensen (W1, W2, …; nummers liggen vast). |
-| `ARCHITECTUUR.md` / `NOTES.md` / `DECISIONS.md` / `CLAUDE.md` | Vaste kennis (dit bestand), actuele stand, besluitenlogboek, werkafspraken voor Claude. |
+| `ROADMAP.md` | Open punten, praktijktests en nog niet ingebouwde wensen (W1, W2, …; nummers liggen vast). |
+| `ARCHITECTUUR.md` / `DECISIONS.md` / `CLAUDE.md` | Vaste kennis (dit bestand), besluitenlogboek, werkafspraken voor Claude. |
 | `tests/` | Playwright-tests, nep-CoinGecko, test-export (zie `tests/README.md`). |
 | `.github/workflows/tests.yml` | Draait de tests bij elke push. |
-| `tools/release.py`, `tools/wish.py` | Versie uitbrengen; wens van de wishlist halen. |
+| `tools/release.py`, `tools/wish.py` | Versie uitbrengen; punt van de roadmap halen. |
 
 ## 3. Code-indeling van `app.js` (waar zit wat)
 

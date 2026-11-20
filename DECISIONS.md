@@ -342,3 +342,11 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Besluit:** Cryptotracker gebruikt PWA-Core v1.3.0-protocol `PWA-CORE-PAIR-2` voor handmatige koppelcodes. De versleutelde envelop bevat uitsluitend owner, repo, branch, path en token.
 - **Gevolg:** het kluiswachtwoord wordt op het nieuwe apparaat afzonderlijk ingevoerd; de CoinGecko-sleutel en overige appgegevens komen via de bestaande versleutelde synchronisatie.
 - **Waarom:** één gedeeld protocol voorkomt afwijkende cryptografie en beperkt de overdracht tot de minimale GitHub Sync-configuratie.
+
+### D62 – Documenten naar verleden, heden en toekomst (20 november 2026)
+- **Besluit:** heden: `README.md` met het blok "Stand" en `ARCHITECTUUR.md` (opbouw van de code). Toekomst: `ROADMAP.md`, de enige takenlijst met vaste W-nummers: open punten, praktijktests en wensen (vervangt `WISHLIST.md` en de open punten uit `NOTES.md`; W48 viel af doordat de migratie en opruiming op 20 november in de praktijktest zijn bevestigd). Verleden: `CHANGELOG.md` (wat) en `DECISIONS.md` (waarom). `NOTES.md` vervalt: de werkwijze staat in `CLAUDE.md`, de vaste testuitkomsten in `tests/README.md`, en er is geen sessielog meer. Een wijziging alleen aan de documenten krijgt geen nieuwe appversie. Vervangt het deel van D-besluiten dat naar NOTES §1, §3 en §4 verwijst.
+- **Waarom:** NOTES herhaalde de changelog (sessielog), de werkafspraken (§1) en de wishlist-stand, en liep daardoor uit de pas. Dezelfde indeling geldt voor al Geerts projecten.
+
+### D63 – Map backup/ opgeruimd (20 november 2026)
+- **Besluit:** de codekopieën in `backup/` (58 bestanden) zijn verwijderd. De regel uit het migratieplan om vóór elke wijziging een kopie te maken gold voor de overstap naar PWA-Core, en die is klaar; Git bewaart elke eerdere versie. `_config.yml` sluit `backup/` nog uit van GitHub Pages.
+

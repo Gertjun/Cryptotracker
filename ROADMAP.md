@@ -1,13 +1,40 @@
-# Wishlist – Crypto Portfolio
+# Roadmap – Crypto Portfolio
 
-Functies die zijn voorgesteld, maar nog niet zijn ingebouwd.
+> **Dit bestand (toekomst):** alles wat nog moet of kan gebeuren: open punten, praktijktests en wensen. Het is de enige takenlijst.
+> **Niet hier:** wat al gebouwd is → [`CHANGELOG.md`](CHANGELOG.md); waarom → [`DECISIONS.md`](DECISIONS.md); de stand van nu → [`README.md`](README.md); hoe de app in elkaar zit → [`ARCHITECTUUR.md`](ARCHITECTUUR.md).
+
+Bijgewerkt: 20 november 2026 · versie 4.0.6
 
 **Zo werkt deze lijst**
-- Elke wens heeft een vast nummer (W1, W2, …). Dat nummer verandert nooit, ook niet als er wensen bij komen of af gaan.
-- Wordt een wens ingebouwd, dan verdwijnt hij hier. In de [changelog](CHANGELOG.md) staat dan bij die versie "(wens W3)", zodat je kunt terugvinden wat er van de wens is geworden.
-- Nieuwe wensen krijgen het eerstvolgende vrije nummer.
+- Elk punt heeft een vast nummer (W1, W2, …). Dat nummer verandert nooit, ook niet als er punten bij komen of af gaan. Volgende vrije nummer: W54.
+- Wordt een punt gebouwd of afgerond, dan verdwijnt het hier (`python3 tools/wish.py W3`). In de [changelog](CHANGELOG.md) staat dan bij die versie "(wens W3)", zodat je kunt terugvinden wat ervan is geworden.
 
 ---
+
+## Open punten en praktijktests
+
+### W47 – 4.0.6 officieel uitbrengen
+De praktijktest is op 20 november geslaagd. Nog de laatste releasevoorbereiding (`tools/release.py`) en publicatie, na expliciet akkoord van Geert.
+
+### W49 – Nog te bevestigen op een echte iPhone
+- Vervaging bovenin bij de app op het beginscherm (iOS 26/27): sinds 3.20.3 14 px ruimte in de vaste bovenbalk (D39).
+- Back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan (3.19.1). iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
+
+### W50 – Koersen sneller zonder sleutel
+Zonder CoinGecko-sleutel duurt de eerste keer laden met veel munten 10–15 s. Advies: een gratis Demo-sleutel. Is het daarna nog te traag, dan kan een GitHub-taak elk uur koersen ophalen (D45, nog niet gekozen).
+
+### W51 – Wisselende test in de gaten houden
+`inzicht.spec.mjs` › meebewegen met bitcoin faalde één keer bij de volle testrun op het telefoonprofiel (los steeds groen).
+
+### W52 – Versleutelwachtwoord wijzigen
+Kan in de app nog niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen). Een bestaand wachtwoord korter dan 12 tekens blijft werken.
+
+### W53 – Native iPhone-app in SwiftUI
+Genoemd door Geert in een andere sessie; geen code in deze repository. Hij heeft geen Mac.
+
+---
+
+**Wensen**, per onderwerp. Advies: eerst W39 (jaarrendement) en W40 (hoe gingen je verkopen); W6 heeft al een uitgewerkte oplossing.
 
 ## Inzicht in je portfolio
 
