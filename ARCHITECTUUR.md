@@ -11,14 +11,17 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 - **Gegevens:** lokaal in de browser, en optioneel versleuteld (AES-256-GCM) gesynchroniseerd naar één bestand in een privé-GitHub-repository.
 - **Koersen:** van de CoinGecko-API (gratis, optioneel met Demo-sleutel).
 - **Geen eigen server.** Alles draait in de browser.
-- **Eigenaar:** Geert, Nederlandstalig, geen IT-achtergrond. Hij uploadt de bestanden zelf naar GitHub.
+- **Eigenaar:** Geert, Nederlandstalig, geen IT-achtergrond. Claude werkt in de repository via een eigen branch en pull request; Geert geeft akkoord voordat iets naar `main` gaat (D64).
 
 ## 2. Bestanden
 
 | Bestand | Inhoud |
 |---|---|
-| `index.html` | Alle HTML-skelet en **alle CSS** (in één `<style>`), CSP-meta, laadt `app.js`. |
+| `index.html` | Alle HTML-skelet en **alle CSS** (in één `<style>`), CSP-meta, laadt `app.js` en `js/bootstrap.js`. |
 | `app.js` | App-schermen, datamodel, berekeningen en app-specifieke samenvoegfunctie `merge()`; geen framework of build-stap. |
+| `js/config.js` | Appnaam, versie, vastgepinde PWA-Core-versie en instellingen voor de kern (opslagprefix, sync-vertraging, minimale wachtwoordlengte, PBKDF2-rondes). |
+| `core-manifest.json`, `pwa-core.lock.json` | Lijst en SHA-256-controles van de vastgepinde Core-bestanden, en de vastgepinde Core-release. |
+| `css/base.css` | Basisstijl die met PWA-Core wordt meegeleverd (in de manifestlijst). Wordt door deze app niet geladen; de app-stijl staat in `index.html`. |
 | `js/bootstrap.js` | Start de PWA-Core-runtime en koppelt die aan de bestaande app-UI. |
 | `js/core/runtime.js` / `js/core/legacy-adapter.js` | Brug tussen de bestaande Cryptotracker-UI/datamodel en de gedeelde PWA-Core-kluis. |
 | `js/core/` | Vastgepinde PWA-Core-modules; de allowlist en SHA-256-controles staan in `core-manifest.json`, de releasepin in `pwa-core.lock.json`. Cryptotracker gebruikt `js/core/pair.js` voor handmatige `PWA-CORE-PAIR-2`-koppeling; alleen de vijf GitHub Sync-velden worden overgedragen. Kluiswachtwoord, CoinGecko-sleutel en appgegevens worden niet in de koppelcode opgenomen. App-specifieke modules staan buiten de Core-allowlist. |
@@ -31,6 +34,17 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 | `tests/` | Playwright-tests, nep-CoinGecko, test-export (zie `tests/README.md`). |
 | `.github/workflows/tests.yml` | Draait de tests bij elke push. |
 | `tools/release.py`, `tools/wish.py` | Versie uitbrengen; punt van de roadmap halen. |
+
+### Aansluiting op PWA-Core en verschillen met de andere apps
+
+- **PWA-Core** regelt de kluis, opslagwachtrij, versleuteling, synchronisatie, sessievergrendeling en apparaatkoppeling (D57–D61). De bestanden in `core-manifest.json` zijn vastgepind: pas ze hier niet aan. Een fix daarin hoort in de repository PWA-Core en komt hier binnen via een nieuwe vastgepinde release (D60). `js/core/runtime.js` en `js/core/legacy-adapter.js` staan niet in het manifest en zijn van deze app.
+- **Niet gebouwd op de PWA-template** (D36): geen `ctx.update`, geen `app.migrate()` of `SCHEMA`, geen `saveFile()`. Schermen, datamodel, berekeningen en `merge()` zitten in `app.js`.
+- **Bedragen** zijn gewone getallen in euro (geen centen).
+- **Lijstitems** hebben `id` en `mod` (geen `createdAt`/`updatedAt`); verwijderen gaat via een grafsteen (`del:true` of `deleted[]`), nooit echt uit de lijst.
+- **Gegevensversie:** verhoog `DATA_V` als een oudere appversie nieuwe gegevens niet goed kan samenvoegen (D32).
+- **Bestanden aanbieden** (back-up, CSV): via `download()` in `app.js` (D33).
+- **Nieuw bestand:** voeg het toe aan `PRECACHE` in `sw.js`, anders werkt het niet offline.
+- **Versie uitbrengen:** `python3 tools/release.py <major|minor|patch> tekst.md` werkt `APP_VERSION` in `app.js`, de cache-naam in `sw.js` en de CHANGELOG bij (zie `CLAUDE.md`). Let op: `version` in `js/config.js` gaat nog niet mee (ROADMAP W54).
 
 ## 3. Code-indeling van `app.js` (waar zit wat)
 
@@ -126,7 +140,7 @@ Zoek op de functienaam; de volgorde in het bestand is ongeveer zoals hieronder.
   - Kop `## X.Y.Z – datum`, één zin samenvatting.
   - Secties `### Toegevoegd / Gewijzigd / Verbeterd / Opgelost / Technisch / Let op`, met vetgedrukte labels.
   - Bij een wens schrijf je "(wens Wn)".
-- **Wishlist:** een ingebouwde wens verdwijnt met `tools/wish.py Wn`. Een nieuwe wens krijgt het eerstvolgende vrije nummer; de hoogste is nu W46 (vrije nummers niet hergebruiken).
+- **Roadmap:** een afgerond of gebouwd punt verdwijnt uit `ROADMAP.md` met `tools/wish.py Wn`. Een nieuw punt krijgt het volgende vrije nummer, dat bovenaan `ROADMAP.md` staat (nummers niet hergebruiken).
 
 ## 5. Stijl en vormgeving
 

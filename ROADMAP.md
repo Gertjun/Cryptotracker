@@ -6,7 +6,7 @@
 Bijgewerkt: 20 november 2026 · versie 4.0.6
 
 **Zo werkt deze lijst**
-- Elk punt heeft een vast nummer (W1, W2, …). Dat nummer verandert nooit, ook niet als er punten bij komen of af gaan. Volgende vrije nummer: W54.
+- Elk punt heeft een vast nummer (W1, W2, …). Dat nummer verandert nooit, ook niet als er punten bij komen of af gaan. Volgende vrije nummer: W55.
 - Wordt een punt gebouwd of afgerond, dan verdwijnt het hier (`python3 tools/wish.py W3`). In de [changelog](CHANGELOG.md) staat dan bij die versie "(wens W3)", zodat je kunt terugvinden wat ervan is geworden.
 
 ---
@@ -31,6 +31,9 @@ Kan in de app nog niet; dat zou een nieuwe functie zijn (bestand opnieuw versleu
 
 ### W53 – Native iPhone-app in SwiftUI
 Genoemd door Geert in een andere sessie; geen code in deze repository. Hij heeft geen Mac.
+
+### W54 – Versienummer in `js/config.js` gaat niet mee bij een release
+`tools/release.py` verhoogt `APP_VERSION` in `app.js` en de cache-naam in `sw.js`, maar niet `version` in `js/config.js` (nu 4.0.6). De test `core-version-status.spec.mjs` controleert vast op '4.0.6' in plaats van op gelijkheid met `APP_VERSION`. Bij de volgende versie lopen de twee dus uiteen zonder dat een test faalt. Oplossing: `release.py` ook `js/config.js` laten bijwerken en de test laten vergelijken met `APP_VERSION`. Het script maakt ook nog een zip in `../releases`, een overblijfsel van vóór de pull requests (D35, D64); dat kan weg.
 
 ---
 
