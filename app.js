@@ -890,8 +890,8 @@ function parseBitvavo(text){
   const H=rows[0].map(h=>h.trim().toLowerCase()),col=n=>H.indexOf(n);
   const need=['type','currency','amount','date'];if(need.some(n=>col(n)<0))throw new Error('Dit lijkt geen Bitvavo-export (kolommen ontbreken)');
   const g=(r,n)=>{const i=col(n);return i<0?'':(r[i]||'').trim()};
-  const number=v=>{const s=String(v??'').trim();if(!s)return null;if(!/^[+-]?(?:\d+(?:\\.\d*)?|\\.\d+)$/.test(s))return null;const x=Number(s);return Number.isFinite(x)?x:null};
-  const validDate=(d,t)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;const [y,m,day]=d.split('-').map(Number),dt=new Date(Date.UTC(y,m-1,day));if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==m-1||dt.getUTCDate()!==day)return false;return !t||/^\d{2}:\d{2}:\d{2}(?:\\.\d{1,3})?$/.test(t)&&(()=>{const [hh,mm,ss]=t.split(':');const sec=Number(ss.split('.')[0]);return Number(hh)<24&&Number(mm)<60&&sec<60})()};
+  const number=v=>{const s=String(v??'').trim();if(!s)return null;if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s))return null;const x=Number(s);return Number.isFinite(x)?x:null};
+  const validDate=(d,t)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;const [y,m,day]=d.split('-').map(Number),dt=new Date(Date.UTC(y,m-1,day));if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==m-1||dt.getUTCDate()!==day)return false;return !t||/^\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?$/.test(t)&&(()=>{const [hh,mm,ss]=t.split(':');const sec=Number(ss.split('.')[0]);return Number(hh)<24&&Number(mm)<60&&sec<60})()};
   const items=[],skipped=[];
   rows.slice(1).forEach((r,ix)=>{
     const type=g(r,'type').toLowerCase(),cur=g(r,'currency').toUpperCase(),rawAmt=g(r,'amount'),amt=number(rawAmt),status=g(r,'status').toLowerCase();
