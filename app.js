@@ -889,18 +889,23 @@ function parseBitvavo(text){
   const rows=parseCSV(text);if(rows.length<2)throw new Error('Leeg bestand');
   const H=rows[0].map(h=>h.trim().toLowerCase()),col=n=>H.indexOf(n);
   const need=['type','currency','amount','date'];if(need.some(n=>col(n)<0))throw new Error('Dit lijkt geen Bitvavo-export (kolommen ontbreken)');
-  const g=(r,n)=>{const i=col(n);return i<0?'':(r[i]||'').trim()},N=v=>{const x=parseFloat(String(v).replace(/\s/g,''));return isFinite(x)?x:0};
+  const g=(r,n)=>{const i=col(n);return i<0?'':(r[i]||'').trim()};
+  const number=v=>{const s=String(v??'').trim();if(!s)return null;if(!/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$/.test(s))return null;const x=Number(s);return Number.isFinite(x)?x:null};
+  const validDate=(d,t)=>{if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(d))return false;const [y,m,day]=d.split('-').map(Number),dt=new Date(Date.UTC(y,m-1,day));if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==m-1||dt.getUTCDate()!==day)return false;return !t||/^\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?$/.test(t)&&(()=>{const [hh,mm,ss]=t.split(':');const sec=Number(ss.split('.')[0]);return Number(hh)<24&&Number(mm)<60&&sec<60})()};
   const items=[],skipped=[];
   rows.slice(1).forEach((r,ix)=>{
-    const type=g(r,'type').toLowerCase(),cur=g(r,'currency').toUpperCase(),amt=N(g(r,'amount')),status=g(r,'status').toLowerCase();
-    const txid=g(r,'transaction id')||`${g(r,'date')}-${g(r,'time')}-${type}-${cur}-${amt}`;
-    const date=`${g(r,'date')}T${(g(r,'time')||'00:00:00').slice(0,8)}`;
-    const feeCur=g(r,'fee currency').toUpperCase(),fee=Math.abs(N(g(r,'fee amount'))),feeE=feeCur==='EUR'?fee:0;
-    const rp=Math.abs(N(g(r,'received / paid amount'))),qp=N(g(r,'quote price')),quote=g(r,'quote currency').toUpperCase();
-    const base={id:'bv-'+txid,ext:'bitvavo',date,acct:'Bitvavo',note:'',row:ix+2};
+    const type=g(r,'type').toLowerCase(),cur=g(r,'currency').toUpperCase(),rawAmt=g(r,'amount'),amt=number(rawAmt),status=g(r,'status').toLowerCase();
+    const dateRaw=g(r,'date'),timeRaw=g(r,'time'),txid=g(r,'transaction id');
+    const feeCur=g(r,'fee currency').toUpperCase(),rawFee=g(r,'fee amount'),feeNum=number(rawFee),fee=Math.abs(feeNum??0),feeE=feeCur==='EUR'?fee:0;
+    const rpRaw=g(r,'received / paid amount'),qpRaw=g(r,'quote price'),rpNum=number(rpRaw),qpNum=number(qpRaw),rp=Math.abs(rpNum??0),qp=qpNum??0,quote=g(r,'quote currency').toUpperCase();
+    const base={id:'bv-'+(txid||`${dateRaw}-${timeRaw}-${type}-${cur}-${rawAmt}`),ext:'bitvavo',date:`${dateRaw}T${(timeRaw||'00:00:00').slice(0,12)}`,acct:'Bitvavo',note:'',row:ix+2};
     const skip=why=>skipped.push({row:ix+2,type,cur,why});
     if(status&&!['completed','distributed','voltooid','uitgekeerd'].includes(status))return skip('status: '+status);
-    if(!amt)return skip('geen aantal');
+    if(!validDate(dateRaw,timeRaw))return skip('ongeldige datum of tijd');
+    if(amt===null||amt===0)return skip('ongeldig aantal');
+    if(rawFee&&feeNum===null)return skip('ongeldige transactiekosten');
+    if(rpRaw&&rpNum===null)return skip('ongeldig ontvangen/betaald bedrag');
+    if(qpRaw&&qpNum===null)return skip('ongeldige koers');
     if(cur==='EUR'){
       if(type==='deposit')items.push({...base,type:'deposit',amount:Math.abs(amt),fee:feeE});
       else if(type==='withdrawal')items.push({...base,type:'withdraw',amount:Math.abs(amt),fee:feeE});
@@ -908,9 +913,11 @@ function parseBitvavo(text){
     }
     const sym=cur.toLowerCase(),q=Math.abs(amt);
     if((type==='buy'||type==='sell')&&quote&&quote!=='EUR')return skip('niet in euro ('+quote+')');
-    if(type==='buy')items.push({...base,type:'buy',sym,qty:q,price:rp?(rp-feeE)/q:qp,fee:feeE});
-    else if(type==='sell')items.push({...base,type:'sell',sym,qty:q,price:rp?(rp+feeE)/q:qp,fee:feeE});
-    else if(type==='withdrawal')items.push({...base,type:'transfer',sym,qty:q,feeQty:feeCur===cur?Math.min(fee,q*0.999999):0,to:'Externe wallet',price:0,fee:0});
+    if(type==='buy'||type==='sell'){
+      const price=rp?(type==='buy'?(rp-feeE)/q:(rp+feeE)/q):qp;
+      if(!Number.isFinite(price)||price<=0)return skip('ontbrekende of ongeldige koers');
+      items.push({...base,type,sym,qty:q,price,fee:feeE});
+    }else if(type==='withdrawal')items.push({...base,type:'transfer',sym,qty:q,feeQty:feeCur===cur?Math.min(fee,q*0.999999):0,to:'Externe wallet',price:0,fee:0});
     else if(type==='deposit')items.push({...base,type:'receive',sym,qty:q,price:0,fee:0,note:'Storting van externe wallet: vul zo nodig de aankoopprijs aan'});
     else if(amt>0)items.push({...base,type:'receive',sym,qty:q,price:0,fee:0,note:type.charAt(0).toUpperCase()+type.slice(1).replace(/_/g,' ')});
     else skip('onbekend type');
