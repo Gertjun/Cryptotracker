@@ -2,19 +2,19 @@
 
 De **actuele stand**: versie, werkwijze, testen, open punten en sessielog. Werk dit bij aan het eind van elke sessie (zie `CLAUDE.md`). De vaste kennis over de app staat in `ARCHITECTUUR.md`, de besluiten in `DECISIONS.md`.
 
-Laatst bijgewerkt: 20 november 2026 · versie **4.0.6** in voorbereiding; PWA-Core **v1.3.0** op main.
+Laatst bijgewerkt: 20 november 2026 · versie **4.0.6** praktijktest geslaagd; release nog niet gepubliceerd; PWA-Core **v1.3.0** op main.
 
 ---
 
-## Actuele stand – 19 november 2026
+## Actuele stand – 20 november 2026
 
 - Main gebruikt Cryptotracker **4.0.6** en PWA-Core **v1.3.0** (pwa-core.lock.json); de service-worker-cache is crypto-portfolio-4.0.6-core1.3.0.
 - PR #52 is op 18 november gemerged. De app gebruikt nu het gedeelde pairing-protocol PWA-CORE-PAIR-2; alleen owner/repo/branch/path/token worden overgedragen. Het kluiswachtwoord wordt op het nieuwe apparaat apart ingevoerd. Oude CPK1/CPK2-koppelcodes worden geweigerd.
 - PR #57 is op 19 november gemerged: back-uptransacties worden gevalideerd op ID, type en datum; dynamische transactietypen en ongeldige datum-fallbacks worden veilig ge-escaped.
 - PR #58 is op 19 november gemerged: de Core-grafiekcache cpt:charts blijft behouden bij handmatige legacy-opruiming. Alleen cpt.data, cpt.settings, cpt.prices en cpt.charts mogen na geverifieerde migratie worden verwijderd. Versleutelde herstel- en Core-opslag blijven behouden.
 - PR #59 is op 19 november gemerged (`206b59ad`). De opruimtest voert de gebruikersactie één keer uit en controleert daarna bevestiging, opslagstatus en idempotentie. De post-merge Tests-run #747, PWA-Core-validatie #595 en Pages-deployment #127 zijn alle geslaagd.
-- De gebruiker bevestigde op 18 november dat **4.0.5** functioneel was (“Alles werkt!”). De huidige 4.0.6-wijzigingen, inclusief PR #57, zijn nog niet afzonderlijk fysiek geaccepteerd. Een officiële release van 4.0.6 is niet bevestigd.
-- De fysieke controle van migratie en eventuele legacy-opruiming op echte apparaten blijft open. Opruiming is uitsluitend een afzonderlijke, expliciet bevestigde gebruikershandeling per apparaat nadat de Core-payload, versleutelde apparaatinstellingen en opslagwachtrij aantoonbaar zijn geverifieerd. Er is in deze audit geen echte lokale opslag benaderd of verwijderd.
+- De gebruiker heeft op 20 november de volledige praktijktest van **4.0.6** geslaagd bevestigd: passkeys (iPhone/Face ID en Windows Hello), hergebruik/annuleren en wachtwoordfallback, koppelen en synchroniseren in beide richtingen, offline wijziging en herstel, PWA-installatie/offline, legacy-detectie en cleanup, en behoud van gegevens na herstart. Officiële release van 4.0.6 is nog niet gepubliceerd.
+- Praktijkacceptatie op echte apparaten is afgerond. De gebruiker meldt dat alle stappen, inclusief legacy-cleanup en controle van gegevensintegriteit, geslaagd zijn.
 - Geen productiekluis, SyncData-bestand, persoonlijke token of bestaande gebruikersgegevens benaderd of gewijzigd.
 ## 1. Werkwijze met Geert (belangrijk)
 
@@ -46,8 +46,8 @@ Laatst bijgewerkt: 20 november 2026 · versie **4.0.6** in voorbereiding; PWA-Co
 - **GitHub Pages cachet 10 minuten.** Opgelost in de service worker sinds 3.3.2, maar een apparaat met een heel oude versie heeft één keer die vertraging.
 - **Wishlist open (33):** W4–W8, W10, W11, W15, W16, W18–W23, W25, W26, W28–W33, W35–W43, W46. W17, W27, W34, W44 en W45 ingebouwd in 3.25.0. Advies aan Geert: daarna W39 (jaarrendement) en W40 (hoe gingen je verkopen). W6 (fijnere grafiek voor jonge munten) heeft al een uitgewerkte oplossing in de wishlist.
 - **Nog niet op een echte iPhone bevestigd (3.19.1):** back-up via het deelmenu en de lege app-wisselaar met vergrendeling aan. iOS maakt het plaatje voor de app-wisselaar soms al vóór de app het scherm kan verbergen.
-- **Synchronisatie en beveiliging:** fase 2 (4.0.2) is onderdeel van `main`. De gebruiker heeft de praktijktest van de huidige 4.0.5 op 18 november als geslaagd bevestigd; zie de actuele stand bovenaan.
-- **PWA-Core:** de migratie is afgerond; PR #48 heeft de app naar v1.2.2 gebracht en PR #50 heeft de zichtbare Core-versie en synchronisatiestatus gecorrigeerd. De gebruiker heeft de praktijktest op 18 november bevestigd. De afzonderlijke app-release 4.0.5 is nog niet gepubliceerd.
+- **Synchronisatie en beveiliging:** de gebruiker heeft de fysieke acceptatie van 4.0.5 op 18 november en van 4.0.6 op 20 november bevestigd; zie de actuele stand bovenaan.
+- **PWA-Core:** de migratie is afgerond; Cryptotracker gebruikt v1.3.0. De praktijktests van 4.0.5 en 4.0.6 zijn door de gebruiker bevestigd. 4.0.6 is nog niet officieel gepubliceerd.
 - **Passkey hergebruiken (3.26.0, D55)** nog niet op een echte iPhone bevestigd: vergrendeling uit en weer aan, dan "Bestaande passkey gebruiken". `inzicht.spec.mjs` › meebewegen met bitcoin faalde één keer bij de volle testrun op de telefoon (los steeds groen); in de gaten houden.
 - **Gegevensversie (D32):** de bescherming werkt alleen op apparaten met 3.19.0 of nieuwer. Werk alle apparaten bij voordat `DATA_V` ooit omhoog gaat.
 - **Bestaand versleutelwachtwoord korter dan 12 tekens** blijft werken. Het versleutelwachtwoord wijzigen kan in de app (nog) niet; dat zou een nieuwe functie zijn (bestand opnieuw versleutelen en alle apparaten opnieuw koppelen).
@@ -58,7 +58,7 @@ Laatst bijgewerkt: 20 november 2026 · versie **4.0.6** in voorbereiding; PWA-Co
 
 ## 4. Sessielog (kort, nieuwste bovenaan)
 
-- **20 nov 2026 – audit na PR #59:** post-merge Tests #747, Core-validatie #595 en Pages-deployment #127 zijn geslaagd op `206b59ad`. Synthetische tests omvatten berekeningen, UI/responsiviteit, toegankelijkheid, beveiliging, passkeys, Core-runtime, pairing, sync, herstel, verwijderingsgedrag, legacy-cleanup en updategedrag. Fysieke acceptatie van Cryptotracker 4.0.6 blijft open; release niet bevestigd.
+- **20 nov 2026 – praktijktest 4.0.6 afgerond:** gebruiker bevestigt alle praktijkteststappen geslaagd op echte apparaten: passkeys, wachtwoordfallback, pairing/sync in beide richtingen, offline herstel, PWA-installatie/offline, legacy-cleanup en data-integriteit na herstart. Op actuele main `c20cf094` zijn Tests #751, PWA-Core-validatie #599 en Pages-deployment #128 alle geslaagd. Geen openstaande releaseblokkade vastgesteld; release nog niet gepubliceerd.
 
 - **18 nov 2026 – PR #47 en #48, Core v1.2.2:** PR #47 gemerged in `main` (`27c211a3519b2377d8fc0f265ce973d6c5f4091f`). Daarna is PR #48 gemerged; `main` staat op mergecommit `666b6af75156ff59a2392beb0b164499257091d7`. De post-merge testworkflow, Core-validatie en Pages-deployment zijn alle drie succesvol afgerond. De synthetische tests en Core-pin zijn daarmee op de gemergede commit gecontroleerd. De praktijktest op echte apparaten en de release van Cryptotracker 4.0.5 blijven open. Geen echte lokale data gemigreerd of verwijderd.
 
