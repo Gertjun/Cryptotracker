@@ -350,3 +350,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 ### D63 – Map backup/ opgeruimd (20 november 2026)
 - **Besluit:** de codekopieën in `backup/` (58 bestanden) zijn verwijderd. De regel uit het migratieplan om vóór elke wijziging een kopie te maken gold voor de overstap naar PWA-Core, en die is klaar; Git bewaart elke eerdere versie. `_config.yml` sluit `backup/` nog uit van GitHub Pages.
 
+
+### D64 – Wijzigingen via een pull request, pas na akkoord naar `main` (20 november 2026, vervangt D35)
+- **Besluit:** Claude zet elke wijziging op een eigen branch (`claude/...`) en biedt die aan als pull request. Eerst draaien de tests lokaal (Playwright en html-validate), daarna op GitHub (Actions) voor de pull request. Mergen, een versie uitbrengen (`tools/release.py`) en publiceren gebeuren pas na een afzonderlijk, expliciet akkoord van Geert. Dit is de werkwijze uit `CLAUDE.md`; de projectinstructies in claude.ai zijn erop aangepast.
+- **Waarom:** Geert wil eerst zien dat de tests slagen voordat een wijziging op `main` komt en live staat. Sinds de overstap naar PWA-Core werkte het in de praktijk al zo, maar D35 was nooit vervangen.
+- **Afweging:** per wijziging een extra stap (akkoord geven en mergen).
+- **Niet gekozen:** rechtstreeks naar `main` pushen (D35).
