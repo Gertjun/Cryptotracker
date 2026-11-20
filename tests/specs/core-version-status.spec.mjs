@@ -5,10 +5,13 @@ const configSource=readFileSync(new URL('../../js/config.js',import.meta.url),'u
 const configValue=(key)=>configSource.match(new RegExp("\\b"+key+":\\s*'([^']+)'"))?.[1];
 import {openApp} from './helpers.mjs';
 
+const appSource=readFileSync(new URL('../../app.js',import.meta.url),'utf8');
+const appVersion=appSource.match(/const APP_VERSION='(\d+\.\d+\.\d+)/)?.[1];
 const lock=JSON.parse(readFileSync(new URL('../../pwa-core.lock.json',import.meta.url),'utf8'));
 
 test('app-configuratie volgt exact de vastgepinde PWA-Core-release',()=>{
-  expect(configValue('version')).toBe('4.0.6');
+  expect(appVersion).toBeTruthy();
+  expect(configValue('version')).toBe(appVersion);
   expect(configValue('coreVersion')).toBe(lock.version);
   expect(configValue('coreCommit')).toBe(lock.commit);
 });

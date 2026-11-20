@@ -44,7 +44,7 @@ Vaste kennis over de app: opbouw, code-indeling, conventies en stijlkeuzes. Dit 
 - **Gegevensversie:** verhoog `DATA_V` als een oudere appversie nieuwe gegevens niet goed kan samenvoegen (D32).
 - **Bestanden aanbieden** (back-up, CSV): via `download()` in `app.js` (D33).
 - **Nieuw bestand:** voeg het toe aan `PRECACHE` in `sw.js`, anders werkt het niet offline.
-- **Versie uitbrengen:** `python3 tools/release.py <major|minor|patch> tekst.md` werkt `APP_VERSION` in `app.js`, de cache-naam in `sw.js` en de CHANGELOG bij (zie `CLAUDE.md`). Let op: `version` in `js/config.js` gaat nog niet mee (ROADMAP W54).
+- **Versie uitbrengen:** `python3 tools/release.py <major|minor|patch> tekst.md` werkt `APP_VERSION` in `app.js`, `version` in `js/config.js`, de cache-naam in `sw.js` en de CHANGELOG bij (zie `CLAUDE.md`). De test `core-version-status.spec.mjs` controleert dat `app.js` en `js/config.js` hetzelfde versienummer hebben.
 
 ## 3. Code-indeling van `app.js` (waar zit wat)
 
