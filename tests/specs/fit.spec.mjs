@@ -43,3 +43,16 @@ test('telefoon: koersverandering 1u, 24u, 7d en 30d op één regel onder elke mu
     expect(res.length).toBeGreaterThan(0);
     for(const r of res)expect(r,`${w}px`).toEqual({labels:'1u 24u 7d 30d',lines:w<360?2:1,fits:true})}
 });
+
+test('portfolio-grafiek blijft binnen het paneel',async({page},testInfo)=>{
+  const errors=await openApp(page);await importCsv(page);await chartReady(page);
+  const bounds=await page.evaluate(()=>{const panel=document.querySelector('#pchart')?.closest('.panel'),chart=document.querySelector('#pchart'),svg=chart?.querySelector('svg');if(!panel||!chart||!svg)return null;
+    const p=panel.getBoundingClientRect(),c=chart.getBoundingClientRect(),s=svg.getBoundingClientRect();
+    return {panel:{left:p.left,right:p.right},chart:{left:c.left,right:c.right},svg:{left:s.left,right:s.right},viewport:document.documentElement.clientWidth}});
+  expect(bounds, 'grafiek en paneel moeten bestaan').not.toBeNull();
+  expect(bounds.chart.left).toBeGreaterThanOrEqual(bounds.panel.left-1);
+  expect(bounds.chart.right).toBeLessThanOrEqual(bounds.panel.right+1);
+  expect(bounds.svg.left).toBeGreaterThanOrEqual(bounds.chart.left-1);
+  expect(bounds.svg.right).toBeLessThanOrEqual(bounds.chart.right+1);
+  expect(errors).toEqual([]);
+});
