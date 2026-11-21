@@ -574,12 +574,12 @@ function headerSyncHTML(){
   const title=[label,market].filter(Boolean).join(' · ');
   return `<button type="button" class="icon-btn header-sync" data-act="syncinfo" aria-label="${esc(label)}" title="${esc(title)}"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.1 4.5 4.5 0 0 0 7 18Z"/></svg><span class="dot ${state}" aria-hidden="true"></span></button>`;
 }
-function topbarHTML(c,pageTitle){
+function topbarHTML(c,pageTitle,settingsPage=false){
   const eye=eyeBtn(),lockB=lockBtn();
-  const gear=`<button type="button" class="icon-btn header-settings" data-act="settings" aria-label="Instellingen" title="Instellingen">${ICONS.gear}</button>`;
+  const gear=settingsPage?`<button type="button" class="icon-btn header-settings" data-act="setback" aria-label="Terug" title="Terug">${ICONS.back}</button>`:`<button type="button" class="icon-btn header-settings" data-act="settings" aria-label="Instellingen" title="Instellingen">${ICONS.gear}</button>`;
   const screen=c?`${esc(c.meta.name)} · ${esc((c.meta.symbol||'').toUpperCase())}`:(pageTitle||'Overzicht');
   const version=appVerHTML();
-  const add=`<button type="button" class="btn-add header-add" data-act="add">${ICONS.plus} Transactie</button>`;
+  const add=settingsPage?'':`<button type="button" class="btn-add header-add" data-act="add">${ICONS.plus} Transactie</button>`;
   return `<div class="app-header-inner">
     <div class="app-brand"><img src="icon-192.png" alt="" class="app-brand-icon" width="36" height="36"><span class="app-brand-text"><span class="app-title">Crypto Portfolio</span><span class="app-brand-version">${version}</span></span></div>
     <span class="app-screen-title">${screen}</span>
@@ -2652,11 +2652,7 @@ function openSettings(){
   if(location.hash!=='#instellingen'){setFrom=location.hash;history.pushState(null,'','#instellingen');closeZoom();render();window.scrollTo(0,0)}
   else render();
 }
-function setTopbarHTML(){
-  const eye=eyeBtn();
-  const back=`<button type="button" class="icon-btn" data-act="setback" aria-label="Terug">${ICONS.back}</button>`;
-  return `<div class="m-top only-m">${back}<h1>Instellingen</h1>${eye}</div><div class="d-top only-d"><div class="tb-title"><h1>Instellingen</h1></div><span class="grow"></span>${deskActHTML()}</div>`;
-}
+function setTopbarHTML(){return topbarHTML(null,'Instellingen',true)}
 function exportData(){
   settings.lastExport=Date.now();saveSettings();
   const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
