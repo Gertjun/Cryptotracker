@@ -56,3 +56,11 @@ test('portfolio-grafiek blijft binnen het paneel',async({page},testInfo)=>{
   expect(bounds.svg.right).toBeLessThanOrEqual(bounds.chart.right+1);
   expect(errors).toEqual([]);
 });
+test('hoofdbalk toont appnaam, logo, versie en synchronisatiestatus',async({page})=>{
+  await openApp(page);
+  await expect(page.locator('#topbar .app-brand-icon')).toBeVisible();
+  await expect(page.locator('#topbar .app-title')).toHaveText('Crypto Portfolio');
+  await expect(page.locator('#topbar .app-brand-version')).toContainText('4.0.7');
+  await expect(page.locator('#topbar .header-sync')).toBeVisible();
+  await expect(page.locator('#topbar .app-screen-title')).toBeVisible();
+});
