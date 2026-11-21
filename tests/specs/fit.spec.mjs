@@ -24,8 +24,10 @@ test('te brede tabel: minst belangrijke kolommen verdwijnen, met melding; op 144
   await expect(note).toHaveCount(0);
   await page.setViewportSize({width:1024,height:900});
   await expect(note).toContainText('Broker · notitie');
-  await expect(page.locator('.tbl-wrap.only-d thead th:has-text("Kosten")')).toBeHidden();
-  await expect(page.locator('.tbl-wrap.only-d thead th:has-text("Winst/verlies")')).toBeVisible();
+  // De melding noemt precies welke kolommen op dit scherm zijn verborgen.
+  const hiddenLabels=(await note.innerText()).split(/[·,]/).map(s=>s.trim()).filter(Boolean);
+  expect(hiddenLabels.length).toBeGreaterThan(0);
+  for(const label of hiddenLabels) await expect(page.locator(`.tbl-wrap.only-d thead th:has-text("${label}")`)).toBeHidden();
   // Munt staat als ticker in de tabel, met de volledige naam voor schermlezers
   await expect(page.locator('.tbl-wrap.only-d tbody .coin-cell',{hasText:'BTC'}).first()).toContainText('Bitcoin');
   await page.setViewportSize({width:1440,height:900});
