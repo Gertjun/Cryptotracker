@@ -120,3 +120,26 @@ test('FIFO: aankopen op dezelfde dag, handelskosten en netwerkkosten',async({pag
   expect(r.transfer.cost).toBeCloseTo(2,10);
   expect(r.transfer.pl).toBeCloseTo(-2,10);
 });
+
+
+test('Bitvavo-import slaat ongeldige aantallen, datums en kosten over',async({page})=>{
+  await openApp(page);
+  const csv=[
+    'Timezone,Date,Time,Type,Currency,Amount,Quote Currency,Quote Price,Received / Paid Currency,Received / Paid Amount,Fee currency,Fee amount,Status,Transaction ID,Address',
+    'Europe/Amsterdam,2026-10-01,10:00:00.000,buy,BTC,1,EUR,100,EUR,-100,EUR,0.25,Completed,valid-1,',
+    'Europe/Amsterdam,2026-10-01,10:01:00.000,buy,BTC,1BTC,EUR,100,EUR,-100,EUR,0.25,Completed,bad-amount,',
+    'Europe/Amsterdam,2026-02-30,10:02:00.000,buy,BTC,1,EUR,100,EUR,-100,EUR,0.25,Completed,bad-date,',
+    'Europe/Amsterdam,2026-10-01,10:03:00.000,buy,BTC,1,EUR,100,EUR,-100,EUR,fee-error,Completed,bad-fee,'
+  ].join('\n');
+  await page.setInputFiles('#bvFile',{name:'validation.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
+  await expect(page.getByText('Importeren uit Bitvavo')).toBeVisible();
+  await expect(page.getByText('Overgeslagen',{exact:false})).toBeVisible();
+  await page.locator('summary').filter({hasText:'Overgeslagen regels bekijken'}).click();
+  await expect(page.getByText('Regel 3: buy BTC (ongeldig aantal)',{exact:true})).toBeVisible();
+  await expect(page.getByText('Regel 4: buy BTC (ongeldige datum of tijd)',{exact:true})).toBeVisible();
+  await expect(page.getByText('Regel 5: buy BTC (ongeldige transactiekosten)',{exact:true})).toBeVisible();
+  await page.locator('[data-act=doimport]').click();
+  await expect.poll(()=>page.evaluate(()=>data.txs.some(t=>t.id==='bv-valid-1'))).toBe(true);
+  expect(await page.evaluate(()=>data.txs.find(t=>t.id==='bv-valid-1').price)).toBe(99.75);
+  expect(await page.evaluate(()=>data.txs.filter(t=>t.id.startsWith('bv-')).length)).toBe(1);
+});
