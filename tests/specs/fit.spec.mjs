@@ -1,7 +1,7 @@
 // Tabellen en grafieken passen op het scherm: geen schuifbalk opzij (op elke schermbreedte en elk scherm).
 // Past een tabel niet, dan verdwijnen eerst de minst belangrijke kolommen, met een melding onder de tabel.
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv,isPhone} from './helpers.mjs';
+import {openApp,seedTransactions,isPhone} from './helpers.mjs';
 const ROUTES=['','#transacties','#analyse/rendement','#analyse/vergelijken','#analyse/plannen','#analyse/administratie','#coin/bitcoin','#coin/fetch-ai'];
 // alles wat opzij scrolt (behalve de bewust brede dag/week-grafiek in het vergrote scherm op een telefoon)
 const overflow=page=>page.evaluate(()=>{const out=[],de=document.documentElement;if(de.scrollWidth>de.clientWidth+1)out.push('pagina');
@@ -9,7 +9,7 @@ const overflow=page=>page.evaluate(()=>{const out=[],de=document.documentElement
     if(el.scrollWidth>el.clientWidth+1)out.push((el.id?'#'+el.id:el.className)+' '+el.scrollWidth+'>'+el.clientWidth)}return out});
 test('geen schuifbalk opzij bij tabellen en grafieken',async({page},testInfo)=>{
   const widths=isPhone(testInfo)?[null]:[768,1024,1280,1440];
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   for(const w of widths){if(w)await page.setViewportSize({width:w,height:900});
     for(const r of ROUTES){await page.evaluate(h=>{location.hash=h},r);await page.waitForTimeout(500);
       expect(await overflow(page),`${w||'telefoon'} ${r||'overzicht'}`).toEqual([])}}
@@ -17,7 +17,7 @@ test('geen schuifbalk opzij bij tabellen en grafieken',async({page},testInfo)=>{
 });
 test('te brede tabel: minst belangrijke kolommen verdwijnen, met melding; op 1440 px past alles',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'de tabellen staan alleen op de laptop');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#transacties'});
   const note=page.locator('.fit-note');
   await expect(page.locator('.tbl-wrap.only-d tbody tr').first()).toBeVisible();
@@ -33,7 +33,7 @@ test('te brede tabel: minst belangrijke kolommen verdwijnen, met melding; op 144
 });
 test('telefoon: koersverandering 1u, 24u, 7d en 30d op één regel onder elke munt (heel smal: twee regels)',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'de lijst staat alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   for(const w of [430,390,375,360,320]){await page.setViewportSize({width:w,height:844});await page.waitForTimeout(300);
     const res=await page.evaluate(()=>[...document.querySelectorAll('.list .mkt-chg')].map(el=>{
       const sp=[...el.children].filter(s=>!s.classList.contains('sr-only'));

@@ -1,6 +1,6 @@
 // Toegankelijkheid (WCAG 2.2 AA) met axe-core, in alle thema's
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv,chartReady} from './helpers.mjs';
+import {openApp,seedTransactions,chartReady} from './helpers.mjs';
 import {createRequire} from 'node:module';import fs from 'node:fs';
 const axeSrc=fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'),'utf8');
 // wacht tot een melding (toast) helemaal weg is: midden in het uitfaden meet axe een te laag contrast
@@ -8,7 +8,7 @@ async function axe(page){await page.waitForFunction(()=>!document.querySelector(
   return page.evaluate(async()=>(await window.axe.run(document,{resultTypes:['violations']})).violations.map(v=>`${v.id} (${v.impact}): ${v.nodes.slice(0,3).map(n=>n.target.join(' ')).join(' | ')}`))}
 
 for(const theme of ['dark','light'])test(`geen toegankelijkheidsfouten (${theme==='dark'?'donker':'licht'})`,async({page})=>{
-  await openApp(page,{theme});await importCsv(page);await chartReady(page);
+  await openApp(page,{theme});await seedTransactions(page);await chartReady(page);
   const found=[];
   const check=async n=>{await page.waitForTimeout(400);for(const v of await axe(page))found.push(n+': '+v)};
   await check('Overzicht');
@@ -24,7 +24,7 @@ for(const theme of ['dark','light'])test(`geen toegankelijkheidsfouten (${theme=
 const EXTRA={black:'Zwart',navy:'Nachtblauw',soft:'Zacht',contrast:'Hoog contrast'};
 for(const [th,naam] of Object.entries(EXTRA))test(`geen toegankelijkheidsfouten (thema ${naam})`,async({page})=>{
   await page.addInitScript(th=>{if(!sessionStorage.getItem('th')){sessionStorage.setItem('th','1');localStorage.setItem('cpt.settings',JSON.stringify({theme:th}))}},th);
-  await openApp(page);await importCsv(page);await chartReady(page);
+  await openApp(page);await seedTransactions(page);await chartReady(page);
   await expect(page.locator('html')).toHaveClass(new RegExp('th-'+th));
   const found=[];
   const check=async n=>{await page.waitForTimeout(400);for(const v of await axe(page))found.push(n+': '+v)};
@@ -59,7 +59,7 @@ test('thema kiezen in Instellingen, en Automatisch volgt het apparaat',async({pa
 
 test('portfoliografiek is met het toetsenbord te bedienen',async({page})=>{
   test.skip(test.info().project.name!=='laptop','toetsenbord: laptop');
-  await openApp(page);await importCsv(page);await chartReady(page);
+  await openApp(page);await seedTransactions(page);await chartReady(page);
   const chart=page.locator('#pchart .pc-plot');
   await expect(chart).toHaveAttribute('role','slider');
   await chart.focus();await page.keyboard.press('End');

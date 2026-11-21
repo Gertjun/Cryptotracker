@@ -1,9 +1,9 @@
 // Rendementskalender (3.16.0): kiezen tussen dag, week, maand en jaar.
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv} from './helpers.mjs';
+import {openApp,seedTransactions} from './helpers.mjs';
 
 test('rendementskalender per dag, week, maand en jaar',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#analyse/rendement'});
   const card=page.locator('.card',{has:page.getByRole('heading',{name:'Rendementskalender'})});
   await expect(card.locator('.cal-nav b')).toHaveText('oktober 2026');

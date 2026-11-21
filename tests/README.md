@@ -10,7 +10,7 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 | `specs/core-version-status.spec.mjs` | De zichtbare PWA-Core-versie en commit komen overeen met de releasepin; synchronisatiestatus toont uitgeschakeld, nog niet gesynchroniseerd, geslaagd of mislukt. |
 | `specs/smoke.spec.mjs` | Alle schermen openen zonder JavaScript-fouten of blokkades door de beveiligingsregels (CSP), ook een lege app. |
 | `specs/a11y.spec.mjs` | Toegankelijkheid (WCAG 2.2 AA) met axe-core, in het donkere en lichte thema, en de portfoliografiek met het toetsenbord. |
-| `specs/calc.spec.mjs` | Berekeningen: cash, inleg en gerealiseerde winst uit de test-export; grafiek en tabel tonen hetzelfde percentage; bitcoinweergave; afronding in formulieren; de verkoopsimulator. |
+| `specs/calc.spec.mjs` | Berekeningen: cash, inleg en gerealiseerde winst uit synthetische testtransacties; grafiek en tabel tonen hetzelfde percentage; bitcoinweergave; afronding in formulieren; de verkoopsimulator. |
 | `specs/sync.spec.mjs` | Versleutelde GitHub-synchronisatie tussen twee apparaten, inclusief portefeuilles, verwijderen, koppelcode en controle dat wijzigingen in bestaande koersarchiefdagen worden herkend (met een nep-GitHub). |
 | `specs/columns.spec.mjs` | Kolommen van de tabel Bezittingen verplaatsen, verbergen, bewaren en standaard herstellen; de keuze komt mee bij het samenvoegen van twee apparaten; de Volglijst heeft dezelfde kolommen; op een brede laptop is er geen schuifbalk; de kolommen 1 uur, 4 uur en 1 jaar. |
 | `specs/fit.spec.mjs` | Tabellen en grafieken passen op het scherm (geen schuifbalk opzij) op telefoon, 768, 1024, 1280 en 1440 px; te brede tabellen verbergen eerst de minst belangrijke kolommen, met een melding. |
@@ -26,7 +26,7 @@ Automatische tests die controleren of de app nog goed werkt na een wijziging. Ze
 
 Alles draait op twee schermformaten: **telefoon** (iPhone 13) en **laptop** (1440 × 900).
 
-De tests gebruiken **nep-koersen** (`mock.mjs`) en een **vaste datum** (26 oktober 2026). Er gaat dus niets naar CoinGecko of GitHub, en de uitkomsten zijn elke keer gelijk. De test-export `fixtures/dummy-bitvavo-export.csv` bevat 85 verzonnen Bitvavo-regels. De uitkomsten liggen vast: 84 transacties, cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
+De tests gebruiken **nep-koersen** (`mock.mjs`), een **vaste datum** (26 oktober 2026) en synthetische transacties in `fixtures/test-transactions.json`. Er gaat dus niets naar CoinGecko of GitHub, en de uitkomsten zijn elke keer gelijk. De fixture bevat 84 transacties. De uitkomsten liggen vast: cash € 439,87, netto gestort € 1.600, gerealiseerd € 47,79.
 
 ## Zelf draaien
 
