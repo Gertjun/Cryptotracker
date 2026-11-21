@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='4.0.6 (18 nov 2026)';
+const APP_VERSION='4.0.7 (21 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -560,16 +560,31 @@ function renderSide(cid){
   <div class="side-foot">Koersdata: CoinGecko</div></div>`;   // alleen de muntenlijsten schuiven; appnaam, knoppen en navigatie blijven staan (en verspringen niet door een schuifbalk)
 }
 const eyeBtn=()=>`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen" aria-pressed="${!!settings.privacy}">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
-const lockBtn=()=>lockCfg?`<button type="button" class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';
+const lockBtn=()=>coreMode||lockCfg?`<button type="button" class="icon-btn header-lock" data-act="lock" aria-label="Nu vergrendelen" title="Nu vergrendelen">${ICONS.lock}</button>`:'';
 // Knoppen rechtsboven (laptop en iPad). Op de laptop staat + Transactie in de zijbalk (D47); op de telefoon staan ze in .m-top.
 const deskActHTML=()=>`<div class="tb-act">${syncBadge()}${eyeBtn()}${lockBtn()}<button type="button" class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div>`;
+function headerSyncHTML(){
+  let state='off',label='Synchronisatie uitgeschakeld';
+  if(coreMode){const s=coreSyncStatus();state=s.state;label=s.label}
+  else if(syncState.s==='busy'){state='busy';label='Synchroniseren…'}
+  else if(syncState.s==='err'){state='err';label='Synchronisatie mislukt'}
+  else if(settings.gh?.token&&settings.gh?.repo&&settings.gh?.pass&&settings.lastGh){state='ok';label='Gesynchroniseerd'}
+  else if(settings.gh?.token&&settings.gh?.repo&&settings.gh?.pass){state='off';label='Nog niet gesynchroniseerd'}
+  const market=coinIds().length?(cgState.s==='busy'?'Koersen ophalen…':cgState.s==='err'?'Koersen ophalen mislukt':lastCgTs()?('Koersen bijgewerkt '+fmtTs(lastCgTs())):'Koersen nog niet opgehaald'):'';
+  const title=[label,market].filter(Boolean).join(' · ');
+  return `<button type="button" class="icon-btn header-sync" data-act="syncinfo" aria-label="${esc(label)}" title="${esc(title)}"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.1 4.5 4.5 0 0 0 7 18Z"/></svg><span class="dot ${state}" aria-hidden="true"></span></button>`;
+}
 function topbarHTML(c,pageTitle){
   const eye=eyeBtn(),lockB=lockBtn();
-  const gear=`<button type="button" class="icon-btn" data-act="settings" aria-label="Instellingen">${ICONS.gear}</button>`;
-  const back=`<button type="button" class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button>`;
-  const title=c?`${esc(c.meta.name)} <span class="sym">${esc((c.meta.symbol||'').toUpperCase())}</span>`:(pageTitle||'Overzicht');
-  const mob=c?`${back}<h1>${title}</h1>${eye}`:`<div class="tb-group">${eye}${lockB}</div>${pageTitle?`<h1>${pageTitle}</h1>`:`<h1 class="sr-only">Overzicht</h1>${syncBadge()}`}<div class="tb-group">${lockCfg?'<span class="tb-spacer"></span>':''}${gear}</div>`;
-  return `<div class="m-top only-m">${mob}</div><div class="d-top only-d"><div class="tb-title">${c?back:''}<h1>${title}</h1></div><span class="grow"></span>${deskActHTML()}</div>`;
+  const gear=`<button type="button" class="icon-btn header-settings" data-act="settings" aria-label="Instellingen" title="Instellingen">${ICONS.gear}</button>`;
+  const screen=c?`${esc(c.meta.name)} · ${esc((c.meta.symbol||'').toUpperCase())}`:(pageTitle||'Overzicht');
+  const version=appVerHTML();
+  const add=`<button type="button" class="btn-add header-add" data-act="add">${ICONS.plus} Transactie</button>`;
+  return `<div class="app-header-inner">
+    <div class="app-brand"><img src="icon-192.png" alt="" class="app-brand-icon" width="36" height="36"><span class="app-brand-text"><span class="app-title">Crypto Portfolio</span><span class="app-brand-version">${version}</span></span></div>
+    <span class="app-screen-title">${screen}</span>
+    <div class="header-actions">${headerSyncHTML()}${lockB}${eye}${gear}${add}</div>
+  </div>`;
 }
 /* ---------- transactie-overzicht ---------- */
 let txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};
