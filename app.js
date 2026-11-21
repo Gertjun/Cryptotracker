@@ -803,7 +803,7 @@ function syncBadge(){
   if(!navigator.onLine)return `<button type="button" class="sync" data-act="syncinfo" title="Geen internet. Je ziet de laatst bekende koersen${cgT?' ('+fmtTs(cgT)+')':''}; wijzigingen worden gesynchroniseerd zodra je weer online bent.">${line('Offline','err',cgT?'koersen '+tm(cgT,fmtTs(cgT),true):'')}</button>`;
   return `<button type="button" class="sync" data-act="syncinfo" title="${esc(tip)}"><span class="sr-only">Nu synchroniseren. </span>${ghOn?line('GitHub',syncState.s,settings.lastGh?tm(settings.lastGh,ghTxt,true):ghTxt):''}${coinIds().length?line('Koersen',cgSt,cgT?tm(cgT,cgTxt,true):cgTxt):''}</button>`;
 }
-function updBadges(){const si=$('#setSync');if(si){si.outerHTML=syncInfoHTML();updSetNav()}document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
+function updBadges(){const si=$('#setSync');if(si){si.outerHTML=syncInfoHTML();updSetNav()}document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()});document.querySelectorAll('.header-sync').forEach(el=>{const f=el===document.activeElement;el.outerHTML=headerSyncHTML();if(f)document.querySelector('.header-sync')?.focus()})}   // status en focus in de hoofdbalk en instellingen bijwerken
 window.addEventListener('offline',()=>{updBadges();if(!locked)toast('Geen internet: je ziet de laatst bekende koersen')});
 window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer online');refreshPrices();refreshFng();syncNow(true)});
 /* ---------- Overzicht zelf indelen (wens W34) ---------- */
