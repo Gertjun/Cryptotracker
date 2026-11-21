@@ -582,7 +582,7 @@ function topbarHTML(c,pageTitle,settingsPage=false){
   const add=settingsPage?'':`<button type="button" class="btn-add header-add" data-act="add">${ICONS.plus} Transactie</button>`;
   return `<div class="app-header-inner">
     <div class="app-brand"><img src="icon-192.png" alt="" class="app-brand-icon" width="36" height="36"><span class="app-brand-text"><span class="app-title">Crypto Portfolio</span><span class="app-brand-version">${version}</span></span></div>
-    <span class="app-screen-title">${screen}</span>
+    <h1 class="app-screen-title">${screen}</h1>
     <div class="header-actions">${headerSyncHTML()}${lockB}${eye}${gear}${add}</div>
   </div>`;
 }
