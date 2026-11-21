@@ -39,36 +39,35 @@ test('telefoon: transacties van een munt staan vóór de rekenhulpen',async({pag
   expect(txY).toBeLessThan(toolsY);
 });
 
-test('laptop: zijbalk zonder dubbele muntenlijst op het Overzicht; kolomkoppen blijven staan',async({page},testInfo)=>{
-  test.skip(isPhone(testInfo),'alleen op de laptop');
+test('laptop: hoofdbalk en navigatie gebruiken de gedeelde PWA-layout',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'alleen op laptop en tablet');
   await openApp(page);await importCsv(page);
-  await expect(page.locator('#side .side-coin')).toHaveCount(0);
-  await page.evaluate(()=>{location.hash='#coin/bitcoin'});
-  await expect(page.locator('#side .side-coin').first()).toBeVisible();
-  await page.evaluate(()=>{location.hash='#transacties'});
-  await expect(page.locator('.tbl-wrap.only-d tbody tr').first()).toBeVisible();
-  await page.mouse.wheel(0,2000);
-  await expect.poll(()=>page.locator('.tbl-wrap.only-d thead th').first().evaluate(th=>Math.round(th.getBoundingClientRect().top))).toBe(0);
+  await expect(page.locator('#topbar .app-brand-icon')).toBeVisible();
+  await expect(page.locator('#topbar .app-title')).toHaveText('Crypto Portfolio');
+  await expect(page.locator('#topbar .app-screen-title')).toHaveText('Overzicht');
+  await expect(page.locator('#topbar .header-sync')).toBeVisible();
+  const nav=page.locator('#side nav');
+  await expect(nav).toBeVisible();
+  expect((await nav.boundingBox()).width).toBeGreaterThan(500);
+  await expect(nav.getByRole('link',{name:'Transacties'})).toBeVisible();
+  await expect(nav.getByRole('link',{name:'Analyse'})).toBeVisible();
+  await expect(page.locator('#view')).toBeVisible();
 });
 
-test('laptop: zijbalk in- en uitklappen, onthouden na herladen',async({page},testInfo)=>{
-  test.skip(isPhone(testInfo),'alleen op de laptop');
-  await openApp(page);await importCsv(page);
-  await page.evaluate(()=>{location.hash='#coin/bitcoin'});
-  const side=page.locator('#side'),tog=page.locator('#side [data-act=sidetog]');
-  await expect(tog).toHaveAttribute('aria-expanded','true');
-  const wide=await side.evaluate(e=>e.getBoundingClientRect().width);
-  await tog.click();
-  await expect(tog).toHaveAttribute('aria-expanded','false');
-  await expect(tog).toBeFocused();
-  expect(await side.evaluate(e=>e.getBoundingClientRect().width)).toBeLessThan(80);
-  expect(wide).toBeGreaterThan(200);
-  await expect(page.locator('#side .side-coin').first()).toBeHidden();
-  await expect(page.getByRole('link',{name:'Transacties'}).first()).toBeVisible();
-  await page.reload();await expect(page.locator('#side [data-act=sidetog]')).toHaveAttribute('aria-expanded','false');
-  await page.locator('#side [data-act=sidetog]').click();
-  await expect(page.locator('#side [data-act=sidetog]')).toHaveAttribute('aria-expanded','true');
-  expect(await side.evaluate(e=>e.getBoundingClientRect().width)).toBeGreaterThan(200);
+test('laptop: hoofdbalkacties zijn bereikbaar en openen de juiste schermen',async({page},testInfo)=>{
+  test.skip(isPhone(testInfo),'alleen op laptop en tablet');
+  const errors=await openApp(page);await importCsv(page);
+  await expect(page.locator('#topbar .header-add')).toBeVisible();
+  await expect(page.locator('#topbar .header-sync')).toBeVisible();
+  await expect(page.locator('#topbar [data-act=privacy]')).toBeVisible();
+  await page.locator('#topbar .header-add').click();
+  await expect(page.locator('#sheet')).toBeVisible();await page.evaluate(()=>closeSheet());
+  await page.locator('#topbar [data-act=settings]').click();
+  await expect(page).toHaveURL(/#instellingen$/);
+  await expect(page.locator('#topbar .app-screen-title')).toHaveText('Instellingen');
+  await expect(page.locator('#topbar [data-act=setback]')).toBeVisible();
+  await expect(page.locator('#st_sync')).toBeVisible();
+  expect(errors).toEqual([]);
 });
 
 test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug brengt je terug, velden blijven staan',async({page},testInfo)=>{
@@ -155,12 +154,12 @@ test('iPad rechtop: tabbladen bovenaan zonder zijbalk; laptop zijbalk; liggende 
     await page.evaluate(()=>{location.hash='#coin/bitcoin'});await page.waitForTimeout(400);
     if(mode==='phone'){await expect(nav).toBeHidden();await expect(tab).toBeVisible();continue}
     await expect(nav).toBeVisible();await expect(tab).toBeHidden();
-    await expect(page.locator('.d-top h1')).toBeVisible();
-    const n=await nav.boundingBox(),hd=await page.locator('.d-top h1').boundingBox();
+    await expect(page.locator('.app-screen-title')).toBeVisible();
+    const n=await nav.boundingBox(),hd=await page.locator('.app-screen-title').boundingBox();
     if(mode==='tabs'){expect(n.width).toBeGreaterThan(w-60);expect(hd.y).toBeGreaterThan(n.y);   // tabbladen over de volle breedte, munttitel eronder
       await expect(page.locator('#side .side-coin').first()).toBeHidden();
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)}
-    else expect(n.width).toBeLessThan(300);
+    else expect(n.width).toBeGreaterThan(w-60);
   }
   expect(errors).toEqual([]);
 });
