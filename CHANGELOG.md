@@ -2,6 +2,17 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
+## 4.0.7 – 21 november 2026
+Hoofdbalk geharmoniseerd met de andere PWA's en de portfoliografiek begrensd binnen het paneel.
+
+### UI
+- App-logo, naam en versienummer in de hoofdbalk.
+- Synchronisatiestatus en vergrendelknop in de hoofdbalk; behoud van privacy- en instellingenknoppen.
+- Grafiek Totale waarde blijft binnen de grenzen van het paneel.
+
+### Tests
+- Automatische layout-, overflow- en regressietests.
+
 ## 4.0.6 – 20 november 2026
 PWA-Core v1.3.0-integratie en beveiligingscorrecties.
 
