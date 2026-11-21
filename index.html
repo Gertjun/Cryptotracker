@@ -831,9 +831,9 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
 
 /* iPad-portret: merk en acties bovenaan, schermkop onder de navigatie. */
 @media (min-width:700px) and (max-width:999px) and (min-height:700px){
-  .app-header-inner{display:contents}
-  .app-brand{grid-area:brand;padding:8px 16px}
-  .app-screen-title{grid-area:title;position:static;width:auto;height:auto;padding:0;margin:0 0 16px;overflow:visible;clip:auto;white-space:nowrap}
+  #topbar .app-header-inner{display:contents!important}
+  #topbar .app-brand{grid-area:brand;padding:8px 16px}
+  #topbar .app-screen-title{grid-area:title!important;position:static;width:auto;height:auto;padding:0;margin:0 0 16px;overflow:visible;clip:auto;white-space:nowrap}
   .header-actions{grid-area:act;justify-self:end;min-height:64px}
   #topbar .header-add{display:inline-flex}
 }
