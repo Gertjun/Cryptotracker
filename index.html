@@ -829,6 +829,14 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
 .sim-quick .link{font-size:13px;min-height:32px}
 .sim-lots summary{cursor:pointer;font-weight:650;font-size:14px;min-height:44px;display:flex;align-items:center}
 
+/* iPad-portret: merk en acties bovenaan, schermkop onder de navigatie. */
+@media (min-width:700px) and (max-width:999px) and (min-height:700px){
+  .app-header-inner{display:contents}
+  .app-brand{grid-area:brand;padding:8px 16px}
+  .app-screen-title{grid-area:title;position:static;width:auto;height:auto;padding:0;margin:0 0 16px;overflow:visible;clip:auto;white-space:nowrap}
+  .header-actions{grid-area:act;justify-self:end;min-height:64px}
+  .header-add{display:none!important}
+}
 /* Gedeelde responsieve app-indeling: telefoon, iPad-portret en desktop.
    Op iPad-portret staat de appnaam links, de schermkop rechts en de navigatie
    als horizontale rij eronder. De muntenlijst blijft als tweede, horizontale rij
