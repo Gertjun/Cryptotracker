@@ -26,7 +26,7 @@ Winst en kostprijs worden berekend volgens **FIFO**: bij een verkoop tellen de o
 - **iPhone/iPad (Safari):** open de link, tik op het deelicoon en kies **Zet op beginscherm**.
 - **Laptop (Chrome of Edge):** open de link en klik in de adresbalk op het installeericoon.
 
-Een nieuwe versie komt vanzelf binnen. Naast de appnaam (laptop) of bovenin (telefoon) staat dan "update beschikbaar". Het versienummer zie je onder **Instellingen**.
+Een nieuwe versie komt vanzelf binnen. Naast de appnaam (laptop) of bovenin (telefoon) staat dan "update beschikbaar". Het versienummer staat in de hoofdbalk.
 
 ## Je gegevens
 
