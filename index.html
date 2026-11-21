@@ -834,7 +834,7 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
   #topbar .app-header-inner{display:contents!important}
   #topbar .app-brand{grid-area:brand;padding:8px 16px}
   #topbar .app-screen-title{grid-area:title!important;position:static;width:auto;height:auto;padding:0;margin:0 0 16px;overflow:visible;clip:auto;white-space:nowrap}
-  .header-actions{grid-area:act;justify-self:end;min-height:64px}
+  .header-actions{grid-area:act;grid-row:1;grid-column:2;justify-self:end;min-height:64px}
   #topbar .header-add{display:inline-flex}
 }
 /* Gedeelde responsieve app-indeling: telefoon, iPad-portret en desktop.
@@ -845,14 +845,14 @@ button.app-ver.upd:hover{filter:brightness(1.1)}
   .shell{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto 1fr;grid-template-areas:"brand act" "nav nav" "title title" "view view";min-height:100dvh;gap:0}
   #side,#app{display:contents}
   .locked #side,.locked #topbar{display:none!important}
-  #side .brand{grid-area:brand;display:flex;align-items:center;min-width:0;padding:8px 16px}
+  #side .brand{grid-area:brand;grid-row:1;grid-column:1;display:flex;align-items:center;min-width:0;padding:8px 16px}
   #side .brand>.side-tog,#side .side-act{display:none!important}
   #topbar{display:contents!important}
   #topbar .m-top{display:none!important}
   #topbar .d-top{display:contents!important}
   .only-m{display:none!important}.tabbar{display:none!important}
   .only-d{display:contents!important}
-  #side nav{grid-area:nav;display:flex;flex-direction:row;justify-content:center;gap:6px;width:100%;padding:6px 16px;background:var(--tab);border-bottom:1px solid var(--line)}
+  #side nav{grid-area:nav;grid-row:2;grid-column:1/-1;display:flex;flex-direction:row;justify-content:center;gap:6px;width:100%;padding:6px 16px;background:var(--tab);border-bottom:1px solid var(--line)}
   #side nav .nav{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 14px;white-space:nowrap}
   #side nav .nav svg{width:20px;height:20px}
   #side nav .nav-l{display:inline}
