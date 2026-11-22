@@ -1,7 +1,7 @@
 // App-configuratie voor Cryptotracker 4.0.7 en de vastgepinde PWA-Core v1.3.0.
 export const APP = {
   name: 'Crypto Portfolio',
-  version: '4.1.0',
+  version: '4.2.0',
   coreVersion: '1.3.0',
   coreCommit: 'fd47638355d975d85dfc376b07810b4b0e4b2a63',
   storagePrefix: 'cpt',

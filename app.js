@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='4.1.0 (22 nov 2026)';
+const APP_VERSION='4.2.0 (22 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -547,7 +547,7 @@ function renderSide(cid){
   const p=portfolio(),list=[...p.open].sort((a,b)=>(b.value??0)-(a.value??0));
   const min=!!settings.sideMin;el.closest('.shell')?.classList.toggle('side-min',min);   // zijbalk ingeklapt (laptop, per apparaat)
   const tog=`<button type="button" class="side-tog" data-act="sidetog" aria-controls="side" aria-expanded="${!min}" aria-label="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}" title="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}">${ICONS.back}</button>`;
-  el.innerHTML=`<div class="brand"><img src="icon.svg" alt="" width="32" height="32"><span class="brand-n">Crypto Portfolio</span>${tog}${appVerHTML()}</div>
+  el.innerHTML=`<div class="brand"><img src="icon-192.png" alt="" width="36" height="36"><span class="brand-text"><span class="brand-n">Crypto Portfolio</span>${appVerHTML()}</span>${tog}</div>
   <div class="side-act"><button type="button" class="btn-add" data-act="add"${min?' title="Transactie toevoegen"':''}>${ICONS.plus}<span class="add-l"> Transactie</span><span class="sr-only add-sr"> toevoegen</span></button></div>
   <nav aria-label="Hoofdnavigatie"><a class="nav ${cid?'':'on'}" href="#"${cid?'':' aria-current="page"'}${min?' title="Overzicht"':''}>${ICONS.home} <span class="nav-l">Overzicht</span></a>
   <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}${min?' title="Transacties"':''}>${ICONS.list} <span class="nav-l">Transacties</span></a>
