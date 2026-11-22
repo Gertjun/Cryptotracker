@@ -138,7 +138,11 @@ test('iPad rechtop: tabbladen bovenaan zonder zijbalk; laptop zijbalk; liggende 
     if(mode==='tabs'){expect(n.width).toBeGreaterThan(w-60);expect(hd.y).toBeGreaterThan(n.y+n.height);   // tabbladen over de volle breedte, munttitel eronder
       await expect(page.locator('#side .side-coin').first()).toBeHidden();
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)}
-    else expect(n.width).toBeGreaterThan(w-60);
+    else { // desktop: navigatie volgt de contentbreedte (max. 1100px), gecentreerd
+      expect(n.width).toBeGreaterThan(500);
+      expect(n.width).toBeLessThanOrEqual(w);
+      expect(Math.abs((n.x+n.width/2)-w/2)).toBeLessThanOrEqual(2);
+    }
   }
   expect(errors).toEqual([]);
 });
