@@ -537,7 +537,7 @@ function renderInner(){
     if(cid)renderCoin(cid);else{renderHome();bar()}
     lastView=cid?'coin':'home';renderSide(cid);
   }
-  document.querySelectorAll('.tabbar a').forEach(b=>{const on=b.dataset.tab===(isSet?'':isRep?'reps':isTx?'txs':'home');b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  document.querySelectorAll('.tabbar a').forEach(b=>{const on=b.dataset.tab===(isSet?'set':isRep?'reps':isTx?'txs':'home');b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   clearTimeout(window._fabR);window._fabR=setTimeout(()=>{const f=$('#btnAdd');if(f)f.classList.toggle('away',fabCovers()||(f.classList.contains('away')&&scrollY>60))},150);
 }
 let lastView=null;
@@ -576,14 +576,13 @@ function headerSyncHTML(){
 }
 function topbarHTML(c,pageTitle,settingsPage=false){
   const eye=eyeBtn(),lockB=lockBtn();
-  const gear=settingsPage?`<button type="button" class="icon-btn header-settings" data-act="setback" aria-label="Terug" title="Terug">${ICONS.back}</button>`:`<button type="button" class="icon-btn header-settings" data-act="settings" aria-label="Instellingen" title="Instellingen">${ICONS.gear}</button>`;
   const screen=c?`${esc(c.meta.name)} · ${esc((c.meta.symbol||'').toUpperCase())}`:(pageTitle||'Overzicht');
   const version=appVerHTML();
   const add=settingsPage?'':`<button type="button" class="btn-add header-add" data-act="add">${ICONS.plus} Transactie</button>`;
   return `<div class="app-header-inner">
     <div class="app-brand"><img src="icon-192.png" alt="" class="app-brand-icon" width="36" height="36"><span class="app-brand-text"><span class="app-title">Crypto Portfolio</span><span class="app-brand-version">${version}</span></span></div>
     <h1 class="app-screen-title">${screen}</h1>
-    <div class="header-actions">${headerSyncHTML()}${lockB}${eye}${gear}${add}</div>
+    <div class="header-actions">${headerSyncHTML()}${lockB}${eye}${add}</div>
   </div>`;
 }
 /* ---------- transactie-overzicht ---------- */

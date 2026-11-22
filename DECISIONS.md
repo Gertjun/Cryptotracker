@@ -356,3 +356,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert wil eerst zien dat de tests slagen voordat een wijziging op `main` komt en live staat. Sinds de overstap naar PWA-Core werkte het in de praktijk al zo, maar D35 was nooit vervangen.
 - **Afweging:** per wijziging een extra stap (akkoord geven en mergen).
 - **Niet gekozen:** rechtstreeks naar `main` pushen (D35).
+
+### D65 – Instellingen als vierde tabblad onderin op de telefoon (22 november 2026, vervangt D25/D37/D46 voor de telefoon)
+- **Besluit:** de tabbalk onderin (telefoon en liggende telefoon) heeft vier tabbladen: Overzicht, Transacties, Analyse en Instellingen (tandwiel). Het actieve tabblad krijgt de accentkleur. Het tandwiel bovenin en de terugknop op het scherm Instellingen zijn weg, op alle formaten: op laptop en iPad staat Instellingen al in de navigatie (D46).
+- **Waarom:** Geert wil de opbouw gelijk aan zijn andere apps (Vaste Lasten, Energieverbruik), die Instellingen als laatste tabblad onderin hebben, met het actieve tabblad in de accentkleur.
+- **Niet gekozen:** het tandwiel bovenin laten staan naast het tabblad (dubbel); de terugknop houden (een tabblad heeft die niet nodig; de terugknop van de browser of het veegebaar werkt nog wel).
+
