@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='4.0.6 (18 nov 2026)';
+const APP_VERSION='4.0.7 (21 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -560,16 +560,31 @@ function renderSide(cid){
   <div class="side-foot">Koersdata: CoinGecko</div></div>`;   // alleen de muntenlijsten schuiven; appnaam, knoppen en navigatie blijven staan (en verspringen niet door een schuifbalk)
 }
 const eyeBtn=()=>`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen" aria-pressed="${!!settings.privacy}">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
-const lockBtn=()=>lockCfg?`<button type="button" class="icon-btn" data-act="lock" aria-label="Nu vergrendelen">${ICONS.lock}</button>`:'';
+const lockBtn=()=>coreMode||lockCfg?`<button type="button" class="icon-btn header-lock" data-act="lock" aria-label="Nu vergrendelen" title="Nu vergrendelen">${ICONS.lock}</button>`:'';
 // Knoppen rechtsboven (laptop en iPad). Op de laptop staat + Transactie in de zijbalk (D47); op de telefoon staan ze in .m-top.
 const deskActHTML=()=>`<div class="tb-act">${syncBadge()}${eyeBtn()}${lockBtn()}<button type="button" class="btn-add" data-act="add">${ICONS.plus} Transactie</button></div>`;
-function topbarHTML(c,pageTitle){
+function headerSyncHTML(){
+  let state='off',label='Synchronisatie uitgeschakeld';
+  if(coreMode){const s=coreSyncStatus();state=s.state;label=s.label}
+  else if(syncState.s==='busy'){state='busy';label='Synchroniseren…'}
+  else if(syncState.s==='err'){state='err';label='Synchronisatie mislukt'}
+  else if(settings.gh?.token&&settings.gh?.repo&&settings.gh?.pass&&settings.lastGh){state='ok';label='Gesynchroniseerd'}
+  else if(settings.gh?.token&&settings.gh?.repo&&settings.gh?.pass){state='off';label='Nog niet gesynchroniseerd'}
+  const market=coinIds().length?(cgState.s==='busy'?'Koersen ophalen…':cgState.s==='err'?'Koersen ophalen mislukt':lastCgTs()?('Koersen bijgewerkt '+fmtTs(lastCgTs())):'Koersen nog niet opgehaald'):'';
+  const title=[label,market].filter(Boolean).join(' · ');
+  return `<button type="button" class="icon-btn header-sync" data-act="syncinfo" aria-label="${esc(label)}" title="${esc(title)}"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.1 4.5 4.5 0 0 0 7 18Z"/></svg><span class="dot ${state}" aria-hidden="true"></span></button>`;
+}
+function topbarHTML(c,pageTitle,settingsPage=false){
   const eye=eyeBtn(),lockB=lockBtn();
-  const gear=`<button type="button" class="icon-btn" data-act="settings" aria-label="Instellingen">${ICONS.gear}</button>`;
-  const back=`<button type="button" class="icon-btn" data-act="home" aria-label="Terug">${ICONS.back}</button>`;
-  const title=c?`${esc(c.meta.name)} <span class="sym">${esc((c.meta.symbol||'').toUpperCase())}</span>`:(pageTitle||'Overzicht');
-  const mob=c?`${back}<h1>${title}</h1>${eye}`:`<div class="tb-group">${eye}${lockB}</div>${pageTitle?`<h1>${pageTitle}</h1>`:`<h1 class="sr-only">Overzicht</h1>${syncBadge()}`}<div class="tb-group">${lockCfg?'<span class="tb-spacer"></span>':''}${gear}</div>`;
-  return `<div class="m-top only-m">${mob}</div><div class="d-top only-d"><div class="tb-title">${c?back:''}<h1>${title}</h1></div><span class="grow"></span>${deskActHTML()}</div>`;
+  const gear=settingsPage?`<button type="button" class="icon-btn header-settings" data-act="setback" aria-label="Terug" title="Terug">${ICONS.back}</button>`:`<button type="button" class="icon-btn header-settings" data-act="settings" aria-label="Instellingen" title="Instellingen">${ICONS.gear}</button>`;
+  const screen=c?`${esc(c.meta.name)} · ${esc((c.meta.symbol||'').toUpperCase())}`:(pageTitle||'Overzicht');
+  const version=appVerHTML();
+  const add=settingsPage?'':`<button type="button" class="btn-add header-add" data-act="add">${ICONS.plus} Transactie</button>`;
+  return `<div class="app-header-inner">
+    <div class="app-brand"><img src="icon-192.png" alt="" class="app-brand-icon" width="36" height="36"><span class="app-brand-text"><span class="app-title">Crypto Portfolio</span><span class="app-brand-version">${version}</span></span></div>
+    <h1 class="app-screen-title">${screen}</h1>
+    <div class="header-actions">${headerSyncHTML()}${lockB}${eye}${gear}${add}</div>
+  </div>`;
 }
 /* ---------- transactie-overzicht ---------- */
 let txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};
@@ -788,7 +803,7 @@ function syncBadge(){
   if(!navigator.onLine)return `<button type="button" class="sync" data-act="syncinfo" title="Geen internet. Je ziet de laatst bekende koersen${cgT?' ('+fmtTs(cgT)+')':''}; wijzigingen worden gesynchroniseerd zodra je weer online bent.">${line('Offline','err',cgT?'koersen '+tm(cgT,fmtTs(cgT),true):'')}</button>`;
   return `<button type="button" class="sync" data-act="syncinfo" title="${esc(tip)}"><span class="sr-only">Nu synchroniseren. </span>${ghOn?line('GitHub',syncState.s,settings.lastGh?tm(settings.lastGh,ghTxt,true):ghTxt):''}${coinIds().length?line('Koersen',cgSt,cgT?tm(cgT,cgTxt,true):cgTxt):''}</button>`;
 }
-function updBadges(){const si=$('#setSync');if(si){si.outerHTML=syncInfoHTML();updSetNav()}document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()})}   // focus blijft op de statusknop staan
+function updBadges(){const si=$('#setSync');if(si){si.outerHTML=syncInfoHTML();updSetNav()}document.querySelectorAll('.sync').forEach((el,i)=>{const f=el===document.activeElement;el.outerHTML=syncBadge();if(f)document.querySelectorAll('.sync')[i]?.focus()});document.querySelectorAll('.header-sync').forEach(el=>{const f=el===document.activeElement;el.outerHTML=headerSyncHTML();if(f)document.querySelector('.header-sync')?.focus()})}   // status en focus in de hoofdbalk en instellingen bijwerken
 window.addEventListener('offline',()=>{updBadges();if(!locked)toast('Geen internet: je ziet de laatst bekende koersen')});
 window.addEventListener('online',()=>{updBadges();if(locked)return;toast('Weer online');refreshPrices();refreshFng();syncNow(true)});
 /* ---------- Overzicht zelf indelen (wens W34) ---------- */
@@ -2637,11 +2652,7 @@ function openSettings(){
   if(location.hash!=='#instellingen'){setFrom=location.hash;history.pushState(null,'','#instellingen');closeZoom();render();window.scrollTo(0,0)}
   else render();
 }
-function setTopbarHTML(){
-  const eye=eyeBtn();
-  const back=`<button type="button" class="icon-btn" data-act="setback" aria-label="Terug">${ICONS.back}</button>`;
-  return `<div class="m-top only-m">${back}<h1>Instellingen</h1>${eye}</div><div class="d-top only-d"><div class="tb-title"><h1>Instellingen</h1></div><span class="grow"></span>${deskActHTML()}</div>`;
-}
+function setTopbarHTML(){return topbarHTML(null,'Instellingen',true)}
 function exportData(){
   settings.lastExport=Date.now();saveSettings();
   const blob=new Blob([JSON.stringify({app:'crypto-portfolio',exported:new Date().toISOString(),...data},null,2)],{type:'application/json'});
