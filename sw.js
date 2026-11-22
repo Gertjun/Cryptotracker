@@ -7,6 +7,7 @@ const PRECACHE = [
   "icon.svg",
   "icon-180.png",
   "icon-192.png",
+  "icons/icon-192.png",
   "icon-512.png",
   "js/bootstrap.js",
   "js/core/legacy-adapter.js",

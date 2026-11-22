@@ -61,7 +61,7 @@ test('portfolio-grafiek blijft binnen het paneel',async({page},testInfo)=>{
 test('hoofdbalk toont appnaam, logo, versie en synchronisatiestatus',async({page},testInfo)=>{
   await openApp(page);
   const ver=await page.evaluate(()=>APP_VERSION.split(' ')[0]);   // geen vast nummer: volgt elke release
-  const brand=isPhone(testInfo)?page.locator('#topbar'):page.locator('#side .brand');   // laptop: merk in de zijbalk (D66)
+  const brand=isPhone(testInfo)?page.locator('#topbar'):page.locator('.app-nav-brand');   // laptop: merk in de zijbalk van PWA-Core (D67)
   await expect(brand.locator('img').first()).toBeVisible();
   await expect(brand).toContainText('Crypto Portfolio');
   await expect(brand).toContainText(ver);
