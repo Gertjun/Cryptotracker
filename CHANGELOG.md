@@ -2,6 +2,14 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
+## 4.1.0 – 22 november 2026
+Instellingen als vierde tabblad onderin op de telefoon, net als in je andere apps.
+
+### Gewijzigd
+- **Tabbalk:** op de telefoon staat Instellingen nu als vierde knop onderin, naast Overzicht, Transacties en Analyse.
+- **Actief tabblad:** het tabblad waar je bent, krijgt de accentkleur.
+- **Bovenbalk:** het tandwiel en de terugknop op het scherm Instellingen zijn weg; op laptop en iPad staat Instellingen al in de navigatie.
+
 ## 4.0.7 – 21 november 2026
 Hoofdbalk geharmoniseerd met de andere PWA's en de portfoliografiek begrensd binnen het paneel.
 
