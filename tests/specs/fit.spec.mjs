@@ -62,7 +62,8 @@ test('hoofdbalk toont appnaam, logo, versie en synchronisatiestatus',async({page
   await openApp(page);
   await expect(page.locator('#topbar .app-brand-icon')).toBeVisible();
   await expect(page.locator('#topbar .app-title')).toHaveText('Crypto Portfolio');
-  await expect(page.locator('#topbar .app-brand-version')).toContainText('4.0.7');
+  const ver=await page.evaluate(()=>APP_VERSION.split(' ')[0]);   // geen vast nummer: volgt elke release
+  await expect(page.locator('#topbar .app-brand-version')).toContainText(ver);
   await expect(page.locator('#topbar .header-sync')).toBeVisible();
   await expect(page.locator('#topbar .app-screen-title')).toHaveText('Overzicht');
 });

@@ -62,20 +62,26 @@ test('laptop: hoofdbalkacties zijn bereikbaar en openen de juiste schermen',asyn
   await expect(page.locator('#topbar [data-act=privacy]')).toBeVisible();
   await page.locator('#topbar .header-add').click();
   await expect(page.locator('#sheet')).toBeVisible();await page.evaluate(()=>closeSheet());
-  await page.locator('#topbar [data-act=settings]').click();
+  await page.locator('#side nav').getByRole('link',{name:'Instellingen'}).click();
   await expect(page).toHaveURL(/#instellingen$/);
   await expect(page.locator('#topbar .app-screen-title')).toHaveText('Instellingen');
-  await expect(page.locator('#topbar [data-act=setback]')).toBeVisible();
+  await expect(page.locator('#topbar [data-act=setback], #topbar [data-act=settings]')).toHaveCount(0);   // geen tandwiel of terugknop meer (D65)
   await expect(page.locator('#st_sync')).toBeVisible();
   expect(errors).toEqual([]);
 });
 
-test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug brengt je terug, velden blijven staan',async({page},testInfo)=>{
+test('telefoon: Instellingen is een vierde tabblad onderin; velden blijven staan (D65)',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
   await openApp(page);await importCsv(page);
   await page.evaluate(()=>{location.hash='#transacties'});await expect(page.locator('#txOut')).toBeVisible();
-  await page.locator('[data-act=settings]:visible').first().click();
+  await expect(page.locator('#topbar [data-act=settings], #topbar [data-act=setback]')).toHaveCount(0);   // geen tandwiel bovenin
+  const setTab=page.locator('.tabbar a[data-tab="set"]');
+  await expect(page.locator('.tabbar a')).toHaveCount(4);
+  await setTab.click();
   await expect(page).toHaveURL(/#instellingen$/);
+  await expect(setTab).toHaveAttribute('aria-current','page');
+  await expect(page.locator('.tabbar a[data-tab="txs"]')).not.toHaveAttribute('aria-current','page');
+  const tb=await setTab.boundingBox();expect(tb.height).toBeGreaterThanOrEqual(44);
   await expect(page.locator('#sheet')).toBeHidden();
   await expect(page.locator('.set-nav')).toBeHidden();   // op de telefoon alle blokken onder elkaar
   for(const id of ['st_view','st_unit','st_pf','st_sec','st_sync','st_dev','st_cg','st_fng','st_imp','st_bak','st_danger','st_about'])await expect(page.locator('#'+id)).toBeVisible();
@@ -87,8 +93,9 @@ test('telefoon: Instellingen is een eigen scherm; tandwiel opent het, terug bren
   await page.locator('[data-act=pfedit][data-id=""]').click();await expect(page.locator('#pf_name')).toBeVisible();
   await page.locator('#sheet [data-act=settings]').click();await expect(page.locator('#sheet')).toBeHidden();
   await expect(page.locator('#st_pf')).toBeVisible();
-  await page.locator('[data-act=setback]:visible').click();
+  await page.locator('.tabbar a[data-tab="txs"]').click();
   await expect(page).toHaveURL(/#transacties$/);await expect(page.locator('#txOut')).toBeVisible();
+  await expect(page.locator('.tabbar a[data-tab="txs"]')).toHaveAttribute('aria-current','page');
   // terugknop van de browser
   await page.evaluate(()=>openSettings());await expect(page.locator('#st_sync')).toBeVisible();
   await page.goBack();await expect(page.locator('#txOut')).toBeVisible();
@@ -100,7 +107,7 @@ test('laptop: hoofdbalk bevat acties en navigatie is volledig bereikbaar',async(
   await expect(page.locator('#topbar .header-add')).toBeVisible();
   await expect(page.locator('#topbar .header-sync')).toBeVisible();
   await expect(page.locator('#topbar [data-act=privacy]')).toBeVisible();
-  await expect(page.locator('#topbar [data-act=settings]')).toBeVisible();
+  await expect(page.locator('#topbar [data-act=settings]')).toHaveCount(0);
   const nav=page.locator('#side nav');
   for(const label of ['Overzicht','Transacties','Analyse','Instellingen'])await expect(nav.getByRole('link',{name:label})).toBeVisible();
   await page.locator('#topbar .header-add').click();await expect(page.locator('#sheet')).toBeVisible();await page.evaluate(()=>closeSheet());
