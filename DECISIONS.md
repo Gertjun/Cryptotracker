@@ -362,3 +362,13 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert wil de opbouw gelijk aan zijn andere apps (Vaste Lasten, Energieverbruik), die Instellingen als laatste tabblad onderin hebben, met het actieve tabblad in de accentkleur.
 - **Niet gekozen:** het tandwiel bovenin laten staan naast het tabblad (dubbel); de terugknop houden (een tabblad heeft die niet nodig; de terugknop van de browser of het veegebaar werkt nog wel).
 
+### D66 – Schil gelijk aan PWA-Core: kopbalk, navigatie en werkvlak (22 november 2026, vervangt de indeling uit D40, D43, D46–D48 en 4.0.7)
+- **Besluit:** kopbalk, navigatie en werkvlak gebruiken dezelfde maten als `css/base.css` van PWA-Core, zoals Energieverbruik, Games Backlog en MW4.
+  - **Telefoon (ook liggend):** kopbalk 61 px met icoon 36 px, appnaam 1,2rem vet en versienummer 0,7rem; knoppen rechts als ronde knoppen van 44 px zonder rand, iconen 22 px. Tabbalk onderin 58 px, iconen 24 px, labels 0,7rem; actief in de accentkleur. Werkvlak max. 720 px met 16 px marge.
+  - **iPad rechtop:** dezelfde kopbalk (max. 960 px), daaronder de tabbladen gecentreerd in een rij; actief tabblad als gekleurde pil. Grafiekblok met kop links, zodat de knoppen niet over "Totale waarde" vallen.
+  - **Laptop en iPad liggend:** vaste zijbalk links (236 px, ingeklapt 68 px) met icoon, naam en versie bovenin en Overzicht, Transacties, Analyse en Instellingen; kopbalk rechts daarvan met de schermtitel (1,25rem vet), synchronisatie, oogje, slotje en + Transactie.
+  - Lichte thema's: het actieve menu-item in de zijbalk en op de iPad heeft donkere tekst met een gekleurd icoon (contrast WCAG AA).
+- **Waarom:** Geert vond Crypto Portfolio na 4.0.7 en 4.1.0 nog niet gelijk aan zijn andere apps (uitlijning, positie, lettertype en grootte). Op de iPad stond de appnaam dubbel en plakte de inhoud tegen de rand.
+- **Niet gekozen:** `css/base.css` van PWA-Core echt laden (die zet ook knoppen, formulieren en kaarten anders en zou de hele app raken); de muntenlijsten terug in de zijbalk (de andere apps hebben die niet; ze waren sinds 4.0.7 al verborgen).
+- **Nog open:** op telefoon en iPad staat de naam van de munt niet in beeld op de munt-pagina (alleen het tickericoon), net als sinds 4.0.7.
+

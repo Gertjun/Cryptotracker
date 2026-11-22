@@ -58,12 +58,13 @@ test('portfolio-grafiek blijft binnen het paneel',async({page},testInfo)=>{
   expect(bounds.svg.right).toBeLessThanOrEqual(bounds.chart.right+1);
   expect(errors).toEqual([]);
 });
-test('hoofdbalk toont appnaam, logo, versie en synchronisatiestatus',async({page})=>{
+test('hoofdbalk toont appnaam, logo, versie en synchronisatiestatus',async({page},testInfo)=>{
   await openApp(page);
-  await expect(page.locator('#topbar .app-brand-icon')).toBeVisible();
-  await expect(page.locator('#topbar .app-title')).toHaveText('Crypto Portfolio');
   const ver=await page.evaluate(()=>APP_VERSION.split(' ')[0]);   // geen vast nummer: volgt elke release
-  await expect(page.locator('#topbar .app-brand-version')).toContainText(ver);
+  const brand=isPhone(testInfo)?page.locator('#topbar'):page.locator('#side .brand');   // laptop: merk in de zijbalk (D66)
+  await expect(brand.locator('img').first()).toBeVisible();
+  await expect(brand).toContainText('Crypto Portfolio');
+  await expect(brand).toContainText(ver);
   await expect(page.locator('#topbar .header-sync')).toBeVisible();
   await expect(page.locator('#topbar .app-screen-title')).toHaveText('Overzicht');
 });

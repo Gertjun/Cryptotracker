@@ -56,10 +56,10 @@ Werkafspraken voor Claude: [`CLAUDE.md`](CLAUDE.md). Testen: [`tests/README.md`]
 
 Bijgewerkt: 22 november 2026 · `main` **4.1.0** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.1.0-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
 
-- 4.1.0 (PR #76): Instellingen als vierde tabblad onderin op de telefoon, actief tabblad in de accentkleur, tandwiel en terugknop bovenin weg (D65). Automatische tests op GitHub groen; nog niet door Geert op de iPhone bekeken.
-- 4.0.7 (PR #73–#75): hoofdbalk met logo, naam, versie en synchronisatiestatus gelijk aan de andere apps; de portfoliografiek blijft binnen het paneel. Op de laptop staan de tabbladen onder de hoofdbalk.
+- 4.1.0 (PR #76): Instellingen als vierde tabblad onderin op de telefoon (D65).
+- In behandeling (branch `claude/schil-gelijk-aan-core`, nog niet gemerged): kopbalk, tabbalk, tabbladen en zijbalk met precies de maten van PWA-Core, zoals de andere apps (D66). Op de laptop weer een zijbalk links; de fout op de iPad (dubbele appnaam, inhoud tegen de rand) is opgelost. Alle tests lokaal groen.
+- 4.0.7 (PR #73–#75): hoofdbalk met logo, naam, versie en synchronisatiestatus; portfoliografiek binnen het paneel.
 - Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten (passkeys, koppelen, synchroniseren, offline, opruimen oude opslag).
-- Lokaal faalt `fit.spec.mjs` › "op 1440 px past alles" (ook op 4.0.7); op GitHub slaagt hij. Vermoedelijk verschil in lettertypes.
 
 **Goed om te weten**
 - GitHub Pages cachet 10 minuten. De service worker vangt dat op sinds 3.3.2; een apparaat met een heel oude versie heeft het één keer.
