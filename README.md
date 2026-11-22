@@ -54,10 +54,10 @@ Werkafspraken voor Claude: [`CLAUDE.md`](CLAUDE.md). Testen: [`tests/README.md`]
 
 ## Stand
 
-Bijgewerkt: 22 november 2026 · `main` **4.1.0** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.1.0-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
+Bijgewerkt: 22 november 2026 · `main` **4.2.0** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.2.0-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
 
 - 4.1.0 (PR #76): Instellingen als vierde tabblad onderin op de telefoon (D65).
-- In behandeling (branch `claude/schil-gelijk-aan-core`, nog niet gemerged): kopbalk, tabbalk, tabbladen en zijbalk met precies de maten van PWA-Core, zoals de andere apps (D66). Op de laptop weer een zijbalk links; de fout op de iPad (dubbele appnaam, inhoud tegen de rand) is opgelost. Alle tests lokaal groen.
+- 4.2.0 (PR #77): kopbalk, tabbalk, tabbladen en zijbalk met precies de maten van PWA-Core, zoals de andere apps (D66). Laptop weer met zijbalk links; iPad-fout (dubbele appnaam, inhoud tegen de rand) opgelost. Automatische tests groen; nog niet door Geert op echte apparaten bekeken.
 - 4.0.7 (PR #73–#75): hoofdbalk met logo, naam, versie en synchronisatiestatus; portfoliografiek binnen het paneel.
 - Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten (passkeys, koppelen, synchroniseren, offline, opruimen oude opslag).
 

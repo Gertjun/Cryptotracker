@@ -2,6 +2,18 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
+## 4.2.0 – 22 november 2026
+Bovenbalk, tabbalk en zijbalk zien er nu precies zo uit als in je andere apps.
+
+### Gewijzigd
+- **Telefoon:** grotere appnaam en logo bovenin, ronde knoppen rechts, meer ruimte onder de bovenbalk en een tabbalk met dezelfde maten als je andere apps.
+- **iPad rechtop:** bovenin de appnaam met de knoppen, daaronder de tabbladen in een rij; het actieve tabblad krijgt een gekleurde achtergrond.
+- **Laptop:** weer een zijbalk links met logo, naam, versie en het menu (in te klappen met het pijltje); bovenin de naam van het scherm met de knoppen en + Transactie. Tabellen krijgen meer ruimte.
+
+### Opgelost
+- **iPad:** de appnaam stond twee keer over elkaar, de inhoud plakte tegen de rand en de knoppen bij de grafiek vielen over "Totale waarde".
+- **Licht thema:** het actieve menu-item in de zijbalk heeft genoeg contrast.
+
 ## 4.1.0 – 22 november 2026
 Instellingen als vierde tabblad onderin op de telefoon, net als in je andere apps.
 
