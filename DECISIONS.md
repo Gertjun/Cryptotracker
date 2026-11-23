@@ -356,3 +356,25 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Waarom:** Geert wil eerst zien dat de tests slagen voordat een wijziging op `main` komt en live staat. Sinds de overstap naar PWA-Core werkte het in de praktijk al zo, maar D35 was nooit vervangen.
 - **Afweging:** per wijziging een extra stap (akkoord geven en mergen).
 - **Niet gekozen:** rechtstreeks naar `main` pushen (D35).
+
+### D65 – Instellingen als vierde tabblad onderin op de telefoon (22 november 2026, vervangt D25/D37/D46 voor de telefoon)
+- **Besluit:** de tabbalk onderin (telefoon en liggende telefoon) heeft vier tabbladen: Overzicht, Transacties, Analyse en Instellingen (tandwiel). Het actieve tabblad krijgt de accentkleur. Het tandwiel bovenin en de terugknop op het scherm Instellingen zijn weg, op alle formaten: op laptop en iPad staat Instellingen al in de navigatie (D46).
+- **Waarom:** Geert wil de opbouw gelijk aan zijn andere apps (Vaste Lasten, Energieverbruik), die Instellingen als laatste tabblad onderin hebben, met het actieve tabblad in de accentkleur.
+- **Niet gekozen:** het tandwiel bovenin laten staan naast het tabblad (dubbel); de terugknop houden (een tabblad heeft die niet nodig; de terugknop van de browser of het veegebaar werkt nog wel).
+
+### D66 – Schil gelijk aan PWA-Core: kopbalk, navigatie en werkvlak (22 november 2026, vervangt de indeling uit D40, D43, D46–D48 en 4.0.7)
+- **Besluit:** kopbalk, navigatie en werkvlak gebruiken dezelfde maten als `css/base.css` van PWA-Core, zoals Energieverbruik, Games Backlog en MW4.
+  - **Telefoon (ook liggend):** kopbalk 61 px met icoon 36 px, appnaam 1,2rem vet en versienummer 0,7rem; knoppen rechts als ronde knoppen van 44 px zonder rand, iconen 22 px. Tabbalk onderin 58 px, iconen 24 px, labels 0,7rem; actief in de accentkleur. Werkvlak max. 720 px met 16 px marge.
+  - **iPad rechtop:** dezelfde kopbalk (max. 960 px), daaronder de tabbladen gecentreerd in een rij; actief tabblad als gekleurde pil. Grafiekblok met kop links, zodat de knoppen niet over "Totale waarde" vallen.
+  - **Laptop en iPad liggend:** vaste zijbalk links (236 px, ingeklapt 68 px) met icoon, naam en versie bovenin en Overzicht, Transacties, Analyse en Instellingen; kopbalk rechts daarvan met de schermtitel (1,25rem vet), synchronisatie, oogje, slotje en + Transactie.
+  - Lichte thema's: het actieve menu-item in de zijbalk en op de iPad heeft donkere tekst met een gekleurd icoon (contrast WCAG AA).
+- **Waarom:** Geert vond Crypto Portfolio na 4.0.7 en 4.1.0 nog niet gelijk aan zijn andere apps (uitlijning, positie, lettertype en grootte). Op de iPad stond de appnaam dubbel en plakte de inhoud tegen de rand.
+- **Niet gekozen:** `css/base.css` van PWA-Core echt laden (die zet ook knoppen, formulieren en kaarten anders en zou de hele app raken); de muntenlijsten terug in de zijbalk (de andere apps hebben die niet; ze waren sinds 4.0.7 al verborgen).
+- **Nog open:** op telefoon en iPad staat de naam van de munt niet in beeld op de munt-pagina (alleen het tickericoon), net als sinds 4.0.7.
+
+### D67 – Kopbalk en navigatie uit PWA-Core zelf: base.css en nav.js laden in plaats van namaken (22 november 2026, vervangt D66 en het deel "geen UI" uit het migratieplan)
+- **Besluit:** Crypto Portfolio laadt `css/base.css` van PWA-Core (als cascadelaag `core`) en tekent de navigatie met `createNav()` uit `js/core/nav.js`, net als Energieverbruik, Games Backlog en MW4. De opbouw volgt die van Core: `#screen-app`, `header.app-header`, `nav.app-nav`, `main.app-main`. De eigen nagemaakte schil uit D66 is weg. Eigen app-regels gelden niet in de kopbalk en navigatie (`all:revert-layer`), en Core-regels gelden niet in de inhoud (laag `inhoud` met `all:revert`), zodat de schermen zelf pixelgelijk bleven.
+- **Waarom:** de migratie naar PWA-Core (4.0.x) nam bewust alleen de gegevenskant over ("geen volledige herbouw van de gebruikersinterface"). `css/base.css` en `js/core/nav.js` stonden wel in de app en werden gecontroleerd, maar werden niet gebruikt. Daardoor liep de lay-out uit de pas met de andere apps, en ook pogingen om die na te maken (4.0.7, 4.2.0) bleven een kopie die bij elke Core-update opnieuw zou afwijken. Geert: "de beste oplossing is de juiste oplossing".
+- **Gevolg:** een wijziging aan de schil in PWA-Core komt bij de volgende Core-update ook in Crypto Portfolio. De inklapstand van de zijbalk staat nu in `cpt:nav-collapsed` (zoals de andere apps), niet meer in `settings.sideMin`; de muntenlijsten in de zijbalk zijn weg (waren sinds 4.0.7 al verborgen). In de test-webserver (`tests/serve.mjs`) krijgt `.css` het juiste type.
+- **Niet gekozen:** `css/base.css` zonder laag laden (dan veranderen knoppen, keuzelijsten en kopjes in de hele app); de shell-module (`js/core/shell.js`) gebruiken (die regelt ook vergrendelen, instellingen en schermen; dat is een volledige herbouw); een apart `shell.css` in PWA-Core (vereist een nieuwe Core-release en aanpassingen in alle apps, terwijl `base.css` met lagen al volstaat).
+

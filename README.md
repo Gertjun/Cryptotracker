@@ -26,7 +26,7 @@ Winst en kostprijs worden berekend volgens **FIFO**: bij een verkoop tellen de o
 - **iPhone/iPad (Safari):** open de link, tik op het deelicoon en kies **Zet op beginscherm**.
 - **Laptop (Chrome of Edge):** open de link en klik in de adresbalk op het installeericoon.
 
-Een nieuwe versie komt vanzelf binnen. Naast de appnaam (laptop) of bovenin (telefoon) staat dan "update beschikbaar". Het versienummer zie je onder **Instellingen**.
+Een nieuwe versie komt vanzelf binnen. Naast de appnaam (laptop) of bovenin (telefoon) staat dan "update beschikbaar". Het versienummer staat in de hoofdbalk.
 
 ## Je gegevens
 
@@ -54,12 +54,12 @@ Werkafspraken voor Claude: [`CLAUDE.md`](CLAUDE.md). Testen: [`tests/README.md`]
 
 ## Stand
 
-Bijgewerkt: 20 november 2026 · `main` **4.0.6** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.0.6-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
+Bijgewerkt: 23 november 2026 · `main` **4.3.0** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.3.0-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
 
-- Apparaatkoppeling via het gedeelde protocol PWA-CORE-PAIR-2 (PR #52): alleen owner, repo, branch, pad en token gaan over; het kluiswachtwoord vul je op het nieuwe apparaat apart in. Oude CPK1/CPK2-koppelcodes worden geweigerd.
-- Strengere controle van back-uptransacties (PR #57) en behoud van de grafiekcache bij legacy-opruiming (PR #58, #59) zijn op 19 november gemerged. Na PR #59 slaagden de tests, de PWA-Core-controle en de publicatie op GitHub Pages.
-- Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten: passkeys (iPhone met Face ID, Windows Hello), hergebruik, annuleren en wachtwoord als terugval, koppelen en synchroniseren in beide richtingen, offline wijzigen en herstel, installeren en offline werken, opruimen van de oude opslag en gegevens behouden na herstart. Op `c20cf094` slaagden ook de automatische tests, de PWA-Core-controle en de publicatie op GitHub Pages.
-- 4.0.6 is op 20 november officieel uitgebracht (tag `v4.0.6`). Sindsdien zijn alleen de documenten en het versiescript bijgewerkt (W54); de app zelf is ongewijzigd.
+- 4.3.0 (PR #78): kopbalk en navigatie komen uit PWA-Core zelf (`css/base.css` als laag en `js/core/nav.js`), in plaats van een nagemaakte kopie (D67). De inhoud van alle schermen is op telefoon en iPad pixelgelijk aan 4.2.0 gecontroleerd; automatische tests groen. Nog niet door Geert op echte apparaten bekeken. In PWA-Core vastgelegd als D23 (PR #64).
+- 4.2.0 (PR #77): kopbalk, tabbalk en zijbalk nagemaakt met de maten van PWA-Core (D66, vervangen door D67).
+- 4.1.0 (PR #76): Instellingen als vierde tabblad onderin op de telefoon (D65).
+- Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten (passkeys, koppelen, synchroniseren, offline, opruimen oude opslag).
 
 **Goed om te weten**
 - GitHub Pages cachet 10 minuten. De service worker vangt dat op sinds 3.3.2; een apparaat met een heel oude versie heeft het één keer.
