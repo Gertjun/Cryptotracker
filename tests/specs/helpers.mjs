@@ -1,8 +1,8 @@
 // Gedeelde hulpfuncties voor de tests
 import {expect} from '@playwright/test';
 import {routeCG,routeFng} from '../mock.mjs';
-import path from 'node:path';import {fileURLToPath} from 'node:url';
-export const CSV=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../fixtures/dummy-bitvavo-export.csv');
+import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const FIXTURE=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../fixtures/test-transactions.json');
 // Vaste "nu": koersen uit de nep-CoinGecko en alle berekeningen zijn daardoor elke keer gelijk
 export const NOW=Date.parse('2026-10-26T12:00:00Z');
 
