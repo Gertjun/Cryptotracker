@@ -54,9 +54,9 @@ Werkafspraken voor Claude: [`CLAUDE.md`](CLAUDE.md). Testen: [`tests/README.md`]
 
 ## Stand
 
-Bijgewerkt: 22 november 2026 · `main` **4.2.0** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.2.0-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
+Bijgewerkt: 22 november 2026 · `main` **4.3.0** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.3.0-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
 
-- In behandeling (branch `claude/core-schil-laden`, nog niet gemerged): kopbalk en navigatie komen uit PWA-Core zelf (`css/base.css` als laag en `js/core/nav.js`), in plaats van een nagemaakte kopie (D67). De inhoud van alle schermen is op telefoon en iPad pixelgelijk aan 4.2.0 gecontroleerd. Alle 167 tests lokaal groen.
+- 4.3.0 (PR #78): kopbalk en navigatie komen uit PWA-Core zelf (`css/base.css` als laag en `js/core/nav.js`), in plaats van een nagemaakte kopie (D67). De inhoud van alle schermen is op telefoon en iPad pixelgelijk aan 4.2.0 gecontroleerd; automatische tests groen. Nog niet door Geert op echte apparaten bekeken. In PWA-Core vastgelegd als D23 (PR #64).
 - 4.2.0 (PR #77): kopbalk, tabbalk en zijbalk nagemaakt met de maten van PWA-Core (D66, vervangen door D67).
 - 4.1.0 (PR #76): Instellingen als vierde tabblad onderin op de telefoon (D65).
 - Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten (passkeys, koppelen, synchroniseren, offline, opruimen oude opslag).

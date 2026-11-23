@@ -2,6 +2,19 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
+## 4.3.0 – 23 november 2026
+De bovenbalk en de navigatie komen nu rechtstreeks uit PWA-Core, net als in je andere apps.
+
+### Gewijzigd
+- **Bovenbalk en navigatie:** worden getekend door de gedeelde basis van je apps (PWA-Core) in plaats van een eigen kopie. Een verbetering daarin komt voortaan vanzelf ook in Crypto Portfolio.
+- **Laptop:** de inhoud is iets breder; de zijbalk onthoudt of hij ingeklapt is op dezelfde manier als in je andere apps.
+
+### Opgelost
+- **iPhone (app op het beginscherm):** de ruimte voor de statusbalk kwam er twee keer boven de bovenbalk.
+
+### Technisch
+- **Schil uit PWA-Core:** `css/base.css` geladen als laag `core`, navigatie via `createNav()` uit `js/core/nav.js` (D67). Nieuw bestand `icons/icon-192.png`.
+
 ## 4.2.0 – 22 november 2026
 Bovenbalk, tabbalk en zijbalk zien er nu precies zo uit als in je andere apps.
 
