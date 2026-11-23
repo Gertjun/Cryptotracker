@@ -99,12 +99,6 @@ Je ontvangen beloningen per munt en per jaar, in aantal en in euro's op het mome
 ### W7 – Labels per transactie
 Geef transacties een label, zoals "lange termijn", "trade" of "pensioen". Je kunt dan filteren op label en per label je rendement en inleg zien.
 
-### W11 – Saldocontrole met je broker
-Typ per munt het saldo over dat Bitvavo (of een wallet) toont. De app vergelijkt het met zijn eigen stand en markeert verschillen, zoals "0,42 ADA meer bij Bitvavo". Zo vind je snel een vergeten staking-beloning of een ontbrekende transactie. Bij cash werkt het net zo.
-
-### W15 – Import uit andere brokers
-Naast Bitvavo ook CSV-exports van bijvoorbeeld Coinbase, Kraken en Binance inlezen, met dezelfde controle op dubbele transacties en het koppelen van munten. Handig als je (ook) bij een andere broker zit of overstapt.
-
 ### W18 – Beleggingsdagboek
 Leg bij een aankoop of verkoop vast waaróm je het deed ("dip gekocht na nieuws", "winst genomen"). Na 3, 6 en 12 maanden laat de app zien hoe die beslissing uitpakte, zodat je kunt terugkijken welke redenen goed werkten.
 
@@ -112,10 +106,10 @@ Leg bij een aankoop of verkoop vast waaróm je het deed ("dip gekocht na nieuws"
 Op basis van je waarde op 1 januari (uit het jaaroverzicht) een schatting van de box 3-belasting. Het tarief, het vrije bedrag en een eventuele fiscale partner stel je zelf in, omdat de regels vaak veranderen. Duidelijk gemarkeerd als schatting.
 
 ### W32 – Aankopen in dollar of stablecoin
-Een aankoop of verkoop in dollar, USDT of USDC invoeren. De app rekent die om naar euro tegen de koers van die dag. Handig samen met W15.
+Een aankoop of verkoop in dollar, USDT of USDC invoeren. De app rekent die om naar euro tegen de koers van die dag.
 
-### W35 – Importherinnering
-Een melding op het overzicht als je laatste Bitvavo-import (of transactie) lang geleden is, bijvoorbeeld "Je laatste import is 3 weken oud". Het aantal weken stel je zelf in.
+### W35 – Transactieherinnering
+Een melding op het overzicht als je laatste transactie lang geleden is, bijvoorbeeld "Je hebt 3 weken geen transactie ingevoerd". Het aantal weken stel je zelf in.
 
 ## Grafieken
 
@@ -151,4 +145,4 @@ Een plaatje van je verdeling en je rendement in procenten, zonder bedragen, om t
 ## Bewust niet op de lijst
 
 - **Melding bij een prijsalert terwijl de app dicht is:** daarvoor is een eigen server nodig, en die heeft GitHub Pages niet.
-- **Automatisch transacties ophalen bij Bitvavo:** daarvoor moet een geheime API-sleutel in de webapp staan, en Bitvavo staat verzoeken vanuit de browser waarschijnlijk niet toe. De CSV-import blijft de manier.
+- **Automatisch transacties ophalen bij exchanges:** daarvoor zou de app geheime API-sleutels moeten beheren en afhankelijk zijn van exchange-API's. Dat past niet bij de statische, client-side architectuur.

@@ -1,10 +1,10 @@
 // Inzicht in je portfolio: break-even (W45), bijdrage per munt (W17), meebewegen met bitcoin (W44),
 // munten vergelijken (W27) en het Overzicht zelf indelen (W34).
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv,isPhone} from './helpers.mjs';
+import {openApp,seedTransactions,isPhone} from './helpers.mjs';
 
 test('afstand tot break-even bij een munt op verlies (W45)',async({page},testInfo)=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   const want=await page.evaluate(()=>pct(beNeed(computeCoin('iostoken'))));
   expect(want).toBe('+14,09%');   // IOST staat −12,35% → +14,09% nodig
   await page.evaluate(()=>{location.hash='#coin/iostoken'});
@@ -28,7 +28,7 @@ test('afstand tot break-even bij een munt op verlies (W45)',async({page},testInf
 });
 
 test('bijdrage per munt aan je rendement (W17)',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#analyse/rendement'});
   const card=page.locator('.card.ctb');
   await expect(card).toBeVisible();
@@ -53,7 +53,7 @@ test('bijdrage per munt aan je rendement (W17)',async({page})=>{
 });
 
 test('meebewegen met bitcoin (W44)',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#analyse/vergelijken'});
   const card=page.locator('.card.beta');
   await expect(card).toBeVisible();
@@ -71,7 +71,7 @@ test('meebewegen met bitcoin (W44)',async({page})=>{
 });
 
 test('munten vergelijken in één grafiek (W27)',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#analyse/vergelijken'});
   const card=page.locator('.card.cmp');
   await expect(card).toBeVisible();
@@ -97,7 +97,7 @@ test('munten vergelijken in één grafiek (W27)',async({page})=>{
 });
 
 test('Overzicht zelf indelen: blokken verbergen en verplaatsen, per apparaat (W34)',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   const heads=()=>page.locator('#view > .list-head h2, #view > details.closed summary').allTextContents();
   expect((await heads()).map(t=>t.replace(/\s*\(.*$/,''))).toEqual(['Bezittingen','Volglijst']);
   await page.locator('[data-act=homeblocks]').click();

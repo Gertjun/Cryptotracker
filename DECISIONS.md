@@ -9,7 +9,7 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 ### D1 – Eén statische web-app op GitHub Pages, zonder server of build-stap (okt 2026, v1)
 - **Besluit:** HTML, CSS en JS als losse bestanden, zonder framework of bundler. GitHub Pages host de app.
 - **Waarom:** gratis, Geert kan zelf uploaden, en er is niets te onderhouden.
-- **Niet gekozen:** Vercel. In een andere sessie overwogen om de app openbaar te maken, maar Geert blijft voorlopig bij GitHub Pages. Gevolg: functies die een server nodig hebben, staan onder "Bewust niet op de lijst" in de wishlist: meldingen als de app dicht is, en automatisch ophalen bij Bitvavo.
+- **Niet gekozen:** Vercel. In een andere sessie overwogen om de app openbaar te maken, maar Geert blijft voorlopig bij GitHub Pages. Gevolg: server-afhankelijke functies, zoals meldingen wanneer de app gesloten is, staan onder "Bewust niet op de lijst" in de roadmap.
 
 ### D2 – Versleutelde synchronisatie via één bestand in een privé-GitHub-repository (okt 2026, v1)
 - **Besluit:** alle gegevens in één JSON-bestand, versleuteld met AES-256-GCM. De sleutel komt via PBKDF2 (250.000 rondes) uit een wachtwoord dat alleen de gebruiker kent. Samenvoegen gebeurt per item: de nieuwste `mod` wint, en verwijderingen worden als grafsteen bewaard.
@@ -378,3 +378,10 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Gevolg:** een wijziging aan de schil in PWA-Core komt bij de volgende Core-update ook in Crypto Portfolio. De inklapstand van de zijbalk staat nu in `cpt:nav-collapsed` (zoals de andere apps), niet meer in `settings.sideMin`; de muntenlijsten in de zijbalk zijn weg (waren sinds 4.0.7 al verborgen). In de test-webserver (`tests/serve.mjs`) krijgt `.css` het juiste type.
 - **Niet gekozen:** `css/base.css` zonder laag laden (dan veranderen knoppen, keuzelijsten en kopjes in de hele app); de shell-module (`js/core/shell.js`) gebruiken (die regelt ook vergrendelen, instellingen en schermen; dat is een volledige herbouw); een apart `shell.css` in PWA-Core (vereist een nieuwe Core-release en aanpassingen in alle apps, terwijl `base.css` met lagen al volstaat).
 
+
+
+### D68 – Bitvavo-import verwijderd (23 november 2026)
+- **Besluit:** de CSV-import uit Bitvavo en alle bijbehorende parser-, preview-, muntkoppel-, duplicate-detectie- en importcode zijn verwijderd. De app ondersteunt handmatige transactie-invoer en CSV-export; generieke broker/wallet-velden blijven.
+- **Testen:** tests gebruiken synthetische transacties die rechtstreeks worden ingevoerd, zonder broker-exportfixture.
+- **Waarom:** Geert heeft de Bitvavo-import en eventuele exchange-koppeling niet langer wenselijk geacht. Minder import-specifieke code en testcomplexiteit; geen exchange-specifieke functionaliteit in de app.
+- **Behouden:** bestaande transacties en accountnamen (waaronder eventueel `Bitvavo`), handmatige administratie, back-up en herstel van appgegevens, en portefeuilleberekeningen.

@@ -291,7 +291,7 @@ function acctSummary(){
 }
 // eenmalig: als je de broker als notitie had ingevuld, wordt dat de broker/wallet van de transactie
 function migrateAccounts(){
-  const known=['Bitvavo','eToro','Coinbase','Binance','Kraken','Bybit','Bitpanda','Bitstamp','Crypto.com','OKX','Ledger','Trezor','MetaMask'];let ch=false;
+  const known=['eToro','Coinbase','Binance','Kraken','Bybit','Bitpanda','Bitstamp','Crypto.com','OKX','Ledger','Trezor','MetaMask'];let ch=false;
   for(const t of data.txs){if(t.acct)continue;const k=known.find(n=>n.toLowerCase()===(t.note||'').trim().toLowerCase());if(k){t.acct=k;t.note='';t.mod=Date.now();ch=true}}
   if(ch)saveData();
 }
@@ -581,13 +581,13 @@ function topbarHTML(c,pageTitle,settingsPage=false){
 let txf={q:'',type:'all',coin:'all',year:'all',acct:'all'};
 function renderTxs(){
   $('#topbar').innerHTML=topbarHTML(null,'Transacties');
-  if(!TX().length){$('#view').innerHTML=`<div class="empty"><b>Nog geen transacties</b>Tik op + om je eerste aankoop toe te voegen,<br>of <button type="button" class="link-lg link" data-act="bvimport">importeer ze uit Bitvavo</button>.</div>`;return}
+  if(!TX().length){$('#view').innerHTML=`<div class="empty"><b>Nog geen transacties</b>Tik op + om je eerste aankoop toe te voegen.</div>`;return}
   const coins=coinIds().map(computeCoin).sort((a,b)=>(a.meta.name||'').localeCompare(b.meta.name||''));
   const years=[...new Set(TX().map(t=>t.date.slice(0,4)))].sort().reverse();
   if(txf.coin!=='all'&&!coins.some(c=>c.coinId===txf.coin))txf.coin='all';
   if(txf.year!=='all'&&!years.includes(txf.year))txf.year='all';
   const accts=accounts();if(txf.acct!=='all'&&!accts.includes(txf.acct))txf.acct='all';
-  $('#view').innerHTML=`<div class="txp${txOpen?' open':''}"><div class="tx-actions"><button type="button" class="link" data-act="csvfiltered">Exporteren (CSV)</button><button type="button" class="link" data-act="bvimport">Importeren uit Bitvavo</button></div><div class="filters">
+  $('#view').innerHTML=`<div class="txp${txOpen?' open':''}"><div class="tx-actions"><button type="button" class="link" data-act="csvfiltered">Exporteren (CSV)</button></div><div class="filters">
     <label class="sr-only" for="tf_q">Zoek op munt of notitie</label><input id="tf_q" type="search" enterkeyhint="search" placeholder="Zoek op munt of notitie" value="${esc(txf.q)}" autocomplete="off">
     <button type="button" class="filt-btn" data-act="txfilt" aria-expanded="${txOpen}" aria-controls="txMore">Filter<span class="filt-n" id="filtN"></span></button>
     <div class="tx-more" id="txMore"><fieldset class="seg"><legend class="sr-only">Soort transactie</legend>${[['all','Alle'],['buy','Koop'],['sell','Verkoop'],...(hasCashTx()?[['cash','Cash']]:[]),...(data.txs.some(t=>isOther(t.type))?[['other','Overig']]:[])].map(([v,l])=>`<button type="button" data-tf="${v}" class="${v} ${txf.type===v?'on':''}">${l}</button>`).join('')}</fieldset>
@@ -876,113 +876,6 @@ function renderHome(){
   <div class="side-col">${BL.side}</div></div>
   ${BL.main}<p class="home-edit"><button type="button" class="link" data-act="homeblocks">Overzicht indelen</button></p>`;
   drawPortfolioChart();placeUnitMenu();need4h();
-}
-/* ---------- import uit Bitvavo (CSV) ---------- */
-// Kolommen: Timezone, Date, Time, Type, Currency, Amount, Quote Currency, Quote Price, Received / Paid Currency,
-// Received / Paid Amount, Fee currency, Fee amount, Status, Transaction ID, Address
-const CG_MAP={btc:'bitcoin',eth:'ethereum',ada:'cardano',xlm:'stellar',usdt:'tether',usdc:'usd-coin',sol:'solana',xrp:'ripple',doge:'dogecoin',dot:'polkadot',link:'chainlink',avax:'avalanche-2',ltc:'litecoin',bnb:'binancecoin',shib:'shiba-inu',pepe:'pepe',trx:'tron',atom:'cosmos',near:'near',uni:'uniswap',fet:'fetch-ai',iost:'iostoken',algo:'algorand',xtz:'tezos',vet:'vechain',hbar:'hedera-hashgraph',icp:'internet-computer',arb:'arbitrum',op:'optimism',sui:'sui',apt:'aptos',grt:'the-graph',aave:'aave',sand:'the-sandbox',mana:'decentraland',chz:'chiliz',bch:'bitcoin-cash',etc:'ethereum-classic',kas:'kaspa',ton:'the-open-network'};
-function parseCSV(text){
-  text=text.replace(/^﻿/,'');const first=text.split('\n')[0],d=(first.match(/;/g)||[]).length>(first.match(/,/g)||[]).length?';':',';
-  const rows=[];let row=[],f='',q=false;
-  for(let i=0;i<text.length;i++){const c=text[i];
-    if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
-    else if(c==='"')q=true;else if(c===d){row.push(f);f=''}else if(c==='\n'){row.push(f);rows.push(row);row=[];f=''}else if(c!=='\r')f+=c}
-  if(f||row.length){row.push(f);rows.push(row)}
-  return rows.filter(r=>r.some(x=>x.trim()));
-}
-let imp=null;
-function parseBitvavo(text){
-  const rows=parseCSV(text);if(rows.length<2)throw new Error('Leeg bestand');
-  const H=rows[0].map(h=>h.trim().toLowerCase()),col=n=>H.indexOf(n);
-  const need=['type','currency','amount','date'];if(need.some(n=>col(n)<0))throw new Error('Dit lijkt geen Bitvavo-export (kolommen ontbreken)');
-  const g=(r,n)=>{const i=col(n);return i<0?'':(r[i]||'').trim()},N=v=>{const x=parseFloat(String(v).replace(/\s/g,''));return isFinite(x)?x:0};
-  const items=[],skipped=[];
-  rows.slice(1).forEach((r,ix)=>{
-    const type=g(r,'type').toLowerCase(),cur=g(r,'currency').toUpperCase(),amt=N(g(r,'amount')),status=g(r,'status').toLowerCase();
-    const txid=g(r,'transaction id')||`${g(r,'date')}-${g(r,'time')}-${type}-${cur}-${amt}`;
-    const date=`${g(r,'date')}T${(g(r,'time')||'00:00:00').slice(0,8)}`;
-    const feeCur=g(r,'fee currency').toUpperCase(),fee=Math.abs(N(g(r,'fee amount'))),feeE=feeCur==='EUR'?fee:0;
-    const rp=Math.abs(N(g(r,'received / paid amount'))),qp=N(g(r,'quote price')),quote=g(r,'quote currency').toUpperCase();
-    const base={id:'bv-'+txid,ext:'bitvavo',date,acct:'Bitvavo',note:'',row:ix+2};
-    const skip=why=>skipped.push({row:ix+2,type,cur,why});
-    if(status&&!['completed','distributed','voltooid','uitgekeerd'].includes(status))return skip('status: '+status);
-    if(!amt)return skip('geen aantal');
-    if(cur==='EUR'){
-      if(type==='deposit')items.push({...base,type:'deposit',amount:Math.abs(amt),fee:feeE});
-      else if(type==='withdrawal')items.push({...base,type:'withdraw',amount:Math.abs(amt),fee:feeE});
-      else skip('onbekend type');return;
-    }
-    const sym=cur.toLowerCase(),q=Math.abs(amt);
-    if((type==='buy'||type==='sell')&&quote&&quote!=='EUR')return skip('niet in euro ('+quote+')');
-    if(type==='buy')items.push({...base,type:'buy',sym,qty:q,price:rp?(rp-feeE)/q:qp,fee:feeE});
-    else if(type==='sell')items.push({...base,type:'sell',sym,qty:q,price:rp?(rp+feeE)/q:qp,fee:feeE});
-    else if(type==='withdrawal')items.push({...base,type:'transfer',sym,qty:q,feeQty:feeCur===cur?Math.min(fee,q*0.999999):0,to:'Externe wallet',price:0,fee:0});
-    else if(type==='deposit')items.push({...base,type:'receive',sym,qty:q,price:0,fee:0,note:'Storting van externe wallet: vul zo nodig de aankoopprijs aan'});
-    else if(amt>0)items.push({...base,type:'receive',sym,qty:q,price:0,fee:0,note:type.charAt(0).toUpperCase()+type.slice(1).replace(/_/g,' ')});
-    else skip('onbekend type');
-  });
-  return{items,skipped};
-}
-async function startImport(file){
-  let res;try{res=parseBitvavo(await file.text())}catch(e){return toast(e.message||'Bestand niet leesbaar')}
-  const syms=[...new Set(res.items.filter(i=>i.sym).map(i=>i.sym))];
-  imp={...res,map:{},cands:{},replace:true,fname:file.name};
-  // koppeling symbool → CoinGecko-munt: eerst je eigen transacties, dan bekende munten, dan zoeken
-  for(const s of syms){const own=data.txs.find(t=>(t.symbol||'').toLowerCase()===s&&t.coinId);imp.map[s]=own?own.coinId:CG_MAP[s]||null;
-    imp.cands[s]=own?[{id:own.coinId,name:own.name,symbol:own.symbol,image:own.image}]:[]}
-  renderImport();
-  await Promise.all(syms.map(async s=>{try{const r=await cg(`/search?query=${encodeURIComponent(s)}`);const j=await r.json();
-    const ex=(j.coins||[]).filter(c=>c.symbol.toLowerCase()===s).sort((a,b)=>(a.market_cap_rank||1e9)-(b.market_cap_rank||1e9)).slice(0,6).map(c=>({id:c.id,name:c.name,symbol:c.symbol,image:c.large||c.thumb}));
-    for(const c of ex)if(!imp.cands[s].some(x=>x.id===c.id))imp.cands[s].push(c);
-    if(!imp.map[s]&&imp.cands[s].length)imp.map[s]=imp.cands[s][0].id;
-  }catch(e){}if(imp)renderImport()}));
-}
-function importPlan(){
-  const seen=new Set([...data.txs.map(t=>t.id),...(data.deleted||[])]),used=new Set();
-  const fresh=imp.items.filter(i=>!seen.has(i.id)),already=imp.items.length-fresh.length;
-  const ready=fresh.filter(i=>!i.sym||imp.map[i.sym]),unmapped=fresh.length-ready.length;
-  const dups=[];
-  for(const i of ready){
-    const coinId=i.sym?imp.map[i.sym]:null;
-    const m=data.txs.filter(t=>pfOf(t)===(imp?.pf||pfNew())).find(t=>!t.ext&&!used.has(t.id)&&t.type===i.type&&t.date.slice(0,10)===i.date.slice(0,10)&&(coinId?t.coinId===coinId&&Math.abs(t.qty-i.qty)<=1e-9+1e-6*i.qty:Math.abs((t.amount||0)-i.amount)<0.005));
-    if(m){used.add(m.id);dups.push([i,m])}
-  }
-  return{fresh,ready,already,unmapped,dups};
-}
-function renderImport(){
-  if(!imp)return;const P=importPlan(),cnt={};P.ready.forEach(i=>cnt[i.type]=(cnt[i.type]||0)+1);
-  const syms=Object.keys(imp.map);
-  openSheet(`<h2 class="h3">Importeren uit Bitvavo</h2><p class="mt-0 hint">${esc(imp.fname)} · ${imp.items.length+imp.skipped.length} regels</p>
-  ${multiPf()?`<div class="field"><label for="imp_pf">Importeren in portefeuille</label><select id="imp_pf">${pfList().map(p=>`<option value="${esc(p.id)}"${(imp.pf||pfNew())===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select></div>`:''}
-  <div class="card-alt card kv">
-    <div><span class="label">Nieuw om te importeren</span><b>${P.ready.length}</b></div>
-    ${Object.entries(cnt).map(([t,n])=>`<div><span class="indent label">${TYPE_L[t]}</span><span>${n}</span></div>`).join('')}
-    <div><span class="label">Al geïmporteerd of eerder verwijderd</span><span>${P.already}</span></div>
-    ${imp.skipped.length?`<div><span class="label">Overgeslagen</span><span>${imp.skipped.length}</span></div>`:''}
-    ${P.unmapped?`<div><span class="warn-mark label">Wacht op muntkoppeling</span><span>${P.unmapped}</span></div>`:''}
-  </div>
-  ${P.dups.length?`<label class="chk"><input type="checkbox" id="imp_rep" ${imp.replace?'checked':''}><span><b>${P.dups.length} transactie${P.dups.length>1?'s':''} heb je al met de hand ingevoerd.</b> Vervang die door de exacte gegevens uit Bitvavo (aanbevolen; je notities blijven bewaard). Anders worden ze overgeslagen.</span></label>`:''}
-  ${syms.length?`<div class="section-t">Munten koppelen</div>${syms.map(s=>`<div class="imp-map"><label for="imp_${esc(s)}"><b>${esc(s.toUpperCase())}</b><span class="sr-only"> koppelen aan munt</span></label><select id="imp_${esc(s)}" data-impmap="${esc(s)}">${imp.cands[s].length?'':`<option value="">${imp.map[s]?esc(imp.map[s]):'zoeken…'}</option>`}${imp.cands[s].map(c=>`<option value="${esc(c.id)}"${imp.map[s]===c.id?' selected':''}>${esc(c.name)} (${esc(c.id)})</option>`).join('')}</select></div>`).join('')}`:''}
-  ${imp.skipped.length?`<details class="mt-12"><summary class="label">Overgeslagen regels bekijken</summary>${imp.skipped.map(x=>`<div class="skip-row label">Regel ${x.row}: ${esc(x.type)} ${esc(x.cur)} (${esc(x.why)})</div>`).join('')}</details>`:''}
-  <p class="mt-12 hint">Crypto-opnames worden een <b>overboeking</b> van Bitvavo naar "Externe wallet" (de naam kun je later aanpassen). Staking en andere beloningen worden <b>Ontvangen</b>. Alles krijgt broker/wallet "Bitvavo".</p>
-  <button type="button" class="btn" data-act="doimport" ${P.ready.length-(imp.replace?0:P.dups.length)>0||(imp.replace&&P.dups.length)?'':'disabled'}>Importeer ${P.ready.length-(imp.replace?0:P.dups.length)} transacties</button>
-  <button type="button" class="btn sec" data-act="cancelimport">Annuleren</button>`);
-  document.querySelectorAll('[data-impmap]').forEach(el=>el.onchange=()=>{imp.map[el.dataset.impmap]=el.value||null;renderImport()});
-  const rc=$('#imp_rep');if(rc)rc.onchange=()=>{imp.replace=rc.checked;renderImport()};
-}
-function doImport(){
-  if($('#imp_pf'))imp.pf=$('#imp_pf').value;
-  const P=importPlan(),dupIds=new Map(P.dups.map(([i,m])=>[i.id,m])),now=Date.now();let n=0,k=0;
-  for(const i of P.ready){
-    const m=dupIds.get(i.id);
-    if(m&&!imp.replace)continue;
-    if(m){data.txs=data.txs.filter(t=>t.id!==m.id);data.deleted.push(m.id);k++}
-    const c=i.sym?(imp.cands[i.sym].find(x=>x.id===imp.map[i.sym])||{id:imp.map[i.sym],name:i.sym.toUpperCase(),symbol:i.sym}):null;
-    const {sym,row,...t}=i;
-    const tp=imp.pf||pfNew();data.txs.push({...t,...(c?{coinId:c.id,name:c.name,symbol:c.symbol,image:c.image}:{}),note:m?.note||t.note||'',created:now+n,mod:now,dev:devId(),...(tp!=='main'?{pf:tp}:{})});n++;
-  }
-  imp=null;saveData();closeSheet();refreshPrices();setTimeout(collectHistory,3000);render();
-  toast(`${n} transacties geïmporteerd${k?` (${k} handmatige vervangen)`:''}`);
 }
 /* ---------- analyse (voorheen Rapporten) ---------- */
 // Analyse in vier tabbladen; '#analyse' zonder tabblad opent het laatst bekeken tabblad.
@@ -2401,7 +2294,7 @@ function renderTxSheet(){
   const f=form,cash=isCash(f.type),sym=esc(((f.coin||{}).symbol||'').toUpperCase());
   const seg=`<fieldset class="seg seg4"><legend class="sr-only">Soort transactie</legend>${['buy','sell','deposit','withdraw','receive','transfer'].map(k=>`<button type="button" data-type="${k}" class="${k} ${f.type===k?'on':''}">${TYPE_L[k]}</button>`).join('')}</fieldset>`;
   const accts=accounts();
-  const dl=`<datalist id="acctList">${[...new Set([...accts,'Bitvavo','eToro','Ledger','Eigen wallet'])].map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
+  const dl=`<datalist id="acctList">${[...new Set([...accts,'eToro','Ledger','Eigen wallet'])].map(a=>`<option value="${esc(a)}">`).join('')}</datalist>`;
   const acctF=(id,label,val)=>`<div class="field"><label for="${id}">${label}</label><input type="text" id="${id}" list="acctList" value="${esc(val)}" placeholder="bijv. Bitvavo" autocomplete="off"></div>`;
   const coinPick=f.coin?`<div class="chosen">${coinIcon({coinId:f.coin.id,symbol:f.coin.symbol,image:f.coin.image},28)}<div><b>${esc(f.coin.name)}</b> <span class="muted">${sym}</span></div>${f.id?'':'<button type="button" data-act="changecoin">Wijzig</button>'}</div>`
     :`<div class="field"><label for="f_search">Munt zoeken</label><input type="text" id="f_search" enterkeyhint="search" placeholder="bijv. Bitcoin, ETH, Solana" autocomplete="off"></div><ul class="results" id="f_results"></ul>`;
@@ -2511,7 +2404,7 @@ function deleteTx(){
 
 // Instellingen in onderdelen (D46): op de laptop en iPad links de lijst, rechts de blokken van het gekozen onderdeel.
 // Op de telefoon staat alles onder elkaar (de lijst is daar verborgen). Het gekozen onderdeel staat in settings.setSec (per apparaat).
-const SETSECS=[['sync','Synchronisatie','Koppeling met GitHub, andere apparaten en eerdere versies'],['view','Weergave','Thema en valuta'],['pf','Portefeuilles','Aparte portefeuilles toevoegen en wijzigen'],['sec','Beveiliging','App-vergrendeling met Face ID of passkey'],['cg','Koersdata en markt','CoinGecko-sleutel, koersarchief en marktsentiment'],['data','Gegevens','Importeren uit Bitvavo, back-up en wissen'],['about','Over de app','Versie, wijzigingen en installeren']];
+const SETSECS=[['sync','Synchronisatie','Koppeling met GitHub, andere apparaten en eerdere versies'],['view','Weergave','Thema en valuta'],['pf','Portefeuilles','Aparte portefeuilles toevoegen en wijzigen'],['sec','Beveiliging','App-vergrendeling met Face ID of passkey'],['cg','Koersdata en markt','CoinGecko-sleutel, koersarchief en marktsentiment'],['data','Gegevens','Back-up en wissen'],['about','Over de app','Versie, wijzigingen en installeren']];
 const curSetSec=()=>SETSECS.some(x=>x[0]===settings.setSec)?settings.setSec:'sync';
 function coreSyncStatus(){
   const info=coreRuntime?.getSyncInfo?.()||{};
@@ -2603,11 +2496,7 @@ function renderSettings(){
   <label class="chk"><input type="checkbox" id="s_fng"${fngOn()?' checked':''}><span>Marktsentiment tonen op het Overzicht</span></label>
   <p class="mt-0 hint">De angst- en hebzuchtmeter komt van alternative.me. Staat dit uit, dan maakt de app geen verbinding met die dienst. Geldt alleen voor dit apparaat.</p>
   </section>`)}
-  ${pane('data',`<section class="card" aria-labelledby="st_imp"><h2 class="h3" id="st_imp">Importeren uit Bitvavo</h2>
-  <p class="mt-0 hint">Download in Bitvavo je transactiegeschiedenis als CSV-bestand (menu rechtsboven → Transactiegeschiedenis → downloaden) en lees het hier in. Bestaande transacties worden herkend, dus je kunt hetzelfde bestand later opnieuw importeren.</p>
-  <button type="button" class="btn sec" data-act="bvimport">Importeren uit Bitvavo (CSV)</button>
-  </section>
-  <section class="card" aria-labelledby="st_bak"><h2 class="h3" id="st_bak">Back-up</h2>
+  ${pane('data',`<section class="card" aria-labelledby="st_bak"><h2 class="h3" id="st_bak">Back-up</h2>
   <p class="mt-0 hint">Een back-up is een bestand met al je gegevens (niet versleuteld). Bewaar het op een veilige plek.${settings.lastExport?` Laatste back-up: <b>${fmtTs(settings.lastExport)}</b>.`:''}</p>
   <div class="two"><button type="button" class="btn sec" data-act="export">Exporteren</button><button type="button" class="btn sec" data-act="import">Importeren</button></div>
   <input type="file" id="s_file" accept="application/json,.json" hidden>
@@ -3152,9 +3041,6 @@ document.addEventListener('click',e=>{
     case 'hcolreset':setHoldCols(HCOLS.map(x=>({k:x.k,off:x.off,hide:!!x.off})));render();openHoldCols('[data-act="hcolreset"]');toast('Standaardkolommen hersteld');break;
     case 'unitmenu':if(!hasPopover){const i=UNITS.findIndex(x=>x[0]===(settings.unit||'EUR'));setUnit(UNITS[(i+1)%3][0],a)}break;
     case 'pview':settings.pView=a.dataset.v;saveSettings();document.querySelectorAll('[data-act=pview]').forEach(b=>{const on=b.dataset.v===a.dataset.v;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});drawPortfolioChart();if($('#pzchart'))drawPfZoom();break;
-    case 'bvimport':$('#bvFile').value='';$('#bvFile').click();break;
-    case 'doimport':doImport();break;
-    case 'cancelimport':imp=null;closeSheet();break;
     case 'addwatch':openWatchAdd();break;
     case 'watch':{const id=decodeURIComponent((location.hash.match(/^#coin\/(.+)$/)||[])[1]||'');const c=computeCoin(id);const on=!isWatched(id);setWatch({id,name:c.meta.name,symbol:c.meta.symbol,image:c.meta.image},on);if(!on&&!c.txs.length)location.hash='';render();toast(on?'Toegevoegd aan volglijst':'Van volglijst verwijderd');break}
     case 'addbuy':{const id=decodeURIComponent((location.hash.match(/^#coin\/(.+)$/)||[])[1]||'');openTx({coinId:id});break}
@@ -3206,8 +3092,7 @@ document.addEventListener('click',e=>{
       data.deleted=[...new Set([...data.deleted,...data.txs.map(t=>t.id)])];data.txs=[];saveData();closeSheet();location.hash='';render();toast('Alles gewist');break;
   }
 });
-$('#bvFile').onchange=e=>{const f=e.target.files[0];if(f){closeSheet();startImport(f)}};
-document.addEventListener('change',e=>{if(e.target.dataset.hblk){const bl=homeBlocks(),x=bl.find(b=>b.k===e.target.dataset.hblk);if(x){if(x.k==='fng'){settings.fng=e.target.checked;if(e.target.checked)refreshFng()}x.hide=!e.target.checked;setHomeBlocks(bl);render()}return}if(e.target.dataset.hcol){const cols=holdCols(),x=cols.find(c=>c.k===e.target.dataset.hcol);if(x){x.hide=!e.target.checked;setHoldCols(cols);render();if(x.k==='ch4h'&&!x.hide)need4h()}return}if(e.target.id==='imp_pf'&&imp){imp.pf=e.target.value;renderImport();$('#imp_pf')?.focus();return}if(e.target.dataset.act==='cmpsel'){const ids=[0,1,2].map(i=>$('#cmp_'+i)?.value||'');settings.cmpIds=ids;saveSettings();keepFocus(()=>inEUR(renderReports));return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
+document.addEventListener('change',e=>{if(e.target.dataset.hblk){const bl=homeBlocks(),x=bl.find(b=>b.k===e.target.dataset.hblk);if(x){if(x.k==='fng'){settings.fng=e.target.checked;if(e.target.checked)refreshFng()}x.hide=!e.target.checked;setHomeBlocks(bl);render()}return}if(e.target.dataset.hcol){const cols=holdCols(),x=cols.find(c=>c.k===e.target.dataset.hcol);if(x){x.hide=!e.target.checked;setHoldCols(cols);render();if(x.k==='ch4h'&&!x.hide)need4h()}return}if(e.target.dataset.act==='cmpsel'){const ids=[0,1,2].map(i=>$('#cmp_'+i)?.value||'');settings.cmpIds=ids;saveSettings();keepFocus(()=>inEUR(renderReports));return}if(e.target.dataset.act==='bench'){settings.bench=e.target.value;saveSettings();renderReports();return}if(e.target.dataset.act==='sort'){settings.sort=e.target.value;saveSettings();render()}});
 $('#btnAdd').onclick=()=>{const m=location.hash.match(/^#coin\/(.+)$/);openTx(m?{coinId:decodeURIComponent(m[1])}:{})};
 window.addEventListener('hashchange',()=>{closeZoom();window.scrollTo(0,0);render()});
 // Plusknop opzij bij omlaag scrollen (dekt dan geen knoppen of totalen af), terug bij omhoog scrollen of bovenaan

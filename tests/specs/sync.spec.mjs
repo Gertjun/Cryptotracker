@@ -1,6 +1,6 @@
 // Versleutelde GitHub-synchronisatie tussen twee apparaten (met een nep-GitHub)
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv} from './helpers.mjs';
+import {openApp,seedTransactions} from './helpers.mjs';
 
 test.describe.configure({mode:'serial'});
 test.beforeEach(()=>test.skip(test.info().project.name!=='laptop','één keer is genoeg (laptop)'));
@@ -18,7 +18,7 @@ test('transacties, portefeuilles en verwijderen komen op het andere apparaat aan
   const gh=fakeGitHub();
   const dev=async()=>{const ctx=await browser.newContext({viewport:{width:1280,height:800}});const p=await ctx.newPage();await gh(p);await openApp(p);
     await p.evaluate(g=>{Object.assign(settings.gh,g);saveSettings()},GH);return p};
-  const A=await dev();await importCsv(A);
+  const A=await dev();await seedTransactions(A);
   await A.evaluate(()=>{data.portfolios=[{id:'pP',name:'Partner',mod:Date.now()}];
     data.txs.push({id:'pt1',pf:'pP',type:'buy',coinId:'ethereum',name:'Ethereum',symbol:'eth',qty:0.1,price:3000,fee:1,date:'2026-10-01',created:Date.now(),mod:Date.now()});saveData()});
   await A.evaluate(()=>syncNow(false));await A.waitForFunction(()=>syncState.s==='ok');
@@ -34,7 +34,7 @@ test('transacties, portefeuilles en verwijderen komen op het andere apparaat aan
 test('nieuw apparaat koppelen met koppelcode en pincode',async({browser})=>{
   const gh=fakeGitHub();
   const dev=async()=>{const ctx=await browser.newContext({viewport:{width:1280,height:800}});const p=await ctx.newPage();await gh(p);await openApp(p);return p};
-  const A=await dev();await A.evaluate(g=>{Object.assign(settings.gh,g);saveSettings()},GH);await importCsv(A);
+  const A=await dev();await A.evaluate(g=>{Object.assign(settings.gh,g);saveSettings()},GH);await seedTransactions(A);
   await A.evaluate(()=>syncNow(false));await A.waitForFunction(()=>syncState.s==='ok');
   await A.evaluate(()=>openSettings());await A.locator('[data-act=pairout]').click();
   const code=await A.locator('#pair_out').inputValue(),pin=await A.locator('.pair-pin').textContent();

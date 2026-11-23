@@ -1,9 +1,9 @@
 // Indeling (3.14.0): Analyse (voorheen Rapporten), filters op de telefoon, volgorde op de munt-pagina, zijbalk en kolomkoppen.
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv,isPhone} from './helpers.mjs';
+import {openApp,seedTransactions,isPhone} from './helpers.mjs';
 
 test('oude adressen van Rapporten openen het juiste tabblad van Analyse',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#rapporten/analyse'});
   await expect(page).toHaveURL(/#analyse\/vergelijken$/);
   await expect(page.locator('.rep-tabs [aria-current="page"]')).toHaveText('Vergelijken');
@@ -17,7 +17,7 @@ test('oude adressen van Rapporten openen het juiste tabblad van Analyse',async({
 
 test('telefoon: filters en totalen staan achter de knop Filter',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#transacties'});
   const btn=page.locator('.filt-btn');
   await expect(btn).toHaveAttribute('aria-expanded','false');
@@ -33,7 +33,7 @@ test('telefoon: filters en totalen staan achter de knop Filter',async({page},tes
 
 test('telefoon: transacties van een munt staan vóór de rekenhulpen',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#coin/bitcoin'});
   const txY=(await page.locator('.coin-txs').boundingBox()).y,toolsY=(await page.locator('.coin-tools').boundingBox()).y;
   expect(txY).toBeLessThan(toolsY);
@@ -41,7 +41,7 @@ test('telefoon: transacties van een munt staan vóór de rekenhulpen',async({pag
 
 test('laptop: zijbalk en kopbalk komen uit PWA-Core (D67)',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen op laptop en tablet');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   const nav=page.locator('.app-nav');
   // de navigatie is gemaakt door js/core/nav.js en de opmaak komt uit css/base.css (laag core)
   await expect(nav.locator('.app-nav-brand .app-title')).toHaveText('Crypto Portfolio');
@@ -65,7 +65,7 @@ test('laptop: zijbalk en kopbalk komen uit PWA-Core (D67)',async({page},testInfo
 
 test('laptop: hoofdbalkacties zijn bereikbaar en openen de juiste schermen',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen op laptop en tablet');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await expect(page.locator('#topbar .header-add')).toBeVisible();
   await expect(page.locator('#topbar .header-sync')).toBeVisible();
   await expect(page.locator('#topbar [data-act=privacy]')).toBeVisible();
@@ -81,7 +81,7 @@ test('laptop: hoofdbalkacties zijn bereikbaar en openen de juiste schermen',asyn
 
 test('telefoon: Instellingen is een vierde tabblad onderin; velden blijven staan (D65, D67)',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#transacties'});await expect(page.locator('#txOut')).toBeVisible();
   await expect(page.locator('#topbar [data-act=settings], #topbar [data-act=setback]')).toHaveCount(0);   // geen tandwiel bovenin
   const btn=id=>page.locator(`.app-nav .app-nav-btn[data-screen="${id}"]`);
@@ -94,7 +94,7 @@ test('telefoon: Instellingen is een vierde tabblad onderin; velden blijven staan
   const tb=await btn('settings').boundingBox();expect(tb.height).toBeGreaterThanOrEqual(44);
   await expect(page.locator('#sheet')).toBeHidden();
   await expect(page.locator('.set-nav')).toBeHidden();   // op de telefoon alle blokken onder elkaar
-  for(const id of ['st_view','st_unit','st_pf','st_sec','st_sync','st_dev','st_cg','st_fng','st_imp','st_bak','st_danger','st_about'])await expect(page.locator('#'+id)).toBeVisible();
+  for(const id of ['st_view','st_unit','st_pf','st_sec','st_sync','st_dev','st_cg','st_fng','st_bak','st_danger','st_about'])await expect(page.locator('#'+id)).toBeVisible();
   await expect(page.locator('#btnAdd')).toBeHidden();
   // een koersupdate tekent het scherm niet opnieuw: wat je typt blijft staan
   await page.fill('#s_repo','geert/test');await page.evaluate(()=>render());
@@ -118,7 +118,7 @@ test('telefoon: Instellingen is een vierde tabblad onderin; velden blijven staan
 
 test('laptop: hoofdbalk bevat acties en navigatie is volledig bereikbaar',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen op laptop en tablet');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await expect(page.locator('#topbar .header-add')).toBeVisible();
   await expect(page.locator('#topbar .header-sync')).toBeVisible();
   await expect(page.locator('#topbar [data-act=privacy]')).toBeVisible();
@@ -135,7 +135,7 @@ test('laptop: hoofdbalk bevat acties en navigatie is volledig bereikbaar',async(
 });
 test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',async({page},testInfo)=>{
   test.skip(!isPhone(testInfo),'alleen op de telefoon');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(()=>{location.hash='#transacties'});
   await page.waitForTimeout(300);
   await page.evaluate(()=>window.scrollTo(0,1500));
@@ -150,7 +150,7 @@ test('telefoon: de bovenbalk met appnaam en knoppen blijft staan bij scrollen',a
 
 test('één navigatie van PWA-Core: tabbalk, tabbladen of zijbalk per schermformaat (D67)',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'alleen met een instelbaar venster');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   const nav=page.locator('.app-nav');
   for(const [w,h,mode] of [[820,1180,'tabs'],[744,1133,'tabs'],[932,430,'phone'],[390,844,'phone'],[1440,900,'side']]){
     await page.setViewportSize({width:w,height:h});

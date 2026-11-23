@@ -1,8 +1,8 @@
 // Gedeelde hulpfuncties voor de tests
 import {expect} from '@playwright/test';
 import {routeCG,routeFng} from '../mock.mjs';
-import path from 'node:path';import {fileURLToPath} from 'node:url';
-export const CSV=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../fixtures/dummy-bitvavo-export.csv');
+import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const FIXTURE=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../fixtures/test-transactions.json');
 // Vaste "nu": koersen uit de nep-CoinGecko en alle berekeningen zijn daardoor elke keer gelijk
 export const NOW=Date.parse('2026-10-26T12:00:00Z');
 
@@ -20,11 +20,10 @@ export async function openApp(page,{theme='dark',fngFail=false}={}){
   await page.goto('/index.html');
   return errors;
 }
-// Importeer de test-export van Bitvavo (85 regels, 84 transacties)
-export async function importCsv(page){
-  await page.evaluate(()=>{document.querySelector('#bvFile').value=''});
-  await page.setInputFiles('#bvFile',CSV);
-  await page.locator('[data-act=doimport]').click();
+// Seed de app met generieke synthetische transacties; geen broker-importfunctie nodig.
+export async function seedTransactions(page){
+  const txs=JSON.parse(await fs.readFile(FIXTURE,'utf8'));
+  await page.evaluate(txs=>{data.txs=txs;data.deleted=[];saveData(false);render()},txs);
   await expect(page.locator('#heroVal')).toBeVisible();
   await page.waitForFunction(()=>Object.keys(prices||{}).length>=4);
 }
