@@ -1,6 +1,6 @@
 // Rooktest: alle schermen openen zonder JavaScript-fouten of CSP-blokkades
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv,chartReady} from './helpers.mjs';
+import {openApp,seedTransactions,chartReady} from './helpers.mjs';
 
 const screens=[
   ['Overzicht',async p=>{await p.evaluate(()=>{location.hash=''});await chartReady(p)}],
@@ -14,7 +14,7 @@ const screens=[
 
 test('alle schermen zonder fouten',async({page})=>{
   const errors=await openApp(page);
-  await importCsv(page);
+  await seedTransactions(page);
   for(const [name,go] of screens){await test.step(name,async()=>{await go(page);await page.waitForTimeout(300)})}
   for(const v of ['total','ptotal','assets','pct'])await test.step('grafiek '+v,async()=>{
     await page.evaluate(v=>{closeZoom();settings.pView=v;saveSettings();location.hash='';render()},v);await chartReady(page)});
