@@ -2496,11 +2496,7 @@ function renderSettings(){
   <label class="chk"><input type="checkbox" id="s_fng"${fngOn()?' checked':''}><span>Marktsentiment tonen op het Overzicht</span></label>
   <p class="mt-0 hint">De angst- en hebzuchtmeter komt van alternative.me. Staat dit uit, dan maakt de app geen verbinding met die dienst. Geldt alleen voor dit apparaat.</p>
   </section>`)}
-  ${pane('data',`<section class="card" aria-labelledby="st_imp"><h2 class="h3" id="st_imp">Importeren uit Bitvavo</h2>
-  <p class="mt-0 hint">Download in Bitvavo je transactiegeschiedenis als CSV-bestand (menu rechtsboven → Transactiegeschiedenis → downloaden) en lees het hier in. Bestaande transacties worden herkend, dus je kunt hetzelfde bestand later opnieuw importeren.</p>
-  <button type="button" class="btn sec" data-act="bvimport">Importeren uit Bitvavo (CSV)</button>
-  </section>
-  <section class="card" aria-labelledby="st_bak"><h2 class="h3" id="st_bak">Back-up</h2>
+  ${pane('data',`<section class="card" aria-labelledby="st_bak"><h2 class="h3" id="st_bak">Back-up</h2>
   <p class="mt-0 hint">Een back-up is een bestand met al je gegevens (niet versleuteld). Bewaar het op een veilige plek.${settings.lastExport?` Laatste back-up: <b>${fmtTs(settings.lastExport)}</b>.`:''}</p>
   <div class="two"><button type="button" class="btn sec" data-act="export">Exporteren</button><button type="button" class="btn sec" data-act="import">Importeren</button></div>
   <input type="file" id="s_file" accept="application/json,.json" hidden>
