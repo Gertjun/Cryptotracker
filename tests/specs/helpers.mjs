@@ -20,11 +20,10 @@ export async function openApp(page,{theme='dark',fngFail=false}={}){
   await page.goto('/index.html');
   return errors;
 }
-// Importeer de test-export van Bitvavo (85 regels, 84 transacties)
-export async function importCsv(page){
-  await page.evaluate(()=>{document.querySelector('#bvFile').value=''});
-  await page.setInputFiles('#bvFile',CSV);
-  await page.locator('[data-act=doimport]').click();
+// Seed de app met generieke synthetische transacties; geen broker-importfunctie nodig.
+export async function seedTransactions(page){
+  const txs=JSON.parse(await fs.readFile(FIXTURE,'utf8'));
+  await page.evaluate(txs=>{data.txs=txs;data.deleted=[];saveData(false);render()},txs);
   await expect(page.locator('#heroVal')).toBeVisible();
   await page.waitForFunction(()=>Object.keys(prices||{}).length>=4);
 }
