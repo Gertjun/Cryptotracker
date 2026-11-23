@@ -1,9 +1,9 @@
 // Marktsentiment (3.22.0, wens W24): angst- en hebzuchtmeter van alternative.me op het Overzicht.
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv} from './helpers.mjs';
+import {openApp,seedTransactions} from './helpers.mjs';
 
 test('marktsentiment staat op het Overzicht met gisteren en vorige week',async({page})=>{
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   const card=page.locator('#fngCard');
   await expect(card).toBeVisible();
   await expect(card.locator('.fng-v')).toHaveText('62');
@@ -17,7 +17,7 @@ test('marktsentiment staat op het Overzicht met gisteren en vorige week',async({
 });
 
 test('marktsentiment uitzetten in Instellingen haalt het blok weg en blijft bewaard',async({page})=>{
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await expect(page.locator('#fngCard')).toBeVisible();
   await page.evaluate(()=>{location.hash='#instellingen'});
   const sec=page.locator('[data-setsec=cg]');if(await sec.isVisible())await sec.click();   // laptop: onderdeel Koersdata en markt
@@ -33,7 +33,7 @@ test('marktsentiment uitzetten in Instellingen haalt het blok weg en blijft bewa
 });
 
 test('lukt alternative.me niet, dan geen blok en geen fouten',async({page})=>{
-  const errors=await openApp(page,{fngFail:true});await importCsv(page);
+  const errors=await openApp(page,{fngFail:true});await seedTransactions(page);
   await expect(page.locator('#heroVal')).toBeVisible();
   await expect(page.locator('#fngCard')).toHaveCount(0);
   expect(errors).toEqual([]);
