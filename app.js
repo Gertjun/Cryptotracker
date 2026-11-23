@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='4.2.0 (22 nov 2026)';
+const APP_VERSION='4.3.0 (23 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -526,38 +526,29 @@ function renderInner(){
   if(isSet){
     // Instellingen alleen opnieuw opbouwen als het moet (openSettings), anders zou een koersupdate half ingevulde velden wissen
     if(lastView==='set'&&$('#setView'))$('#topbar').innerHTML=setTopbarHTML();else renderSettings();
-    lastView='set';renderSide('__set');
+    lastView='set';
   }
-  else if(isRep){inEUR(renderReports);bar();lastView='rep';renderSide('__rep')}
+  else if(isRep){inEUR(renderReports);bar();lastView='rep'}
   else if(isTx){
     if(lastView==='tx'&&$('#txOut')){$('#topbar').innerHTML=topbarHTML(null,'Transacties');fillTxs()}  // focus in zoekveld behouden
     else{renderTxs();bar()}
-    lastView='tx';renderSide('__tx');
+    lastView='tx';
   }else{
     if(cid)renderCoin(cid);else{renderHome();bar()}
-    lastView=cid?'coin':'home';renderSide(cid);
+    lastView=cid?'coin':'home';
   }
-  document.querySelectorAll('.tabbar a').forEach(b=>{const on=b.dataset.tab===(isSet?'set':isRep?'reps':isTx?'txs':'home');b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  syncCoreNav(isSet?'settings':isRep?'reps':isTx?'txs':'home');
   clearTimeout(window._fabR);window._fabR=setTimeout(()=>{const f=$('#btnAdd');if(f)f.classList.toggle('away',fabCovers()||(f.classList.contains('away')&&scrollY>60))},150);
 }
 let lastView=null;
-function renderSide(cid){
-  const el=$('#side');if(!el)return;
-  const home=!cid||cid==='__set';   // Instellingen: geen muntenlijst, het scherm is breed genoeg nodig   // op het Overzicht staan cash, bezittingen en volglijst al in beeld
-  const p=portfolio(),list=[...p.open].sort((a,b)=>(b.value??0)-(a.value??0));
-  const min=!!settings.sideMin;el.closest('.shell')?.classList.toggle('side-min',min);   // zijbalk ingeklapt (laptop, per apparaat)
-  const tog=`<button type="button" class="side-tog" data-act="sidetog" aria-controls="side" aria-expanded="${!min}" aria-label="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}" title="${min?'Zijbalk uitklappen':'Zijbalk inklappen'}">${ICONS.back}</button>`;
-  el.innerHTML=`<div class="brand"><img src="icon-192.png" alt="" width="36" height="36"><span class="brand-text"><span class="brand-n">Crypto Portfolio</span>${appVerHTML()}</span>${tog}</div>
-  <div class="side-act"><button type="button" class="btn-add" data-act="add"${min?' title="Transactie toevoegen"':''}>${ICONS.plus}<span class="add-l"> Transactie</span><span class="sr-only add-sr"> toevoegen</span></button></div>
-  <nav aria-label="Hoofdnavigatie"><a class="nav ${cid?'':'on'}" href="#"${cid?'':' aria-current="page"'}${min?' title="Overzicht"':''}>${ICONS.home} <span class="nav-l">Overzicht</span></a>
-  <a class="nav ${cid==='__tx'?'on':''}" href="#transacties"${cid==='__tx'?' aria-current="page"':''}${min?' title="Transacties"':''}>${ICONS.list} <span class="nav-l">Transacties</span></a>
-  <a class="nav ${cid==='__rep'?'on':''}" href="#analyse"${cid==='__rep'?' aria-current="page"':''}${min?' title="Analyse"':''}>${ICONS.reps} <span class="nav-l">Analyse</span></a>
-  <a class="nav ${cid==='__set'?'on':''}" href="#instellingen"${cid==='__set'?' aria-current="page"':''}${min?' title="Instellingen"':''}>${ICONS.gear} <span class="nav-l">Instellingen</span></a></nav>
-  <div class="side-scroll">${!home&&p.hasCash?`<div class="side-t">Cash</div><a class="side-coin" href="#transacties" data-act="cashtx"><div class="coin-ph cash-ic">€</div><div class="grow"><div class="name-sm name">Beschikbaar</div><div class="meta m">${money(p.cash,2)}</div></div></a>`:''}
-  ${!home&&list.length?`<div class="side-t">Bezittingen</div>${list.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div><div class="meta m">${money(c.value,2)}</div></div><div class="chg ${cls(c.unreal)}">${pct(c.unrealPct)}</div></a>`).join('')}`:''}
-  ${!home&&p.closed.length?`<div class="side-t">Gesloten</div>${p.closed.map(c=>`<a class="side-coin ${c.coinId===cid?'on':''}" href="#coin/${encodeURIComponent(c.coinId)}" data-coin="${esc(c.coinId)}">${coinIcon(c.meta)}<div class="grow"><div class="name-sm name">${esc(c.meta.name)}</div></div><div class="chg ${cls(c.realized)} m">${signed(c.realized)}</div></a>`).join('')}`:''}
-  ${!home&&watchOnly().length?`<div class="side-t">Volglijst</div>${watchOnly().map(x=>{const P=prices[x.id]||{};return `<a class="side-coin ${x.id===cid?'on':''}" href="#coin/${encodeURIComponent(x.id)}" data-coin="${esc(x.id)}">${coinIcon({coinId:x.id,symbol:x.symbol,image:x.image})}<div class="grow"><div class="name-sm name">${esc(x.name)}</div><div class="meta">${money(P.price)}</div></div><div class="chg ${cls(chU(P.ch24))}">${pct(chU(P.ch24))}</div></a>`}).join('')}`:''}
-  <div class="side-foot">Koersdata: CoinGecko</div></div>`;   // alleen de muntenlijsten schuiven; appnaam, knoppen en navigatie blijven staan (en verspringen niet door een schuifbalk)
+// Navigatie: js/core/nav.js van PWA-Core (D67), aangemaakt in js/bootstrap.js als window.coreNav.
+// De app bepaalt via de hash-route welk scherm actief is; syncCoreNav() zet de navigatie daarop.
+const NAV_HASH={home:'#',txs:'#transacties',reps:'#analyse'};
+function syncCoreNav(id){
+  const n=window.coreNav;if(!n)return;
+  if(id==='settings'){if(n.current!=='settings')n.showSettings();return}
+  n.hideSettings();
+  if(n.screen!==id){window.__navSync=true;try{n.select(id)}finally{window.__navSync=false}}
 }
 const eyeBtn=()=>`<button type="button" class="icon-btn" data-act="privacy" aria-label="Bedragen verbergen" aria-pressed="${!!settings.privacy}">${settings.privacy?ICONS.eyeOff:ICONS.eye}</button>`;
 const lockBtn=()=>coreMode||lockCfg?`<button type="button" class="icon-btn header-lock" data-act="lock" aria-label="Nu vergrendelen" title="Nu vergrendelen">${ICONS.lock}</button>`:'';
@@ -572,7 +563,8 @@ function headerSyncHTML(){
   else if(settings.gh?.token&&settings.gh?.repo&&settings.gh?.pass){state='off';label='Nog niet gesynchroniseerd'}
   const market=coinIds().length?(cgState.s==='busy'?'Koersen ophalen…':cgState.s==='err'?'Koersen ophalen mislukt':lastCgTs()?('Koersen bijgewerkt '+fmtTs(lastCgTs())):'Koersen nog niet opgehaald'):'';
   const title=[label,market].filter(Boolean).join(' · ');
-  return `<button type="button" class="icon-btn header-sync" data-act="syncinfo" aria-label="${esc(label)}" title="${esc(title)}"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.1 4.5 4.5 0 0 0 7 18Z"/></svg><span class="dot ${state}" aria-hidden="true"></span></button>`;
+  const ds={ok:'ok',busy:'syncing',err:'error'}[state]||'off';
+  return `<button type="button" class="icon-btn sync-btn header-sync" data-act="syncinfo" data-state="${ds}" aria-label="${esc(label)}" title="${esc(title)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.1 4.5 4.5 0 0 0 7 18Z"/></svg><span class="sync-dot"></span></button>`;
 }
 function topbarHTML(c,pageTitle,settingsPage=false){
   const eye=eyeBtn(),lockB=lockBtn();
@@ -3002,7 +2994,7 @@ function lockNow(){
 function pkErr(e){return e?.name==='NotAllowedError'?'Geannuleerd of verlopen':e?.name==='InvalidStateError'?'Deze passkey bestaat al op dit apparaat':e?.message||'Mislukt'}
 function renderLock(){
   document.body.classList.add('locked');document.body.classList.remove('private');
-  $('#topbar').innerHTML='';$('#side').innerHTML='';
+  $('#topbar').innerHTML='';
   const hasPk=(lockCfg.pks||[]).length>0&&pkSupported();
   $('#view').innerHTML=`<div class="lock"><div class="lock-ic">${ICONS.lock}</div><h2>Crypto Portfolio</h2><p class="label">Vergrendeld</p>
     ${hasPk?`<button type="button" class="btn" data-act="unlockpk">${ICONS.key} Ontgrendel met passkey</button><div class="or">of</div>`:''}
@@ -3122,7 +3114,6 @@ document.addEventListener('click',e=>{
     case 'csvfiltered':{const ids=new Set([...document.querySelectorAll('#txOut .only-m [data-tx]')].map(e=>e.dataset.tx));exportCSV(data.txs.filter(t=>ids.has(t.id)));break}
     case 'printyear':printYear(+($('#py')?.value||new Date().getFullYear()));break;
     case 'reload':location.reload();break;
-    case 'sidetog':settings.sideMin=!settings.sideMin;saveSettings();render();fitBars();break;
     case 'addgoal':openGoal();break;
     case 'savegoal':saveGoal(a.dataset.id);break;
     case 'versions':openVersions();break;
