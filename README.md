@@ -12,7 +12,7 @@ De app werkt in de browser en is te installeren op het beginscherm van je iPhone
 
 - **Overzicht:** totale waarde, inleg, cash en (on)gerealiseerde winst, met een grafiek over 1 uur tot alles (Max).
 - **Per munt:** koersgrafiek, je aankopen en verkopen, gemiddelde aankoopprijs, resultaat per aankoop, marktinformatie en prijsalerts.
-- **Transacties:** aankopen, verkopen, stortingen, opnames, ontvangsten en overboekingen. Importeren uit een Bitvavo-export (CSV) en exporteren naar CSV.
+- **Transacties:** aankopen, verkopen, stortingen, opnames, ontvangsten en overboekingen. Exporteren naar CSV.
 - **Weergave in €, $ of ₿:** in bitcoin zie je of je beter had gedaan door alleen bitcoin te houden. De administratie blijft altijd in euro.
 - **Meerdere portefeuilles**, los te bekijken of samen.
 - **Analyse** in vier tabbladen: Rendement, Vergelijken, Plannen en Administratie.
