@@ -2,13 +2,13 @@
 import {test,expect} from '@playwright/test';
 import {createRequire} from 'node:module';import fs from 'node:fs';
 const axeSrc=fs.readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'),'utf8');
-import {openApp,importCsv,isPhone} from './helpers.mjs';
+import {openApp,seedTransactions,isPhone} from './helpers.mjs';
 
 const heads=page=>page.locator('.hold-tbl:has(caption:text("Bezittingen")) thead th').allTextContents().then(a=>a.map(s=>s.replace('↓','').trim()));
 
 test('kolommen verplaatsen, verbergen en herstellen',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   expect(await heads(page)).toEqual(['Munt','Aantal','Gem. prijs','Koers','1 uur','24 uur','7 dagen','30 dagen','Waarde','Geïnvesteerd','Winst/verlies','%']);
 
   await page.locator('[data-act=hcols]').click();
@@ -51,7 +51,7 @@ test('kolomkeuze komt mee bij het samenvoegen van twee apparaten',async({page},t
 
 test('volglijst heeft dezelfde kolommen als Bezittingen, met 0 voor wat je niet hebt',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(async()=>{setWatch({id:'solana',name:'Solana',symbol:'sol'},true);await fetchPrice('solana');render()});
   const wt=page.locator('.tbl-wrap:has(caption:text("Volglijst"))');
   await expect(wt.locator('tbody tr')).toHaveCount(1);
@@ -70,7 +70,7 @@ test('volglijst heeft dezelfde kolommen als Bezittingen, met 0 voor wat je niet 
 
 test('Bezittingen en Volglijst passen op een brede laptop zonder schuifbalk, met kolommen onder elkaar',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
-  await openApp(page);await importCsv(page);
+  await openApp(page);await seedTransactions(page);
   await page.evaluate(async()=>{setWatch({id:'solana',name:'Solana',symbol:'sol'},true);await fetchPrice('solana');render()});
   for(const w of [1440,1600]){
     await page.setViewportSize({width:w,height:900});
@@ -85,7 +85,7 @@ test('Bezittingen en Volglijst passen op een brede laptop zonder schuifbalk, met
 
 test('kolommen 1 uur, 4 uur en 1 jaar: 1 uur staat aan, 4 uur en 1 jaar kun je aanzetten',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   const col=async name=>{const h=await heads(page),i=h.indexOf(name);if(i<0)return null;
     return page.locator('.hold-tbl:has(caption:text("Bezittingen")) tbody tr:first-child td').nth(i).textContent()};
   expect(await col('1 uur')).toMatch(/^[+−]\d+,\d\d%$/);
@@ -117,7 +117,7 @@ test('een eerder bewaarde kolomvolgorde krijgt de nieuwe kolom 1 uur op zijn sta
 
 test('volglijst sorteren via de kolomkoppen: eerst hoog naar laag, dan laag naar hoog',async({page},testInfo)=>{
   test.skip(isPhone(testInfo),'de tabel staat alleen op de laptop');
-  const errors=await openApp(page);await importCsv(page);
+  const errors=await openApp(page);await seedTransactions(page);
   await page.evaluate(async()=>{for(const [id,name,symbol] of [['solana','Solana','sol'],['dogecoin','Dogecoin','doge'],['polkadot','Polkadot','dot']]){setWatch({id,name,symbol},true);await fetchPrice(id)}render()});
   const wt=page.locator('.tbl-wrap:has(caption:text("Volglijst"))');
   const koers=()=>wt.locator('tbody tr').evaluateAll(rs=>rs.map(r=>r.dataset.coin));
