@@ -1,7 +1,7 @@
 // Tabellen en grafieken passen op het scherm: geen schuifbalk opzij (op elke schermbreedte en elk scherm).
 // Past een tabel niet, dan verdwijnen eerst de minst belangrijke kolommen, met een melding onder de tabel.
 import {test,expect} from '@playwright/test';
-import {openApp,importCsv,isPhone} from './helpers.mjs';
+import {openApp,importCsv,isPhone,chartReady} from './helpers.mjs';
 const ROUTES=['','#transacties','#analyse/rendement','#analyse/vergelijken','#analyse/plannen','#analyse/administratie','#coin/bitcoin','#coin/fetch-ai'];
 // alles wat opzij scrolt (behalve de bewust brede dag/week-grafiek in het vergrote scherm op een telefoon)
 const overflow=page=>page.evaluate(()=>{const out=[],de=document.documentElement;if(de.scrollWidth>de.clientWidth+1)out.push('pagina');
@@ -24,8 +24,10 @@ test('te brede tabel: minst belangrijke kolommen verdwijnen, met melding; op 144
   await expect(note).toHaveCount(0);
   await page.setViewportSize({width:1024,height:900});
   await expect(note).toContainText('Broker · notitie');
-  await expect(page.locator('.tbl-wrap.only-d thead th:has-text("Kosten")')).toBeHidden();
-  await expect(page.locator('.tbl-wrap.only-d thead th:has-text("Winst/verlies")')).toBeVisible();
+  // De melding noemt precies welke kolommen op dit scherm zijn verborgen.
+  const hiddenLabels=(await note.innerText()).split(/[·,]/).map(s=>s.trim()).filter(Boolean);
+  expect(hiddenLabels.length).toBeGreaterThan(0);
+  for(const label of hiddenLabels) await expect(page.locator(`.tbl-wrap.only-d thead th:has-text("${label}")`)).toBeHidden();
   // Munt staat als ticker in de tabel, met de volledige naam voor schermlezers
   await expect(page.locator('.tbl-wrap.only-d tbody .coin-cell',{hasText:'BTC'}).first()).toContainText('Bitcoin');
   await page.setViewportSize({width:1440,height:900});
@@ -42,4 +44,27 @@ test('telefoon: koersverandering 1u, 24u, 7d en 30d op één regel onder elke mu
         fits:sp.every(s=>s.scrollWidth<=s.clientWidth+1&&s.getBoundingClientRect().right<=el.getBoundingClientRect().right+1)}}));
     expect(res.length).toBeGreaterThan(0);
     for(const r of res)expect(r,`${w}px`).toEqual({labels:'1u 24u 7d 30d',lines:w<360?2:1,fits:true})}
+});
+
+test('portfolio-grafiek blijft binnen het paneel',async({page},testInfo)=>{
+  const errors=await openApp(page);await importCsv(page);await chartReady(page);
+  const bounds=await page.evaluate(()=>{const panel=document.querySelector('#pchart')?.closest('.panel'),chart=document.querySelector('#pchart'),svg=chart?.querySelector('svg');if(!panel||!chart||!svg)return null;
+    const p=panel.getBoundingClientRect(),c=chart.getBoundingClientRect(),s=svg.getBoundingClientRect();
+    return {panel:{left:p.left,right:p.right},chart:{left:c.left,right:c.right},svg:{left:s.left,right:s.right},viewport:document.documentElement.clientWidth}});
+  expect(bounds, 'grafiek en paneel moeten bestaan').not.toBeNull();
+  expect(bounds.chart.left).toBeGreaterThanOrEqual(bounds.panel.left-1);
+  expect(bounds.chart.right).toBeLessThanOrEqual(bounds.panel.right+1);
+  expect(bounds.svg.left).toBeGreaterThanOrEqual(bounds.chart.left-1);
+  expect(bounds.svg.right).toBeLessThanOrEqual(bounds.chart.right+1);
+  expect(errors).toEqual([]);
+});
+test('hoofdbalk toont appnaam, logo, versie en synchronisatiestatus',async({page},testInfo)=>{
+  await openApp(page);
+  const ver=await page.evaluate(()=>APP_VERSION.split(' ')[0]);   // geen vast nummer: volgt elke release
+  const brand=isPhone(testInfo)?page.locator('#topbar'):page.locator('.app-nav-brand');   // laptop: merk in de zijbalk van PWA-Core (D67)
+  await expect(brand.locator('img').first()).toBeVisible();
+  await expect(brand).toContainText('Crypto Portfolio');
+  await expect(brand).toContainText(ver);
+  await expect(page.locator('#topbar .header-sync')).toBeVisible();
+  await expect(page.locator('#topbar .app-screen-title')).toHaveText('Overzicht');
 });

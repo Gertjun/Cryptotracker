@@ -30,7 +30,6 @@ function show(title, message, body, error = '') {
   document.body.classList.add('locked');
   document.body.classList.remove('private');
   $('#topbar').innerHTML = '';
-  $('#side').innerHTML = '';
   $('#view').innerHTML = `<section class="lock" id="core-gate" aria-labelledby="core-gate-title">
     <div class="lock-ic" aria-hidden="true">🔐</div>
     <h2 id="core-gate-title">${escapeHtml(title)}</h2>

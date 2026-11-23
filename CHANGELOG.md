@@ -2,6 +2,50 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
+## 4.3.0 – 23 november 2026
+De bovenbalk en de navigatie komen nu rechtstreeks uit PWA-Core, net als in je andere apps.
+
+### Gewijzigd
+- **Bovenbalk en navigatie:** worden getekend door de gedeelde basis van je apps (PWA-Core) in plaats van een eigen kopie. Een verbetering daarin komt voortaan vanzelf ook in Crypto Portfolio.
+- **Laptop:** de inhoud is iets breder; de zijbalk onthoudt of hij ingeklapt is op dezelfde manier als in je andere apps.
+
+### Opgelost
+- **iPhone (app op het beginscherm):** de ruimte voor de statusbalk kwam er twee keer boven de bovenbalk.
+
+### Technisch
+- **Schil uit PWA-Core:** `css/base.css` geladen als laag `core`, navigatie via `createNav()` uit `js/core/nav.js` (D67). Nieuw bestand `icons/icon-192.png`.
+
+## 4.2.0 – 22 november 2026
+Bovenbalk, tabbalk en zijbalk zien er nu precies zo uit als in je andere apps.
+
+### Gewijzigd
+- **Telefoon:** grotere appnaam en logo bovenin, ronde knoppen rechts, meer ruimte onder de bovenbalk en een tabbalk met dezelfde maten als je andere apps.
+- **iPad rechtop:** bovenin de appnaam met de knoppen, daaronder de tabbladen in een rij; het actieve tabblad krijgt een gekleurde achtergrond.
+- **Laptop:** weer een zijbalk links met logo, naam, versie en het menu (in te klappen met het pijltje); bovenin de naam van het scherm met de knoppen en + Transactie. Tabellen krijgen meer ruimte.
+
+### Opgelost
+- **iPad:** de appnaam stond twee keer over elkaar, de inhoud plakte tegen de rand en de knoppen bij de grafiek vielen over "Totale waarde".
+- **Licht thema:** het actieve menu-item in de zijbalk heeft genoeg contrast.
+
+## 4.1.0 – 22 november 2026
+Instellingen als vierde tabblad onderin op de telefoon, net als in je andere apps.
+
+### Gewijzigd
+- **Tabbalk:** op de telefoon staat Instellingen nu als vierde knop onderin, naast Overzicht, Transacties en Analyse.
+- **Actief tabblad:** het tabblad waar je bent, krijgt de accentkleur.
+- **Bovenbalk:** het tandwiel en de terugknop op het scherm Instellingen zijn weg; op laptop en iPad staat Instellingen al in de navigatie.
+
+## 4.0.7 – 21 november 2026
+Hoofdbalk geharmoniseerd met de andere PWA's en de portfoliografiek begrensd binnen het paneel.
+
+### UI
+- App-logo, naam en versienummer in de hoofdbalk.
+- Synchronisatiestatus en vergrendelknop in de hoofdbalk; behoud van privacy- en instellingenknoppen.
+- Grafiek Totale waarde blijft binnen de grenzen van het paneel.
+
+### Tests
+- Automatische layout-, overflow- en regressietests.
+
 ## 4.0.6 – 20 november 2026
 PWA-Core v1.3.0-integratie en beveiligingscorrecties.
 
