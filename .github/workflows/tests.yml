@@ -1,8 +1,10 @@
-# Draait de automatische tests bij elke upload en bij elk voorstel (pull request)
+# Draait de automatische tests bij pushes naar main en bij pull requests naar main.
 name: Tests
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
