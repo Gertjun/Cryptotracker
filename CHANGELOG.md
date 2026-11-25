@@ -2,6 +2,11 @@
 
 Alle noemenswaardige wijzigingen aan de app. De nieuwste versie staat bovenaan.
 
+## 4.4.0 – 25 november 2026 (releasekandidaat)
+- PWA-Core v1.4.0: gedeelde QR-koppeling zonder pincode of wachtwoord via de ontgrendelde kluis, inclusief tekstfallback en ontvangst vanaf het startscherm.
+- Bestaande kluizen worden niet vervangen door een QR-link. Handmatige import en v2-koppelcodes blijven mogelijk; opslagprefix, datapad, gegevensschema en bestaande passkeys blijven ongewijzigd.
+- Nieuwe koppelcode bevat volledige toegang; risico en waarschuwing volgen Core-besluit D25. CI en echte apparaten nog te valideren.
+
 ## 4.3.0 – 23 november 2026
 De bovenbalk en de navigatie komen nu rechtstreeks uit PWA-Core, net als in je andere apps.
 

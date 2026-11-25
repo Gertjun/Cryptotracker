@@ -385,3 +385,9 @@ Vorm: `D<n> – titel (datum, versie)` · **Besluit** · **Waarom** · **Niet ge
 - **Testen:** tests gebruiken synthetische transacties die rechtstreeks worden ingevoerd, zonder broker-exportfixture.
 - **Waarom:** Geert heeft de Bitvavo-import en eventuele exchange-koppeling niet langer wenselijk geacht. Minder import-specifieke code en testcomplexiteit; geen exchange-specifieke functionaliteit in de app.
 - **Behouden:** bestaande transacties en accountnamen (waaronder eventueel `Bitvavo`), handmatige administratie, back-up en herstel van appgegevens, en portefeuilleberekeningen.
+
+### D69 – Gedeelde QR-koppeling met PWA-Core v1.4.0 (25 november 2026, 4.4.0; vervangt D13, het koppeldeel van D58 en D61)
+- **Besluit:** Core-modus gebruikt `pairing-ui.js` voor het v3-protocol. Nieuwe apparaten kunnen via QR-fragment of tekstcode de bestaande versleutelde kluis ophalen. Oude v2-codes en handmatige GitHub-import blijven terugvalopties.
+- **Waarom:** één koppelflow voor alle apps volgens de Core-besluiten D24/D25. De eigen app-adapter en bestaande kluis, passkeys en gegevens blijven behouden.
+- **Risico:** de gebruiker accepteerde Core D25; v3 bevat de datasleutel en GitHub-token. De app toont de Core-waarschuwing en vraagt bevestiging. Een gekopieerde sleutel of token blijft ook na de geldigheid bruikbaar. Alleen gebruiken tussen eigen apparaten.
+- **Niet gekozen:** een aanwezige lokale kluis door een link vervangen of app-specifieke cryptografie toevoegen. Legacy-modus blijft voor herstel/compatibiliteit beschikbaar.
