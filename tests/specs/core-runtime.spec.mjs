@@ -312,6 +312,65 @@ test('nieuw apparaat opent dezelfde Core-kluis via het nieuwe GitHub-bestand',as
   expect(result.txs.map(tx=>tx.id)).toContain('shared-tx');
   expect(result.device.github.path).toBe('crypto-portfolio.pwa-core-v1.json');
   expect(result.device.github.token).toBe('test-token');
+
+  // Dezelfde echte runtime kan vanuit een ontgrendelde Core-kluis
+  // een v3-koppeling maken en op een derde, leeg apparaat ontvangen.
+  pageA.on('dialog', dialog => dialog.accept());
+  await pageA.evaluate(() => { openSettings(); showSetSec('sync'); });
+  await pageA.locator('[data-act=pairout]').click();
+  const pairingDialog = pageA.locator('#dlg-pair');
+  await expect(pairingDialog).toBeVisible();
+  await expect(pairingDialog.locator('.pair-qr')).toBeVisible();
+  const code = await pairingDialog.locator('textarea').inputValue();
+  expect(code).toMatch(/^PWA-CORE-PAIR-3:/);
+  await expect(pairingDialog.locator('#pair-pin-panel')).toHaveCount(0);
+  const link = await pageA.evaluate(async code => (await import('/js/core/pairing-ui.js')).pairingLink(code, location.href), code);
+  expect(new URL(link).searchParams.has('pair')).toBe(false);
+  expect(new URLSearchParams(new URL(link).hash.slice(1)).get('pair')).toBe(code);
+  await pairingDialog.getByRole('button', {name:'Klaar'}).click();
+
+  // Een apparaat met bestaande Core-kluis mag niet opnieuw worden gekoppeld.
+  await pageB.evaluate(link => { location.hash = new URL(link).hash; }, link);
+  await pageB.waitForFunction(() => !location.hash.includes('pair='));
+  expect(await pageB.evaluate(() => window.PWACoreV1.runtime.isActive())).toBe(true);
+  expect(await pageB.evaluate(() => localStorage.getItem('cpt:pairing:used'))).toBeNull();
+  await pageB.evaluate(() => window.PWACoreV1.runtime.lock());
+  await expect(pageB.locator('#core-unlock-form')).toBeVisible();
+  const existingVault = await pageB.evaluate(() => localStorage.getItem('cpt:vault'));
+  await pageB.evaluate(link => { location.hash = new URL(link).hash; }, link);
+  await pageB.waitForFunction(() => !location.hash.includes('pair='));
+  await expect(pageB.locator('#core-unlock-form')).toBeVisible();
+  await expect(pageB.locator('#core-gate-error')).toContainText('bestaat al een kluis');
+  expect(await pageB.evaluate(() => localStorage.getItem('cpt:vault'))).toBe(existingVault);
+  expect(await pageB.evaluate(() => window.PWACoreV1.runtime.isActive())).toBe(false);
+
+  const contextC = await browser.newContext({viewport:{width:1280,height:800}});
+  try {
+    const pageC = await contextC.newPage();
+    await pageC.route('https://api.coingecko.com/**', route => route.fulfill({json:{}}));
+    await pageC.route('https://api.alternative.me/**', route => route.fulfill({json:{data:[]}}));
+    await attachGitHub(pageC);
+    await pageC.goto(link);
+    await expect(pageC.locator('#core-pair-code')).toHaveValue(code);
+    await expect(pageC.locator('#core-pair-legacy')).toBeHidden();
+    await expect(pageC.locator('#core-password')).toBeHidden();
+    expect(new URL(pageC.url()).hash).toBe('');
+    expect(await pageC.evaluate(() => localStorage.getItem('cpt:vault'))).toBeNull();
+    await pageC.locator('[data-core-action=pair]').click();
+    await pageC.waitForFunction(() => window.PWACoreV1?.runtime?.isActive() === true);
+    const paired = await pageC.evaluate(async () => {
+      const vault = await import('/js/core/vault.js');
+      return { ids: vault.getData().txs.map(tx => tx.id), settings: await vault.getDeviceSettings(), replay: localStorage.getItem('cpt:pairing:used') };
+    });
+    expect(paired.ids).toContain('shared-tx');
+    expect(paired.settings.github.path).toBe('crypto-portfolio.pwa-core-v1.json');
+    expect(paired.settings.syncEnabled).toBe(true);
+    expect(paired.replay).not.toBeNull();
+    await pageC.reload();
+    await pageC.locator('#core-unlock-password').fill('shared core password 123');
+    await pageC.locator('#core-unlock-form button[type="submit"]').click();
+    await pageC.waitForFunction(() => window.PWACoreV1?.runtime?.isActive() === true);
+  } finally { await contextC.close(); }
   await contextA.close();
   await contextB.close();
 });

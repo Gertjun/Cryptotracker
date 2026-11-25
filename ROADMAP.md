@@ -6,12 +6,15 @@
 Bijgewerkt: 20 november 2026 · versie 4.0.6
 
 **Zo werkt deze lijst**
-- Elk punt heeft een vast nummer (W1, W2, …). Dat nummer verandert nooit, ook niet als er punten bij komen of af gaan. Volgende vrije nummer: W55.
+- Elk punt heeft een vast nummer (W1, W2, …). Dat nummer verandert nooit, ook niet als er punten bij komen of af gaan. Volgende vrije nummer: W56.
 - Wordt een punt gebouwd of afgerond, dan verdwijnt het hier (`python3 tools/wish.py W3`). In de [changelog](CHANGELOG.md) staat dan bij die versie "(wens W3)", zodat je kunt terugvinden wat ervan is geworden.
 
 ---
 
 ## Open punten en praktijktests
+
+### W55 – Fysieke acceptatie PWA-Core v1.4.0
+Test op iPhone/iPad (Safari en geïnstalleerde PWA) en Windows: bestaande kluis/passkeys, QR of tekstcode op nieuw apparaat, weigering bij bestaande kluis, v2-fallback, synchronisatie, vergrendelen, offline en service-worker-update. Nog niet afgevinkt.
 
 ### W49 – Nog te bevestigen op een echte iPhone
 - Vervaging bovenin bij de app op het beginscherm (iOS 26/27): sinds 3.20.3 14 px ruimte in de vaste bovenbalk (D39).

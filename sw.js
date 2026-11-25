@@ -1,5 +1,5 @@
 // Service worker: app werkt offline; koersen en GitHub-sync gaan altijd via het netwerk.
-const CACHE = 'crypto-portfolio-4.3.0-core1.3.0';
+const CACHE = 'crypto-portfolio-4.4.0-core1.4.0';
 const PRECACHE = [
   "index.html",
   "app.js",
@@ -25,6 +25,8 @@ const PRECACHE = [
   "js/core/github.js",
   "js/core/nav.js",
   "js/core/pair.js",
+  "js/core/pairing-ui.js",
+  "js/core/qrcode.js",
   "js/core/records.js",
   "js/core/session-lock-factory.js",
   "js/core/session-lock.js",

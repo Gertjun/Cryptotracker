@@ -3,7 +3,7 @@
 const LS_DATA='cpt.data', LS_SET='cpt.settings', LS_PRICES='cpt.prices', LS_LOCK='cpt.lock', LS_VAULT='cpt.vault', LS_CHARTS='cpt.charts', LS_VCHARTS='cpt.vcharts', LS_CORE_CHARTS='cpt:charts';
 const API='https://api.coingecko.com/api/v3';
 const CUR='eur';
-const APP_VERSION='4.3.0 (23 nov 2026)';
+const APP_VERSION='4.4.0 (25 nov 2026)';
 if(navigator.standalone)document.documentElement.classList.add('ios-standalone');   // oudere iOS kent display-mode: standalone niet
 // Versienummer naast de appnaam; is er een nieuwe versie klaar, dan wordt het de knop "update beschikbaar"
 let updReady=false;
@@ -513,7 +513,7 @@ function focusKey(e){if(!e||e===document.body)return null;if(e.id)return '#'+CSS
   const row=e.closest?.('[data-tx],[data-coin],[data-goal]');if(row){const k=row.dataset.tx!=null?'tx':row.dataset.coin!=null?'coin':'goal';return `[data-${k}="${CSS.escape(row.dataset[k])}"] .rowlink`}
   return null}
 function keepFocus(fn){const k=focusKey(document.activeElement);fn();if(k&&(document.activeElement===document.body||!document.activeElement)){const el=[...document.querySelectorAll(k)].find(x=>x.getClientRects().length);if(el)el.focus({preventScroll:true})}}
-function render(){keepFocus(()=>inUnit(renderInner));fitTables();setTimeout(markScrollers,0)}
+function render(){if($('#core-gate')||$('#core-bootstrap-error'))return;keepFocus(()=>inUnit(renderInner));fitTables();setTimeout(markScrollers,0)}
 function renderInner(){
   if(locked)return renderLock();
   document.body.classList.toggle('private',!!settings.privacy);
@@ -825,7 +825,7 @@ function renderHome(){
   $('#topbar').innerHTML=topbarHTML(null);
   const p=portfolio();
   if(!TX().length){
-    $('#view').innerHTML=`<div class="empty"><b>Nog geen investeringen</b>Tik op + om je eerste aankoop toe te voegen.<br>Koersen worden automatisch opgehaald.${settings.gh.token?'':'<br><button type="button" class="link-lg link" data-act="pairopen">Al in gebruik op een ander apparaat? Koppelcode invoeren</button>'}</div>${watchSection()}`;return;
+    $('#view').innerHTML=`<div class="empty"><b>Nog geen investeringen</b>Tik op + om je eerste aankoop toe te voegen.<br>Koersen worden automatisch opgehaald.${coreMode||settings.gh.token?'':'<br><button type="button" class="link-lg link" data-act="pairopen">Al in gebruik op een ander apparaat? Koppelcode invoeren</button>'}</div>${watchSection()}`;return;
   }
   const mode=settings.plMode;
   const plV=mode==='24h'?p.ch24:p.unreal,plP=mode==='24h'?p.ch24Pct:p.unrealPct;
@@ -2451,7 +2451,7 @@ function renderSettings(){
   <button type="submit" class="btn" data-act="savesync">Opslaan en synchroniseren</button></form>
   </section>
   <section class="card" aria-labelledby="st_dev"><h2 class="h3" id="st_dev">Apparaten en versies</h2>
-  ${(coreMode?settings.gh.token&&settings.gh.repo:settings.gh.token&&settings.gh.repo&&settings.gh.pass)?'<p class="mt-0 hint">Koppel een ander apparaat met een koppelcode, of zet je gegevens terug naar een eerdere Core-versie.</p><button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':'<p class="mt-0 hint">Heb je de synchronisatie al op een ander apparaat ingesteld? Maak daar een koppelcode en vul die hier in.</p><button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
+  ${(coreMode?settings.gh.token&&settings.gh.repo:settings.gh.token&&settings.gh.repo&&settings.gh.pass)?'<p class="mt-0 hint">Koppel een ander apparaat met '+(coreMode?'een QR-code of geheime koppelcode':'een koppelcode')+', of zet je gegevens terug naar een eerdere Core-versie.</p><button type="button" class="btn sec" data-act="pairout">Ander apparaat koppelen</button><button type="button" class="btn sec" data-act="versions">Eerdere versie terugzetten</button>':coreMode?'<p class="mt-0 hint">Activeer synchronisatie om een ander apparaat te koppelen. Een bestaande lokale kluis wordt niet vervangen door een koppelcode.</p>':'<p class="mt-0 hint">Heb je de synchronisatie al op een ander apparaat ingesteld? Maak daar een koppelcode en vul die hier in.</p><button type="button" class="btn sec" data-act="pairopen">Koppelcode invoeren</button>'}
   </section>`)}
   ${pane('view',`<section class="card" aria-labelledby="st_view"><h2 class="h3" id="st_view">Thema</h2>
   <fieldset class="seg theme-seg"><legend class="sr-only">Thema</legend>${[['auto','Automatisch','linear-gradient(135deg,#f3f4f7 50%,#0b0d12 50%)'],...THEMES.map(([v,l,bg,ac])=>[v,l,`linear-gradient(135deg,${bg} 55%,${ac} 55%)`])].map(([v,l,sw])=>`<button type="button" data-theme="${v}" class="${(settings.theme||'auto')===v?'on all':'all'}"><span class="theme-sw" style="background:${sw}" aria-hidden="true"></span>${l}</button>`).join('')}</fieldset>
@@ -2587,6 +2587,7 @@ async function readPairCode(code,pin,now=Date.now()){
   return pair.openPairingCode({payload:code,pin,context:PAIR_CONTEXT,now,transport:'text'});
 }
 async function openPairOut(){
+  if(coreMode)return coreRuntime.openPairOut();
   const pair=await import('./js/core/pair.js'),pin=pair.newPin();
   openSheet('<h2 class="h3">Ander apparaat koppelen</h2><p class="mt-0 hint">Koppelcode maken…</p>');
   const code=await makePairCode(pin);
@@ -2605,6 +2606,7 @@ async function openPairOut(){
   '<button type="button" class="btn" data-act="settings">Klaar</button>');
 }
 function openPairIn(){
+  if(coreMode){toast('Op dit apparaat bestaat al een kluis. Koppelen kan vanaf het startscherm van een nieuw apparaat.');return}
   openSheet(`<h2 class="h3">Koppelcode invoeren</h2><p class="mt-0 hint">Op je andere apparaat vind je de code bij <b>Instellingen › Synchronisatie › Ander apparaat koppelen</b>.</p>
   <form class="js-form" novalidate><div class="field"><label for="pair_in">Koppelcode</label><textarea id="pair_in" rows="4" spellcheck="false" autocapitalize="off" autocorrect="off" class="pair-code" placeholder="PWA-CORE-PAIR-2:…"></textarea></div>
   <div class="field"><label for="pair_pin">Pincode</label><input type="text" id="pair_pin" autocapitalize="characters" autocomplete="one-time-code" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19"></div>
@@ -3187,7 +3189,7 @@ window.CryptoPortfolioLegacy=Object.freeze({
   hasLegacyData:()=>!!(localStorage.getItem(LS_DATA)||localStorage.getItem(LS_VAULT)||localStorage.getItem(LS_LOCK)),
   legacyLocked:()=>!!lockCfg&&locked,
   startLegacy:({allowSync=true,coreHandoff=false}={})=>{coreGateActive=!allowSync;coreHandoffPending=!!coreHandoff;if(lockCfg){renderLock();if((lockCfg.pks||[]).length&&pkSupported())tryPasskey(true)}else start()},
-  activateCore:(payload,box)=>{coreMode=true;const app=box?.app||{};chartCache=structuredClone({...load(LS_CORE_CHARTS,{}),...(app.chartCache||{})});locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start();coreRuntime?.saveChartCache(structuredClone(chartCache)).catch(e=>setSync('err',e.message||'Grafiekcache opslaan in Core mislukt'))},
+  activateCore:(payload,box)=>{$('#core-gate')?.remove();coreMode=true;const app=box?.app||{};chartCache=structuredClone({...load(LS_CORE_CHARTS,{}),...(app.chartCache||{})});locked=false;data=structuredClone(payload||{txs:[],deleted:[],updated:0});settings={...settings,...(app.settings||{})};prices=structuredClone(app.prices||{});if(app.visit)settings.visit=app.visit;const gh=box?.github||{};settings.gh={...settings.gh,repo:gh.owner&&gh.repo?gh.owner+'/'+gh.repo:'',token:gh.token||'',path:'crypto-portfolio.pwa-core-v1.json',branch:gh.branch||'main',pass:''};applyTheme();start();coreRuntime?.saveChartCache(structuredClone(chartCache)).catch(e=>setSync('err',e.message||'Grafiekcache opslaan in Core mislukt'))},
   getCoreChartCache:()=>structuredClone(chartCache),
   applyCoreData:(payload)=>{data=structuredClone(payload||{});invalidateEstPts();render()},
   lockCore:()=>{locked=true;data={txs:[],deleted:[],updated:0};prices={};settings.gh={...settings.gh,token:'',repo:'',pass:''};closeZoom();closeSheet();document.body.classList.add('locked')},

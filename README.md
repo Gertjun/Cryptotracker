@@ -31,7 +31,7 @@ Een nieuwe versie komt vanzelf binnen. Naast de appnaam (laptop) of bovenin (tel
 ## Je gegevens
 
 - Alles staat **op je eigen apparaat**, in de browser.
-- **Synchroniseren tussen apparaten** kan via één bestand in een **privé-repository op GitHub**. Dat bestand is versleuteld met een wachtwoord dat alleen jij kent; GitHub ziet alleen onleesbare tekst. Een nieuw apparaat koppel je met een koppelcode en een pincode.
+- **Synchroniseren tussen apparaten** kan via één bestand in een **privé-repository op GitHub**. Dat bestand is versleuteld met een wachtwoord dat alleen jij kent; GitHub ziet alleen onleesbare tekst. Een nieuw apparaat koppel je met een geheime QR-code of koppelcode, zonder pincode of wachtwoord in te voeren. Oude v2-koppelcodes met pincode en wachtwoord blijven leesbaar. De nieuwe code geeft volledige toegang: deel hem uitsluitend met je eigen apparaat; een gekopieerde sleutel of token blijft bruikbaar na de drie minuten geldigheid in de app.
 - Elke synchronisatie wordt op GitHub bewaard, dus je kunt een **eerdere versie terugzetten**.
 - De app praat alleen met deze website, met **CoinGecko** (koersen), met **alternative.me** (marktsentiment, uit te zetten in Instellingen) en met **GitHub** (synchronisatie). Andere verbindingen worden door de browser geblokkeerd.
 - Optioneel kun je de app **vergrendelen** met Face ID / Touch ID (passkey) en een herstelwachtwoord.
@@ -54,12 +54,10 @@ Werkafspraken voor Claude: [`CLAUDE.md`](CLAUDE.md). Testen: [`tests/README.md`]
 
 ## Stand
 
-Bijgewerkt: 23 november 2026 · `main` **4.3.0** met PWA-Core v1.3.0 (cache `crypto-portfolio-4.3.0-core1.3.0`). Dit blok wordt aan het eind van elke sessie overschreven.
+Bijgewerkt: 25 november 2026 · ontwikkelbranch **4.4.0** met PWA-Core v1.4.0 (cache `crypto-portfolio-4.4.0-core1.4.0`). `main` blijft 4.3.0 tot na afzonderlijk akkoord.
 
-- 4.3.0 (PR #78): kopbalk en navigatie komen uit PWA-Core zelf (`css/base.css` als laag en `js/core/nav.js`), in plaats van een nagemaakte kopie (D67). De inhoud van alle schermen is op telefoon en iPad pixelgelijk aan 4.2.0 gecontroleerd; automatische tests groen. Nog niet door Geert op echte apparaten bekeken. In PWA-Core vastgelegd als D23 (PR #64).
-- 4.2.0 (PR #77): kopbalk, tabbalk en zijbalk nagemaakt met de maten van PWA-Core (D66, vervangen door D67).
-- 4.1.0 (PR #76): Instellingen als vierde tabblad onderin op de telefoon (D65).
-- Praktijktest van 4.0.6 op 20 november door Geert geslaagd op echte apparaten (passkeys, koppelen, synchroniseren, offline, opruimen oude opslag).
+- Nieuwe gedeelde QR-koppeling vanaf het startscherm, met behoud van handmatige GitHub-import, oude v2-koppelcodes en de bestaande kluis en passkeys.
+- Automatische CI en fysieke acceptatie zijn nog niet uitgevoerd op deze kandidaat.
 
 **Goed om te weten**
 - GitHub Pages cachet 10 minuten. De service worker vangt dat op sinds 3.3.2; een apparaat met een heel oude versie heeft het één keer.

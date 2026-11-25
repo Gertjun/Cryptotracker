@@ -4,6 +4,7 @@ import * as vault from './vault.js';
 import * as sync from './sync.js';
 import * as github from './github.js';
 import * as biometric from './biometric.js';
+import * as pairUi from './pairing-ui.js';
 import { createLegacyStorageAdapter } from './legacy-adapter.js';
 import * as sessionLock from './session-lock.js';
 import { APP } from '../config.js';
@@ -19,6 +20,11 @@ let syncAgain = false;
 let lastHiddenAt = 0;
 let lockTimer = null;
 let pendingMigration = null;
+let incomingPair = null;
+let gateBusy = false;
+let pairingOutBusy = false;
+let pairingGeneration = 0;
+let locking = false;
 
 const $ = (selector) => document.querySelector(selector);
 const clone = (value) => structuredClone(value ?? {});
@@ -56,7 +62,18 @@ function githubFields(initial = {}) {
     ${formField('core-branch', 'Branch', 'text', initial.branch || 'main')}`;
 }
 
+function updatePairingFields() {
+  const input = $('#core-pair-code');
+  if (!input) return;
+  const code = pairUi.extractPairCode(input.value);
+  $('#core-pair-legacy').hidden = !code || pairUi.isFullPairCode(code);
+  $('#core-manual-setup').hidden = Boolean(code);
+}
+
 function setupScreen(error = '') {
+  const incoming = incomingPair;
+  incomingPair = null;
+  if (incoming?.invalid) error = 'Deze koppellink is ongeldig. Maak een nieuwe koppelcode.';
   const hasLegacy = core.legacyAdapter && window.CryptoPortfolioLegacy.hasLegacyData();
   const oldGh = hasLegacy ? window.CryptoPortfolioLegacy.snapshot().settings?.gh || {} : {};
   const repo = typeof oldGh.repo === 'string' ? oldGh.repo.split('/') : [];
@@ -70,6 +87,13 @@ function setupScreen(error = '') {
   show('PWA-Core instellen',
     'De nieuwe kluis staat los van de oude opslag. De bestaande gegevens en het oude synchronisatiebestand blijven behouden.',
     `<div class="core-actions">
+      <div class="field"><label for="core-pair-code">Koppelcode of QR-link</label><textarea id="core-pair-code" class="pair-code" rows="3" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea></div>
+      <div id="core-pair-legacy" hidden>
+        ${formField('core-pair-pin', 'Pincode (oude koppelcode)', 'text', '', 'one-time-code')}
+        ${formField('core-pair-password', 'Core-wachtwoord', 'password', '', 'current-password')}
+      </div>
+      <button class="btn" type="button" data-core-action="pair">Koppelen en ophalen</button>
+      <div class="core-actions" id="core-manual-setup">
       ${legacyChoice}
       <button class="btn sec" type="button" data-core-action="import">Bestaande Core-kluis van GitHub openen</button>
       <details><summary>GitHub-instellingen</summary><div class="mt-2">${githubFields(initial)}</div></details>
@@ -77,7 +101,12 @@ function setupScreen(error = '') {
       ${formField('core-password', 'Core-wachtwoord (nieuw bij migratie, bestaand bij koppelen)', 'password', '', 'current-password')}
       ${formField('core-password-confirm', 'Herhaal Core-wachtwoord', 'password', '', 'new-password')}
       <button class="btn sec" type="button" data-core-action="empty">Nieuwe lege kluis maken</button>
+      </div>
     </div>`, error);
+  const input = $('#core-pair-code');
+  if (incoming?.code) input.value = incoming.code;
+  input.addEventListener('input', updatePairingFields);
+  updatePairingFields();
 }
 
 function unlockScreen(error = '') {
@@ -257,6 +286,92 @@ async function importFromGitHub() {
   await vault.setDeviceSettings(next);
   await vault.flush();
   await activate();
+}
+
+// Een bestaande kluis mag door een QR-link of geplakte code nooit worden vervangen.
+const hasLocalCoreVault = () => vault.isUnlocked() || vault.hasVault() || localStorage.getItem(vault.KEYS.vault) !== null;
+
+async function importFromPairing() {
+  if (hasLocalCoreVault()) throw new Error('Op dit apparaat bestaat al een kluis.');
+  const pairing = await pairUi.openPairing({
+    input: $('#core-pair-code')?.value,
+    pin: $('#core-pair-pin')?.value,
+    context: APP.storagePrefix,
+  });
+  const config = pairing.syncConfig;
+  if (config.path !== APP.defaultDataPath) throw new Error('Deze koppelcode verwijst niet naar het Cryptotracker Core-bestand.');
+  const password = $('#core-pair-password')?.value || '';
+  if (!pairing.dataKey && !password) throw new Error('Vul ook het wachtwoord van je kluis in.');
+  await acquireSession();
+  try {
+    if (hasLocalCoreVault()) throw new Error('Op dit apparaat bestaat al een kluis.');
+    const client = github.createClient(config);
+    await client.checkRepo();
+    const remote = await client.getFile();
+    if (!remote) throw new Error('Geen Core-kluis gevonden op het opgegeven pad.');
+    const settingsBox = { autoLockMinutes: 5, syncEnabled: true, github: config, app: {} };
+    const syncMeta = { sha: remote.sha, dirty: false, lastSyncAt: Date.now() };
+    if (pairing.dataKey) {
+      if (Date.now() >= pairing.expiresAt) throw new Error('Deze koppelcode is verlopen. Maak een nieuwe code.');
+      await vault.importEnvelopeWithKey(remote.envelope, pairing.dataKey, { deviceSettings: settingsBox, syncMeta });
+    } else {
+      await vault.importEnvelope(remote.envelope, password);
+      vault.setSyncMeta(syncMeta);
+      await vault.setDeviceSettings(settingsBox);
+    }
+    await vault.flush();
+    // Pas na duurzame import verbruiken. Een fout wachtwoord kan opnieuw worden geprobeerd.
+    let replayWarning = '';
+    try { pairing.markUsed(); } catch (error) { replayWarning = 'Gekoppeld, maar de replaybescherming kon niet worden bijgewerkt: ' + error.message; }
+    await activate();
+    window.CryptoPortfolioLegacy.toast(replayWarning || 'Kluis opgehaald van GitHub.');
+  } catch (error) {
+    // Bij een fout blijft een eventueel al opgeslagen kluis behouden; nooit resetten.
+    if (active) {
+      active = false;
+      adapter = null;
+      deviceSettings = { github: {}, app: {} };
+      window.CryptoPortfolioLegacy.lockCore();
+    }
+    vault.lock();
+    const release = releaseSession;
+    releaseSession = null;
+    if (release) await release();
+    if (hasLocalCoreVault()) unlockScreen(error.message);
+    throw error;
+  }
+}
+
+function receivePairLink() {
+  const incoming = pairUi.takeIncomingPairCode();
+  if (!incoming) return;
+  if (hasLocalCoreVault()) {
+    const message = 'Op dit apparaat bestaat al een kluis. Er is niets gewijzigd.';
+    if (active) window.CryptoPortfolioLegacy.toast(message);
+    else unlockScreen(message);
+    return;
+  }
+  if (gateBusy) { setError('Er loopt al een handeling. Open de koppellink opnieuw zodra deze klaar is.'); return; }
+  incomingPair = incoming;
+  if (!window.CryptoPortfolioLegacy.legacyLocked()) setupScreen();
+}
+
+async function openPairOut() {
+  if (!active || locking || !vault.isUnlocked()) throw new Error('Ontgrendel eerst de Core-kluis.');
+  if (!getSyncInfo().enabled || !getSyncInfo().configured) throw new Error('Activeer eerst Core-synchronisatie.');
+  if (pairingOutBusy || $('#dlg-pair')?.open) return;
+  pairingOutBusy = true;
+  const generation = pairingGeneration;
+  const session = releaseSession;
+  const isAuthorized = () => active && !locking && vault.isUnlocked() && releaseSession === session && pairingGeneration === generation;
+  try {
+    await syncNow(true);
+    if (!isAuthorized()) throw new Error('De kluis is vergrendeld.');
+    return await pairUi.openPairOutDialog({
+      syncConfig: appGithubSettings(), dataKey: vault.getDataKey(), context: APP.storagePrefix,
+      appName: APP.name, toast: (message) => window.CryptoPortfolioLegacy.toast(message), isAuthorized,
+    });
+  } finally { pairingOutBusy = false; }
 }
 
 async function unlockLocal(password) {
@@ -538,7 +653,10 @@ function scheduleAutoLock() {
 }
 
 async function lock() {
-  if (!active) return;
+  if (!active || locking) return;
+  locking = true;
+  pairingGeneration++;
+  $('#dlg-pair')?.close();
   clearTimeout(lockTimer);
   try {
     if (syncPromise) await syncPromise.catch(() => {});
@@ -548,6 +666,7 @@ async function lock() {
     // Vergrendel nooit na een mislukte opslag: de enige actuele kopie kan
     // nog in het geheugen staan. Laat de sessie actief zodat opnieuw opslaan kan.
     window.CryptoPortfolioLegacy.setSyncError(error?.message || 'Opslagcontrole vóór vergrendelen mislukt');
+    locking = false;
     throw error;
   }
 
@@ -558,8 +677,8 @@ async function lock() {
   window.CryptoPortfolioLegacy.lockCore();
   const release = releaseSession;
   releaseSession = null;
-  if (release) await release();
-  unlockScreen();
+  try { if (release) await release(); }
+  finally { locking = false; unlockScreen(); }
 }
 
 const runtime = Object.freeze({
@@ -571,6 +690,7 @@ const runtime = Object.freeze({
   getSyncInfo,
   syncNow,
   updateGitHub,
+  openPairOut,
   enrollExistingPasskey,
   enrollNewPasskey,
   changePassword,
@@ -587,6 +707,7 @@ async function handleAction(action) {
   if (action === 'cancel-migrate') { pendingMigration = null; return setupScreen(); }
   if (action === 'empty') return createEmpty();
   if (action === 'import') return importFromGitHub();
+  if (action === 'pair') return importFromPairing();
   if (action === 'passkey') return unlockPasskey();
   if (action === 'corelock') return lock();
   if (action === 'lock-info') {
@@ -598,24 +719,33 @@ async function handleAction(action) {
 export async function initialize(coreModules) {
   core = coreModules;
   if (!window.CryptoPortfolioLegacy) throw new Error('De bestaande app-brug ontbreekt.');
+  incomingPair = pairUi.takeIncomingPairCode();
   document.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-core-action]');
-    if (!button) return;
+    if (!button || gateBusy) return;
+    gateBusy = true;
     const action = button.dataset.coreAction;
     button.disabled = true;
     try { await handleAction(action); }
-    catch (error) { setError(error); button.disabled = false; }
+    catch (error) { setError(error); }
+    finally { gateBusy = false; if (button.isConnected) button.disabled = false; }
   });
   document.addEventListener('submit', async (event) => {
     if (event.target.id !== 'core-unlock-form') return;
     event.preventDefault();
+    if (gateBusy) return;
+    gateBusy = true;
     const button = event.target.querySelector('button[type="submit"]');
     button.disabled = true;
     try { await unlockLocal($('#core-unlock-password').value); }
-    catch (error) { setError(error); button.disabled = false; }
+    catch (error) { setError(error); }
+    finally { gateBusy = false; if (button.isConnected) button.disabled = false; }
   });
+  window.addEventListener('hashchange', receivePairLink);
   window.addEventListener('cpt-legacy-unlocked', () => setupScreen());
   window.addEventListener('pagehide', () => {
+    pairingGeneration++;
+    $('#dlg-pair')?.close();
     if (active) {
       void adapter?.flush().catch(() => {});
       void vault.flush().catch(() => {});
@@ -631,7 +761,11 @@ export async function initialize(coreModules) {
       else { scheduleAutoLock(); void syncNow(true).catch(() => {}); }
     }
   });
-  if (vault.hasVault()) unlockScreen();
+  if (hasLocalCoreVault()) {
+    const message = incomingPair ? 'Op dit apparaat bestaat al een kluis. Er is niets gewijzigd.' : '';
+    incomingPair = null;
+    unlockScreen(message);
+  }
   else if (window.CryptoPortfolioLegacy.legacyLocked()) window.CryptoPortfolioLegacy.startLegacy({ allowSync: false, coreHandoff: true });
   else setupScreen();
 }
